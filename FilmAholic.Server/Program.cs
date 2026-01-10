@@ -23,7 +23,7 @@ builder.Services.AddIdentityApiEndpoints<Utilizador>()
 
 builder.Services.AddCors(options => {
     options.AddPolicy("AllowAngular",
-        policy => policy.WithOrigins("https://localhost:4200")
+        policy => policy.WithOrigins("https://localhost:50905")
                         .AllowAnyMethod()
                         .AllowAnyHeader()
                         .AllowCredentials());

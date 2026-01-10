@@ -1,0 +1,30 @@
+<div class="page-wrapper">
+  <div class="register-card">
+    <div class="header">
+      <h1>Registo</h1>
+      <p style="color: #6c757d;">Get started for free</p>
+    </div>
+
+    <form (ngSubmit)="onRegister()">
+      <div class="input-row" style="display: flex; gap: 10px;">
+        <input type="text" name="nome" [(ngModel)]="user.nome" placeholder="Nome" required>
+        <input type="text" name="sobrenome" [(ngModel)]="user.sobrenome" placeholder="Sobrenome" required>
+      </div>
+
+      <input type="email" name="email" [(ngModel)]="user.email" placeholder="Email" required>
+
+      <input type="date" name="dataNascimento" [(ngModel)]="user.dataNascimento" required>
+
+      <input type="password" name="password" [(ngModel)]="user.password" placeholder="Password" required>
+
+      <button type="submit"
+              style="width: 100%; padding: 15px; background-color: #007bff; color: white; border: none; border-radius: 10px; font-weight: bold; cursor: pointer;">
+        Criar Conta
+      </button>
+
+      <div style="margin-top: 20px;">
+        <a routerLink="/login" style="color: #007bff; text-decoration: none; font-size: 14px;">Já tenho uma conta</a>
+      </div>
+    </form>
+  </div>
+</div>

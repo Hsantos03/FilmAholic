@@ -1,0 +1,109 @@
+/* Contentor que faz o fundo da sala de cinema */
+.page-wrapper {
+  min-height: 100vh; /* Ocupa pelo menos 100% da altura do ecrã */
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: linear-gradient(rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.7)), url('../../../assets/fundo-cinema.png') no-repeat center center;
+  background-size: cover;
+  background-attachment: fixed; /* A imagem fica fixa enquanto fazes scroll (se houver) */
+}
+
+/* O Cartão com a borda azul do teu Figma */
+.register-card {
+  background-color: rgba(5, 10, 15, 0.95); /* Quase preto com ligeira transparência */
+  padding: 40px;
+  border-radius: 15px;
+  border: 2px solid #007bff; /* Borda azul neon do teu template */
+  width: 100%;
+  max-width: 500px;
+  box-shadow: 0px 0px 25px rgba(0, 123, 255, 0.4); /* Brilho azul à volta */
+  z-index: 1;
+}
+
+.header h1 {
+  color: white;
+  margin: 0;
+  font-size: 28px;
+  font-weight: 500;
+}
+
+.header p {
+  color: #6c757d;
+  margin-bottom: 30px;
+}
+
+/* Inputs com o estilo escuro */
+.input-group {
+  margin-bottom: 20px;
+}
+
+.input-row {
+  display: flex;
+  gap: 15px;
+  margin-bottom: 20px;
+}
+
+  .input-row .input-group {
+    flex: 1;
+    margin-bottom: 0;
+  }
+
+input {
+  width: 100%;
+  padding: 15px;
+  background-color: #0a1118;
+  border: 1px solid #1a2a3a;
+  border-radius: 8px;
+  color: white;
+  margin-bottom: 15px;
+  box-sizing: border-box;
+}
+
+  input:focus {
+    outline: none;
+    border-color: #007bff;
+  }
+
+  /* Foca especificamente no ícone do calendário dentro de inputs de data */
+  input[type="date"]::-webkit-calendar-picker-indicator {
+    /* Inverte a cor do ícone (de preto para branco) */
+    filter: invert(1);
+    /* Muda o cursor para uma mãozinha para mostrar que é clicável */
+    cursor: pointer;
+  }
+
+/* Botão Azul Grande */
+.btn-register {
+  width: 100%;
+  padding: 15px;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 10px;
+  font-size: 16px;
+  font-weight: bold;
+  cursor: pointer;
+  margin-top: 10px;
+  transition: 0.3s;
+}
+
+  .btn-register:hover {
+    background-color: #0056b3;
+  }
+
+.footer-links {
+  text-align: left;
+  margin-top: 20px;
+}
+
+  .footer-links a {
+    color: #007bff;
+    text-decoration: none;
+    font-size: 14px;
+  }
+
+    .footer-links a:hover {
+      text-decoration: underline;
+    }
