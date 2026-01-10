@@ -45,15 +45,23 @@ namespace FilmAholic.Server.Controllers
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] LoginRequest model)
         {
-            // O Identity trata da verificação da password encriptada
-            var result = await _signInManager.PasswordSignInAsync(model.Email, model.Password, isPersistent: true, lockoutOnFailure: false);
+            var user = await _userManager.FindByEmailAsync(model.Email);
+            if (user == null) return Unauthorized(new { message = "Utilizador não encontrado." });
+
+            var result = await _signInManager.PasswordSignInAsync(user, model.Password, isPersistent: true, lockoutOnFailure: false);
 
             if (result.Succeeded)
             {
-                return Ok(new { message = "Login efetuado com sucesso!" });
+                // Devolvemos o nome para o Angular usar na UI
+                return Ok(new
+                {
+                    message = "Login ok",
+                    nome = user.Nome,
+                    email = user.Email
+                });
             }
 
-            return Unauthorized(new { message = "Email ou password incorretos." });
+            return Unauthorized(new { message = "Password incorreta." });
         }
     }
 

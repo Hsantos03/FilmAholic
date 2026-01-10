@@ -1,0 +1,92 @@
+/* Fundo idêntico ao register mas isolado para o login */
+.page-wrapper-login {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  /* Usando a mesma imagem de fundo */
+  background: linear-gradient(rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.7)), url('../../../assets/fundo-cinema.png') no-repeat center center;
+  background-size: cover;
+  z-index: 999;
+}
+
+/* Cartão com borda azul neon */
+.auth-card-login {
+  background-color: rgba(5, 10, 15, 0.95);
+  padding: 40px;
+  border-radius: 15px;
+  border: 2px solid #007bff;
+  width: 100%;
+  max-width: 480px;
+  box-shadow: 0px 0px 25px rgba(0, 123, 255, 0.4);
+  color: white;
+  text-align: left;
+}
+
+.header h1 {
+  margin: 0;
+  font-size: 28px;
+}
+
+.header p {
+  color: #6c757d;
+  margin-bottom: 25px;
+}
+
+/* Inputs escuros */
+input {
+  width: 100%;
+  padding: 15px;
+  background-color: #0d141b;
+  border: 1px solid #1a2a3a;
+  border-radius: 8px;
+  color: white;
+  margin-bottom: 15px;
+  box-sizing: border-box;
+}
+
+  input:focus {
+    outline: none;
+    border-color: #007bff;
+  }
+
+/* O Teu Botão Rosa do Figma */
+.btn-login-pink {
+  width: 100%;
+  padding: 15px;
+  background-color: #e91e63;
+  color: white;
+  border: none;
+  border-radius: 10px;
+  font-size: 16px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: 0.3s;
+}
+
+  .btn-login-pink:hover {
+    background-color: #d81b60;
+  }
+
+.footer-links {
+  margin-top: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+  .footer-links a {
+    color: #007bff;
+    text-decoration: none;
+    font-size: 14px;
+  }
+
+    .footer-links a:hover {
+      text-decoration: underline;
+    }
