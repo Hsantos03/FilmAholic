@@ -1,9 +1,18 @@
-﻿namespace FilmAholic.Server.Models;
+﻿using Microsoft.AspNetCore.Identity;
+using System.ComponentModel.DataAnnotations;
 
-public class Utilizador
+namespace FilmAholic.Server.Models;
+
+public class Utilizador : IdentityUser
 {
-    public int Id { get; set; }
+    [Required]
     public string Nome { get; set; } = "";
-    public string Email { get; set; } = "";
-    public string PasswordHash { get; set; } = "";
+    [Required]
+    public string Sobrenome { get; set; } = "";
+    [Required]
+    public DateTime DataNascimento { get; set; }
+    public string? FotoPerfilUrl { get; set; }
+    public string? GeneroFavorito { get; set; }
+    public DateTime DataCriacao { get; set; } = DateTime.UtcNow;
+
 }
