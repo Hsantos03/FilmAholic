@@ -1,19 +1,51 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { AuthService } from '../../services/auth.service';
-import { Router } from '@angular/router';
+import { Router, ActivatedRoute } from '@angular/router';
 
 @Component({
   selector: 'app-login',
   templateUrl: './login.component.html',
   styleUrls: ['./login.component.css']
 })
-export class LoginComponent {
+export class LoginComponent implements OnInit {
   loginData = { email: '', password: '' };
   showEmailVerificationMessage = false;
   emailParaVerificar = '';
   isLoading = false;
+  externalSuccess = false;
+  externalNome = '';
+  externalEmail = '';
 
-  constructor(private authService: AuthService, private router: Router) { }
+  constructor(
+    private authService: AuthService, 
+    private router: Router,
+    private route: ActivatedRoute
+  ) { }
+
+  ngOnInit() {
+    // Verificar se veio de login externo bem-sucedido
+    this.route.queryParams.subscribe(params => {
+      if (params['externalSuccess'] === 'true') {
+        this.externalSuccess = true;
+        this.externalNome = params['nome'] || '';
+        this.externalEmail = params['email'] || '';
+        
+        // Guardar no localStorage
+        if (this.externalNome) {
+          localStorage.setItem('user_nome', this.externalNome);
+        }
+        
+        // Redirecionar após 2 segundos
+        setTimeout(() => {
+          this.router.navigate(['/dashboard']);
+        }, 2000);
+      }
+      
+      if (params['error']) {
+        alert('Erro: ' + params['error']);
+      }
+    });
+  }
 
   onLogin() {
     this.isLoading = true;
@@ -56,5 +88,14 @@ export class LoginComponent {
         alert('Erro ao reenviar email. Tente novamente mais tarde.');
       }
     });
+  }
+
+  // Métodos para login social
+  loginWithGoogle() {
+    this.authService.googleLogin();
+  }
+
+  loginWithFacebook() {
+    this.authService.facebookLogin();
   }
 }

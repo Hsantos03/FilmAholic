@@ -35,4 +35,13 @@ export class AuthService {
   resetPassword(model: any) {
     return this.http.post(`${this.apiUrl}/reset-password`, model);
   }
+
+  // Métodos para autenticação externa (OAuth)
+  googleLogin(): void {
+    window.location.href = `${this.apiUrl}/google-login`;
+  }
+
+  facebookLogin(): void {
+    window.location.href = `${this.apiUrl}/facebook-login`;
+  }
 }
