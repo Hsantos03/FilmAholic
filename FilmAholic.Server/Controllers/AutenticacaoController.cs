@@ -1,7 +1,9 @@
-﻿using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Mvc;
-using FilmAholic.Server.Models;
+﻿using FilmAholic.Server.Models;
 using FilmAholic.Server.Services;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.Data;
+using Microsoft.AspNetCore.Identity.UI.Services;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 
 namespace FilmAholic.Server.Controllers
@@ -191,6 +193,55 @@ namespace FilmAholic.Server.Controllers
                 return StatusCode(500, new { message = "Erro ao enviar email de verificação." });
             }
         }
+
+        [HttpPost("forgot-password")]
+        public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordRequest model)
+        {
+            if (string.IsNullOrEmpty(model.Email)) return BadRequest(new { message = "Email é obrigatório." });
+
+            var user = await _userManager.FindByEmailAsync(model.Email);
+
+            // Por segurança, retornamos Ok mesmo que o email não exista para evitar "data mining"
+            if (user == null) return Ok(new { message = "Se o email existir, enviámos as instruções." });
+
+            // Gera o token de recuperação
+            var token = await _userManager.GeneratePasswordResetTokenAsync(user);
+
+            // Constrói o URL para o Angular
+            var angularUrl = _configuration["EmailSettings:AngularUrl"] ?? "https://localhost:4200";
+            var callbackUrl = $"{angularUrl}/reset-password?email={user.Email}&token={Uri.EscapeDataString(token)}";
+
+            // MUDANÇA: Usar o _emailService injetado (substituí _emailSender)
+            try
+            {
+                // Aqui deves usar um método do teu EmailService. 
+                // Se ele só tiver o de verificação, podes criar um similar para Password.
+                await _emailService.SendPasswordResetEmailAsync(user.Email, callbackUrl);
+                return Ok(new { message = "Se o email existir, enviámos as instruções." });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Erro ao enviar email de recuperação");
+                return StatusCode(500, new { message = "Erro ao enviar o email." });
+            }
+        }
+
+        [HttpPost("reset-password")]
+        public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordDTO model)
+        {
+            if (!ModelState.IsValid) return BadRequest(ModelState);
+
+            var user = await _userManager.FindByEmailAsync(model.Email);
+            if (user == null) return BadRequest(new { message = "Erro ao processar o pedido." });
+
+            // O token já deve vir decodificado do Angular ou decodificas aqui
+            var result = await _userManager.ResetPasswordAsync(user, model.Token, model.NewPassword);
+
+            if (result.Succeeded)
+                return Ok(new { message = "Password alterada com sucesso! Já pode fazer login." });
+
+            return BadRequest(new { message = "Erro ao redefinir password.", errors = result.Errors });
+        }
     }
 
     // DTOs (Objetos de transferência de dados) para o Controller receber do Angular
@@ -212,5 +263,17 @@ namespace FilmAholic.Server.Controllers
     public class ReenviarEmailRequest
     {
         public string Email { get; set; } = "";
+    }
+
+    public class ForgotPasswordRequest
+    {
+        public string Email { get; set; } = "";
+    }
+
+    public class ResetPasswordDTO
+    {
+        public string Email { get; set; } = "";
+        public string Token { get; set; } = "";
+        public string NewPassword { get; set; } = "";
     }
 }

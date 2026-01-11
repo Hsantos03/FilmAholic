@@ -27,4 +27,12 @@ export class AuthService {
   reenviarEmailVerificacao(email: string): Observable<any> {
     return this.http.post(`${this.apiUrl}/reenviar-email-verificacao`, { email });
   }
+
+  forgotPassword(email: string) {
+    return this.http.post(`${this.apiUrl}/forgot-password`, { email });
+  }
+
+  resetPassword(model: any) {
+    return this.http.post(`${this.apiUrl}/reset-password`, model);
+  }
 }

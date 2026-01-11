@@ -8,6 +8,7 @@ namespace FilmAholic.Server.Services;
 public interface IEmailService
 {
     Task SendVerificationEmailAsync(string email, string verificationToken, string userId);
+    Task SendPasswordResetEmailAsync(string email, string callbackUrl);
 }
 
 public class EmailService : IEmailService
@@ -82,6 +83,66 @@ public class EmailService : IEmailService
         {
             _logger.LogError(ex, $"Erro ao enviar email de verificação para {email}");
             // Em desenvolvimento, continuamos mesmo se o email falhar
+            throw;
+        }
+    }
+
+    public async Task SendPasswordResetEmailAsync(string email, string callbackUrl)
+    {
+        try
+        {
+            var smtpHost = _configuration["EmailSettings:SmtpHost"] ?? "smtp.gmail.com";
+            var smtpPort = int.Parse(_configuration["EmailSettings:SmtpPort"] ?? "587");
+            var smtpUser = _configuration["EmailSettings:SmtpUser"];
+            var smtpPassword = _configuration["EmailSettings:SmtpPassword"];
+            var fromEmail = _configuration["EmailSettings:FromEmail"] ?? smtpUser;
+            var fromName = _configuration["EmailSettings:FromName"] ?? "FilmAholic";
+
+            // Caso o SMTP não esteja configurado, logamos o link no console (útil para testes)
+            if (string.IsNullOrEmpty(smtpUser) || string.IsNullOrEmpty(smtpPassword))
+            {
+                _logger.LogWarning($"Email não configurado. Link de recuperação para {email}: {callbackUrl}");
+                return;
+            }
+
+            var message = new MimeMessage();
+            message.From.Add(new MailboxAddress(fromName, fromEmail));
+            message.To.Add(new MailboxAddress("", email));
+            message.Subject = "Recuperar Password - FilmAholic";
+
+            var bodyBuilder = new BodyBuilder
+            {
+                HtmlBody = $@"
+                <html>
+                <body style='font-family: Arial, sans-serif;'>
+                    <div style='max-width: 600px; margin: 0 auto; padding: 20px;'>
+                        <h2 style='color: #333;'>Recuperação de Password</h2>
+                        <p>Recebemos um pedido para redefinir a password da sua conta no <strong>FilmAholic</strong>.</p>
+                        <p>Clique no botão abaixo para escolher uma nova password. Este link expirará em breve:</p>
+                        <p style='text-align: center; margin: 30px 0;'>
+                            <a href='{callbackUrl}' style='background-color: #e91e63; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; display: inline-block; font-weight: bold;'>Redefinir Password</a>
+                        </p>
+                        <p>Se não solicitou esta alteração, pode ignorar este email com segurança.</p>
+                        <p style='word-break: break-all; color: #666; font-size: 12px;'>Ou copie este link: {callbackUrl}</p>
+                    </div>
+                </body>
+                </html>",
+                TextBody = $"Recuperação de Password - FilmAholic\n\nRedefina a sua password em: {callbackUrl}"
+            };
+
+            message.Body = bodyBuilder.ToMessageBody();
+
+            using var client = new SmtpClient();
+            await client.ConnectAsync(smtpHost, smtpPort, SecureSocketOptions.StartTls);
+            await client.AuthenticateAsync(smtpUser, smtpPassword);
+            await client.SendAsync(message);
+            await client.DisconnectAsync(true);
+
+            _logger.LogInformation($"Email de recuperação enviado para {email}");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, $"Erro ao enviar email de recuperação para {email}");
             throw;
         }
     }

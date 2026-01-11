@@ -3,11 +3,15 @@ import { RouterModule, Routes } from '@angular/router';
 import { RegisterComponent } from './components/register/register.component';
 import { LoginComponent } from './components/login/login.component';
 import { EmailConfirmadoComponent } from './components/email-confirmado/email-confirmado.component';
+import { ForgotPasswordComponent } from './components/forgot-password/forgot-password.component';
+import { ResetPasswordComponent } from './components/reset-password/reset-password.component';
 
 const routes: Routes = [
   { path: 'register', component: RegisterComponent },
   { path: 'login', component: LoginComponent },
   { path: 'email-confirmado', component: EmailConfirmadoComponent },
+  { path: 'forgot-password', component: ForgotPasswordComponent }, 
+  { path: 'reset-password', component: ResetPasswordComponent },
   { path: '', redirectTo: '/register', pathMatch: 'full' } // Rota inicial
 ];
 
