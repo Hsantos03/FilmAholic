@@ -5,7 +5,30 @@
       <p style="color: #6c757d;">Get started for free</p>
     </div>
 
-    <form (ngSubmit)="onRegister()">
+    <!-- Mensagem de verificação de email -->
+    <div *ngIf="showVerificationMessage" style="background-color: #d1ecf1; border: 1px solid #bee5eb; border-radius: 10px; padding: 20px; margin-bottom: 20px;">
+      <h3 style="color: #0c5460; margin-top: 0;">📧 Verifique o seu email!</h3>
+      <p style="color: #0c5460; margin-bottom: 15px;">
+        Enviamos um email de verificação para <strong>{{ registeredEmail }}</strong>.
+        Por favor, clique no link no email para ativar a sua conta.
+      </p>
+      <p style="color: #856404; font-size: 14px; margin-bottom: 15px;">
+        <strong>Nota:</strong> Se não receber o email, verifique a pasta de spam ou lixo eletrónico.
+      </p>
+      <div style="display: flex; gap: 10px; align-items: center;">
+        <button 
+          type="button"
+          (click)="reenviarEmail()"
+          [disabled]="isLoading"
+          style="padding: 10px 20px; background-color: #17a2b8; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 14px;">
+          {{ isLoading ? 'A enviar...' : 'Reenviar Email' }}
+        </button>
+        <a routerLink="/login" style="color: #007bff; text-decoration: none; font-size: 14px;">Ir para Login</a>
+      </div>
+    </div>
+
+    <!-- Formulário de registo -->
+    <form *ngIf="!showVerificationMessage" (ngSubmit)="onRegister()">
       <div class="input-row" style="display: flex; gap: 10px;">
         <input type="text" name="nome" [(ngModel)]="user.nome" placeholder="Nome" required>
         <input type="text" name="sobrenome" [(ngModel)]="user.sobrenome" placeholder="Sobrenome" required>
@@ -18,8 +41,9 @@
       <input type="password" name="password" [(ngModel)]="user.password" placeholder="Password" required>
 
       <button type="submit"
-              style="width: 100%; padding: 15px; background-color: #007bff; color: white; border: none; border-radius: 10px; font-weight: bold; cursor: pointer;">
-        Criar Conta
+              [disabled]="isLoading"
+              style="width: 100%; padding: 15px; background-color: #007bff; color: white; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; opacity: isLoading ? 0.6 : 1;">
+        {{ isLoading ? 'A processar...' : 'Criar Conta' }}
       </button>
 
       <div style="margin-top: 20px;">

@@ -1,0 +1,49 @@
+<div class="page-wrapper">
+  <div class="confirm-card">
+    <div class="header">
+      <h1 *ngIf="isLoading">A confirmar...</h1>
+      <h1 *ngIf="!isLoading && success">✅ Email Confirmado!</h1>
+      <h1 *ngIf="!isLoading && !success">❌ Erro ao Confirmar</h1>
+    </div>
+
+    <div *ngIf="isLoading" style="text-align: center; padding: 40px;">
+      <p style="color: #6c757d;">A confirmar o seu email, por favor aguarde...</p>
+    </div>
+
+    <div *ngIf="!isLoading && success" style="text-align: center; padding: 20px;">
+      <p style="color: #155724; font-size: 18px; margin-bottom: 20px;">
+        O seu email foi confirmado com sucesso!
+      </p>
+      <p style="color: #6c757d; margin-bottom: 30px;">
+        A redirecionar para a página de login em instantes...
+      </p>
+      <button 
+        (click)="irParaLogin()"
+        style="padding: 12px 30px; background-color: #007bff; color: white; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; font-size: 16px;">
+        Ir para Login
+      </button>
+    </div>
+
+    <div *ngIf="!isLoading && !success" style="text-align: center; padding: 20px;">
+      <p style="color: #721c24; font-size: 18px; margin-bottom: 20px;">
+        {{ error || 'Ocorreu um erro ao confirmar o seu email.' }}
+      </p>
+      <p style="color: #6c757d; margin-bottom: 30px;">
+        O token pode estar expirado ou inválido. Por favor, tente registar-se novamente ou contacte o suporte.
+      </p>
+      <div style="display: flex; gap: 15px; justify-content: center;">
+        <button 
+          (click)="irParaLogin()"
+          style="padding: 12px 30px; background-color: #6c757d; color: white; border: none; border-radius: 10px; font-weight: bold; cursor: pointer;">
+          Login
+        </button>
+        <button 
+          (click)="irParaRegisto()"
+          style="padding: 12px 30px; background-color: #007bff; color: white; border: none; border-radius: 10px; font-weight: bold; cursor: pointer;">
+          Registo
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
