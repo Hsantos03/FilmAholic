@@ -56,6 +56,16 @@ input {
     border-color: #007bff;
   }
 
+  input[type="password"]::-ms-reveal,
+  input[type="password"]::-ms-clear {
+    /* Inverte a cor do ícone (de preto para branco) */
+    filter: invert(1);
+    /* Garante que o ícone é visível */
+    display: inline-block !important;
+    /* Opcional: muda o cursor para uma mãozinha ao passar por cima */
+    cursor: pointer;
+  }
+
 /* O Teu Botão Rosa do Figma */
 .btn-login-pink {
   width: 100%;
