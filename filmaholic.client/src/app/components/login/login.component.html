@@ -5,6 +5,23 @@
       <p>Get started for free</p>
     </div>
 
+    <!-- Mensagem de verificação de email -->
+    <div *ngIf="showEmailVerificationMessage" style="background-color: #fff3cd; border: 1px solid #ffc107; border-radius: 10px; padding: 20px; margin-bottom: 20px;">
+      <h3 style="color: #856404; margin-top: 0;">⚠️ Email não confirmado</h3>
+      <p style="color: #856404; margin-bottom: 15px;">
+        Por favor, confirme o seu email antes de fazer login. Verifique a sua caixa de entrada (e pasta de spam) para <strong>{{ emailParaVerificar }}</strong>.
+      </p>
+      <div style="display: flex; gap: 10px; align-items: center;">
+        <button 
+          type="button"
+          (click)="reenviarEmail()"
+          [disabled]="isLoading"
+          style="padding: 10px 20px; background-color: #ffc107; color: #856404; border: none; border-radius: 5px; cursor: pointer; font-size: 14px; font-weight: bold;">
+          {{ isLoading ? 'A enviar...' : 'Reenviar Email de Verificação' }}
+        </button>
+      </div>
+    </div>
+
     <form (ngSubmit)="onLogin()">
       <div class="input-group">
         <input type="email" name="email" [(ngModel)]="loginData.email" placeholder="Email" required>
@@ -14,7 +31,9 @@
         <input type="password" name="password" [(ngModel)]="loginData.password" placeholder="Password" required>
       </div>
 
-      <button type="submit" class="btn-login-pink">Log In</button>
+      <button type="submit" class="btn-login-pink" [disabled]="isLoading">
+        {{ isLoading ? 'A processar...' : 'Log In' }}
+      </button>
 
       <div class="footer-links">
         <a routerLink="/register">Não tem conta? Registe-se aqui!</a>

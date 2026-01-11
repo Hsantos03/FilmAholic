@@ -19,4 +19,12 @@ export class AuthService {
   login(dados: any): Observable<any> {
     return this.http.post(`${this.apiUrl}/login`, dados);
   }
+
+  confirmarEmail(userId: string, token: string): Observable<any> {
+    return this.http.post(`${this.apiUrl}/confirmar-email?userId=${encodeURIComponent(userId)}&token=${encodeURIComponent(token)}`, {});
+  }
+
+  reenviarEmailVerificacao(email: string): Observable<any> {
+    return this.http.post(`${this.apiUrl}/reenviar-email-verificacao`, { email });
+  }
 }
