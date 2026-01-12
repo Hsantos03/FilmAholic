@@ -242,6 +242,22 @@ namespace FilmAholic.Server.Controllers
 
             return BadRequest(new { message = "Erro ao redefinir password.", errors = result.Errors });
         }
+
+        [HttpPost("logout")]
+        public async Task<IActionResult> Logout()
+        {
+            try
+            {
+                await _signInManager.SignOutAsync();
+                _logger.LogInformation("Utilizador fez logout com sucesso.");
+                return Ok(new { message = "Logout realizado com sucesso" });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Erro ao realizar logout no servidor.");
+                return StatusCode(500, new { message = "Erro ao processar logout no servidor." });
+            }
+        }
     }
 
     // DTOs (Objetos de transferência de dados) para o Controller receber do Angular

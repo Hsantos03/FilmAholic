@@ -1,0 +1,5 @@
+<button class="btn btn-primary" (click)="addQueroVer()">Quero Ver</button>
+<button class="btn btn-success" (click)="addJaVi()">Já Vi</button>
+<button class="btn btn-danger" (click)="remove()">Remover</button>
+
+<p class="total-hours" *ngIf="totalHours">Total de horas vistas: {{ totalHours | number:'1.1-2' }}h</p>
