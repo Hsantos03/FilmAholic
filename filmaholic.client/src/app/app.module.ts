@@ -10,6 +10,7 @@ import { LoginComponent } from './components/login/login.component';
 import { EmailConfirmadoComponent } from './components/email-confirmado/email-confirmado.component';
 import { ForgotPasswordComponent } from './components/forgot-password/forgot-password.component';
 import { ResetPasswordComponent } from './components/reset-password/reset-password.component';
+import { DashboardComponent } from './components/dashboard/dashboard.component';
 
 @NgModule({
   declarations: [
@@ -18,7 +19,8 @@ import { ResetPasswordComponent } from './components/reset-password/reset-passwo
     LoginComponent,
     EmailConfirmadoComponent,
     ForgotPasswordComponent,
-    ResetPasswordComponent
+    ResetPasswordComponent,
+    DashboardComponent
   ],
   imports: [
     BrowserModule,

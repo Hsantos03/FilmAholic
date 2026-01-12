@@ -49,7 +49,6 @@ if (!string.IsNullOrEmpty(googleClientId) && !string.IsNullOrEmpty(googleClientS
     {
         options.ClientId = googleClientId;
         options.ClientSecret = googleClientSecret;
-        options.CallbackPath = "/api/autenticacao/google-callback";
         options.SaveTokens = true; // Guardar tokens para debug
         // Adicionar scopes explícitos
         options.Scope.Add("https://www.googleapis.com/auth/userinfo.email");
@@ -66,12 +65,9 @@ if (!string.IsNullOrEmpty(facebookAppId) && !string.IsNullOrEmpty(facebookAppSec
     {
         options.AppId = facebookAppId;
         options.AppSecret = facebookAppSecret;
-        options.CallbackPath = "/api/autenticacao/facebook-callback";
         options.SaveTokens = true; // Guardar tokens para debug
-        // Configurar scopes (permissões)
         options.Scope.Add("public_profile");
         options.Scope.Add("email");
-        // Configurações adicionais para melhorar a compatibilidade
         options.Fields.Add("name");
         options.Fields.Add("email");
         options.Fields.Add("first_name");
@@ -85,21 +81,20 @@ builder.Services.ConfigureApplicationCookie(options =>
     options.Cookie.HttpOnly = true;
     options.ExpireTimeSpan = TimeSpan.FromDays(7);
     options.SlidingExpiration = true;
-    options.Cookie.SameSite = SameSiteMode.None; // Necessário para cross-site (Angular em porta diferente)
-    options.Cookie.SecurePolicy = CookieSecurePolicy.Always; // Sempre HTTPS (requerido com SameSite=None)
+    options.Cookie.SameSite = SameSiteMode.None; 
+    options.Cookie.SecurePolicy = CookieSecurePolicy.Always; 
 });
 
 // Configurar cookies para autenticação externa (OAuth)
 builder.Services.ConfigureExternalCookie(options =>
 {
     options.Cookie.HttpOnly = true;
-    options.Cookie.SameSite = SameSiteMode.None; // Necessário para OAuth cross-site
-    options.Cookie.SecurePolicy = CookieSecurePolicy.Always; // Sempre HTTPS (requerido com SameSite=None)
-    options.ExpireTimeSpan = TimeSpan.FromMinutes(10); // Cookies OAuth expiram após 10 minutos
-    options.Cookie.Name = ".AspNetCore.ExternalAuth"; // Nome explícito para o cookie
-    options.Cookie.Path = "/"; // Garantir que o cookie está disponível em todo o path
-    // Configurações adicionais para melhorar a preservação do estado
-    options.SlidingExpiration = false; // Não renovar automaticamente para OAuth
+    options.Cookie.SameSite = SameSiteMode.None; 
+    options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
+    options.ExpireTimeSpan = TimeSpan.FromMinutes(10); 
+    options.Cookie.Name = ".AspNetCore.ExternalAuth"; 
+    options.Cookie.Path = "/"; 
+    options.SlidingExpiration = false; 
 });
 
 // Registar serviço de email
