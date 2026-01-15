@@ -14,3 +14,19 @@
   color: #666;
   font-size: 1.1em;
 }
+
+.profile-btn {
+  margin-top: 20px;
+  padding: 10px 25px;
+  font-size: 1em;
+  background-color: #1976d2;
+  color: #fff;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+  .profile-btn:hover {
+    background-color: #155a9c;
+  }
+

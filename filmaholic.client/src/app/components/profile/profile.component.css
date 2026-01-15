@@ -1,0 +1,133 @@
+/* Header */
+.profile-header {
+  border-radius: 15px 15px 0px 0px;
+  margin: 2%;
+  height: 250px;
+  background-color: #f0eaf2;
+  position: relative;
+}
+
+.profile-body {
+  margin: -75px auto 0; /* puxa o conteúdo para cima */
+  display: flex;
+  gap: 40px;
+  padding: 0 5%;
+  text-align: left;
+}
+
+.profile-left {
+  width: 320px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-left: 1%;
+}
+
+
+
+.edit-btn {
+  position: absolute;
+  right: 20px;
+  top: 20px;
+  border: none;
+  background: #fff;
+  padding: 8px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+/* Content layout */
+.profile-content {
+  display: flex;
+  max-width: 1100px;
+  margin: 0;
+  padding: 0 20px;
+}
+
+/* Sidebar */
+.profile-sidebar {
+  width: 300px;
+  background: #010B15;
+  border-radius: 20px;
+  padding: 20px;
+}
+
+.avatar {
+  width: 200px;
+  height: 200px;
+  background: #e6d9ff;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 40px;
+  margin-bottom: 20px;
+  z-index: 10;
+}
+
+.primary-btn {
+  width: 100%;
+  background: #ff2f6d;
+  border: none;
+  color: white;
+  padding: 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  margin-bottom: 20px;
+}
+
+.menu {
+  list-style: none;
+  padding: 0;
+}
+
+  .menu li {
+    padding: 10px 0;
+    cursor: pointer;
+  }
+
+    .menu li.logout {
+      color: #ff5c5c;
+    }
+
+/* Main */
+.profile-main {
+  flex: 1; /* ocupa o espaço restante */
+  padding-top: 75px;
+  max-width: 800px; /* opcional, para não ficar largo demais */
+}
+
+
+.joined {
+  font-size: 0.9em;
+  color: #aaa;
+}
+
+.bio {
+  margin: 15px 0 30px;
+  line-height: 1.5;
+}
+
+/* Sections */
+.section h3 {
+  margin-bottom: 5px;
+}
+
+.subtitle {
+  font-size: 0.85em;
+  color: #aaa;
+}
+
+.cards {
+  display: flex;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.card img {
+  width: 80px;
+  border-radius: 6px;
+}
+
+
+

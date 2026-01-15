@@ -1,0 +1,57 @@
+<!-- Header -->
+<div class="profile-header">
+  <button class="edit-btn">✎</button>
+</div>
+
+<!-- Profile body -->
+<div class="profile-body">
+
+  <!-- Left column -->
+  <div class="profile-left">
+
+    <!-- Avatar -->
+    <div class="avatar">
+      <span>👤</span>
+    </div>
+
+    <!-- Sidebar -->
+    <aside class="profile-sidebar">
+      <button class="primary-btn">Manage Account</button>
+
+      <ul class="menu">
+        <li>Preferences</li>
+        <li>Achievements</li>
+        <li class="logout">Log out</li>
+      </ul>
+    </aside>
+
+  </div>
+
+  <!-- Right column -->
+  <section class="profile-main">
+
+    <div class="profile-info">
+      <h2>{{ userName }}</h2>
+      <span class="joined">Joined · {{ joined }}</span>
+
+      <p class="bio">
+        {{ bio }}
+      </p>
+    </div>
+
+    <div class="section">
+      <h3>Watch later</h3>
+      <span class="subtitle">{{ watchLater.length }} Titles</span>
+
+      <div class="cards">
+        <div class="card" *ngFor="let movie of watchLater">
+          <img [src]="movie.cover" alt="movie">
+        </div>
+      </div>
+    </div>
+
+  </section>
+
+</div>
+
+
