@@ -56,6 +56,8 @@ export class LoginComponent implements OnInit {
         this.isLoading = false;
         // Guardamos o nome do utilizador para usar no site
         localStorage.setItem('user_nome', res.nome);
+        localStorage.setItem('userName', res.userName);
+        localStorage.setItem('user_id', res.id);
         alert('Bem-vindo, ' + res.nome);
         this.router.navigate(['/dashboard']); // Redireciona para a página principal
       },

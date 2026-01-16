@@ -110,11 +110,14 @@ namespace FilmAholic.Server.Controllers
 
             if (result.Succeeded)
             {
-                // Devolvemos o nome para o Angular usar na UI
+                // Devolvemos o nome e o sobrenome para o Angular usar na UI
                 return Ok(new
                 {
                     message = "Login ok",
                     nome = user.Nome,
+                    sobrenome = user.Sobrenome,
+                    userName = user.UserName,
+                    id = user.Id,
                     email = user.Email
                 });
             }
