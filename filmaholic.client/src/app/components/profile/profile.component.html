@@ -16,7 +16,7 @@
 
     <!-- Sidebar -->
     <aside class="profile-sidebar">
-      <button class="primary-btn">Manage Account</button>
+      <button class="primary-btn" (click)="openEdit()">Manage Account</button>
 
       <ul class="menu">
         <li>Preferences</li>
@@ -52,6 +52,28 @@
 
   </section>
 
+</div>
+
+<!-- Edit modal overlay -->
+<div class="modal-overlay" *ngIf="isEditing" (click)="closeEdit()">
+  <div class="modal-box" (click)="$event.stopPropagation()">
+    <button class="modal-close" (click)="closeEdit()">×</button>
+
+    <h3>Edit account</h3>
+
+    <form (ngSubmit)="saveChanges()">
+      <label for="userName">Username</label>
+      <input id="userName" name="userName" type="text" [(ngModel)]="editUserName" required />
+
+      <label for="bio">Bio</label>
+      <textarea id="bio" name="bio" rows="4" [(ngModel)]="editBio"></textarea>
+
+      <div class="modal-actions">
+        <button type="submit" class="save-btn">Save</button>
+        <button type="button" class="cancel-btn" (click)="closeEdit()">Cancel</button>
+      </div>
+    </form>
+  </div>
 </div>
 
 

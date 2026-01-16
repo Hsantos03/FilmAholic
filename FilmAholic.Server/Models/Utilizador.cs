@@ -13,6 +13,7 @@ public class Utilizador : IdentityUser
     public DateTime DataNascimento { get; set; }
     public string? FotoPerfilUrl { get; set; }
     public string? GeneroFavorito { get; set; }
+    public string? Bio { get; set; } // NEW: store user's bio/profile description
     public DateTime DataCriacao { get; set; } = DateTime.UtcNow;
 
 }

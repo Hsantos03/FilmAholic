@@ -4,7 +4,7 @@ import { HttpClient } from '@angular/common/http';
 @Component({
   selector: 'app-profile',
   templateUrl: './profile.component.html',
-  styleUrl: './profile.component.css'
+  styleUrls: ['./profile.component.css']
 })
 export class ProfileComponent implements OnInit {
 
@@ -19,6 +19,11 @@ export class ProfileComponent implements OnInit {
   ];
 
   private apiBase = 'https://localhost:7277/api/Profile';
+
+  // Modal / edit state
+  isEditing = false;
+  editUserName = '';
+  editBio = '';
 
   constructor(private http: HttpClient) { }
 
@@ -46,6 +51,37 @@ export class ProfileComponent implements OnInit {
       },
       error: (err) => {
         console.warn('Failed to load profile from API; keeping local values.', err);
+      }
+    });
+  }
+
+  openEdit(): void {
+    // populate the edit fields with current values
+    this.editUserName = this.userName;
+    this.editBio = this.bio;
+    this.isEditing = true;
+  }
+
+  closeEdit(): void {
+    this.isEditing = false;
+  }
+
+  saveChanges(): void {
+    // Update UI immediately
+    this.userName = this.editUserName;
+    this.bio = this.editBio;
+    this.isEditing = false;
+
+    // Optionally persist to server if an update endpoint exists.
+    const userId = localStorage.getItem('user_id');
+    if (!userId) return;
+
+    this.http.put<any>(`${this.apiBase}/${encodeURIComponent(userId)}`, { userName: this.userName, bio: this.bio }, { withCredentials: true }).subscribe({
+      next: () => {
+        // success - nothing else required for now
+      },
+      error: (err) => {
+        console.warn('Failed to persist profile changes to API.', err);
       }
     });
   }
