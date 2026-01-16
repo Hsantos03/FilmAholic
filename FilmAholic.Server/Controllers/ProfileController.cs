@@ -1,4 +1,6 @@
 ﻿using FilmAholic.Server.Data;
+using FilmAholic.Server.Models;
+using FilmAholic.Server.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -11,10 +13,12 @@ namespace FilmAholic.Server.Controllers
     public class ProfileController : ControllerBase
     {
         private readonly FilmAholicDbContext _context;
+        private readonly IPreferenciasService _preferenciasService;
 
-        public ProfileController(FilmAholicDbContext context)
+        public ProfileController(FilmAholicDbContext context, IPreferenciasService preferenciasService)
         {
             _context = context;
+            _preferenciasService = preferenciasService;
         }
 
         // GET: api/Profile/{id}
@@ -35,7 +39,12 @@ namespace FilmAholic.Server.Controllers
                     email = u.Email,
                     fotoPerfilUrl = u.FotoPerfilUrl,
                     dataCriacao = u.DataCriacao,
-                    bio = u.Bio
+                    bio = u.Bio,
+                    generosFavoritos = u.GenerosFavoritos.Select(ug => new
+                    {
+                        id = ug.Genero.Id,
+                        nome = ug.Genero.Nome
+                    }).ToList()
                 })
                 .FirstOrDefaultAsync();
 
@@ -83,12 +92,75 @@ namespace FilmAholic.Server.Controllers
             return NoContent();
         }
 
+        // GET: api/Profile/generos
+        // Obter todos os géneros disponíveis
+        [HttpGet("generos")]
+        public async Task<IActionResult> ObterTodosGeneros()
+        {
+            var generos = await _preferenciasService.ObterTodosGenerosAsync();
+            return Ok(generos.Select(g => new { id = g.Id, nome = g.Nome }));
+        }
+
+        // GET: api/Profile/{id}/generos-favoritos
+        // Obter géneros favoritos de um utilizador
+        [HttpGet("{id}/generos-favoritos")]
+        public async Task<IActionResult> ObterGenerosFavoritos(string id)
+        {
+            if (string.IsNullOrWhiteSpace(id))
+                return BadRequest(new { message = "Id é obrigatório." });
+
+            var generos = await _preferenciasService.ObterGenerosFavoritosAsync(id);
+            return Ok(generos.Select(g => new { id = g.Id, nome = g.Nome }));
+        }
+
+        // PUT: api/Profile/{id}/generos-favoritos
+        // Atualizar géneros favoritos de um utilizador
+        [HttpPut("{id}/generos-favoritos")]
+        public async Task<IActionResult> AtualizarGenerosFavoritos(string id, [FromBody] AtualizarGenerosFavoritosDto dto)
+        {
+            if (string.IsNullOrWhiteSpace(id))
+                return BadRequest(new { message = "Id é obrigatório." });
+
+            // Verificar se o utilizador existe
+            var utilizadorExiste = await _context.Users.AnyAsync(u => u.Id == id);
+            if (!utilizadorExiste)
+                return NotFound(new { message = "Utilizador não encontrado." });
+
+            // Validar géneros
+            if (dto.GeneroIds != null && dto.GeneroIds.Any())
+            {
+                foreach (var generoId in dto.GeneroIds)
+                {
+                    if (!await _preferenciasService.GeneroExisteAsync(generoId))
+                    {
+                        return BadRequest(new { message = $"Género com ID {generoId} não encontrado." });
+                    }
+                }
+            }
+
+            try
+            {
+                await _preferenciasService.AtualizarGenerosFavoritosAsync(id, dto.GeneroIds ?? new List<int>());
+                return Ok(new { message = "Géneros favoritos atualizados com sucesso." });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "Erro ao atualizar géneros favoritos.", detail = ex.Message });
+            }
+        }
+
         // DTO used to receive profile updates
         public class UpdateProfileDto
         {
             // JSON binding is case-insensitive; client may send "userName" or "UserName".
             public string? UserName { get; set; }
             public string? Bio { get; set; }
+        }
+
+        // DTO used to receive genre preferences updates
+        public class AtualizarGenerosFavoritosDto
+        {
+            public List<int>? GeneroIds { get; set; }
         }
     }
 }

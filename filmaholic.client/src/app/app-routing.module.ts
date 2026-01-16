@@ -7,6 +7,7 @@ import { ForgotPasswordComponent } from './components/forgot-password/forgot-pas
 import { ResetPasswordComponent } from './components/reset-password/reset-password.component';
 import { DashboardComponent } from './components/dashboard/dashboard.component';
 import { ProfileComponent } from './components/profile/profile.component';
+import { SelecionarGenerosComponent } from './components/selecionar-generos/selecionar-generos.component';
 
 const routes: Routes = [
   { path: 'register', component: RegisterComponent },
@@ -14,6 +15,7 @@ const routes: Routes = [
   { path: 'email-confirmado', component: EmailConfirmadoComponent },
   { path: 'forgot-password', component: ForgotPasswordComponent }, 
   { path: 'reset-password', component: ResetPasswordComponent },
+  { path: 'selecionar-generos', component: SelecionarGenerosComponent },
   { path: 'dashboard', component: DashboardComponent },
   { path: 'profile', component: ProfileComponent },
   { path: '', redirectTo: '/register', pathMatch: 'full' } // Rota inicial

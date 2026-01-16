@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { AuthService } from '../../services/auth.service';
+import { ProfileService } from '../../services/profile.service';
 import { Router, ActivatedRoute } from '@angular/router';
 
 @Component({
@@ -17,7 +18,8 @@ export class LoginComponent implements OnInit {
   externalEmail = '';
 
   constructor(
-    private authService: AuthService, 
+    private authService: AuthService,
+    private profileService: ProfileService,
     private router: Router,
     private route: ActivatedRoute
   ) { }
@@ -29,16 +31,41 @@ export class LoginComponent implements OnInit {
         this.externalSuccess = true;
         this.externalNome = params['nome'] || '';
         this.externalEmail = params['email'] || '';
+        const userId = params['userId'] || '';
         
         // Guardar no localStorage
         if (this.externalNome) {
           localStorage.setItem('user_nome', this.externalNome);
         }
+        if (userId) {
+          localStorage.setItem('user_id', userId);
+        }
         
-        // Redirecionar após 2 segundos
-        setTimeout(() => {
-          this.router.navigate(['/dashboard']);
-        }, 2000);
+        // Verificar se tem géneros favoritos antes de redirecionar
+        if (userId) {
+          this.profileService.obterGenerosFavoritos(userId).subscribe({
+            next: (generos) => {
+              setTimeout(() => {
+                if (generos && generos.length > 0) {
+                  this.router.navigate(['/dashboard']);
+                } else {
+                  this.router.navigate(['/selecionar-generos']);
+                }
+              }, 2000);
+            },
+            error: () => {
+              // Se houver erro, redireciona para selecionar géneros
+              setTimeout(() => {
+                this.router.navigate(['/selecionar-generos']);
+              }, 2000);
+            }
+          });
+        } else {
+          // Se não houver userId, vai para dashboard (fallback)
+          setTimeout(() => {
+            this.router.navigate(['/dashboard']);
+          }, 2000);
+        }
       }
       
       if (params['error']) {
@@ -58,8 +85,27 @@ export class LoginComponent implements OnInit {
         localStorage.setItem('user_nome', res.nome);
         localStorage.setItem('userName', res.userName);
         localStorage.setItem('user_id', res.id);
-        alert('Bem-vindo, ' + res.nome);
-        this.router.navigate(['/dashboard']); // Redireciona para a página principal
+        
+        // Verificar se o utilizador já tem géneros favoritos
+        this.profileService.obterGenerosFavoritos(res.id).subscribe({
+          next: (generos) => {
+            if (generos && generos.length > 0) {
+              // Se já tem géneros, vai para o dashboard
+              alert('Bem-vindo, ' + res.nome);
+              this.router.navigate(['/dashboard']);
+            } else {
+              // Se não tem géneros, redireciona para selecionar
+              alert('Bem-vindo, ' + res.nome + '! Por favor, selecione os seus géneros favoritos.');
+              this.router.navigate(['/selecionar-generos']);
+            }
+          },
+          error: (err) => {
+            // Se houver erro (pode ser porque ainda não tem géneros), redireciona para selecionar
+            console.error('Erro ao verificar géneros:', err);
+            alert('Bem-vindo, ' + res.nome + '! Por favor, selecione os seus géneros favoritos.');
+            this.router.navigate(['/selecionar-generos']);
+          }
+        });
       },
       error: (err) => {
         this.isLoading = false;

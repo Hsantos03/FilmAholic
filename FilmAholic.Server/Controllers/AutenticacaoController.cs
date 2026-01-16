@@ -316,7 +316,7 @@ namespace FilmAholic.Server.Controllers
                 // Login bem-sucedido - utilizador já existe
                 var user = await _userManager.FindByLoginAsync(info.LoginProvider, info.ProviderKey);
                 var angularUrl = _configuration["EmailSettings:AngularUrl"] ?? "https://localhost:50905";
-                return Redirect($"{angularUrl}/login?externalSuccess=true&nome={Uri.EscapeDataString(user?.Nome ?? "")}&email={Uri.EscapeDataString(user?.Email ?? "")}");
+                return Redirect($"{angularUrl}/login?externalSuccess=true&nome={Uri.EscapeDataString(user?.Nome ?? "")}&email={Uri.EscapeDataString(user?.Email ?? "")}&userId={Uri.EscapeDataString(user?.Id ?? "")}");
             }
 
             // Se o utilizador não existe, cria uma conta nova
@@ -346,7 +346,7 @@ namespace FilmAholic.Server.Controllers
                 {
                     await _signInManager.SignInAsync(existingUser, isPersistent: false);
                     var angularUrl = _configuration["EmailSettings:AngularUrl"] ?? "https://localhost:50905";
-                    return Redirect($"{angularUrl}/login?externalSuccess=true&nome={Uri.EscapeDataString(existingUser.Nome)}&email={Uri.EscapeDataString(existingUser.Email)}");
+                    return Redirect($"{angularUrl}/login?externalSuccess=true&nome={Uri.EscapeDataString(existingUser.Nome)}&email={Uri.EscapeDataString(existingUser.Email)}&userId={Uri.EscapeDataString(existingUser.Id)}");
                 }
             }
 
@@ -384,7 +384,7 @@ namespace FilmAholic.Server.Controllers
             // Fazer login
             await _signInManager.SignInAsync(newUser, isPersistent: false);
             var angularUrlFinal = _configuration["EmailSettings:AngularUrl"] ?? "https://localhost:50905";
-            return Redirect($"{angularUrlFinal}/login?externalSuccess=true&nome={Uri.EscapeDataString(newUser.Nome)}&email={Uri.EscapeDataString(newUser.Email)}");
+            return Redirect($"{angularUrlFinal}/login?externalSuccess=true&nome={Uri.EscapeDataString(newUser.Nome)}&email={Uri.EscapeDataString(newUser.Email)}&userId={Uri.EscapeDataString(newUser.Id)}");
         }
     }
 

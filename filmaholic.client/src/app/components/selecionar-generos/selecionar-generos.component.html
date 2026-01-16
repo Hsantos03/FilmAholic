@@ -1,0 +1,48 @@
+<div class="page-wrapper">
+  <div class="selecionar-generos-card">
+    <div class="header">
+      <h1>Escolha os seus géneros favoritos</h1>
+      <p style="color: #6c757d;">Selecione os géneros cinematográficos que mais gosta para personalizarmos a sua experiência</p>
+    </div>
+
+    <div *ngIf="error" class="error-message">
+      {{ error }}
+    </div>
+
+    <div *ngIf="isLoadingGeneros" style="text-align: center; padding: 40px; color: #6c757d;">
+      <p>A carregar géneros...</p>
+    </div>
+
+    <div *ngIf="!isLoadingGeneros" class="generos-grid">
+      <button
+        *ngFor="let genero of generos"
+        type="button"
+        class="genero-button"
+        [class.selected]="isGeneroSelecionado(genero.id)"
+        (click)="toggleGenero(genero.id)">
+        {{ genero.nome }}
+      </button>
+    </div>
+
+    <div class="actions" style="margin-top: 30px; display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;">
+      <button
+        type="button"
+        class="btn-secondary"
+        (click)="saltar()"
+        [disabled]="isLoading">
+        Saltar
+      </button>
+      <button
+        type="button"
+        class="btn-primary"
+        (click)="salvarGeneros()"
+        [disabled]="isLoading || generosSelecionados.length === 0">
+        {{ isLoading ? 'A guardar...' : 'Guardar e Continuar' }}
+      </button>
+    </div>
+
+    <p *ngIf="generosSelecionados.length > 0" style="text-align: center; margin-top: 15px; color: #6c757d; font-size: 14px;">
+      {{ generosSelecionados.length }} género(s) selecionado(s)
+    </p>
+  </div>
+</div>

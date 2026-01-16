@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace FilmAholic.Server.Migrations
 {
     /// <inheritdoc />
-    public partial class InitialCommunityMigration : Migration
+    public partial class InitialCreate : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -69,6 +69,19 @@ namespace FilmAholic.Server.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Filmes", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Generos",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    Nome = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Generos", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
@@ -177,6 +190,31 @@ namespace FilmAholic.Server.Migrations
                         onDelete: ReferentialAction.Cascade);
                 });
 
+            migrationBuilder.CreateTable(
+                name: "UtilizadorGeneros",
+                columns: table => new
+                {
+                    UtilizadorId = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    GeneroId = table.Column<int>(type: "int", nullable: false),
+                    DataAdicao = table.Column<DateTime>(type: "datetime2", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_UtilizadorGeneros", x => new { x.UtilizadorId, x.GeneroId });
+                    table.ForeignKey(
+                        name: "FK_UtilizadorGeneros_AspNetUsers_UtilizadorId",
+                        column: x => x.UtilizadorId,
+                        principalTable: "AspNetUsers",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_UtilizadorGeneros_Generos_GeneroId",
+                        column: x => x.GeneroId,
+                        principalTable: "Generos",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
             migrationBuilder.CreateIndex(
                 name: "IX_AspNetRoleClaims_RoleId",
                 table: "AspNetRoleClaims",
@@ -215,6 +253,11 @@ namespace FilmAholic.Server.Migrations
                 column: "NormalizedUserName",
                 unique: true,
                 filter: "[NormalizedUserName] IS NOT NULL");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_UtilizadorGeneros_GeneroId",
+                table: "UtilizadorGeneros",
+                column: "GeneroId");
         }
 
         /// <inheritdoc />
@@ -239,10 +282,16 @@ namespace FilmAholic.Server.Migrations
                 name: "Filmes");
 
             migrationBuilder.DropTable(
+                name: "UtilizadorGeneros");
+
+            migrationBuilder.DropTable(
                 name: "AspNetRoles");
 
             migrationBuilder.DropTable(
                 name: "AspNetUsers");
+
+            migrationBuilder.DropTable(
+                name: "Generos");
         }
     }
 }

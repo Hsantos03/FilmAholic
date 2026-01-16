@@ -1,0 +1,145 @@
+/* Contentor que faz o fundo da sala de cinema */
+.page-wrapper {
+  min-height: 100vh;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: linear-gradient(rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.7)), url('../../../assets/fundo-cinema.png') no-repeat center center;
+  background-size: cover;
+  background-attachment: fixed;
+  padding: 20px;
+}
+
+/* O Cartão com a borda azul igual ao registo */
+.selecionar-generos-card {
+  background-color: rgba(5, 10, 15, 0.95);
+  padding: 40px;
+  border-radius: 15px;
+  border: 2px solid #007bff;
+  width: 100%;
+  max-width: 800px;
+  box-shadow: 0px 0px 25px rgba(0, 123, 255, 0.4);
+  z-index: 1;
+}
+
+.header {
+  text-align: center;
+  margin-bottom: 30px;
+}
+
+.header h1 {
+  color: white;
+  margin: 0;
+  font-size: 28px;
+  font-weight: 500;
+  margin-bottom: 10px;
+}
+
+.header p {
+  color: #6c757d;
+  margin-bottom: 0;
+}
+
+.generos-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 15px;
+  margin-top: 20px;
+}
+
+.genero-button {
+  padding: 15px 20px;
+  border: 1px solid #1a2a3a;
+  background-color: #0a1118;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: 500;
+  color: white;
+  transition: all 0.3s ease;
+}
+
+.genero-button:hover {
+  border-color: #007bff;
+  background-color: #0f1a25;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 123, 255, 0.3);
+}
+
+.genero-button.selected {
+  background-color: #007bff;
+  color: white;
+  border-color: #007bff;
+  box-shadow: 0px 0px 15px rgba(0, 123, 255, 0.5);
+}
+
+/* Botão Azul Grande igual ao registo */
+.btn-primary {
+  padding: 15px 30px;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 10px;
+  font-size: 16px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: 0.3s;
+}
+
+.btn-primary:hover:not(:disabled) {
+  background-color: #0056b3;
+}
+
+.btn-primary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  background-color: #0056b3;
+}
+
+.btn-secondary {
+  padding: 15px 30px;
+  background-color: #1a2a3a;
+  color: #6c757d;
+  border: 1px solid #1a2a3a;
+  border-radius: 10px;
+  font-size: 16px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: 0.3s;
+}
+
+.btn-secondary:hover:not(:disabled) {
+  background-color: #2a3a4a;
+  border-color: #007bff;
+  color: white;
+}
+
+.btn-secondary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.error-message {
+  background-color: #f8d7da;
+  color: #721c24;
+  padding: 15px;
+  border-radius: 5px;
+  margin-bottom: 20px;
+  border: 1px solid #f5c6cb;
+}
+
+@media (max-width: 768px) {
+  .generos-grid {
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    gap: 10px;
+  }
+
+  .selecionar-generos-card {
+    padding: 25px;
+  }
+
+  .header h1 {
+    font-size: 24px;
+  }
+}

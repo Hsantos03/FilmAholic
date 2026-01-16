@@ -100,6 +100,9 @@ builder.Services.ConfigureExternalCookie(options =>
 // Registar serviço de email
 builder.Services.AddScoped<IEmailService, EmailService>();
 
+// Registar serviço de preferências
+builder.Services.AddScoped<IPreferenciasService, PreferenciasService>();
+
 builder.Services.AddCors(options => {
     options.AddPolicy("AllowAngular",
         policy => policy.WithOrigins("https://localhost:50905")
@@ -131,5 +134,64 @@ app.UseAuthorization();
 app.MapControllers();
 
 app.MapFallbackToFile("/index.html");
+
+// Popular géneros iniciais se ainda não existirem
+await using (var scope = app.Services.CreateAsyncScope())
+{
+    var context = scope.ServiceProvider.GetRequiredService<FilmAholicDbContext>();
+    var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
+    
+    try
+    {
+        // Verificar se a tabela Generos existe (pode não existir se a migração ainda não foi aplicada)
+        var canConnect = await context.Database.CanConnectAsync();
+        if (canConnect)
+        {
+            // Tentar verificar se existem géneros (só funciona se a tabela existir)
+            var generosExist = false;
+            try
+            {
+                generosExist = await context.Generos.AnyAsync();
+            }
+            catch (Exception)
+            {
+                // Tabela ainda não existe - ignorar e continuar
+                logger.LogWarning("A tabela Generos ainda não existe. Por favor, aplique as migrações primeiro.");
+            }
+
+            if (!generosExist)
+            {
+                var generosIniciais = new List<Genero>
+                {
+                    new Genero { Nome = "Ação" },
+                    new Genero { Nome = "Aventura" },
+                    new Genero { Nome = "Comédia" },
+                    new Genero { Nome = "Crime" },
+                    new Genero { Nome = "Drama" },
+                    new Genero { Nome = "Fantasia" },
+                    new Genero { Nome = "Ficção Científica" },
+                    new Genero { Nome = "Horror" },
+                    new Genero { Nome = "Mistério" },
+                    new Genero { Nome = "Romance" },
+                    new Genero { Nome = "Thriller" },
+                    new Genero { Nome = "Animação" },
+                    new Genero { Nome = "Documentário" },
+                    new Genero { Nome = "Família" },
+                    new Genero { Nome = "Guerra" },
+                    new Genero { Nome = "Western" }
+                };
+                
+                context.Generos.AddRange(generosIniciais);
+                await context.SaveChangesAsync();
+                logger.LogInformation("Géneros iniciais criados com sucesso.");
+            }
+        }
+    }
+    catch (Exception ex)
+    {
+        logger.LogError(ex, "Erro ao popular géneros iniciais. Certifique-se de que as migrações foram aplicadas.");
+        // Não lançar a exceção para permitir que a aplicação continue a correr
+    }
+}
 
 app.Run();
