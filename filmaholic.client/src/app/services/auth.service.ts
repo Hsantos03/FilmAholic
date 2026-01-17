@@ -1,15 +1,19 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { Observable } from 'rxjs';
+import { Observable, of } from 'rxjs';
+import { Router } from '@angular/router';
+import { catchError, finalize } from 'rxjs/operators';
+
 
 @Injectable({
   providedIn: 'root'
 })
+
 export class AuthService {
   // Substitui pela porta que aparece no teu Swagger
   private apiUrl = 'https://localhost:7277/api/autenticacao';
 
-  constructor(private http: HttpClient) { }
+  constructor(private http: HttpClient, private router: Router) { }
 
   registar(dados: any): Observable<any> {
     // Envia o Nome, Sobrenome, DataNascimento, Email e Password
@@ -34,6 +38,22 @@ export class AuthService {
 
   resetPassword(model: any) {
     return this.http.post(`${this.apiUrl}/reset-password`, model);
+  }
+
+  logout(): void {
+    this.http.post(`${this.apiUrl}/logout`, {}).pipe(
+      catchError(err => {
+        console.error('Erro ao comunicar logout com o servidor', err);
+        return of(null);
+      }),
+      finalize(() => {
+        localStorage.removeItem('authToken');
+        localStorage.removeItem('user');
+        localStorage.removeItem('nome');
+
+        this.router.navigate(['/login']);
+      })
+    ).subscribe();
   }
 
   // Métodos para autenticação externa (OAuth)

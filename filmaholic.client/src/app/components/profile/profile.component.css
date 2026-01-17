@@ -1,18 +1,18 @@
 /* Header */
 .profile-header {
-  border-radius: 15px 15px 0px 0px;
+  border-radius: 15px 15px 0 0;
   margin: 2%;
   height: 250px;
   background-color: #f0eaf2;
   position: relative;
 }
 
+/* Layout */
 .profile-body {
-  margin: -75px auto 0; /* puxa o conteúdo para cima */
+  margin: -75px auto 0;
   display: flex;
   gap: 40px;
   padding: 0 5%;
-  text-align: left;
 }
 
 .profile-left {
@@ -20,11 +20,15 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding-left: 1%;
 }
 
+.profile-main {
+  flex: 1;
+  padding-top: 75px;
+  max-width: 900px;
+}
 
-
+/* Edit button */
 .edit-btn {
   position: absolute;
   right: 20px;
@@ -36,22 +40,7 @@
   cursor: pointer;
 }
 
-/* Content layout */
-.profile-content {
-  display: flex;
-  max-width: 1100px;
-  margin: 0;
-  padding: 0 20px;
-}
-
-/* Sidebar */
-.profile-sidebar {
-  width: 300px;
-  background: #010B15;
-  border-radius: 20px;
-  padding: 20px;
-}
-
+/* Avatar */
 .avatar {
   width: 200px;
   height: 200px;
@@ -60,9 +49,18 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 40px;
+  font-size: 42px;
   margin-bottom: 20px;
   z-index: 10;
+}
+
+/* Sidebar */
+.profile-sidebar {
+  width: 100%;
+  background: #010b15;
+  border-radius: 20px;
+  padding: 20px;
+  color: #fff;
 }
 
 .primary-btn {
@@ -71,32 +69,63 @@
   border: none;
   color: white;
   padding: 10px;
-  border-radius: 8px;
+  border-radius: 10px;
   cursor: pointer;
-  margin-bottom: 20px;
+  margin-bottom: 18px;
 }
 
 .menu {
   list-style: none;
   padding: 0;
+  margin: 0 0 18px 0;
 }
 
   .menu li {
     padding: 10px 0;
     cursor: pointer;
+    color: #fff;
   }
 
     .menu li.logout {
       color: #ff5c5c;
     }
 
-/* Main */
-.profile-main {
-  flex: 1; /* ocupa o espaço restante */
-  padding-top: 75px;
-  max-width: 800px; /* opcional, para não ficar largo demais */
+.stats h3 {
+  margin: 12px 0 8px;
 }
 
+.stats p {
+  font-size: 0.9em;
+  margin: 4px 0;
+  color: #ddd;
+}
+
+.genres {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(255,255,255,0.08);
+}
+
+.genre-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.9em;
+  color: #ddd;
+  padding: 4px 0;
+}
+
+.list-counts {
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(255,255,255,0.08);
+  color: #ddd;
+}
+
+/* Profile info */
+.profile-info h2 {
+  margin-bottom: 6px;
+  color: #fff;
+}
 
 .joined {
   font-size: 0.9em;
@@ -104,117 +133,151 @@
 }
 
 .bio {
-  margin: 15px 0 30px;
+  margin: 15px 0 26px;
   line-height: 1.5;
+  color: #ddd;
 }
 
 /* Sections */
-.section h3 {
-  margin-bottom: 5px;
+.section {
+  margin-top: 30px;
 }
+
+  .section h3 {
+    margin-bottom: 4px;
+    color: #fff;
+  }
 
 .subtitle {
   font-size: 0.85em;
   color: #aaa;
 }
 
+/* Horizontal cards (mockup style) */
 .cards {
   display: flex;
-  gap: 10px;
-  margin-top: 10px;
+  gap: 14px;
+  margin-top: 12px;
+  overflow-x: auto;
+  padding-bottom: 10px;
 }
 
-.card img {
-  width: 80px;
-  border-radius: 6px;
-}
+  .cards::-webkit-scrollbar {
+    height: 6px;
+  }
 
-/* Modal styles */
-.modal-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.55);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 2000;
-}
+  .cards::-webkit-scrollbar-thumb {
+    background: #444;
+    border-radius: 4px;
+  }
 
-.modal-box {
-  background: #fff;
-  width: 92%;
-  max-width: 460px;
+/* Simple poster card (lists) */
+.card {
+  min-width: 120px;
+  height: 180px;
   border-radius: 10px;
-  padding: 20px 22px;
-  position: relative;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+  overflow: hidden;
+  flex-shrink: 0;
+  background: #111;
 }
 
-.modal-close {
-  position: absolute;
-  right: 10px;
-  top: 8px;
-  border: none;
-  background: transparent;
-  font-size: 22px;
-  line-height: 1;
-  cursor: pointer;
-  color: #444;
-}
-/* Modal styles */
-.modal-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.55);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 2000;
+  .card img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+/* Catalog card with buttons */
+.movie-card {
+  min-width: 260px;
+  border-radius: 14px;
+  overflow: hidden;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.06);
+  flex-shrink: 0;
 }
 
-.modal-box {
-  background: #fff;
-  width: 92%;
-  max-width: 460px;
-  border-radius: 10px;
-  padding: 20px 22px;
-  position: relative;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-}
-
-.modal-close {
-  position: absolute;
-  right: 10px;
-  top: 8px;
-  border: none;
-  background: transparent;
-  font-size: 22px;
-  line-height: 1;
-  cursor: pointer;
-  color: #444;
-}
-
-.modal-box h3 {
-  margin-top: 0;
-  margin-bottom: 12px;
-}
-
-.modal-box label {
-  display: block;
-  font-size: 0.9em;
-  color: #333;
-  margin-top: 8px;
-}
-
-.modal-box input[type="text"],
-.modal-box textarea {
+.poster {
   width: 100%;
+  height: 170px;
+  object-fit: cover;
+  display: block;
+}
+
+.movie-meta {
+  padding: 10px 12px 6px;
+}
+
+.movie-title {
+  color: #fff;
+  font-weight: 600;
+}
+
+.movie-sub {
+  color: #aaa;
+  font-size: 0.85em;
+  margin-top: 2px;
+}
+
+.movie-actions {
+  display: flex;
+  gap: 8px;
+  padding: 10px 12px 12px;
+  flex-wrap: wrap;
+}
+
+.action-btn {
+  border: none;
   padding: 8px 10px;
-  border: 1px solid #ddd;
-  border-radius: 6px;
-  margin-top: 6px;
-  font-size: 0.95em;
-  box-sizing: border-box;
+  border-radius: 10px;
+  cursor: pointer;
+  background: #ff2f6d;
+  color: #fff;
+  font-size: 0.85em;
+}
+
+  .action-btn.ghost {
+    background: rgba(255,255,255,0.12);
+  }
+
+  .action-btn.danger {
+    background: rgba(255, 92, 92, 0.2);
+    color: #ff8a8a;
+  }
+
+  .action-btn:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+  }
+
+/* Modal */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+}
+
+.modal-box {
+  background: #fff;
+  width: 92%;
+  max-width: 460px;
+  border-radius: 10px;
+  padding: 20px 22px;
+  position: relative;
+}
+
+.modal-close {
+  position: absolute;
+  right: 10px;
+  top: 8px;
+  border: none;
+  background: transparent;
+  font-size: 22px;
+  cursor: pointer;
 }
 
 .modal-actions {
@@ -229,7 +292,7 @@
   color: #fff;
   border: none;
   padding: 8px 14px;
-  border-radius: 6px;
+  border-radius: 8px;
   cursor: pointer;
 }
 
@@ -237,9 +300,6 @@
   background: #eef0f2;
   border: none;
   padding: 8px 14px;
-  border-radius: 6px;
+  border-radius: 8px;
   cursor: pointer;
 }
-
-
-

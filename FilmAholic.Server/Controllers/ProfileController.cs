@@ -1,6 +1,10 @@
 ﻿using FilmAholic.Server.Data;
+using FilmAholic.Server.DTOs;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Security.Claims;
+using System.Text.Json;
 
 
 
@@ -81,6 +85,22 @@ namespace FilmAholic.Server.Controllers
             }
 
             return NoContent();
+        }
+
+        [Authorize]
+        [HttpPut("favorites")]
+        public async Task<IActionResult> UpdateFavorites([FromBody] FavoritosDTO dto)
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var user = await _context.Users.FindAsync(userId);
+
+            if (user == null) return NotFound();
+
+            user.TopFilmes = JsonSerializer.Serialize(dto.Filmes.Take(10));
+            user.TopAtores = JsonSerializer.Serialize(dto.Atores.Take(10));
+
+            await _context.SaveChangesAsync();
+            return Ok();
         }
 
         // DTO used to receive profile updates

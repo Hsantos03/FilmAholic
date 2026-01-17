@@ -30,6 +30,17 @@ namespace FilmAholic.Server.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
+                    b.Property<int>("Duracao")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Genero")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("PosterUrl")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("Titulo")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
@@ -41,6 +52,37 @@ namespace FilmAholic.Server.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Filmes");
+                });
+
+            modelBuilder.Entity("FilmAholic.Server.Models.UserMovie", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("Data")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("FilmeId")
+                        .HasColumnType("int");
+
+                    b.Property<bool>("JaViu")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("UtilizadorId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("FilmeId");
+
+                    b.HasIndex("UtilizadorId", "FilmeId")
+                        .IsUnique();
+
+                    b.ToTable("UserMovies");
                 });
 
             modelBuilder.Entity("FilmAholic.Server.Models.Utilizador", b =>
@@ -108,6 +150,14 @@ namespace FilmAholic.Server.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Sobrenome")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("TopAtores")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("TopFilmes")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
@@ -262,6 +312,25 @@ namespace FilmAholic.Server.Migrations
                     b.HasKey("UserId", "LoginProvider", "Name");
 
                     b.ToTable("AspNetUserTokens", (string)null);
+                });
+
+            modelBuilder.Entity("FilmAholic.Server.Models.UserMovie", b =>
+                {
+                    b.HasOne("FilmAholic.Server.Models.Filme", "Filme")
+                        .WithMany()
+                        .HasForeignKey("FilmeId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("FilmAholic.Server.Models.Utilizador", "Utilizador")
+                        .WithMany()
+                        .HasForeignKey("UtilizadorId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Filme");
+
+                    b.Navigation("Utilizador");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>

@@ -1,12 +1,12 @@
 <!-- Header -->
 <div class="profile-header">
-  <button class="edit-btn">✎</button>
+  <button class="edit-btn" (click)="openEdit()">✎</button>
 </div>
 
 <!-- Profile body -->
 <div class="profile-body">
 
-  <!-- Left column -->
+  <!-- LEFT COLUMN -->
   <div class="profile-left">
 
     <!-- Avatar -->
@@ -16,45 +16,117 @@
 
     <!-- Sidebar -->
     <aside class="profile-sidebar">
+
       <button class="primary-btn" (click)="openEdit()">Manage Account</button>
 
       <ul class="menu">
         <li>Preferences</li>
         <li>Achievements</li>
-        <li class="logout">Log out</li>
+        <li class="logout" (click)="logout()">Log out</li>
       </ul>
-    </aside>
 
+      <div class="stats">
+        <h3>Statistics</h3>
+        <p>Movies watched: {{ stats?.totalFilmes || 0 }}</p>
+        <p>Total hours: {{ (stats?.totalHoras || 0) | number:'1.1-2' }}h</p>
+
+        <div class="genres" *ngIf="stats?.generos?.length">
+          <div class="genre-row" *ngFor="let g of stats.generos">
+            <span>{{ g.genero }}</span>
+            <span>{{ g.total }}</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="list-counts">
+        <p><strong>Watch later</strong> ({{ watchLater.length }})</p>
+        <p><strong>Watched</strong> ({{ watched.length }})</p>
+      </div>
+
+    </aside>
   </div>
 
-  <!-- Right column -->
+  <!-- RIGHT COLUMN -->
   <section class="profile-main">
 
+    <!-- Profile info -->
     <div class="profile-info">
       <h2>{{ userName }}</h2>
       <span class="joined">Joined · {{ joined }}</span>
 
-      <p class="bio">
-        {{ bio }}
-      </p>
+      <p class="bio">{{ bio }}</p>
     </div>
 
+    <!-- CATALOGO (hardcoded) + BOTÕES -->
+    <div class="section">
+      <h3>Catalog</h3>
+      <span class="subtitle">Hardcoded movies (FilmSeed)</span>
+
+      <div class="cards">
+        <div class="movie-card" *ngFor="let f of catalogo">
+          <img class="poster" [src]="f.posterUrl" [alt]="f.titulo" />
+
+          <div class="movie-meta">
+            <div class="movie-title">{{ f.titulo }}</div>
+            <div class="movie-sub">{{ f.genero }} · {{ f.duracao }} min</div>
+          </div>
+
+          <div class="movie-actions">
+            <button class="action-btn"
+                    (click)="addToWatchLater(f.id)"
+                    [disabled]="isSavingMovie || inWatchLater(f.id)"
+                    title="Add to Watch later">
+              + Watch later
+            </button>
+
+            <button class="action-btn ghost"
+                    (click)="addToWatched(f.id)"
+                    [disabled]="isSavingMovie || inWatched(f.id)"
+                    title="Mark as Watched">
+              ✓ Watched
+            </button>
+
+            <button class="action-btn danger"
+                    *ngIf="inWatchLater(f.id) || inWatched(f.id)"
+                    (click)="removeFromLists(f.id)"
+                    [disabled]="isSavingMovie">
+              Remove
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Watch later -->
     <div class="section">
       <h3>Watch later</h3>
       <span class="subtitle">{{ watchLater.length }} Titles</span>
 
       <div class="cards">
         <div class="card" *ngFor="let movie of watchLater">
-          <img [src]="movie.cover" alt="movie">
+          <img [src]="movie.filme?.posterUrl || 'https://via.placeholder.com/120x180'"
+               alt="movie poster" />
+        </div>
+      </div>
+    </div>
+
+    <!-- Watched -->
+    <div class="section">
+      <h3>Watched</h3>
+      <span class="subtitle">{{ watched.length }} Titles</span>
+
+      <div class="cards">
+        <div class="card" *ngFor="let movie of watched">
+          <img [src]="movie.filme?.posterUrl || 'https://via.placeholder.com/120x180'"
+               alt="movie poster" />
         </div>
       </div>
     </div>
 
   </section>
-
 </div>
 
-<!-- Edit modal overlay -->
+<!-- EDIT MODAL -->
 <div class="modal-overlay" *ngIf="isEditing" (click)="closeEdit()">
   <div class="modal-box" (click)="$event.stopPropagation()">
     <button class="modal-close" (click)="closeEdit()">×</button>
@@ -75,5 +147,3 @@
     </form>
   </div>
 </div>
-
-
