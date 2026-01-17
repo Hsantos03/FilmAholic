@@ -14,10 +14,7 @@ namespace FilmAholic.Server.Models
         public int FilmeId { get; set; }
         public Filme Filme { get; set; }
 
-
-
         public bool JaViu { get; set; } // false = Quero Ver | true = Já Vi
         public DateTime Data { get; set; } = DateTime.Now;
     }
-
 }

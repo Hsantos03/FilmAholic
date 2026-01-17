@@ -105,7 +105,7 @@ builder.Services.AddScoped<IPreferenciasService, PreferenciasService>();
 
 builder.Services.AddCors(options => {
     options.AddPolicy("AllowAngular",
-        policy => policy.WithOrigins("https://localhost:50905")
+        policy => policy.WithOrigins("http://localhost:4200", "https://localhost:50905")
                         .AllowAnyMethod()
                         .AllowAnyHeader()
                         .AllowCredentials());

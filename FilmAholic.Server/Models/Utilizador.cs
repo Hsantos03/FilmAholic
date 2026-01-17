@@ -13,6 +13,8 @@ public class Utilizador : IdentityUser
     public DateTime DataNascimento { get; set; }
     public string? FotoPerfilUrl { get; set; }
     public string? GeneroFavorito { get; set; } // Mantido para compatibilidade, pode ser removido no futuro
+    public string TopFilmes { get; set; } = "[]";
+    public string TopAtores { get; set; } = "[]";
     public string? Bio { get; set; } // NEW: store user's bio/profile description
     public DateTime DataCriacao { get; set; } = DateTime.UtcNow;
 
