@@ -350,25 +350,6 @@ namespace FilmAholic.Server.Migrations
                     b.ToTable("AspNetUserTokens", (string)null);
                 });
 
-            modelBuilder.Entity("FilmAholic.Server.Models.UtilizadorGenero", b =>
-                {
-                    b.HasOne("FilmAholic.Server.Models.Genero", "Genero")
-                        .WithMany("Utilizadores")
-                        .HasForeignKey("GeneroId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("FilmAholic.Server.Models.Utilizador", "Utilizador")
-                        .WithMany("GenerosFavoritos")
-                        .HasForeignKey("UtilizadorId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Genero");
-
-                    b.Navigation("Utilizador");
-                });
-
             modelBuilder.Entity("FilmAholic.Server.Models.UserMovie", b =>
                 {
                     b.HasOne("FilmAholic.Server.Models.Filme", "Filme")
@@ -384,6 +365,25 @@ namespace FilmAholic.Server.Migrations
                         .IsRequired();
 
                     b.Navigation("Filme");
+
+                    b.Navigation("Utilizador");
+                });
+
+            modelBuilder.Entity("FilmAholic.Server.Models.UtilizadorGenero", b =>
+                {
+                    b.HasOne("FilmAholic.Server.Models.Genero", "Genero")
+                        .WithMany("Utilizadores")
+                        .HasForeignKey("GeneroId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("FilmAholic.Server.Models.Utilizador", "Utilizador")
+                        .WithMany("GenerosFavoritos")
+                        .HasForeignKey("UtilizadorId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Genero");
 
                     b.Navigation("Utilizador");
                 });

@@ -122,8 +122,23 @@ private apiBase = 'https://localhost:7277/api/Profile';
   }
 
   removeFromLists(filmeId: number): void {
+    // Buscar o filme no catálogo pelo ID do seed
+    const filme = this.catalogo.find(f => f.id === filmeId);
+    if (!filme) return;
+    
+    // Encontrar o UserMovie correspondente pelo título
+    const userMovie = [...this.watchLater, ...this.watched].find(
+      x => x?.filme?.titulo === filme.titulo || x?.filme?.Titulo === filme.titulo
+    );
+    
+    if (!userMovie || !userMovie.filmeId) {
+      console.warn('Movie not found in user lists');
+      return;
+    }
+    
     this.isSavingMovie = true;
-    this.userMoviesService.removeMovie(filmeId).subscribe({
+    // Usar o ID real do filme na BD
+    this.userMoviesService.removeMovie(userMovie.filmeId).subscribe({
       next: () => this.refreshAllListsAndStats(),
       error: (err) => console.warn('removeMovie failed', err),
       complete: () => (this.isSavingMovie = false)
@@ -140,11 +155,23 @@ private apiBase = 'https://localhost:7277/api/Profile';
   }
 
   inWatchLater(filmeId: number): boolean {
-    return this.watchLater?.some(x => x?.filmeId === filmeId);
+    // Buscar o filme no catálogo pelo ID do seed
+    const filme = this.catalogo.find(f => f.id === filmeId);
+    if (!filme) return false;
+    
+    // Comparar por título (mais confiável que ID)
+    return this.watchLater?.some(x => x?.filme?.titulo === filme.titulo || 
+                                      x?.filme?.Titulo === filme.titulo);
   }
 
   inWatched(filmeId: number): boolean {
-    return this.watched?.some(x => x?.filmeId === filmeId);
+    // Buscar o filme no catálogo pelo ID do seed
+    const filme = this.catalogo.find(f => f.id === filmeId);
+    if (!filme) return false;
+    
+    // Comparar por título (mais confiável que ID)
+    return this.watched?.some(x => x?.filme?.titulo === filme.titulo || 
+                                   x?.filme?.Titulo === filme.titulo);
   }
 
   toggleFavorite(movieId: number): void {

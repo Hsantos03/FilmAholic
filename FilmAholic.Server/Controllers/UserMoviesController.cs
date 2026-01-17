@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿﻿﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using FilmAholic.Server.Data;
@@ -33,12 +33,27 @@ namespace FilmAholic.Server.Controllers
                 return BadRequest("Filme inválido (não existe no catálogo hardcoded).");
 
             // 2) Garantir que o filme existe na BD (tabela Filmes)
-            var dbFilme = await _context.Set<Filme>().FirstOrDefaultAsync(f => f.Id == filmeId);
+            // Procurar primeiro por TmdbId (se existir) ou Titulo para evitar criar duplicados
+            Filme? dbFilme = null;
+            if (!string.IsNullOrEmpty(seedFilme.TmdbId))
+            {
+                // Se tem TmdbId, procurar por ele
+                dbFilme = await _context.Set<Filme>()
+                    .FirstOrDefaultAsync(f => f.TmdbId == seedFilme.TmdbId);
+            }
+            
+            // Se não encontrou por TmdbId ou não tem TmdbId, procurar por título
+            if (dbFilme == null)
+            {
+                dbFilme = await _context.Set<Filme>()
+                    .FirstOrDefaultAsync(f => f.Titulo == seedFilme.Titulo);
+            }
+            
             if (dbFilme == null)
             {
                 dbFilme = new Filme
                 {
-                    Id = seedFilme.Id,
+                    // Não definir Id - será gerado automaticamente pelo DB
                     Titulo = seedFilme.Titulo,
                     Duracao = seedFilme.Duracao,
                     Genero = seedFilme.Genero,
@@ -50,9 +65,10 @@ namespace FilmAholic.Server.Controllers
                 await _context.SaveChangesAsync();
             }
 
-            // 3) Adicionar ou trocar a lista
+            // 3) Adicionar ou trocar a lista usando o Id real do filme na BD
+            var actualFilmeId = dbFilme.Id;
             var existing = await _context.UserMovies
-                .FirstOrDefaultAsync(um => um.UtilizadorId == userId && um.FilmeId == filmeId);
+                .FirstOrDefaultAsync(um => um.UtilizadorId == userId && um.FilmeId == actualFilmeId);
 
             if (existing != null)
             {
@@ -64,7 +80,7 @@ namespace FilmAholic.Server.Controllers
                 _context.UserMovies.Add(new UserMovie
                 {
                     UtilizadorId = userId,
-                    FilmeId = filmeId,
+                    FilmeId = actualFilmeId, // Usar o Id real do filme na BD
                     JaViu = jaViu,
                     Data = DateTime.Now
                 });
