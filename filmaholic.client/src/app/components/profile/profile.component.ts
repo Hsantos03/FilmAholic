@@ -9,15 +9,13 @@ import { Filme, FilmesService } from '../../services/filmes.service';
   templateUrl: './profile.component.html',
   styleUrls: ['./profile.component.css']
 })
-
 export class ProfileComponent implements OnInit {
 
   userName = localStorage.getItem('userName') || 'RandomUser';  
   joined = '14 hours ago';
   bio = 'Lorem ipsum dolor sit amet consectetur adipisicing elit. Quisque faucibus ex sapien vitae pellentesque sem placerat.';
 
-
-private apiBase = 'https://localhost:7277/api/Profile';
+  private apiBase = 'https://localhost:7277/api/Profile';
 
   catalogo: Filme[] = [];
 
@@ -33,6 +31,12 @@ private apiBase = 'https://localhost:7277/api/Profile';
   isEditing = false;
   editUserName = '';
   editBio = '';
+
+  // Delete account state
+  isDeleting = false;
+  deleteInput = '';
+  deleteRequiredText = 'delete';
+  isDeletingSaving = false;
 
   isSavingMovie = false;
 
@@ -63,15 +67,15 @@ private apiBase = 'https://localhost:7277/api/Profile';
           this.userName = res?.userName ?? this.userName;
           this.bio = res?.bio ?? this.bio;
 
-        if (res?.dataCriacao) {
-          // Normalize server date to readable string
-          this.joined = new Date(res.dataCriacao).toLocaleString();
+          if (res?.dataCriacao) {
+            // Normalize server date to readable string
+            this.joined = new Date(res.dataCriacao).toLocaleString();
+          }
+        },
+        error: (err) => {
+          console.warn('Failed to load profile from API; keeping local values.', err);
         }
-      },
-      error: (err) => {
-        console.warn('Failed to load profile from API; keeping local values.', err);
-      }
-    });
+      });
   }
 
   refreshAllListsAndStats(): void {
@@ -217,12 +221,51 @@ private apiBase = 'https://localhost:7277/api/Profile';
       )
       .subscribe({
         next: () => {
-        // success - nothing else required for now
-      },
-      error: (err) => {
-        console.warn('Failed to persist profile changes to API.', err);
-      }
-    });
+          // success - nothing else required for now
+        },
+        error: (err) => {
+          console.warn('Failed to persist profile changes to API.', err);
+        }
+      });
+  }
+
+  // Delete account related methods
+  openDeleteConfirm(): void {
+    this.deleteInput = '';
+    this.isDeleting = true;
+  }
+
+  closeDeleteConfirm(): void {
+    this.isDeleting = false;
+  }
+
+  confirmDelete(): void {
+    // accept trimmed, case-insensitive "delete" to reduce UX friction
+    if ((this.deleteInput || '').trim().toLowerCase() !== this.deleteRequiredText) {
+      return;
+    }
+
+    const userId = localStorage.getItem('user_id');
+    if (!userId) {
+      console.warn('No user_id in localStorage; cannot delete account.');
+      return;
+    }
+
+    this.isDeletingSaving = true;
+    this.http.delete<any>(`${this.apiBase}/${encodeURIComponent(userId)}`, { withCredentials: true })
+      .subscribe({
+        next: () => {
+          // on successful deletion, sign out and let AuthService handle navigation/cleanup
+          this.authService.logout();
+        },
+        error: (err) => {
+          console.warn('Failed to delete account via API.', err);
+        },
+        complete: () => {
+          this.isDeletingSaving = false;
+          this.isDeleting = false;
+        }
+      });
   }
 
   logout(): void {

@@ -16,31 +16,31 @@ export class AuthService {
 
   registar(dados: any): Observable<any> {
     // Envia o Nome, Sobrenome, DataNascimento, Email e Password
-    return this.http.post(`${this.apiUrl}/registar`, dados);
+    return this.http.post(`${this.apiUrl}/registar`, dados, { withCredentials: true });
   }
 
   login(dados: any): Observable<any> {
-    return this.http.post(`${this.apiUrl}/login`, dados);
+    return this.http.post(`${this.apiUrl}/login`, dados, { withCredentials: true });
   }
 
   confirmarEmail(userId: string, token: string): Observable<any> {
-    return this.http.post(`${this.apiUrl}/confirmar-email?userId=${encodeURIComponent(userId)}&token=${encodeURIComponent(token)}`, {});
+    return this.http.post(`${this.apiUrl}/confirmar-email?userId=${encodeURIComponent(userId)}&token=${encodeURIComponent(token)}`, {}, { withCredentials: true });
   }
 
   reenviarEmailVerificacao(email: string): Observable<any> {
-    return this.http.post(`${this.apiUrl}/reenviar-email-verificacao`, { email });
+    return this.http.post(`${this.apiUrl}/reenviar-email-verificacao`, { email }, { withCredentials: true });
   }
 
   forgotPassword(email: string) {
-    return this.http.post(`${this.apiUrl}/forgot-password`, { email });
+    return this.http.post(`${this.apiUrl}/forgot-password`, { email }, { withCredentials: true });
   }
 
   resetPassword(model: any) {
-    return this.http.post(`${this.apiUrl}/reset-password`, model);
+    return this.http.post(`${this.apiUrl}/reset-password`, model, { withCredentials: true });
   }
 
   logout(): void {
-    this.http.post(`${this.apiUrl}/logout`, {}).pipe(
+    this.http.post(`${this.apiUrl}/logout`, {}, { withCredentials: true }).pipe(
       catchError(err => {
         console.error('Erro ao comunicar logout com o servidor', err);
         return of(null);

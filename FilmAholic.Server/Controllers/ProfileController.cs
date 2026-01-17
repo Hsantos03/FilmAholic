@@ -7,8 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
 using System.Text.Json;
-
-
+using Microsoft.AspNetCore.Identity;
 
 namespace FilmAholic.Server.Controllers
 {
@@ -18,11 +17,13 @@ namespace FilmAholic.Server.Controllers
     {
         private readonly FilmAholicDbContext _context;
         private readonly IPreferenciasService _preferenciasService;
+        private readonly UserManager<Utilizador> _userManager;
 
-        public ProfileController(FilmAholicDbContext context, IPreferenciasService preferenciasService)
+        public ProfileController(FilmAholicDbContext context, IPreferenciasService preferenciasService, UserManager<Utilizador> userManager)
         {
             _context = context;
             _preferenciasService = preferenciasService;
+            _userManager = userManager;
         }
 
         // GET: api/Profile/{id}
@@ -94,6 +95,55 @@ namespace FilmAholic.Server.Controllers
             }
 
             return NoContent();
+        }
+
+        // DELETE: api/Profile/{id}
+        // Only allow the authenticated user to delete their own account
+        [Authorize]
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> DeleteAccount(string id)
+        {
+            if (string.IsNullOrWhiteSpace(id))
+                return BadRequest(new { message = "Id is required." });
+
+            var callerId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrWhiteSpace(callerId) || callerId != id)
+            {
+                return Forbid();
+            }
+
+            var user = await _context.Users
+                .Include(u => u.GenerosFavoritos)
+                .FirstOrDefaultAsync(u => u.Id == id);
+
+            if (user == null)
+                return NotFound();
+
+            try
+            {
+                // Remove linked user data (UserMovies, UtilizadorGeneros) explicitly to be safe
+                var userMovies = _context.UserMovies.Where(um => um.UtilizadorId == id);
+                _context.UserMovies.RemoveRange(userMovies);
+
+                var utilGen = _context.UtilizadorGeneros.Where(ug => ug.UtilizadorId == id);
+                _context.UtilizadorGeneros.RemoveRange(utilGen);
+
+                // Use UserManager to delete the identity user (this will clean up identity tables)
+                var result = await _userManager.DeleteAsync(user);
+                if (!result.Succeeded)
+                {
+                    return StatusCode(500, new { message = "Failed to delete user.", errors = result.Errors });
+                }
+
+                // Save remaining changes (if any)
+                await _context.SaveChangesAsync();
+
+                return NoContent();
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "Error deleting account.", detail = ex.Message });
+            }
         }
 
         // GET: api/Profile/generos

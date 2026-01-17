@@ -268,6 +268,16 @@
   border-radius: 10px;
   padding: 20px 22px;
   position: relative;
+  color: #222; /* ensure modal text is visible on white background */
+}
+
+/* ensure common modal inner elements are readable */
+.modal-box p,
+.modal-box label,
+.modal-box input,
+.modal-box textarea,
+.modal-box h3 {
+  color: #222;
 }
 
 .modal-close {

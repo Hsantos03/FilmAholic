@@ -25,6 +25,11 @@
         <li class="logout" (click)="logout()">Log out</li>
       </ul>
 
+      <!-- New delete account option -->
+      <div class="danger-section">
+        <button class="danger-btn" (click)="openDeleteConfirm()">Delete account</button>
+      </div>
+
       <div class="stats">
         <h3>Statistics</h3>
         <p>Movies watched: {{ stats?.totalFilmes || 0 }}</p>
@@ -143,6 +148,29 @@
       <div class="modal-actions">
         <button type="submit" class="save-btn">Save</button>
         <button type="button" class="cancel-btn" (click)="closeEdit()">Cancel</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- DELETE ACCOUNT MODAL (similar to Manage Account modal) -->
+<div class="modal-overlay" *ngIf="isDeleting" (click)="closeDeleteConfirm()">
+  <div class="modal-box" (click)="$event.stopPropagation()">
+    <button class="modal-close" (click)="closeDeleteConfirm()">×</button>
+
+    <h3>Delete account</h3>
+
+    <p class="delete-info">Para apagar a sua conta escreva <strong>delete</strong></p>
+
+    <form (ngSubmit)="confirmDelete()">
+      <label for="deleteInput">Type "delete" to confirm</label>
+      <input id="deleteInput" name="deleteInput" type="text" [(ngModel)]="deleteInput" autocomplete="off" />
+
+      <div class="modal-actions">
+        <button type="submit" class="danger-btn" [disabled]="(deleteInput || '').trim().toLowerCase() !== deleteRequiredText || isDeletingSaving">
+          Confirm
+        </button>
+        <button type="button" class="cancel-btn" (click)="closeDeleteConfirm()" [disabled]="isDeletingSaving">Cancel</button>
       </div>
     </form>
   </div>
