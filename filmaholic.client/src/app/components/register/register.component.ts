@@ -87,4 +87,13 @@ export class RegisterComponent {
       }
     });
   }
+
+  // Métodos para registo/login social
+  registarComGoogle() {
+    this.authService.googleLogin();
+  }
+
+  registarComFacebook() {
+    this.authService.facebookLogin();
+  }
 }

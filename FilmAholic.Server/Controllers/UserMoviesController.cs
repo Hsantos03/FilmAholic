@@ -1,6 +1,6 @@
-﻿using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using FilmAholic.Server.Data;
 using FilmAholic.Server.Models;
 using System.Security.Claims;
@@ -25,23 +25,52 @@ namespace FilmAholic.Server.Controllers
         public async Task<IActionResult> AddMovie(int filmeId, bool jaViu)
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (userId == null) return Unauthorized();
 
-            if (await _context.UserMovies.AnyAsync(um =>
-                um.UtilizadorId == userId && um.FilmeId == filmeId))
+            // 1) Verificar se o filme existe no seed
+            var seedFilme = FilmSeed.Filmes.FirstOrDefault(f => f.Id == filmeId);
+            if (seedFilme == null)
+                return BadRequest("Filme inválido (não existe no catálogo hardcoded).");
+
+            // 2) Garantir que o filme existe na BD (tabela Filmes)
+            var dbFilme = await _context.Set<Filme>().FirstOrDefaultAsync(f => f.Id == filmeId);
+            if (dbFilme == null)
             {
-                return BadRequest("Filme já existe na lista.");
+                dbFilme = new Filme
+                {
+                    Id = seedFilme.Id,
+                    Titulo = seedFilme.Titulo,
+                    Duracao = seedFilme.Duracao,
+                    Genero = seedFilme.Genero,
+                    PosterUrl = seedFilme.PosterUrl ?? "",
+                    TmdbId = seedFilme.TmdbId ?? ""
+                };
+
+                _context.Set<Filme>().Add(dbFilme);
+                await _context.SaveChangesAsync();
             }
 
-            var userMovie = new UserMovie
+            // 3) Adicionar ou trocar a lista
+            var existing = await _context.UserMovies
+                .FirstOrDefaultAsync(um => um.UtilizadorId == userId && um.FilmeId == filmeId);
+
+            if (existing != null)
             {
-                UtilizadorId = userId,
-                FilmeId = filmeId,
-                JaViu = jaViu
-            };
+                existing.JaViu = jaViu; // troca Quero Ver <-> Já Vi
+                existing.Data = DateTime.Now;
+            }
+            else
+            {
+                _context.UserMovies.Add(new UserMovie
+                {
+                    UtilizadorId = userId,
+                    FilmeId = filmeId,
+                    JaViu = jaViu,
+                    Data = DateTime.Now
+                });
+            }
 
-            _context.UserMovies.Add(userMovie);
             await _context.SaveChangesAsync();
-
             return Ok();
         }
 
@@ -50,13 +79,12 @@ namespace FilmAholic.Server.Controllers
         public async Task<IActionResult> RemoveMovie(int filmeId)
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (userId == null) return Unauthorized();
 
             var movie = await _context.UserMovies
-                .FirstOrDefaultAsync(um =>
-                    um.UtilizadorId == userId && um.FilmeId == filmeId);
+                .FirstOrDefaultAsync(um => um.UtilizadorId == userId && um.FilmeId == filmeId);
 
-            if (movie == null)
-                return NotFound();
+            if (movie == null) return NotFound();
 
             _context.UserMovies.Remove(movie);
             await _context.SaveChangesAsync();
@@ -69,6 +97,7 @@ namespace FilmAholic.Server.Controllers
         public async Task<IActionResult> GetList(bool jaViu)
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (userId == null) return Unauthorized();
 
             var movies = await _context.UserMovies
                 .Include(um => um.Filme)
@@ -78,28 +107,43 @@ namespace FilmAholic.Server.Controllers
             return Ok(movies);
         }
 
+        // 🔹 FR07 – Total hours
         [HttpGet("totalhours")]
-        [Authorize]
-        public IActionResult GetTotalHours()
+        public async Task<IActionResult> GetTotalHours()
         {
-            // 1. Pegar o ID do utilizador autenticado
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (userId == null)
-            {
-                return Unauthorized();
-            }
+            if (userId == null) return Unauthorized();
 
-            // 2. Puxar todos os filmes que estão na lista "Já Vi"
-            var totalMinutes = _context.UserMovies
+            var totalMinutes = await _context.UserMovies
+                .Include(um => um.Filme)
                 .Where(um => um.UtilizadorId == userId && um.JaViu)
-                .Sum(um => um.Filme.Duracao);
+                .SumAsync(um => um.Filme.Duracao);
 
-            // 3. Converter para horas (double)
-            double totalHours = totalMinutes / 60.0;
-
-            // 4. Retornar ao frontend
-            return Ok(totalHours);
+            return Ok(totalMinutes / 60.0);
         }
 
+        // 🔹 FR08 – Estatísticas do utilizador
+        [HttpGet("stats")]
+        public async Task<IActionResult> GetStats()
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (userId == null) return Unauthorized();
+
+            var movies = await _context.UserMovies
+                .Include(um => um.Filme)
+                .Where(um => um.UtilizadorId == userId && um.JaViu)
+                .ToListAsync();
+
+            return Ok(new
+            {
+                totalFilmes = movies.Count,
+                totalHoras = movies.Sum(m => m.Filme.Duracao) / 60.0,
+                generos = movies
+                    .GroupBy(m => m.Filme.Genero)
+                    .Select(g => new { genero = g.Key, total = g.Count() })
+                    .OrderByDescending(x => x.total)
+                    .ToList()
+            });
+        }
     }
 }

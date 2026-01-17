@@ -1,0 +1,305 @@
+/* Header */
+.profile-header {
+  border-radius: 15px 15px 0 0;
+  margin: 2%;
+  height: 250px;
+  background-color: #f0eaf2;
+  position: relative;
+}
+
+/* Layout */
+.profile-body {
+  margin: -75px auto 0;
+  display: flex;
+  gap: 40px;
+  padding: 0 5%;
+}
+
+.profile-left {
+  width: 320px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.profile-main {
+  flex: 1;
+  padding-top: 75px;
+  max-width: 900px;
+}
+
+/* Edit button */
+.edit-btn {
+  position: absolute;
+  right: 20px;
+  top: 20px;
+  border: none;
+  background: #fff;
+  padding: 8px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+/* Avatar */
+.avatar {
+  width: 200px;
+  height: 200px;
+  background: #e6d9ff;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 42px;
+  margin-bottom: 20px;
+  z-index: 10;
+}
+
+/* Sidebar */
+.profile-sidebar {
+  width: 100%;
+  background: #010b15;
+  border-radius: 20px;
+  padding: 20px;
+  color: #fff;
+}
+
+.primary-btn {
+  width: 100%;
+  background: #ff2f6d;
+  border: none;
+  color: white;
+  padding: 10px;
+  border-radius: 10px;
+  cursor: pointer;
+  margin-bottom: 18px;
+}
+
+.menu {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 18px 0;
+}
+
+  .menu li {
+    padding: 10px 0;
+    cursor: pointer;
+    color: #fff;
+  }
+
+    .menu li.logout {
+      color: #ff5c5c;
+    }
+
+.stats h3 {
+  margin: 12px 0 8px;
+}
+
+.stats p {
+  font-size: 0.9em;
+  margin: 4px 0;
+  color: #ddd;
+}
+
+.genres {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(255,255,255,0.08);
+}
+
+.genre-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.9em;
+  color: #ddd;
+  padding: 4px 0;
+}
+
+.list-counts {
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(255,255,255,0.08);
+  color: #ddd;
+}
+
+/* Profile info */
+.profile-info h2 {
+  margin-bottom: 6px;
+  color: #fff;
+}
+
+.joined {
+  font-size: 0.9em;
+  color: #aaa;
+}
+
+.bio {
+  margin: 15px 0 26px;
+  line-height: 1.5;
+  color: #ddd;
+}
+
+/* Sections */
+.section {
+  margin-top: 30px;
+}
+
+  .section h3 {
+    margin-bottom: 4px;
+    color: #fff;
+  }
+
+.subtitle {
+  font-size: 0.85em;
+  color: #aaa;
+}
+
+/* Horizontal cards (mockup style) */
+.cards {
+  display: flex;
+  gap: 14px;
+  margin-top: 12px;
+  overflow-x: auto;
+  padding-bottom: 10px;
+}
+
+  .cards::-webkit-scrollbar {
+    height: 6px;
+  }
+
+  .cards::-webkit-scrollbar-thumb {
+    background: #444;
+    border-radius: 4px;
+  }
+
+/* Simple poster card (lists) */
+.card {
+  min-width: 120px;
+  height: 180px;
+  border-radius: 10px;
+  overflow: hidden;
+  flex-shrink: 0;
+  background: #111;
+}
+
+  .card img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+/* Catalog card with buttons */
+.movie-card {
+  min-width: 260px;
+  border-radius: 14px;
+  overflow: hidden;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.06);
+  flex-shrink: 0;
+}
+
+.poster {
+  width: 100%;
+  height: 170px;
+  object-fit: cover;
+  display: block;
+}
+
+.movie-meta {
+  padding: 10px 12px 6px;
+}
+
+.movie-title {
+  color: #fff;
+  font-weight: 600;
+}
+
+.movie-sub {
+  color: #aaa;
+  font-size: 0.85em;
+  margin-top: 2px;
+}
+
+.movie-actions {
+  display: flex;
+  gap: 8px;
+  padding: 10px 12px 12px;
+  flex-wrap: wrap;
+}
+
+.action-btn {
+  border: none;
+  padding: 8px 10px;
+  border-radius: 10px;
+  cursor: pointer;
+  background: #ff2f6d;
+  color: #fff;
+  font-size: 0.85em;
+}
+
+  .action-btn.ghost {
+    background: rgba(255,255,255,0.12);
+  }
+
+  .action-btn.danger {
+    background: rgba(255, 92, 92, 0.2);
+    color: #ff8a8a;
+  }
+
+  .action-btn:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+  }
+
+/* Modal */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+}
+
+.modal-box {
+  background: #fff;
+  width: 92%;
+  max-width: 460px;
+  border-radius: 10px;
+  padding: 20px 22px;
+  position: relative;
+}
+
+.modal-close {
+  position: absolute;
+  right: 10px;
+  top: 8px;
+  border: none;
+  background: transparent;
+  font-size: 22px;
+  cursor: pointer;
+}
+
+.modal-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  margin-top: 14px;
+}
+
+.save-btn {
+  background: #ff2f6d;
+  color: #fff;
+  border: none;
+  padding: 8px 14px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.cancel-btn {
+  background: #eef0f2;
+  border: none;
+  padding: 8px 14px;
+  border-radius: 8px;
+  cursor: pointer;
+}

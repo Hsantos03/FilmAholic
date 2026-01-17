@@ -7,6 +7,7 @@ import { catchError, finalize } from 'rxjs/operators';
 @Injectable({
   providedIn: 'root'
 })
+
 export class AuthService {
   // Substitui pela porta que aparece no teu Swagger
   private apiUrl = 'https://localhost:7277/api/autenticacao';
@@ -47,10 +48,22 @@ export class AuthService {
       finalize(() => {
         localStorage.removeItem('authToken');
         localStorage.removeItem('user');
+        localStorage.removeItem('user_nome');
+        localStorage.removeItem('userName');
+        localStorage.removeItem('user_id');
         localStorage.removeItem('nome');
 
         this.router.navigate(['/login']);
       })
     ).subscribe();
+  }
+
+  // Métodos para autenticação externa (OAuth)
+  googleLogin(): void {
+    window.location.href = `${this.apiUrl}/google-login`;
+  }
+
+  facebookLogin(): void {
+    window.location.href = `${this.apiUrl}/facebook-login`;
   }
 }

@@ -1,10 +1,9 @@
 ﻿using FilmAholic.Server.Models;
 using FilmAholic.Server.Services;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Identity.Data;
-using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
+using System.Security.Claims;
 
 namespace FilmAholic.Server.Controllers
 {
@@ -111,11 +110,14 @@ namespace FilmAholic.Server.Controllers
 
             if (result.Succeeded)
             {
-                // Devolvemos o nome para o Angular usar na UI
+                // Devolvemos o nome e o sobrenome para o Angular usar na UI
                 return Ok(new
                 {
                     message = "Login ok",
                     nome = user.Nome,
+                    sobrenome = user.Sobrenome,
+                    userName = user.UserName,
+                    id = user.Id,
                     email = user.Email
                 });
             }
@@ -257,6 +259,148 @@ namespace FilmAholic.Server.Controllers
                 _logger.LogError(ex, "Erro ao realizar logout no servidor.");
                 return StatusCode(500, new { message = "Erro ao processar logout no servidor." });
             }
+        }
+
+        // Endpoints para autenticação externa (OAuth)
+        [HttpGet("google-login")]
+        public IActionResult GoogleLogin()
+        {
+            // Garantir que usa HTTPS
+            var scheme = Request.Scheme;
+            if (!Request.IsHttps && Request.Headers["X-Forwarded-Proto"].ToString().ToLower() != "https")
+            {
+                scheme = "https";
+            }
+            var redirectUrl = Url.Action(nameof(GoogleCallback), "Autenticacao", null, scheme, Request.Host.Value);
+            var properties = _signInManager.ConfigureExternalAuthenticationProperties("Google", redirectUrl);
+            return Challenge(properties, "Google");
+        }
+
+        [HttpGet("facebook-login")]
+        public IActionResult FacebookLogin()
+        {
+            // Garantir que usa HTTPS
+            var scheme = Request.Scheme;
+            if (!Request.IsHttps && Request.Headers["X-Forwarded-Proto"].ToString().ToLower() != "https")
+            {
+                scheme = "https";
+            }
+            var redirectUrl = Url.Action(nameof(FacebookCallback), "Autenticacao", null, scheme, Request.Host.Value);
+            var properties = _signInManager.ConfigureExternalAuthenticationProperties("Facebook", redirectUrl);
+            return Challenge(properties, "Facebook");
+        }
+
+        [HttpGet("google-callback")]
+        public async Task<IActionResult> GoogleCallback()
+        {
+            return await HandleExternalLoginCallback("Google");
+        }
+
+        [HttpGet("facebook-callback")]
+        public async Task<IActionResult> FacebookCallback()
+        {
+            return await HandleExternalLoginCallback("Facebook");
+        }
+
+        private async Task<IActionResult> HandleExternalLoginCallback(string provider)
+        {
+            // Verificar se há erros de autenticação
+            var error = Request.Query["error"].ToString();
+            if (!string.IsNullOrEmpty(error))
+            {
+                var angularUrl = _configuration["EmailSettings:AngularUrl"] ?? "https://localhost:50905";
+                return Redirect($"{angularUrl}/login?error={Uri.EscapeDataString($"Erro ao autenticar com {provider}: {error}")}");
+            }
+
+            var info = await _signInManager.GetExternalLoginInfoAsync();
+            if (info == null)
+            {
+                // Log adicional para debug
+                var errorDescription = Request.Query["error_description"].ToString();
+                var angularUrl = _configuration["EmailSettings:AngularUrl"] ?? "https://localhost:50905";
+                var errorMessage = string.IsNullOrEmpty(errorDescription) 
+                    ? $"Erro ao autenticar com {provider}. O estado OAuth pode ter expirado. Tenta novamente." 
+                    : $"Erro ao autenticar com {provider}: {errorDescription}";
+                return Redirect($"{angularUrl}/login?error={Uri.EscapeDataString(errorMessage)}");
+            }
+
+            // Tenta fazer login com o provider externo
+            var signInResult = await _signInManager.ExternalLoginSignInAsync(info.LoginProvider, info.ProviderKey, isPersistent: false, bypassTwoFactor: true);
+
+            if (signInResult.Succeeded)
+            {
+                // Login bem-sucedido - utilizador já existe
+                var user = await _userManager.FindByLoginAsync(info.LoginProvider, info.ProviderKey);
+                var angularUrl = _configuration["EmailSettings:AngularUrl"] ?? "https://localhost:50905";
+                return Redirect($"{angularUrl}/login?externalSuccess=true&nome={Uri.EscapeDataString(user?.Nome ?? "")}&email={Uri.EscapeDataString(user?.Email ?? "")}");
+            }
+
+            // Se o utilizador não existe, cria uma conta nova
+            if (signInResult.IsLockedOut)
+            {
+                var angularUrl = _configuration["EmailSettings:AngularUrl"] ?? "https://localhost:50905";
+                return Redirect($"{angularUrl}/login?error=Conta bloqueada");
+            }
+
+            // Criar novo utilizador
+            var email = info.Principal.FindFirstValue(ClaimTypes.Email) ?? info.Principal.FindFirstValue("email");
+            var name = info.Principal.FindFirstValue(ClaimTypes.Name) ?? info.Principal.FindFirstValue("name");
+            
+            if (string.IsNullOrEmpty(email))
+            {
+                var angularUrl = _configuration["EmailSettings:AngularUrl"] ?? "https://localhost:50905";
+                return Redirect($"{angularUrl}/login?error=Não foi possível obter o email do {provider}");
+            }
+
+            // Verificar se já existe utilizador com este email
+            var existingUser = await _userManager.FindByEmailAsync(email);
+            if (existingUser != null)
+            {
+                // Adicionar o login externo ao utilizador existente
+                var addLoginResult = await _userManager.AddLoginAsync(existingUser, info);
+                if (addLoginResult.Succeeded)
+                {
+                    await _signInManager.SignInAsync(existingUser, isPersistent: false);
+                    var angularUrl = _configuration["EmailSettings:AngularUrl"] ?? "https://localhost:50905";
+                    return Redirect($"{angularUrl}/login?externalSuccess=true&nome={Uri.EscapeDataString(existingUser.Nome)}&email={Uri.EscapeDataString(existingUser.Email)}");
+                }
+            }
+
+            // Criar novo utilizador
+            var names = name?.Split(' ') ?? new[] { "Utilizador", "" };
+            var firstName = names[0];
+            var lastName = names.Length > 1 ? string.Join(" ", names.Skip(1)) : "";
+
+            var newUser = new Utilizador
+            {
+                UserName = email,
+                Email = email,
+                EmailConfirmed = true, // Login externo já confirma o email
+                Nome = firstName,
+                Sobrenome = lastName,
+                DataNascimento = DateTime.UtcNow.AddYears(-18), // Data padrão
+                DataCriacao = DateTime.UtcNow
+            };
+
+            var createResult = await _userManager.CreateAsync(newUser);
+            if (!createResult.Succeeded)
+            {
+                var angularUrl = _configuration["EmailSettings:AngularUrl"] ?? "https://localhost:50905";
+                return Redirect($"{angularUrl}/login?error=Erro ao criar conta: {string.Join(", ", createResult.Errors.Select(e => e.Description))}");
+            }
+
+            // Adicionar o login externo
+            var addLoginResult2 = await _userManager.AddLoginAsync(newUser, info);
+            if (!addLoginResult2.Succeeded)
+            {
+                var angularUrl = _configuration["EmailSettings:AngularUrl"] ?? "https://localhost:50905";
+                return Redirect($"{angularUrl}/login?error=Erro ao associar conta externa");
+            }
+
+            // Fazer login
+            await _signInManager.SignInAsync(newUser, isPersistent: false);
+            var angularUrlFinal = _configuration["EmailSettings:AngularUrl"] ?? "https://localhost:50905";
+            return Redirect($"{angularUrlFinal}/login?externalSuccess=true&nome={Uri.EscapeDataString(newUser.Nome)}&email={Uri.EscapeDataString(newUser.Email)}");
         }
     }
 

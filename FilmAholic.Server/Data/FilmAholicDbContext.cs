@@ -19,6 +19,5 @@ public class FilmAholicDbContext : IdentityDbContext<Utilizador>
         .HasIndex(um => new { um.UtilizadorId, um.FilmeId })
         .IsUnique();
         base.OnModelCreating(builder);
-        // Aqui podes adicionar configurações extras se o teu colega precisar
     }
 }
