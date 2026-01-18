@@ -198,7 +198,7 @@
   gap: 14px;
 }
 
-/*Posters dos Filmes*/
+/* Posters dos Filmes */
 .mini-posters {
   display: flex;
   gap: 10px;
@@ -276,7 +276,7 @@
     border-radius: 4px;
   }
 
-/* Catalog card */
+/* Catálogo dos Filmes */
 .movie-card {
   min-width: 280px;
   border-radius: 14px;
