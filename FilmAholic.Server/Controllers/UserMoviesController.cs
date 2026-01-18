@@ -1,10 +1,9 @@
-﻿﻿﻿using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using FilmAholic.Server.Data;
 using FilmAholic.Server.Models;
 using System.Security.Claims;
-
 
 namespace FilmAholic.Server.Controllers
 {
@@ -70,8 +69,16 @@ namespace FilmAholic.Server.Controllers
             var existing = await _context.UserMovies
                 .FirstOrDefaultAsync(um => um.UtilizadorId == userId && um.FilmeId == actualFilmeId);
 
+            bool shouldProcessDesafio = false;
             if (existing != null)
             {
+                // detect transition from not-watched to watched
+                var previouslyWatched = existing.JaViu;
+                if (!previouslyWatched && jaViu)
+                {
+                    shouldProcessDesafio = true;
+                }
+
                 existing.JaViu = jaViu; // troca Quero Ver <-> Já Vi
                 existing.Data = DateTime.Now;
             }
@@ -84,9 +91,19 @@ namespace FilmAholic.Server.Controllers
                     JaViu = jaViu,
                     Data = DateTime.Now
                 });
+
+                // new entry and it's marked as watched -> should process
+                if (jaViu) shouldProcessDesafio = true;
             }
 
             await _context.SaveChangesAsync();
+
+            // If the movie became watched, update desafios progress for the user
+            if (shouldProcessDesafio)
+            {
+                await HandleDesafioProgressAsync(userId, dbFilme);
+            }
+
             return Ok();
         }
 
@@ -161,6 +178,71 @@ namespace FilmAholic.Server.Controllers
                     .OrderByDescending(x => x.total)
                     .ToList()
             });
+        }
+
+        // When a user watches a movie, update matching active desafios progress for that user.
+        private async Task HandleDesafioProgressAsync(string userId, Filme filme)
+        {
+            if (filme == null || string.IsNullOrWhiteSpace(filme.Genero)) return;
+
+            var now = DateTime.Now;
+
+            // Find active desafios that match the film genre (case-insensitive) and are in the current date window
+            var matchingDesafios = await _context.Desafios
+                .Where(d =>
+                    d.Ativo
+                    && !string.IsNullOrEmpty(d.Genero)
+                    && d.DataInicio <= now && d.DataFim >= now
+                    && d.Genero.ToLower() == filme.Genero.ToLower()
+                )
+                .ToListAsync();
+
+            if (matchingDesafios == null || matchingDesafios.Count == 0) return;
+
+            bool anyChange = false;
+
+            foreach (var desafio in matchingDesafios)
+            {
+                // Load user desafio
+                var userDesafio = await _context.UserDesafios
+                    .FirstOrDefaultAsync(ud => ud.UtilizadorId == userId && ud.DesafioId == desafio.Id);
+
+                if (userDesafio == null)
+                {
+                    userDesafio = new UserDesafio
+                    {
+                        UtilizadorId = userId,
+                        DesafioId = desafio.Id,
+                        QuantidadeProgresso = 0,
+                        DataAtualizacao = DateTime.Now
+                    };
+                    _context.UserDesafios.Add(userDesafio);
+                }
+
+                // If already completed, skip
+                if (userDesafio.QuantidadeProgresso >= desafio.QuantidadeNecessaria) continue;
+
+                // Increment progress by 1 (one movie)
+                userDesafio.QuantidadeProgresso += 1;
+                userDesafio.DataAtualizacao = DateTime.Now;
+                anyChange = true;
+
+                // If just completed, award XP once
+                if (userDesafio.QuantidadeProgresso >= desafio.QuantidadeNecessaria)
+                {
+                    var user = await _context.Users.FindAsync(userId);
+                    if (user != null)
+                    {
+                        // Award XP only once when crossing threshold
+                        user.XP += desafio.Xp;
+                    }
+                }
+            }
+
+            if (anyChange)
+            {
+                await _context.SaveChangesAsync();
+            }
         }
     }
 }

@@ -13,9 +13,9 @@ namespace FilmAholic.Server.Data
                 Id = 1,
                 DataInicio = new DateTime(2026, 1, 19),
                 DataFim = new DateTime(2026, 1, 25),
-                Descricao = "Assista a 3 filmes do género Drama esta semana.",
+                Descricao = "Assista a 3 filmes do género Animação esta semana.",
                 Ativo = true,
-                Genero = "Drama",
+                Genero = "Animação",
                 QuantidadeNecessaria = 3,
                 Xp = 50
             },
