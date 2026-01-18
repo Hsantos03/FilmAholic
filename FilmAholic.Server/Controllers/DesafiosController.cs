@@ -57,5 +57,18 @@ namespace FilmAholic.Server.Controllers
 
             return Ok(result);
         }
+
+        // GET: api/desafios/publicos
+        // Retorna a lista pública de desafios (para utilizadores não autenticados ou autorizados)
+        [HttpGet("publicos")]
+        public async Task<IActionResult> GetPublicDesafios()
+        {
+            var desafios = await _context.Desafios
+                .Where(d => d.Ativo) // Apenas desafios ativos
+                .OrderByDescending(d => d.DataInicio)
+                .ToListAsync();
+
+            return Ok(desafios);
+        }
     }
 }

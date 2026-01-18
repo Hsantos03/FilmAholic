@@ -75,4 +75,12 @@ export class DashboardComponent implements OnInit {
     // restringir a [0,100] e arredondar para inteiro
     return Math.min(100, Math.max(0, Math.round(percent)));
   }
+
+  // Returns true when progresso >= quantidadeNecessaria
+  public isCompleted(desafio: any): boolean {
+    const p = Number(desafio?.progresso ?? 0);
+    const q = Number(desafio?.quantidadeNecessaria ?? 1);
+    if (q <= 0) return false;
+    return p >= q;
+  }
 }

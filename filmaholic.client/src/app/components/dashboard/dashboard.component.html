@@ -23,7 +23,7 @@
     <div *ngIf="isLoadingDesafios" style="color:#ddd;">Loading desafios...</div>
 
     <div class="desafios-list" *ngIf="!isLoadingDesafios">
-      <div class="desafio-row" *ngFor="let d of desafios">
+      <div class="desafio-row" *ngFor="let d of desafios" [class.completed]="isCompleted(d)">
         <div class="desafio-meta">
           <h4 class="desafio-title">{{ d.descricao }}</h4>
           <div class="desafio-sub">
@@ -32,7 +32,10 @@
         </div>
 
         <div class="desafio-progress">
-          <div class="progress-text">{{ d.progresso }} / {{ d.quantidadeNecessaria }}</div>
+          <div class="progress-text">
+            <span *ngIf="!isCompleted(d)">{{ d.progresso }} / {{ d.quantidadeNecessaria }}</span>
+            <span *ngIf="isCompleted(d)" aria-live="polite"> ✓ Completed </span>
+          </div>
 
           <div class="progress-bar" aria-hidden="true">
             <div class="progress-fill" [style.width.%]="computeProgressPercent(d.progresso, d.quantidadeNecessaria)"></div>
@@ -40,6 +43,8 @@
 
           <div class="xp-badge">+{{ d.xp }} XP</div>
         </div>
+
+
       </div>
 
       <div *ngIf="desafios.length === 0" class="empty-list-message">

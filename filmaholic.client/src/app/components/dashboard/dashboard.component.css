@@ -161,8 +161,43 @@
   background: rgba(255,255,255,0.02);
   border: 1px solid rgba(255,255,255,0.04);
   border-radius: 10px;
+  position: relative;
+  transition: box-shadow 0.25s ease, border-color 0.25s ease, transform 0.15s ease;
 }
 
+.desafio-row:hover {
+  transform: translateY(-2px);
+}
+
+.desafio-row.completed {
+  border-color: rgba(40,167,69,0.9); /* green border */
+  box-shadow: 0 6px 18px rgba(40,167,69,0.12);
+  background: linear-gradient(90deg, rgba(40,167,69,0.04), rgba(255,255,255,0.01));
+}
+
+/* completed badge */
+.completed-badge {
+  position: absolute;
+  right: 12px;
+  top: 12px;
+  background: rgba(40,167,69,0.12);
+  color: #28a745;
+  padding: 6px 8px;
+  border-radius: 8px;
+  font-weight: 700;
+  font-size: 0.82em;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  z-index: 5;
+}
+
+/* make the progress fill green when complete */
+.desafio-row.completed .progress-fill {
+  background: linear-gradient(90deg, #28a745, #8ddf8b);
+}
+
+/* meta and text */
 .desafio-meta {
   flex: 1 1 auto;
   color: #fff;
