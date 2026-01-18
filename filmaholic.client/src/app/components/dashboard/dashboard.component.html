@@ -20,9 +20,31 @@
 
     <h3>Desafios Semanais</h3>
 
-    <!-- Empty body — content to be provided later -->
-    <div class="desafios-body">
-      <!-- Intentionally left blank -->
+    <div *ngIf="isLoadingDesafios" style="color:#ddd;">Loading desafios...</div>
+
+    <div class="desafios-list" *ngIf="!isLoadingDesafios">
+      <div class="desafio-row" *ngFor="let d of desafios">
+        <div class="desafio-meta">
+          <h4 class="desafio-title">{{ d.descricao }}</h4>
+          <div class="desafio-sub">
+            {{ d.genero }} · {{ d.dataInicio | date:'shortDate' }} - {{ d.dataFim | date:'shortDate' }}
+          </div>
+        </div>
+
+        <div class="desafio-progress">
+          <div class="progress-text">{{ d.progresso }} / {{ d.quantidadeNecessaria }}</div>
+
+          <div class="progress-bar" aria-hidden="true">
+            <div class="progress-fill" [style.width.%]="computeProgressPercent(d.progresso, d.quantidadeNecessaria)"></div>
+          </div>
+
+          <div class="xp-badge">+{{ d.xp }} XP</div>
+        </div>
+      </div>
+
+      <div *ngIf="desafios.length === 0" class="empty-list-message">
+        Nenhum desafio disponível.
+      </div>
     </div>
 
     <div class="modal-actions">

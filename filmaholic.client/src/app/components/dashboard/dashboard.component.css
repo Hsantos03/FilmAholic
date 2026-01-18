@@ -144,3 +144,77 @@
   font-weight: 600;
 }
 
+/* Desafios list inside modal */
+.desafios-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-top: 12px;
+}
+
+.desafio-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: center;
+  padding: 12px;
+  background: rgba(255,255,255,0.02);
+  border: 1px solid rgba(255,255,255,0.04);
+  border-radius: 10px;
+}
+
+.desafio-meta {
+  flex: 1 1 auto;
+  color: #fff;
+}
+
+.desafio-title {
+  margin: 0 0 6px 0;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.desafio-sub {
+  color: #aaa;
+  font-size: 0.9em;
+}
+
+.desafio-progress {
+  width: 220px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: flex-end;
+}
+
+.progress-text {
+  color: #ddd;
+  font-size: 0.95em;
+}
+
+.progress-bar {
+  width: 100%;
+  height: 10px;
+  background: rgba(255,255,255,0.06);
+  border-radius: 6px;
+  overflow: hidden;
+  border: 1px solid rgba(255,255,255,0.03);
+}
+
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #ff2f6d, #ff8a00);
+  width: 0%;
+  transition: width 0.35s ease;
+}
+
+.xp-badge {
+  margin-top: 4px;
+  background: rgba(255,47,109,0.12);
+  color: #ff2f6d;
+  padding: 6px 8px;
+  border-radius: 8px;
+  font-weight: 700;
+  font-size: 0.9em;
+}
+
