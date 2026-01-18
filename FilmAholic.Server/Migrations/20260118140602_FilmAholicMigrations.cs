@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace FilmAholic.Server.Migrations
 {
     /// <inheritdoc />
-    public partial class FilmAholicMigration : Migration
+    public partial class FilmAholicMigrations : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -37,6 +37,7 @@ namespace FilmAholic.Server.Migrations
                     GeneroFavorito = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     TopFilmes = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     TopAtores = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    XP = table.Column<int>(type: "int", nullable: false),
                     Bio = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     DataCriacao = table.Column<DateTime>(type: "datetime2", nullable: false),
                     UserName = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),

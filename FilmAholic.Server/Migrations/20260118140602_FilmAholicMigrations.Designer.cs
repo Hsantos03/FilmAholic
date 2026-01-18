@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace FilmAholic.Server.Migrations
 {
     [DbContext(typeof(FilmAholicDbContext))]
-    [Migration("20260117185120_FilmAholicMigration")]
-    partial class FilmAholicMigration
+    [Migration("20260118140602_FilmAholicMigrations")]
+    partial class FilmAholicMigrations
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -188,6 +188,9 @@ namespace FilmAholic.Server.Migrations
                     b.Property<string>("UserName")
                         .HasMaxLength(256)
                         .HasColumnType("nvarchar(256)");
+
+                    b.Property<int>("XP")
+                        .HasColumnType("int");
 
                     b.HasKey("Id");
 

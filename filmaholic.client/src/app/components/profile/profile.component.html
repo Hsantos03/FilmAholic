@@ -23,12 +23,8 @@
         <li>Preferences</li>
         <li>Achievements</li>
         <li class="logout" (click)="logout()">Log out</li>
+        <li class="logout" (click)="openDeleteConfirm()">Delete account</li>
       </ul>
-
-      <!-- New delete account option -->
-      <div class="danger-section">
-        <button class="danger-btn" (click)="openDeleteConfirm()">Delete account</button>
-      </div>
 
       <div class="stats">
         <h3>Statistics</h3>
@@ -163,8 +159,13 @@
     <p class="delete-info">Para apagar a sua conta escreva <strong>delete</strong></p>
 
     <form (ngSubmit)="confirmDelete()">
-      <label for="deleteInput">Type "delete" to confirm</label>
-      <input id="deleteInput" name="deleteInput" type="text" [(ngModel)]="deleteInput" autocomplete="off" />
+      <!-- removed the English label as requested; input keeps an accessible aria-label in Portuguese -->
+      <input id="deleteInput"
+             name="deleteInput"
+             type="text"
+             [(ngModel)]="deleteInput"
+             autocomplete="off"
+             aria-label="Escreva 'delete' para confirmar" />
 
       <div class="modal-actions">
         <button type="submit" class="danger-btn" [disabled]="(deleteInput || '').trim().toLowerCase() !== deleteRequiredText || isDeletingSaving">
