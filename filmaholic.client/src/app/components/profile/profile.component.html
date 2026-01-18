@@ -34,8 +34,8 @@
         </div>
 
         <div class="stat-row">
-          <span>Total hours</span>
-          <strong>{{ (stats?.totalHoras || 0) | number:'1.1-2' }}h</strong>
+          <span>Total minutes</span>
+          <strong>{{ stats?.totalMinutos || 0 }} min</strong>
         </div>
 
         <div class="genres" *ngIf="stats?.generos?.length">
@@ -69,11 +69,10 @@
       <p class="bio">{{ bio }}</p>
     </div>
 
-    <!-- LISTAS como estão no mockup -->
     <div class="lists-top">
 
-      <!-- WATCH LATAR LIST -->
-      <div class="list-box">
+      <!-- WATCH LATER LIST -->
+      <div class="list-box clickable" (click)="openListModal('watchLater')">
         <div class="list-box-left">
           <h3>Watch later</h3>
           <span class="subtitle">{{ watchLater.length }} Titles</span>
@@ -93,7 +92,7 @@
       </div>
 
       <!-- Watched LIST -->
-      <div class="list-box">
+      <div class="list-box clickable" (click)="openListModal('watched')">
         <div class="list-box-left">
           <h3>Watched</h3>
           <span class="subtitle">{{ watched.length }} Titles</span>
@@ -113,7 +112,7 @@
       </div>
     </div>
 
-    <!-- CATáLOGO -->
+    <!-- CATÁLOGO -->
     <div class="section">
       <div class="section-title">
         <h3>Catalog</h3>
@@ -175,6 +174,34 @@
         <button type="button" class="cancel-btn" (click)="closeEdit()">Cancel</button>
       </div>
     </form>
+  </div>
+</div>
+
+<div class="modal-overlay list-modal-overlay" *ngIf="showListModal" (click)="closeListModal()">
+  <div class="list-modal-box" (click)="$event.stopPropagation()">
+    <button class="modal-close" (click)="closeListModal()">×</button>
+
+    <h3>{{ currentListTitle }}</h3>
+    <span class="list-subtitle">{{ currentList.length }} {{ currentList.length === 1 ? 'Title' : 'Titles' }}</span>
+
+    <div class="expanded-posters-grid" *ngIf="currentList.length > 0">
+      <div class="expanded-poster-card" *ngFor="let movie of currentList">
+        <img [src]="movie.filme?.posterUrl || movie.filme?.PosterUrl || 'https://via.placeholder.com/200x300'"
+             [alt]="movie.filme?.titulo || movie.filme?.Titulo || 'Movie poster'"
+             class="expanded-poster" />
+        <div class="poster-info">
+          <div class="poster-title">{{ movie.filme?.titulo || movie.filme?.Titulo || 'Unknown' }}</div>
+          <div class="poster-meta">
+            <span *ngIf="movie.filme?.genero || movie.filme?.Genero">{{ movie.filme?.genero || movie.filme?.Genero }}</span>
+            <span *ngIf="movie.filme?.duracao || movie.filme?.Duracao"> · {{ movie.filme?.duracao || movie.filme?.Duracao }} min</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="empty-list-message" *ngIf="currentList.length === 0">
+      <p>Nenhum filme nesta lista ainda.</p>
+    </div>
   </div>
 </div>
 

@@ -38,6 +38,10 @@ export class ProfileComponent implements OnInit {
   deleteRequiredText = 'delete';
   isDeletingSaving = false;
 
+  // List view modal state
+  showListModal = false;
+  currentListType: 'watchLater' | 'watched' | null = null;
+
   isSavingMovie = false;
 
   constructor(
@@ -54,7 +58,7 @@ export class ProfileComponent implements OnInit {
     this.refreshAllListsAndStats();
 
     if (!userId) {
-      console.warn('No user_id in localStorage — using fallback values.');
+      console.warn('No user_id in localStorage â€” using fallback values.');
       return;
     }
 
@@ -64,11 +68,20 @@ export class ProfileComponent implements OnInit {
       .subscribe({
         next: (res) => {
           // Backend returns fields like: id, userName, nome, sobrenome, email, dataCriacao
-          this.userName = res?.userName ?? this.userName;
+          // Use userName if available and not empty, otherwise use nome + sobrenome, fallback to nome
+          if (res?.userName && res.userName.trim() && res.userName !== res?.email) {
+            this.userName = res.userName;
+          } else if (res?.nome) {
+            // Use nome + sobrenome if available, otherwise just nome
+            this.userName = res.sobrenome ? `${res.nome} ${res.sobrenome}` : res.nome;
+          } else {
+            // Keep current userName as fallback
+            this.userName = this.userName || 'User';
+          }
+          
           this.bio = res?.bio ?? this.bio;
 
           if (res?.dataCriacao) {
-            // Normalize server date to readable string
             this.joined = new Date(res.dataCriacao).toLocaleString();
           }
         },
@@ -126,11 +139,11 @@ export class ProfileComponent implements OnInit {
   }
 
   removeFromLists(filmeId: number): void {
-    // Buscar o filme no catálogo pelo ID do seed
+    // Buscar o filme no catÃ¡logo pelo ID do seed
     const filme = this.catalogo.find(f => f.id === filmeId);
     if (!filme) return;
     
-    // Encontrar o UserMovie correspondente pelo título
+    // Encontrar o UserMovie correspondente pelo tÃ­tulo
     const userMovie = [...this.watchLater, ...this.watched].find(
       x => x?.filme?.titulo === filme.titulo || x?.filme?.Titulo === filme.titulo
     );
@@ -159,21 +172,20 @@ export class ProfileComponent implements OnInit {
   }
 
   inWatchLater(filmeId: number): boolean {
-    // Buscar o filme no catálogo pelo ID do seed
+    // Buscar o filme no catÃ¡logo pelo ID do seed
     const filme = this.catalogo.find(f => f.id === filmeId);
     if (!filme) return false;
     
-    // Comparar por título (mais confiável que ID)
+    // Comparar por tÃ­tulo (mais confiÃ¡vel que ID)
     return this.watchLater?.some(x => x?.filme?.titulo === filme.titulo || 
                                       x?.filme?.Titulo === filme.titulo);
   }
 
   inWatched(filmeId: number): boolean {
-    // Buscar o filme no catálogo pelo ID do seed
+    // Buscar o filme no catÃ¡logo pelo ID do seed
     const filme = this.catalogo.find(f => f.id === filmeId);
     if (!filme) return false;
     
-    // Comparar por título (mais confiável que ID)
     return this.watched?.some(x => x?.filme?.titulo === filme.titulo || 
                                    x?.filme?.Titulo === filme.titulo);
   }
@@ -209,7 +221,6 @@ export class ProfileComponent implements OnInit {
     this.bio = this.editBio;
     this.isEditing = false;
 
-    // Optionally persist to server if an update endpoint exists.
     const userId = localStorage.getItem('user_id');
     if (!userId) return;
 
@@ -221,7 +232,6 @@ export class ProfileComponent implements OnInit {
       )
       .subscribe({
         next: () => {
-          // success - nothing else required for now
         },
         error: (err) => {
           console.warn('Failed to persist profile changes to API.', err);
@@ -240,7 +250,6 @@ export class ProfileComponent implements OnInit {
   }
 
   confirmDelete(): void {
-    // accept trimmed, case-insensitive "delete" to reduce UX friction
     if ((this.deleteInput || '').trim().toLowerCase() !== this.deleteRequiredText) {
       return;
     }
@@ -255,7 +264,6 @@ export class ProfileComponent implements OnInit {
     this.http.delete<any>(`${this.apiBase}/${encodeURIComponent(userId)}`, { withCredentials: true })
       .subscribe({
         next: () => {
-          // on successful deletion, sign out and let AuthService handle navigation/cleanup
           this.authService.logout();
         },
         error: (err) => {
@@ -266,6 +274,34 @@ export class ProfileComponent implements OnInit {
           this.isDeleting = false;
         }
       });
+  }
+
+  openListModal(type: 'watchLater' | 'watched'): void {
+    this.currentListType = type;
+    this.showListModal = true;
+  }
+
+  closeListModal(): void {
+    this.showListModal = false;
+    this.currentListType = null;
+  }
+
+  get currentList(): any[] {
+    if (this.currentListType === 'watchLater') {
+      return this.watchLater;
+    } else if (this.currentListType === 'watched') {
+      return this.watched;
+    }
+    return [];
+  }
+
+  get currentListTitle(): string {
+    if (this.currentListType === 'watchLater') {
+      return 'Watch Later';
+    } else if (this.currentListType === 'watched') {
+      return 'Watched';
+    }
+    return '';
   }
 
   logout(): void {

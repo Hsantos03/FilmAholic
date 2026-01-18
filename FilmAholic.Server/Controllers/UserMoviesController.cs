@@ -153,7 +153,8 @@ namespace FilmAholic.Server.Controllers
             return Ok(new
             {
                 totalFilmes = movies.Count,
-                totalHoras = movies.Sum(m => m.Filme.Duracao) / 60.0,
+                totalHoras = movies.Sum(m => m.Filme.Duracao) / 60.0, // Mantido para compatibilidade
+                totalMinutos = movies.Sum(m => m.Filme.Duracao), // Novo campo em minutos
                 generos = movies
                     .GroupBy(m => m.Filme.Genero)
                     .Select(g => new { genero = g.Key, total = g.Count() })
