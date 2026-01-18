@@ -32,6 +32,14 @@ export class ProfileComponent implements OnInit {
   showOnlyFavorites = false;
   isSavingFavorites = false;
 
+  // Drag and drop state (filmes)
+  draggedIndex: number | null = null;
+  dragOverIndex: number | null = null;
+
+  // Drag and drop state (atores)
+  draggedActorIndex: number | null = null;
+  dragOverActorIndex: number | null = null;
+
   // Modal / edit state
   isEditing = false;
   editUserName = '';
@@ -232,6 +240,14 @@ export class ProfileComponent implements OnInit {
     this.saveFavorites();
   }
 
+  removeFromFavorites(filmeId: number): void {
+    const idx = this.favoritosFilmes.indexOf(filmeId);
+    if (idx >= 0) {
+      this.favoritosFilmes.splice(idx, 1);
+      this.saveFavorites();
+    }
+  }
+
   addAtorFavorito(): void {
     const nome = (this.novoAtor || '').trim();
     if (!nome) return;
@@ -373,5 +389,117 @@ export class ProfileComponent implements OnInit {
 
   logout(): void {
     this.authService.logout();
+  }
+
+  // -----------------------
+  // Drag and Drop para Top 10
+  // -----------------------
+  onDragStart(event: DragEvent, index: number): void {
+    this.draggedIndex = index;
+    if (event.dataTransfer) {
+      event.dataTransfer.effectAllowed = 'move';
+      event.dataTransfer.setData('text/html', index.toString());
+    }
+  }
+
+  onDragOver(event: DragEvent): void {
+    event.preventDefault();
+    event.stopPropagation();
+    if (event.dataTransfer) {
+      event.dataTransfer.dropEffect = 'move';
+    }
+    
+    const target = event.currentTarget as HTMLElement;
+    const index = parseInt(target.getAttribute('data-index') || '0', 10);
+    this.dragOverIndex = index;
+  }
+
+  onDrop(event: DragEvent, dropIndex: number): void {
+    event.preventDefault();
+    event.stopPropagation();
+
+    if (this.draggedIndex === null || this.draggedIndex === dropIndex) {
+      this.dragOverIndex = null;
+      return;
+    }
+
+    // Reordenar o array de favoritos
+    const newOrder = [...this.favoritosFilmes];
+    const [removed] = newOrder.splice(this.draggedIndex, 1);
+    newOrder.splice(dropIndex, 0, removed);
+
+    this.favoritosFilmes = newOrder;
+    this.saveFavorites();
+
+    // Limpar estados
+    this.draggedIndex = null;
+    this.dragOverIndex = null;
+  }
+
+  onDragEnd(): void {
+    // Limpar feedback visual e remover estilos inline
+    document.querySelectorAll('.fav-poster').forEach(el => {
+      const htmlEl = el as HTMLElement;
+      htmlEl.style.opacity = '';
+      htmlEl.style.transform = '';
+    });
+    this.draggedIndex = null;
+    this.dragOverIndex = null;
+  }
+
+  // -----------------------
+  // Drag and Drop para Top 10 Atores
+  // -----------------------
+  onActorDragStart(event: DragEvent, index: number): void {
+    this.draggedActorIndex = index;
+    if (event.dataTransfer) {
+      event.dataTransfer.effectAllowed = 'move';
+      event.dataTransfer.setData('text/html', index.toString());
+    }
+  }
+
+  onActorDragOver(event: DragEvent): void {
+    event.preventDefault();
+    event.stopPropagation();
+    if (event.dataTransfer) {
+      event.dataTransfer.dropEffect = 'move';
+    }
+    
+    const target = event.currentTarget as HTMLElement;
+    const index = parseInt(target.getAttribute('data-index') || '0', 10);
+    this.dragOverActorIndex = index;
+  }
+
+  onActorDrop(event: DragEvent, dropIndex: number): void {
+    event.preventDefault();
+    event.stopPropagation();
+
+    if (this.draggedActorIndex === null || this.draggedActorIndex === dropIndex) {
+      this.dragOverActorIndex = null;
+      return;
+    }
+
+    // Reordenar o array de atores
+    const newOrder = [...this.favoritosAtores];
+    const [removed] = newOrder.splice(this.draggedActorIndex, 1);
+    newOrder.splice(dropIndex, 0, removed);
+
+    this.favoritosAtores = newOrder;
+    this.saveFavorites();
+
+    // Limpar estados
+    this.draggedActorIndex = null;
+    this.dragOverActorIndex = null;
+  }
+
+  onActorDragEnd(): void {
+    // Limpar feedback visual e remover estilos inline
+    document.querySelectorAll('.fav-actor-card').forEach(el => {
+      const htmlEl = el as HTMLElement;
+      htmlEl.style.opacity = '';
+      htmlEl.style.transform = '';
+    });
+    this.draggedActorIndex = null;
+    this.dragOverActorIndex = null;
   }
 }

@@ -133,8 +133,22 @@
           </div>
 
           <div class="fav-posters-grid" *ngIf="favoritosFilmesDetalhes.length > 0; else noFavMovies">
-            <div class="fav-poster" *ngFor="let f of favoritosFilmesDetalhes" title="Favorite movie">
-              <img [src]="f.posterUrl" [alt]="f.titulo" />
+            <div class="fav-poster" 
+                 *ngFor="let f of favoritosFilmesDetalhes; let i = index"
+                 draggable="true"
+                 [attr.data-index]="i"
+                 (dragstart)="onDragStart($event, i)"
+                 (dragover)="onDragOver($event)"
+                 (drop)="onDrop($event, i)"
+                 (dragend)="onDragEnd()"
+                 [class.dragging]="draggedIndex === i"
+                 [class.drag-over]="dragOverIndex === i"
+                 title="Drag to reorder">
+              <span class="position-badge">{{ i + 1 }}</span>
+              <img [src]="f.posterUrl" 
+                   [alt]="f.titulo"
+                   (dblclick)="removeFromFavorites(f.id)"
+                   title="Double-click to remove from favorites" />
             </div>
           </div>
 
@@ -167,10 +181,25 @@
             </button>
           </div>
 
-          <div class="fav-actors" *ngIf="favoritosAtores.length > 0; else noFavActors">
-            <div class="fav-chip" *ngFor="let a of favoritosAtores">
-              <span>{{ a }}</span>
-              <button type="button" (click)="removeAtorFavorito(a)" [disabled]="isSavingFavorites">×</button>
+          <div class="fav-actors-list" *ngIf="favoritosAtores.length > 0; else noFavActors">
+            <div class="fav-actor-card" 
+                 *ngFor="let a of favoritosAtores; let i = index"
+                 draggable="true"
+                 [attr.data-index]="i"
+                 (dragstart)="onActorDragStart($event, i)"
+                 (dragover)="onActorDragOver($event)"
+                 (drop)="onActorDrop($event, i)"
+                 (dragend)="onActorDragEnd()"
+                 [class.dragging-actor]="draggedActorIndex === i"
+                 [class.drag-over-actor]="dragOverActorIndex === i"
+                 title="Drag to reorder">
+              <span class="actor-rank">{{ i + 1 }}</span>
+              <span class="actor-name">{{ a }}</span>
+              <button type="button" 
+                      class="actor-remove-btn" 
+                      (click)="removeAtorFavorito(a)" 
+                      [disabled]="isSavingFavorites"
+                      title="Remove actor">×</button>
             </div>
           </div>
 
