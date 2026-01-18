@@ -50,6 +50,10 @@ export class ProfileComponent implements OnInit {
   // movies saving state
   isSavingMovie = false;
 
+  // -- new: watch later & watched filter state
+  watchLaterFilter: 'all' | 'newest' | 'oldest' | '7days' | '30days' = 'all';
+  watchedFilter: 'all' | 'newest' | 'oldest' | '7days' | '30days' = 'all';
+
   constructor(
     private http: HttpClient,
     private authService: AuthService,
@@ -172,10 +176,55 @@ export class ProfileComponent implements OnInit {
   }
 
   private addMovieToList(filmeId: number, jaViu: boolean): void {
+    // Optimistic UI update: add a temporary entry to appropriate list
+    const filmFromSeed = this.catalogo.find(f => f.id === filmeId);
+
+    if (filmFromSeed) {
+      if (!jaViu) {
+        // Watch later optimistic add
+        const already = this.watchLater?.some(x => x?.filme?.titulo === filmFromSeed.titulo || x?.filme?.Titulo === filmFromSeed.titulo);
+        if (!already) {
+          const tempEntry = {
+            filme: filmFromSeed,
+            filmeId: -1,
+            JaViu: false,
+            Data: new Date().toISOString()
+          };
+          this.watchLater = [tempEntry, ...this.watchLater];
+        }
+      } else {
+        // Watched optimistic add
+        const already = this.watched?.some(x => x?.filme?.titulo === filmFromSeed.titulo || x?.filme?.Titulo === filmFromSeed.titulo);
+        if (!already) {
+          const tempEntry = {
+            filme: filmFromSeed,
+            filmeId: -1,
+            JaViu: true,
+            Data: new Date().toISOString()
+          };
+          this.watched = [tempEntry, ...this.watched];
+        }
+      }
+    }
+
     this.isSavingMovie = true;
     this.userMoviesService.addMovie(filmeId, jaViu).subscribe({
       next: () => this.refreshAllListsAndStats(),
-      error: (err) => console.warn('addMovie failed', err),
+      error: (err) => {
+        console.warn('addMovie failed', err);
+        // rollback optimistic add if it exists
+        if (filmFromSeed) {
+          if (!jaViu) {
+            this.watchLater = this.watchLater.filter(
+              x => !(x?.filme?.titulo === filmFromSeed.titulo || x?.filme?.Titulo === filmFromSeed.titulo) || x?.filmeId > 0
+            );
+          } else {
+            this.watched = this.watched.filter(
+              x => !(x?.filme?.titulo === filmFromSeed.titulo || x?.filme?.Titulo === filmFromSeed.titulo) || x?.filmeId > 0
+            );
+          }
+        }
+      },
       complete: () => (this.isSavingMovie = false)
     });
   }
@@ -346,11 +395,65 @@ export class ProfileComponent implements OnInit {
   openListModal(type: 'watchLater' | 'watched'): void {
     this.currentListType = type;
     this.showListModal = true;
+    // reset filter when opening list
+    if (type === 'watchLater') this.watchLaterFilter = 'all';
+    if (type === 'watched') this.watchedFilter = 'all';
   }
 
   closeListModal(): void {
     this.showListModal = false;
     this.currentListType = null;
+  }
+
+  // new: filtered list that applies filters for watch-later and watched
+  get filteredCurrentList(): any[] {
+    const list = this.currentList || [];
+
+    // normalize date value getter
+    const parseDate = (m: any): Date | null => {
+      const v = m?.data ?? m?.Data;
+      if (!v) return null;
+      const d = new Date(v);
+      return isNaN(d.getTime()) ? null : d;
+    };
+
+    const applyFilter = (filter: string) => {
+      switch (filter) {
+        case 'newest':
+          return [...list].sort((a, b) => {
+            const da = parseDate(a)?.getTime() ?? 0;
+            const db = parseDate(b)?.getTime() ?? 0;
+            return db - da;
+          });
+        case 'oldest':
+          return [...list].sort((a, b) => {
+            const da = parseDate(a)?.getTime() ?? 0;
+            const db = parseDate(b)?.getTime() ?? 0;
+            return da - db;
+          });
+        case '7days': {
+          const cutoff = Date.now() - 7 * 24 * 60 * 60 * 1000;
+          return list.filter(m => (parseDate(m)?.getTime() ?? 0) >= cutoff)
+                     .sort((a, b) => (parseDate(b)?.getTime() ?? 0) - (parseDate(a)?.getTime() ?? 0));
+        }
+        case '30days': {
+          const cutoff = Date.now() - 30 * 24 * 60 * 60 * 1000;
+          return list.filter(m => (parseDate(m)?.getTime() ?? 0) >= cutoff)
+                     .sort((a, b) => (parseDate(b)?.getTime() ?? 0) - (parseDate(a)?.getTime() ?? 0));
+        }
+        case 'all':
+        default:
+          return [...list].sort((a, b) => (parseDate(b)?.getTime() ?? 0) - (parseDate(a)?.getTime() ?? 0));
+      }
+    };
+
+    if (this.currentListType === 'watchLater') {
+      return applyFilter(this.watchLaterFilter);
+    } else if (this.currentListType === 'watched') {
+      return applyFilter(this.watchedFilter);
+    }
+
+    return list;
   }
 
   get currentList(): any[] {
