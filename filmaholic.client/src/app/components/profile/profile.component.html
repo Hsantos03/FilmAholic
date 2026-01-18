@@ -16,7 +16,6 @@
 
     <!-- Sidebar -->
     <aside class="profile-sidebar">
-
       <button class="primary-btn" (click)="openEdit()">Manage Account</button>
 
       <ul class="menu">
@@ -28,8 +27,16 @@
 
       <div class="stats">
         <h3>Statistics</h3>
-        <p>Movies watched: {{ stats?.totalFilmes || 0 }}</p>
-        <p>Total hours: {{ (stats?.totalHoras || 0) | number:'1.1-2' }}h</p>
+
+        <div class="stat-row">
+          <span>Movies watched</span>
+          <strong>{{ stats?.totalFilmes || 0 }}</strong>
+        </div>
+
+        <div class="stat-row">
+          <span>Total hours</span>
+          <strong>{{ (stats?.totalHoras || 0) | number:'1.1-2' }}h</strong>
+        </div>
 
         <div class="genres" *ngIf="stats?.generos?.length">
           <div class="genre-row" *ngFor="let g of stats.generos">
@@ -40,10 +47,15 @@
       </div>
 
       <div class="list-counts">
-        <p><strong>Watch later</strong> ({{ watchLater.length }})</p>
-        <p><strong>Watched</strong> ({{ watched.length }})</p>
+        <div class="stat-row">
+          <span>Watch later</span>
+          <strong>{{ watchLater.length }}</strong>
+        </div>
+        <div class="stat-row">
+          <span>Watched</span>
+          <strong>{{ watched.length }}</strong>
+        </div>
       </div>
-
     </aside>
   </div>
 
@@ -54,14 +66,59 @@
     <div class="profile-info">
       <h2>{{ userName }}</h2>
       <span class="joined">Joined · {{ joined }}</span>
-
       <p class="bio">{{ bio }}</p>
     </div>
 
-    <!-- CATALOGO (hardcoded) + BOTÕES -->
+    <!-- LISTAS NO TOPO (como no mockup) -->
+    <div class="lists-top">
+
+      <!-- Watch later BOX -->
+      <div class="list-box">
+        <div class="list-box-left">
+          <h3>Watch later</h3>
+          <span class="subtitle">{{ watchLater.length }} Titles</span>
+        </div>
+
+        <div class="list-box-right">
+          <div class="mini-posters">
+            <img *ngFor="let movie of watchLater | slice:0:5"
+                 [src]="movie.filme?.posterUrl || 'https://via.placeholder.com/120x180'"
+                 alt="movie poster" />
+          </div>
+
+          <button class="pill-btn" title="Watch later">
+            <span class="icon">🚀</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Watched BOX -->
+      <div class="list-box">
+        <div class="list-box-left">
+          <h3>Watched</h3>
+          <span class="subtitle">{{ watched.length }} Titles</span>
+        </div>
+
+        <div class="list-box-right">
+          <div class="mini-posters">
+            <img *ngFor="let movie of watched | slice:0:5"
+                 [src]="movie.filme?.posterUrl || 'https://via.placeholder.com/120x180'"
+                 alt="movie poster" />
+          </div>
+
+          <button class="pill-btn gray" title="Watched">
+            <span class="icon">👁️</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- CATALOGO -->
     <div class="section">
-      <h3>Catalog</h3>
-      <span class="subtitle">Hardcoded movies (FilmSeed)</span>
+      <div class="section-title">
+        <h3>Catalog</h3>
+        <span class="subtitle">Hardcoded movies (FilmSeed)</span>
+      </div>
 
       <div class="cards">
         <div class="movie-card" *ngFor="let f of catalogo">
@@ -75,15 +132,13 @@
           <div class="movie-actions">
             <button class="action-btn"
                     (click)="addToWatchLater(f.id)"
-                    [disabled]="isSavingMovie || inWatchLater(f.id)"
-                    title="Add to Watch later">
+                    [disabled]="isSavingMovie || inWatchLater(f.id)">
               + Watch later
             </button>
 
             <button class="action-btn ghost"
                     (click)="addToWatched(f.id)"
-                    [disabled]="isSavingMovie || inWatched(f.id)"
-                    title="Mark as Watched">
+                    [disabled]="isSavingMovie || inWatched(f.id)">
               ✓ Watched
             </button>
 
@@ -94,32 +149,6 @@
               Remove
             </button>
           </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Watch later -->
-    <div class="section">
-      <h3>Watch later</h3>
-      <span class="subtitle">{{ watchLater.length }} Titles</span>
-
-      <div class="cards">
-        <div class="card" *ngFor="let movie of watchLater">
-          <img [src]="movie.filme?.posterUrl || 'https://via.placeholder.com/120x180'"
-               alt="movie poster" />
-        </div>
-      </div>
-    </div>
-
-    <!-- Watched -->
-    <div class="section">
-      <h3>Watched</h3>
-      <span class="subtitle">{{ watched.length }} Titles</span>
-
-      <div class="cards">
-        <div class="card" *ngFor="let movie of watched">
-          <img [src]="movie.filme?.posterUrl || 'https://via.placeholder.com/120x180'"
-               alt="movie poster" />
         </div>
       </div>
     </div>
@@ -149,17 +178,15 @@
   </div>
 </div>
 
-<!-- DELETE ACCOUNT MODAL (similar to Manage Account modal) -->
+<!-- DELETE ACCOUNT MODAL -->
 <div class="modal-overlay" *ngIf="isDeleting" (click)="closeDeleteConfirm()">
   <div class="modal-box" (click)="$event.stopPropagation()">
     <button class="modal-close" (click)="closeDeleteConfirm()">×</button>
 
     <h3>Delete account</h3>
-
     <p class="delete-info">Para apagar a sua conta escreva <strong>delete</strong></p>
 
     <form (ngSubmit)="confirmDelete()">
-      <!-- removed the English label as requested; input keeps an accessible aria-label in Portuguese -->
       <input id="deleteInput"
              name="deleteInput"
              type="text"
@@ -168,10 +195,18 @@
              aria-label="Escreva 'delete' para confirmar" />
 
       <div class="modal-actions">
-        <button type="submit" class="danger-btn" [disabled]="(deleteInput || '').trim().toLowerCase() !== deleteRequiredText || isDeletingSaving">
+        <button type="submit"
+                class="danger-btn"
+                [disabled]="(deleteInput || '').trim().toLowerCase() !== deleteRequiredText || isDeletingSaving">
           Confirm
         </button>
-        <button type="button" class="cancel-btn" (click)="closeDeleteConfirm()" [disabled]="isDeletingSaving">Cancel</button>
+
+        <button type="button"
+                class="cancel-btn"
+                (click)="closeDeleteConfirm()"
+                [disabled]="isDeletingSaving">
+          Cancel
+        </button>
       </div>
     </form>
   </div>
