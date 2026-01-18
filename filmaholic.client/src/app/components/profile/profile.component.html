@@ -40,6 +40,29 @@
         </div>
       </div>
 
+      <!-- XP / Level block placed below Statistics -->
+      <div class="xp-level">
+        <h3>Progress</h3>
+
+        <div class="stat-row">
+          <span>XP</span>
+          <strong>{{ xp }}</strong>
+        </div>
+
+        <div class="stat-row">
+          <span>Level</span>
+          <strong>{{ level }}</strong>
+        </div>
+
+        <div class="xp-bar" aria-hidden="true">
+          <div class="xp-fill" [style.width.%]="(xp % 10) * 10"></div>
+        </div>
+
+        <div class="xp-text">
+          Next level in {{ 10 - (xp % 10) }} XP
+        </div>
+      </div>
+
       <div class="list-counts">
         <div class="stat-row">
           <span>Watch later</span>
@@ -58,7 +81,9 @@
 
     <div class="profile-info">
       <h2>{{ userName }}</h2>
-      <span class="joined">Joined · {{ joined }}</span>
+      <div class="meta-row">
+        <span class="joined">Joined · {{ joined }}</span>
+      </div>
       <p class="bio">{{ bio }}</p>
     </div>
 

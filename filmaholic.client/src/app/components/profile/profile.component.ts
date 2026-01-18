@@ -16,6 +16,10 @@ export class ProfileComponent implements OnInit {
   joined = '14 hours ago';
   bio = 'Lorem ipsum dolor sit amet consectetur adipisicing elit. Quisque faucibus ex sapien vitae pellentesque sem placerat.';
 
+  // XP / Level
+  xp = 0;
+  level = 0;
+
   private apiBase = 'https://localhost:7277/api/Profile';
 
   catalogo: Filme[] = [];
@@ -94,6 +98,10 @@ export class ProfileComponent implements OnInit {
           if (res?.dataCriacao) {
             this.joined = new Date(res.dataCriacao).toLocaleString();
           }
+
+          // XP / Level
+          this.xp = res?.xp ?? 0;
+          this.level = Math.floor(this.xp / 10);
         },
         error: (err) => console.warn('Failed to load profile from API; keeping local values.', err)
       });
