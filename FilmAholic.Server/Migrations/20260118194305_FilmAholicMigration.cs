@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace FilmAholic.Server.Migrations
 {
     /// <inheritdoc />
-    public partial class initialCreate : Migration
+    public partial class FilmAholicMigration : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -58,6 +58,25 @@ namespace FilmAholic.Server.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_AspNetUsers", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Desafios",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    DataInicio = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    DataFim = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    Descricao = table.Column<string>(type: "nvarchar(2000)", maxLength: 2000, nullable: false),
+                    Ativo = table.Column<bool>(type: "bit", nullable: false),
+                    Genero = table.Column<string>(type: "nvarchar(150)", maxLength: 150, nullable: false),
+                    QuantidadeNecessaria = table.Column<int>(type: "int", nullable: false),
+                    Xp = table.Column<int>(type: "int", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Desafios", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
@@ -197,6 +216,34 @@ namespace FilmAholic.Server.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "UserDesafios",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    UtilizadorId = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    DesafioId = table.Column<int>(type: "int", nullable: false),
+                    QuantidadeProgresso = table.Column<int>(type: "int", nullable: false, defaultValue: 0),
+                    DataAtualizacao = table.Column<DateTime>(type: "datetime2", nullable: false, defaultValueSql: "CURRENT_TIMESTAMP")
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_UserDesafios", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_UserDesafios_AspNetUsers_UtilizadorId",
+                        column: x => x.UtilizadorId,
+                        principalTable: "AspNetUsers",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_UserDesafios_Desafios_DesafioId",
+                        column: x => x.DesafioId,
+                        principalTable: "Desafios",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "UserMovies",
                 columns: table => new
                 {
@@ -289,6 +336,22 @@ namespace FilmAholic.Server.Migrations
                 filter: "[NormalizedUserName] IS NOT NULL");
 
             migrationBuilder.CreateIndex(
+                name: "IX_Desafios_Ativo",
+                table: "Desafios",
+                column: "Ativo");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_UserDesafios_DesafioId",
+                table: "UserDesafios",
+                column: "DesafioId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_UserDesafios_UtilizadorId_DesafioId",
+                table: "UserDesafios",
+                columns: new[] { "UtilizadorId", "DesafioId" },
+                unique: true);
+
+            migrationBuilder.CreateIndex(
                 name: "IX_UserMovies_FilmeId",
                 table: "UserMovies",
                 column: "FilmeId");
@@ -324,6 +387,9 @@ namespace FilmAholic.Server.Migrations
                 name: "AspNetUserTokens");
 
             migrationBuilder.DropTable(
+                name: "UserDesafios");
+
+            migrationBuilder.DropTable(
                 name: "UserMovies");
 
             migrationBuilder.DropTable(
@@ -331,6 +397,9 @@ namespace FilmAholic.Server.Migrations
 
             migrationBuilder.DropTable(
                 name: "AspNetRoles");
+
+            migrationBuilder.DropTable(
+                name: "Desafios");
 
             migrationBuilder.DropTable(
                 name: "Filmes");

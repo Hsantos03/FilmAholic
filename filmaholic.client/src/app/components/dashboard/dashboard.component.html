@@ -2,7 +2,31 @@
   <h1>Bem-vindo ao FilmAholic, {{ userName }}!</h1>
   <p>Login realizado com sucesso.</p>
 
-  <button class="profile-btn" routerLink="/profile">
-    Profile
-  </button>
+  <div class="dashboard-actions">
+    <button class="profile-btn" routerLink="/profile">
+      Profile
+    </button>
+
+    <button class="primary-btn" (click)="openDesafios()">
+      Desafios Semanais
+    </button>
+  </div>
+</div>
+
+<!-- Desafios Semanais modal (design matches Profile "Manage Account") -->
+<div class="modal-overlay" *ngIf="isDesafiosOpen" (click)="closeDesafios()">
+  <div class="modal-box" (click)="$event.stopPropagation()">
+    <button class="modal-close" (click)="closeDesafios()">×</button>
+
+    <h3>Desafios Semanais</h3>
+
+    <!-- Empty body — content to be provided later -->
+    <div class="desafios-body">
+      <!-- Intentionally left blank -->
+    </div>
+
+    <div class="modal-actions">
+      <button class="save-btn" (click)="closeDesafios()">Close</button>
+    </div>
+  </div>
 </div>
