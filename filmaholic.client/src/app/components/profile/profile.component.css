@@ -208,7 +208,7 @@
   gap: 14px;
 }
 
-/*Capas dos Filmes*/
+/* Posters dos Filmes */
 .mini-posters {
   display: flex;
   gap: 10px;
@@ -224,13 +224,11 @@
     display: block;
   }
 
-
 .list-box .mini-posters img,
 .list-box img {
   max-width: 44px;
   max-height: 64px;
 }
-
 
 .pill-btn {
   width: 44px;
@@ -251,7 +249,6 @@
     font-size: 18px;
   }
 
-
 .section {
   margin-top: 26px;
 }
@@ -267,7 +264,6 @@
     margin: 0;
     color: #fff;
   }
-
 
 .cards {
   display: flex;
@@ -351,6 +347,7 @@
     cursor: not-allowed;
   }
 
+/* PopUp Manage Account */
 .modal-overlay {
   position: fixed;
   inset: 0;
@@ -677,3 +674,179 @@
   .list-modal-box::-webkit-scrollbar-thumb:hover {
     background: rgba(0, 123, 255, 0.7);
   }
+
+/* ===========================
+   ✅ FAVORITES (mais apelativo)
+   =========================== */
+
+.fav-section {
+  margin-top: 8px;
+}
+
+.fav-header {
+  width: 100%;
+  max-width: 980px;
+  margin: 10px auto 18px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 14px;
+}
+
+.fav-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  color: #ddd;
+  font-size: 0.95em;
+}
+
+.fav-counter {
+  color: #aaa;
+  font-size: 0.85em;
+}
+
+/* 2 cards lado a lado */
+.fav-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px;
+  width: 100%;
+  max-width: 980px;
+  margin: 0 auto;
+}
+
+.fav-card {
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 16px;
+  padding: 16px 16px 14px;
+}
+
+.fav-card-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 12px;
+}
+
+  .fav-card-head h4 {
+    margin: 0;
+    color: #fff;
+    font-size: 16px;
+    font-weight: 800;
+  }
+
+.fav-mini {
+  color: #aaa;
+  font-size: 0.85em;
+}
+
+/* Posters em grelha */
+.fav-posters-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 10px;
+  align-items: start;
+}
+
+.fav-poster {
+  width: 100%;
+  aspect-ratio: 2 / 3;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid rgba(255,255,255,0.10);
+  background: rgba(255,255,255,0.06);
+}
+
+  .fav-poster img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+
+/* Actors input alinhado */
+.fav-actor-add {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+  .fav-actor-add input {
+    flex: 1;
+    padding: 10px 12px;
+    border-radius: 12px;
+    border: 1px solid rgba(255,255,255,0.10);
+    background: rgba(255,255,255,0.06);
+    color: #fff;
+  }
+
+/* Chips */
+.fav-actors {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.fav-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.10);
+  padding: 8px 10px;
+  border-radius: 999px;
+  color: #fff;
+}
+
+  .fav-chip button {
+    background: transparent;
+    border: none;
+    color: #ff8a8a;
+    cursor: pointer;
+    font-size: 16px;
+    line-height: 1;
+  }
+
+/* Estado vazio */
+.fav-empty {
+  color: #ddd;
+  font-size: 0.95em;
+  text-align: center;
+  padding: 18px 10px;
+  background: rgba(0,0,0,0.12);
+  border: 1px dashed rgba(255,255,255,0.12);
+  border-radius: 14px;
+}
+
+.fav-empty-hint {
+  display: inline-block;
+  margin-top: 6px;
+  color: #aaa;
+  font-size: 0.9em;
+}
+
+/* botão Favorite selecionado */
+.fav-btn.selected {
+  background: rgba(255, 47, 109, 0.25);
+  box-shadow: 0 0 0 2px rgba(255,47,109,0.18) inset;
+}
+
+/* Responsivo */
+@media (max-width: 1050px) {
+  .fav-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .fav-posters-grid {
+    grid-template-columns: repeat(6, 1fr);
+  }
+}
+
+@media (max-width: 650px) {
+  .fav-posters-grid {
+    grid-template-columns: repeat(5, 1fr);
+  }
+}

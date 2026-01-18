@@ -3,6 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { AuthService } from '../../services/auth.service';
 import { UserMoviesService } from '../../services/user-movies.service';
 import { Filme, FilmesService } from '../../services/filmes.service';
+import { FavoritesService, FavoritosDTO } from '../../services/favorites.service';
 
 @Component({
   selector: 'app-profile',
@@ -11,21 +12,25 @@ import { Filme, FilmesService } from '../../services/filmes.service';
 })
 export class ProfileComponent implements OnInit {
 
-  userName = localStorage.getItem('userName') || 'RandomUser';  
+  userName = localStorage.getItem('userName') || 'RandomUser';
   joined = '14 hours ago';
   bio = 'Lorem ipsum dolor sit amet consectetur adipisicing elit. Quisque faucibus ex sapien vitae pellentesque sem placerat.';
 
   private apiBase = 'https://localhost:7277/api/Profile';
 
   catalogo: Filme[] = [];
-
   watchLater: any[] = [];
   watched: any[] = [];
 
   totalHours = 0;
   stats: any;
 
-  favoriteMovieIds: number[] = [];
+  // ✅ FR06 - Favorites
+  favoritosFilmes: number[] = [];
+  favoritosAtores: string[] = [];
+  novoAtor = '';
+  showOnlyFavorites = false;
+  isSavingFavorites = false;
 
   // Modal / edit state
   isEditing = false;
@@ -42,27 +47,29 @@ export class ProfileComponent implements OnInit {
   showListModal = false;
   currentListType: 'watchLater' | 'watched' | null = null;
 
+  // movies saving state
   isSavingMovie = false;
 
   constructor(
     private http: HttpClient,
     private authService: AuthService,
     private userMoviesService: UserMoviesService,
-    private filmesService: FilmesService
-  ) {}
+    private filmesService: FilmesService,
+    private favoritesService: FavoritesService
+  ) { }
 
   ngOnInit(): void {
     const userId = localStorage.getItem('user_id');
 
     this.loadCatalogo();
     this.refreshAllListsAndStats();
+    this.loadFavorites();
 
     if (!userId) {
       console.warn('No user_id in localStorage â€” using fallback values.');
       return;
     }
 
-    // Call backend GET api/Profile/{id} to fetch user data
     this.http
       .get<any>(`${this.apiBase}/${encodeURIComponent(userId)}`, { withCredentials: true })
       .subscribe({
@@ -78,19 +85,19 @@ export class ProfileComponent implements OnInit {
             // Keep current userName as fallback
             this.userName = this.userName || 'User';
           }
-          
           this.bio = res?.bio ?? this.bio;
 
           if (res?.dataCriacao) {
             this.joined = new Date(res.dataCriacao).toLocaleString();
           }
         },
-        error: (err) => {
-          console.warn('Failed to load profile from API; keeping local values.', err);
-        }
+        error: (err) => console.warn('Failed to load profile from API; keeping local values.', err)
       });
   }
 
+  // -----------------------
+  // LOADERS (catalog/lists)
+  // -----------------------
   refreshAllListsAndStats(): void {
     this.loadLists();
     this.loadStats();
@@ -130,6 +137,9 @@ export class ProfileComponent implements OnInit {
     });
   }
 
+  // -----------------------
+  // FR05 - Watch later / Watched
+  // -----------------------
   addToWatchLater(filmeId: number): void {
     this.addMovieToList(filmeId, false);
   }
@@ -139,22 +149,21 @@ export class ProfileComponent implements OnInit {
   }
 
   removeFromLists(filmeId: number): void {
-    // Buscar o filme no catÃ¡logo pelo ID do seed
+    // Buscar o filme no catálogo pelo ID do seed
     const filme = this.catalogo.find(f => f.id === filmeId);
     if (!filme) return;
     
-    // Encontrar o UserMovie correspondente pelo tÃ­tulo
+    // Encontrar o UserMovie correspondente pelo título
     const userMovie = [...this.watchLater, ...this.watched].find(
       x => x?.filme?.titulo === filme.titulo || x?.filme?.Titulo === filme.titulo
     );
-    
+
     if (!userMovie || !userMovie.filmeId) {
       console.warn('Movie not found in user lists');
       return;
     }
-    
+
     this.isSavingMovie = true;
-    // Usar o ID real do filme na BD
     this.userMoviesService.removeMovie(userMovie.filmeId).subscribe({
       next: () => this.refreshAllListsAndStats(),
       error: (err) => console.warn('removeMovie failed', err),
@@ -172,17 +181,17 @@ export class ProfileComponent implements OnInit {
   }
 
   inWatchLater(filmeId: number): boolean {
-    // Buscar o filme no catÃ¡logo pelo ID do seed
+    // Buscar o filme no catálogo pelo ID do seed
     const filme = this.catalogo.find(f => f.id === filmeId);
     if (!filme) return false;
     
-    // Comparar por tÃ­tulo (mais confiÃ¡vel que ID)
+    // Comparar por título (mais confiável que ID)
     return this.watchLater?.some(x => x?.filme?.titulo === filme.titulo || 
                                       x?.filme?.Titulo === filme.titulo);
   }
 
   inWatched(filmeId: number): boolean {
-    // Buscar o filme no catÃ¡logo pelo ID do seed
+    // Buscar o filme no catálogo pelo ID do seed
     const filme = this.catalogo.find(f => f.id === filmeId);
     if (!filme) return false;
     
@@ -190,22 +199,90 @@ export class ProfileComponent implements OnInit {
                                    x?.filme?.Titulo === filme.titulo);
   }
 
-  toggleFavorite(movieId: number): void {
-    if (this.favoriteMovieIds.includes(movieId)) {
-      this.favoriteMovieIds = this.favoriteMovieIds.filter(id => id !== movieId);
-    } else if (this.favoriteMovieIds.length < 10) {
-      this.favoriteMovieIds.push(movieId);
+  // -----------------------
+  // ✅ FR06 - Favorites (Top 10)
+  // -----------------------
+  loadFavorites(): void {
+    this.favoritesService.getFavorites().subscribe({
+      next: (fav: FavoritosDTO) => {
+        this.favoritosFilmes = (fav?.filmes || []).slice(0, 10);
+        this.favoritosAtores = (fav?.atores || []).slice(0, 10);
+      },
+      error: () => {
+        this.favoritosFilmes = [];
+        this.favoritosAtores = [];
+      }
+    });
+  }
+
+  isFilmeFavorito(filmeId: number): boolean {
+    return this.favoritosFilmes.includes(filmeId);
+  }
+
+  toggleFavoriteFilme(filmeId: number): void {
+    const idx = this.favoritosFilmes.indexOf(filmeId);
+
+    if (idx >= 0) {
+      this.favoritosFilmes.splice(idx, 1);
+    } else {
+      if (this.favoritosFilmes.length >= 10) return;
+      this.favoritosFilmes.push(filmeId);
     }
+
+    this.saveFavorites();
   }
 
-  get favoriteMovies(): any[] {
-    return this.watched.filter(m =>
-      this.favoriteMovieIds.includes(m.FilmeId)
-    );
+  addAtorFavorito(): void {
+    const nome = (this.novoAtor || '').trim();
+    if (!nome) return;
+    if (this.favoritosAtores.includes(nome)) {
+      this.novoAtor = '';
+      return;
+    }
+    if (this.favoritosAtores.length >= 10) return;
+
+    this.favoritosAtores.push(nome);
+    this.novoAtor = '';
+    this.saveFavorites();
   }
 
+  removeAtorFavorito(nome: string): void {
+    this.favoritosAtores = this.favoritosAtores.filter(a => a !== nome);
+    this.saveFavorites();
+  }
+
+  private saveFavorites(): void {
+    this.isSavingFavorites = true;
+
+    const dto: FavoritosDTO = {
+      filmes: this.favoritosFilmes.slice(0, 10),
+      atores: this.favoritosAtores.slice(0, 10)
+    };
+
+    this.favoritesService.saveFavorites(dto).subscribe({
+      next: () => { },
+      error: (err) => console.warn('saveFavorites failed', err),
+      complete: () => (this.isSavingFavorites = false)
+    });
+  }
+
+  // ✅ sub-task: filtro (catálogo só favoritos)
+  get catalogoFiltrado(): Filme[] {
+    if (!this.showOnlyFavorites) return this.catalogo;
+    return (this.catalogo || []).filter(f => this.favoritosFilmes.includes(f.id));
+  }
+
+  // para renderizar posters do Top10 de forma bonita
+  get favoritosFilmesDetalhes(): Filme[] {
+    return this.favoritosFilmes
+      .map(id => this.catalogo.find(f => f.id === id))
+      .filter((x): x is Filme => !!x);
+  }
+
+  // -----------------------
+  // Manage account modal
+  // -----------------------
   openEdit(): void {
-    // populate the edit fields with current values
     this.editUserName = this.userName;
     this.editBio = this.bio;
     this.isEditing = true;
@@ -216,7 +293,6 @@ export class ProfileComponent implements OnInit {
   }
 
   saveChanges(): void {
-    // Update UI immediately
     this.userName = this.editUserName;
     this.bio = this.editBio;
     this.isEditing = false;
@@ -231,15 +307,14 @@ export class ProfileComponent implements OnInit {
         { withCredentials: true }
       )
       .subscribe({
-        next: () => {
-        },
-        error: (err) => {
-          console.warn('Failed to persist profile changes to API.', err);
-        }
+        next: () => { },
+        error: (err) => console.warn('Failed to persist profile changes to API.', err)
       });
   }
 
-  // Delete account related methods
+  // -----------------------
+  // Delete account modal
+  // -----------------------
   openDeleteConfirm(): void {
     this.deleteInput = '';
     this.isDeleting = true;
@@ -250,25 +325,17 @@ export class ProfileComponent implements OnInit {
   }
 
   confirmDelete(): void {
-    if ((this.deleteInput || '').trim().toLowerCase() !== this.deleteRequiredText) {
-      return;
-    }
+    if ((this.deleteInput || '').trim().toLowerCase() !== this.deleteRequiredText) return;
 
     const userId = localStorage.getItem('user_id');
-    if (!userId) {
-      console.warn('No user_id in localStorage; cannot delete account.');
-      return;
-    }
+    if (!userId) return;
 
     this.isDeletingSaving = true;
+
     this.http.delete<any>(`${this.apiBase}/${encodeURIComponent(userId)}`, { withCredentials: true })
       .subscribe({
-        next: () => {
-          this.authService.logout();
-        },
-        error: (err) => {
-          console.warn('Failed to delete account via API.', err);
-        },
+        next: () => this.authService.logout(),
+        error: (err) => console.warn('Failed to delete account via API.', err),
         complete: () => {
           this.isDeletingSaving = false;
           this.isDeleting = false;
