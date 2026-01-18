@@ -3,18 +3,12 @@
   <button class="edit-btn" (click)="openEdit()">✎</button>
 </div>
 
-<!-- Body do Perfil -->
 <div class="profile-body">
 
   <!-- LEFT COLUMN -->
   <div class="profile-left">
+    <div class="avatar"><span>👤</span></div>
 
-    <!-- Avatar -->
-    <div class="avatar">
-      <span>👤</span>
-    </div>
-
-    <!-- Sidebar -->
     <aside class="profile-sidebar">
       <button class="primary-btn" (click)="openEdit()">Manage Account</button>
 
@@ -62,17 +56,15 @@
   <!-- RIGHT COLUMN -->
   <section class="profile-main">
 
-    <!-- Informação do Perfil -->
     <div class="profile-info">
       <h2>{{ userName }}</h2>
       <span class="joined">Joined · {{ joined }}</span>
       <p class="bio">{{ bio }}</p>
     </div>
 
-    <!-- LISTAS como estão no mockup -->
+    <!-- LISTAS -->
     <div class="lists-top">
 
-      <!-- WATCH LATAR LIST -->
       <div class="list-box">
         <div class="list-box-left">
           <h3>Watch later</h3>
@@ -92,7 +84,6 @@
         </div>
       </div>
 
-      <!-- Watched LIST -->
       <div class="list-box">
         <div class="list-box-left">
           <h3>Watched</h3>
@@ -113,7 +104,75 @@
       </div>
     </div>
 
-    <!-- CATáLOGO -->
+    <!-- ✅ FR06 - FAVORITES -->
+    <div class="section fav-section">
+      <div class="section-title">
+        <h3>Favorites</h3>
+        <span class="subtitle">Top 10 Movies & Actors</span>
+      </div>
+
+      <div class="fav-filter">
+        <label class="fav-toggle">
+          <input type="checkbox" [(ngModel)]="showOnlyFavorites" />
+          <span>Show only favorites in catalog</span>
+        </label>
+
+        <span class="fav-counter">
+          {{ favoritosFilmes.length }}/10 movies · {{ favoritosAtores.length }}/10 actors
+        </span>
+      </div>
+
+      <!-- Top 10 Movies posters -->
+      <div class="fav-block">
+        <h4 class="fav-h">Top 10 Movies</h4>
+
+        <div class="cards fav-cards">
+          <div class="fav-poster"
+               *ngFor="let f of favoritosFilmesDetalhes"
+               title="Favorite movie">
+            <img [src]="f.posterUrl" [alt]="f.titulo" />
+          </div>
+
+          <div class="fav-empty" *ngIf="favoritosFilmesDetalhes.length === 0">
+            No favorite movies yet.
+          </div>
+        </div>
+
+        <div class="fav-hint">Tip: click “★ Favorite” in the catalog to add/remove (max 10).</div>
+      </div>
+
+      <!-- Top 10 Actors -->
+      <div class="fav-block">
+        <h4 class="fav-h">Top 10 Actors</h4>
+
+        <div class="fav-actor-add">
+          <input type="text"
+                 [(ngModel)]="novoAtor"
+                 placeholder="Add actor name..."
+                 [disabled]="isSavingFavorites || favoritosAtores.length >= 10" />
+
+          <button type="button"
+                  class="action-btn"
+                  (click)="addAtorFavorito()"
+                  [disabled]="isSavingFavorites || !novoAtor.trim() || favoritosAtores.length >= 10">
+            Add
+          </button>
+        </div>
+
+        <div class="fav-actors">
+          <div class="fav-chip" *ngFor="let a of favoritosAtores">
+            <span>{{ a }}</span>
+            <button type="button" (click)="removeAtorFavorito(a)" [disabled]="isSavingFavorites">×</button>
+          </div>
+
+          <div class="fav-empty" *ngIf="favoritosAtores.length === 0">
+            No favorite actors yet.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CATÁLOGO -->
     <div class="section">
       <div class="section-title">
         <h3>Catalog</h3>
@@ -121,7 +180,7 @@
       </div>
 
       <div class="cards">
-        <div class="movie-card" *ngFor="let f of catalogo">
+        <div class="movie-card" *ngFor="let f of catalogoFiltrado">
           <img class="poster" [src]="f.posterUrl" [alt]="f.titulo" />
 
           <div class="movie-meta">
@@ -147,6 +206,15 @@
                     (click)="removeFromLists(f.id)"
                     [disabled]="isSavingMovie">
               Remove
+            </button>
+
+            <!-- ✅ Favorite toggle -->
+            <button class="action-btn ghost fav-btn"
+                    type="button"
+                    (click)="toggleFavoriteFilme(f.id)"
+                    [disabled]="isSavingFavorites"
+                    [class.selected]="isFilmeFavorito(f.id)">
+              ★ Favorite
             </button>
           </div>
         </div>
