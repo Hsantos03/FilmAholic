@@ -26,10 +26,9 @@
   flex: 1;
   padding-top: 75px;
   max-width: 980px;
-  margin-left: 150px; /* move bloco da direita um pouco para a direita */
+  margin-left: 150px;
 }
 
-/* Edit button */
 .edit-btn {
   position: absolute;
   right: 20px;
@@ -138,7 +137,7 @@
   color: #ddd;
 }
 
-/* Profile info */
+/* Informações do Perfil do Utilizador */
 .profile-info h2 {
   margin: 0 0 6px;
   color: #fff;
@@ -157,7 +156,7 @@
   max-width: 820px;
 }
 
-/* Lists top (mockup style) */
+/* Estilo do MockUp feito */
 .lists-top {
   display: flex;
   flex-direction: column;
@@ -199,7 +198,7 @@
   gap: 14px;
 }
 
-/* ✅ FIX: mini posters voltam ao tamanho certo */
+/*Posters dos Filmes*/
 .mini-posters {
   display: flex;
   gap: 10px;
@@ -215,14 +214,14 @@
     display: block;
   }
 
-/* ✅ FIX extra: garante que nenhum style global explode imagens dentro do list-box */
+
 .list-box .mini-posters img,
 .list-box img {
   max-width: 44px;
   max-height: 64px;
 }
 
-/* “icon button” like mockup */
+
 .pill-btn {
   width: 44px;
   height: 44px;
@@ -242,7 +241,7 @@
     font-size: 18px;
   }
 
-/* Sections */
+
 .section {
   margin-top: 26px;
 }
@@ -259,7 +258,7 @@
     color: #fff;
   }
 
-/* Horizontal cards */
+
 .cards {
   display: flex;
   gap: 14px;
@@ -343,7 +342,7 @@
     cursor: not-allowed;
   }
 
-/* Modal */
+/* PopUp Manage Account*/
 .modal-overlay {
   position: fixed;
   inset: 0;
@@ -354,7 +353,7 @@
   z-index: 2000;
 }
 
-/* ✅ NOVO: modal cinzento medio/escuro */
+
 .modal-box {
   background: #4a4a4a;
   width: 92%;
@@ -365,7 +364,8 @@
   box-shadow: 0 20px 55px rgba(0,0,0,0.45);
 }
 
-  /* ✅ Títulos a branco */
+  
+  /* Títulos com cor branco */
   .modal-box h3,
   .modal-box label {
     color: #fff;
@@ -382,7 +382,7 @@
   color: #fff;
 }
 
-/* ✅ Inputs brancos com texto preto */
+
 .modal-box input,
 .modal-box textarea {
   width: 100%;
