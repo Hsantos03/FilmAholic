@@ -104,14 +104,14 @@
       </div>
     </div>
 
-    <!-- ✅ FR06 - FAVORITES -->
+    <!-- ✅ FAVORITES (mais organizado) -->
     <div class="section fav-section">
       <div class="section-title">
         <h3>Favorites</h3>
         <span class="subtitle">Top 10 Movies & Actors</span>
       </div>
 
-      <div class="fav-filter">
+      <div class="fav-header">
         <label class="fav-toggle">
           <input type="checkbox" [(ngModel)]="showOnlyFavorites" />
           <span>Show only favorites in catalog</span>
@@ -122,53 +122,65 @@
         </span>
       </div>
 
-      <!-- Top 10 Movies posters -->
-      <div class="fav-block">
-        <h4 class="fav-h">Top 10 Movies</h4>
+      <div class="fav-grid">
 
-        <div class="cards fav-cards">
-          <div class="fav-poster"
-               *ngFor="let f of favoritosFilmesDetalhes"
-               title="Favorite movie">
-            <img [src]="f.posterUrl" [alt]="f.titulo" />
+        <!-- Top 10 Movies -->
+        <div class="fav-card">
+          <div class="fav-card-head">
+            <h4>Top 10 Movies</h4>
+            <span class="fav-mini">{{ favoritosFilmes.length }}/10</span>
           </div>
 
-          <div class="fav-empty" *ngIf="favoritosFilmesDetalhes.length === 0">
-            No favorite movies yet.
+          <div class="fav-posters-grid" *ngIf="favoritosFilmesDetalhes.length > 0; else noFavMovies">
+            <div class="fav-poster" *ngFor="let f of favoritosFilmesDetalhes" title="Favorite movie">
+              <img [src]="f.posterUrl" [alt]="f.titulo" />
+            </div>
           </div>
+
+          <ng-template #noFavMovies>
+            <div class="fav-empty">
+              No favorite movies yet.<br />
+              <span class="fav-empty-hint">Use “★ Favorite” in the catalog (max 10).</span>
+            </div>
+          </ng-template>
         </div>
 
-        <div class="fav-hint">Tip: click “★ Favorite” in the catalog to add/remove (max 10).</div>
-      </div>
-
-      <!-- Top 10 Actors -->
-      <div class="fav-block">
-        <h4 class="fav-h">Top 10 Actors</h4>
-
-        <div class="fav-actor-add">
-          <input type="text"
-                 [(ngModel)]="novoAtor"
-                 placeholder="Add actor name..."
-                 [disabled]="isSavingFavorites || favoritosAtores.length >= 10" />
-
-          <button type="button"
-                  class="action-btn"
-                  (click)="addAtorFavorito()"
-                  [disabled]="isSavingFavorites || !novoAtor.trim() || favoritosAtores.length >= 10">
-            Add
-          </button>
-        </div>
-
-        <div class="fav-actors">
-          <div class="fav-chip" *ngFor="let a of favoritosAtores">
-            <span>{{ a }}</span>
-            <button type="button" (click)="removeAtorFavorito(a)" [disabled]="isSavingFavorites">×</button>
+        <!-- Top 10 Actors -->
+        <div class="fav-card">
+          <div class="fav-card-head">
+            <h4>Top 10 Actors</h4>
+            <span class="fav-mini">{{ favoritosAtores.length }}/10</span>
           </div>
 
-          <div class="fav-empty" *ngIf="favoritosAtores.length === 0">
-            No favorite actors yet.
+          <div class="fav-actor-add">
+            <input type="text"
+                   [(ngModel)]="novoAtor"
+                   placeholder="Add actor name..."
+                   [disabled]="isSavingFavorites || favoritosAtores.length >= 10" />
+
+            <button type="button"
+                    class="action-btn"
+                    (click)="addAtorFavorito()"
+                    [disabled]="isSavingFavorites || !novoAtor.trim() || favoritosAtores.length >= 10">
+              Add
+            </button>
           </div>
+
+          <div class="fav-actors" *ngIf="favoritosAtores.length > 0; else noFavActors">
+            <div class="fav-chip" *ngFor="let a of favoritosAtores">
+              <span>{{ a }}</span>
+              <button type="button" (click)="removeAtorFavorito(a)" [disabled]="isSavingFavorites">×</button>
+            </div>
+          </div>
+
+          <ng-template #noFavActors>
+            <div class="fav-empty">
+              No favorite actors yet.<br />
+              <span class="fav-empty-hint">Add up to 10.</span>
+            </div>
+          </ng-template>
         </div>
+
       </div>
     </div>
 
@@ -208,7 +220,6 @@
               Remove
             </button>
 
-            <!-- ✅ Favorite toggle -->
             <button class="action-btn ghost fav-btn"
                     type="button"
                     (click)="toggleFavoriteFilme(f.id)"
