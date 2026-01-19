@@ -29,24 +29,121 @@
 
     <!-- Formulário de registo -->
     <form *ngIf="!showVerificationMessage" (ngSubmit)="onRegister()">
+      <input
+        type="text"
+        name="userName"
+        [(ngModel)]="user.userName"
+        placeholder="Username"
+        required
+        pattern="^[a-zA-Z0-9_]{3,}$"
+        title="Mínimo 3 caracteres, apenas letras, números e underscore (_)">
+
       <div class="input-row" style="display: flex; gap: 10px;">
-        <input type="text" name="nome" [(ngModel)]="user.nome" placeholder="Nome" required>
-        <input type="text" name="sobrenome" [(ngModel)]="user.sobrenome" placeholder="Sobrenome" required>
+        <input
+          type="text"
+          name="nome"
+          [(ngModel)]="user.nome"
+          placeholder="Nome"
+          required
+          pattern="^[A-Za-zÀ-ÿ\s]+$"
+          title="Só são permitidas letras e espaços (ex: João, Ana Maria)">
+
+        <input
+          type="text"
+          name="sobrenome"
+          [(ngModel)]="user.sobrenome"
+          placeholder="Sobrenome"
+          required
+          pattern="^[A-Za-zÀ-ÿ\s]+$"
+          title="Só são permitidas letras e espaços (ex: Almeida, Dembélé)">
       </div>
 
-      <input type="email" name="email" [(ngModel)]="user.email" placeholder="Email" required>
+      <input
+        type="email"
+        name="email"
+        [(ngModel)]="user.email"
+        placeholder="Email"
+        required
+        pattern="^[^\\s@]+@[^\\s@]+\\.com$"
+        title="Introduza um email no formato nome@dominio.com">
 
-      <input type="date" name="dataNascimento" [(ngModel)]="user.dataNascimento" required>
+      <input
+        type="date"
+        name="dataNascimento"
+        [(ngModel)]="user.dataNascimento"
+        [max]="todayISO"
+        required
+        title="A data não pode ser futura">
 
-      <input type="password" name="password" [(ngModel)]="user.password" placeholder="Password" required>
+      <div class="password-container">
+        <input
+          type="password"
+          name="password"
+          [(ngModel)]="user.password"
+          (input)="checkPasswordRequirements()"
+          placeholder="Password"
+          required
+          class="password-input"
+          [class.password-invalid]="user.password && !isPasswordValid">
+        
+        <!-- Mensagem de erro se tentar submeter sem password válida -->
+        <div *ngIf="showPasswordError && !isPasswordValid" class="password-error-message">
+          Por favor, certifique-se de que a password cumpre todos os requisitos acima.
+        </div>
+
+        <!-- Lista de requisitos da password -->
+        <div *ngIf="user.password" class="password-requirements">
+          <div class="password-requirements-title">
+            A password deve conter:
+          </div>
+          <ul class="password-requirements-list">
+            <li [class.requirement-met]="passwordRequirements.minLength" [class.requirement-unmet]="!passwordRequirements.minLength">
+              <span class="requirement-icon">{{ passwordRequirements.minLength ? '✓' : '✗' }}</span>
+              Pelo menos 8 caracteres
+            </li>
+            <li [class.requirement-met]="passwordRequirements.hasUppercase" [class.requirement-unmet]="!passwordRequirements.hasUppercase">
+              <span class="requirement-icon">{{ passwordRequirements.hasUppercase ? '✓' : '✗' }}</span>
+              Uma letra maiúscula
+            </li>
+            <li [class.requirement-met]="passwordRequirements.hasLowercase" [class.requirement-unmet]="!passwordRequirements.hasLowercase">
+              <span class="requirement-icon">{{ passwordRequirements.hasLowercase ? '✓' : '✗' }}</span>
+              Uma letra minúscula
+            </li>
+            <li [class.requirement-met]="passwordRequirements.hasDigit" [class.requirement-unmet]="!passwordRequirements.hasDigit">
+              <span class="requirement-icon">{{ passwordRequirements.hasDigit ? '✓' : '✗' }}</span>
+              Um número
+            </li>
+            <li [class.requirement-met]="passwordRequirements.hasSpecialChar" [class.requirement-unmet]="!passwordRequirements.hasSpecialChar">
+              <span class="requirement-icon">{{ passwordRequirements.hasSpecialChar ? '✓' : '✗' }}</span>
+              Um símbolo especial (!&#64;#$%^&amp;*...)
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="password-container">
+        <input
+          type="password"
+          name="confirmPassword"
+          [(ngModel)]="user.confirmPassword"
+          (input)="checkPasswordMatch()"
+          placeholder="Confirmar Password"
+          required
+          class="password-input"
+          [class.password-invalid]="user.confirmPassword && user.password !== user.confirmPassword">
+        
+        <div *ngIf="showPasswordMismatch || (user.confirmPassword && user.password !== user.confirmPassword)" class="password-error-message">
+          As passwords não coincidem.
+        </div>
+      </div>
 
       <button type="submit"
-              [disabled]="isLoading"
-              style="width: 100%; padding: 15px; background-color: #007bff; color: white; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; opacity: isLoading ? 0.6 : 1;">
+              [disabled]="isLoading || !isPasswordValid"
+              [style.opacity]="isLoading || !isPasswordValid ? 0.6 : 1"
+              class="btn-register">
         {{ isLoading ? 'A processar...' : 'Criar Conta' }}
       </button>
 
-      <!-- Divisor para registo social -->
       <div style="display: flex; align-items: center; margin: 20px 0;">
         <div style="flex: 1; height: 1px; background-color: #ddd;"></div>
         <span style="padding: 0 15px; color: #666; font-size: 14px;">ou</span>

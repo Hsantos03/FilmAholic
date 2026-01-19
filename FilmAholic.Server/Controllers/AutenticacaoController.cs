@@ -38,7 +38,7 @@ namespace FilmAholic.Server.Controllers
 
             var user = new Utilizador
             {
-                UserName = model.Email,
+                UserName = !string.IsNullOrWhiteSpace(model.UserName) ? model.UserName : model.Email,
                 Email = model.Email,
                 Nome = model.Nome,
                 Sobrenome = model.Sobrenome,
@@ -407,6 +407,7 @@ namespace FilmAholic.Server.Controllers
     // DTOs (Objetos de transferência de dados) para o Controller receber do Angular
     public class RegistoRequest
     {
+        public string UserName { get; set; } = "";
         public string Email { get; set; } = "";
         public string Password { get; set; } = "";
         public string Nome { get; set; } = "";
