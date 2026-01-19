@@ -246,7 +246,7 @@
   color: #ddd;
 }
 
-/* InformaÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â§ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Âµes do Perfil do Utilizador */
+/* Informacoes do Perfil do Utilizador */
 .profile-info h2 {
   margin: 0 0 6px;
   color: #fff;
@@ -392,7 +392,7 @@
     border-radius: 4px;
   }
 
-/* CatÃƒÂ¡logo dos Filmes */
+/* Catalogo dos Filmes */
 .movie-card {
   min-width: 280px;
   border-radius: 14px;
@@ -1129,4 +1129,3 @@
     grid-template-columns: repeat(5, 1fr);
   }
 }
-F

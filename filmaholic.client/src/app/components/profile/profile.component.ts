@@ -32,7 +32,7 @@ export class ProfileComponent implements OnInit {
   totalHours = 0;
   stats: any;
 
-  // âœ… FR06 - Favorites
+  // FR06 - Favorites
   favoritosFilmes: number[] = [];
   favoritosAtores: string[] = [];
   novoAtor = '';
@@ -264,7 +264,7 @@ export class ProfileComponent implements OnInit {
   }
 
   // -----------------------
-  // âœ… FR06 - Favorites (Top 10)
+  // FR06 - Favorites (Top 10)
   // -----------------------
 
   loadFavorites(): void {
@@ -451,7 +451,7 @@ export class ProfileComponent implements OnInit {
     if (!file) return;
 
     if (file.size > 5 * 1024 * 1024) {
-      alert('A imagem Ã© muito grande. Por favor, escolha uma imagem menor que 5MB.');
+      alert('A imagem e muito grande. Por favor, escolha uma imagem menor que 5MB.');
       return;
     }
 
@@ -467,7 +467,7 @@ export class ProfileComponent implements OnInit {
     if (!file) return;
 
     if (file.size > 5 * 1024 * 1024) {
-      alert('A imagem Ã© muito grande. Por favor, escolha uma imagem menor que 5MB.');
+      alert('A imagem e muito grande. Por favor, escolha uma imagem menor que 5MB.');
       return;
     }
 

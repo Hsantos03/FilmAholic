@@ -1,7 +1,7 @@
 <!-- Header -->
 <div class="profile-header" [style.background-image]="capaUrl ? 'url(' + capaUrl + ')' : 'none'" [style.background-size]="'cover'" [style.background-position]="'center'">
-  <button class="back-btn" (click)="goToHome()" title="Voltar Ã  homepage">â†</button>
-  <button class="edit-btn" (click)="openEditCapa()" title="Editar capa">âœŽ</button>
+  <button class="back-btn" (click)="goToHome()" title="Voltar ÃƒÂ  homepage">←</button>
+  <button class="edit-btn" (click)="openEditCapa()" title="Editar capa">✎</button>
 </div>
 
 <div class="profile-body">
@@ -10,8 +10,8 @@
   <div class="profile-left">
     <div class="avatar">
       <img *ngIf="fotoPerfilUrl" [src]="fotoPerfilUrl" alt="Profile picture" />
-      <span *ngIf="!fotoPerfilUrl">ðŸ‘¤</span>
-      <button class="avatar-edit-btn" (click)="openEditAvatar()" title="Editar foto de perfil">âœŽ</button>
+      <span *ngIf="!fotoPerfilUrl">👤</span>
+      <button class="avatar-edit-btn" (click)="openEditAvatar()" title="Editar foto de perfil">✏️</button>
     </div>
 
     <aside class="profile-sidebar">
@@ -108,7 +108,7 @@
           </div>
 
           <button class="pill-btn" title="Watch later">
-            <span class="icon">ðŸš€</span>
+            <span class="icon">🚀</span>
           </button>
         </div>
       </div>
@@ -128,13 +128,13 @@
           </div>
 
           <button class="pill-btn gray" title="Watched">
-            <span class="icon">ðŸ‘ï¸</span>
+            <span class="icon">👁️</span>
           </button>
         </div>
       </div>
     </div>
 
-    <!-- âœ… FAVORITES (mais organizado) -->
+    <!-- FAVORITES (mais organizado) -->
     <div class="section fav-section">
       <div class="section-title">
         <h3>Favorites</h3>
@@ -228,7 +228,7 @@
                       class="actor-remove-btn" 
                       (click)="removeAtorFavorito(a)" 
                       [disabled]="isSavingFavorites"
-                      title="Remove actor">Ã—</button>
+                      title="Remove actor">&times;</button>
             </div>
           </div>
 
@@ -243,7 +243,7 @@
       </div>
     </div>
 
-    <!-- CATÃLOGO -->
+    <!-- CATÃƒÂLOGO -->
     <div class="section">
       <div class="section-title">
         <h3>Catalog</h3>
@@ -297,7 +297,7 @@
 <!-- EDITAR a Conta (Username e Bio) -->
 <div class="modal-overlay" *ngIf="isEditing" (click)="closeEdit()">
   <div class="modal-box" (click)="$event.stopPropagation()">
-    <button class="modal-close" (click)="closeEdit()">Ã—</button>
+    <button class="modal-close" (click)="closeEdit()">&times;</button>
 
     <h3>Edit account</h3>
 
@@ -319,7 +319,7 @@
 <!-- EDITAR Capa -->
 <div class="modal-overlay" *ngIf="isEditingCapa" (click)="closeEditCapa()">
   <div class="modal-box" (click)="$event.stopPropagation()">
-    <button class="modal-close" (click)="closeEditCapa()">Ã—</button>
+    <button class="modal-close" (click)="closeEditCapa()">&times;</button>
 
     <h3>Edit Cover Photo</h3>
 
@@ -341,7 +341,7 @@
 <!-- EDITAR Avatar -->
 <div class="modal-overlay" *ngIf="isEditingAvatar" (click)="closeEditAvatar()">
   <div class="modal-box" (click)="$event.stopPropagation()">
-    <button class="modal-close" (click)="closeEditAvatar()">Ã—</button>
+    <button class="modal-close" (click)="closeEditAvatar()">&times;</button>
 
     <h3>Edit Profile Picture</h3>
 
@@ -362,7 +362,7 @@
 
 <div class="modal-overlay list-modal-overlay" *ngIf="showListModal" (click)="closeListModal()">
   <div class="list-modal-box" (click)="$event.stopPropagation()">
-    <button class="modal-close" (click)="closeListModal()">Ã—</button>
+    <button class="modal-close" (click)="closeListModal()">&times;</button>
 
     <h3>{{ currentListTitle }}</h3>
     <span class="list-subtitle">{{ filteredCurrentList.length }} {{ filteredCurrentList.length === 1 ? 'Title' : 'Titles' }}</span>
@@ -418,7 +418,7 @@
 <!-- APAGAR a Conta -->
 <div class="modal-overlay" *ngIf="isDeleting" (click)="closeDeleteConfirm()">
   <div class="modal-box" (click)="$event.stopPropagation()">
-    <button class="modal-close" (click)="closeDeleteConfirm()">Ã—</button>
+    <button class="modal-close" (click)="closeDeleteConfirm()">&times;</button>
 
     <h3>Delete account</h3>
     <p class="delete-info">Para apagar a sua conta escreva <strong>delete</strong></p>
