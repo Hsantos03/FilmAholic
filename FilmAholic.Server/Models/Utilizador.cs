@@ -12,11 +12,12 @@ public class Utilizador : IdentityUser
     [Required]
     public DateTime DataNascimento { get; set; }
     public string? FotoPerfilUrl { get; set; }
-    public string? GeneroFavorito { get; set; } // Mantido para compatibilidade, pode ser removido no futuro
+    public string? CapaUrl { get; set; }
+    public string? GeneroFavorito { get; set; } 
     public string TopFilmes { get; set; } = "[]";
     public string TopAtores { get; set; } = "[]";
     public int XP { get; set; } = 0;
-    public string? Bio { get; set; } // NEW: store user's bio/profile description
+    public string? Bio { get; set; } 
     public DateTime DataCriacao { get; set; } = DateTime.UtcNow;
 
     // Navegação para géneros favoritos (relação many-to-many)

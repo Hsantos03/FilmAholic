@@ -25,7 +25,7 @@ export class SelecionarGenerosComponent implements OnInit {
     this.userId = localStorage.getItem('user_id') || '';
     
     if (!this.userId) {
-      // Se não houver userId, redirecionar para login
+      // Se nÃ£o houver userId, redirecionar para login
       this.router.navigate(['/login']);
       return;
     }
@@ -41,8 +41,8 @@ export class SelecionarGenerosComponent implements OnInit {
         this.isLoadingGeneros = false;
       },
       error: (err) => {
-        console.error('Erro ao carregar géneros:', err);
-        this.error = 'Erro ao carregar géneros. Por favor, tente novamente.';
+        console.error('Erro ao carregar gÃ©neros:', err);
+        this.error = 'Erro ao carregar gÃ©neros. Por favor, tente novamente.';
         this.isLoadingGeneros = false;
       }
     });
@@ -51,10 +51,10 @@ export class SelecionarGenerosComponent implements OnInit {
   toggleGenero(generoId: number) {
     const index = this.generosSelecionados.indexOf(generoId);
     if (index > -1) {
-      // Remover se já estiver selecionado
+      // Remover se jÃ¡ estiver selecionado
       this.generosSelecionados.splice(index, 1);
     } else {
-      // Adicionar se não estiver selecionado
+      // Adicionar se nÃ£o estiver selecionado
       this.generosSelecionados.push(generoId);
     }
   }
@@ -65,7 +65,7 @@ export class SelecionarGenerosComponent implements OnInit {
 
   salvarGeneros() {
     if (this.generosSelecionados.length === 0) {
-      alert('Por favor, selecione pelo menos um género favorito.');
+      alert('Por favor, selecione pelo menos um gÃ©nero favorito.');
       return;
     }
 
@@ -75,19 +75,31 @@ export class SelecionarGenerosComponent implements OnInit {
     this.profileService.atualizarGenerosFavoritos(this.userId, this.generosSelecionados).subscribe({
       next: (res) => {
         this.isLoading = false;
-        alert('Géneros favoritos guardados com sucesso!');
         this.router.navigate(['/dashboard']);
       },
       error: (err) => {
         this.isLoading = false;
-        console.error('Erro ao guardar géneros:', err);
-        this.error = err.error?.message || 'Erro ao guardar géneros favoritos. Por favor, tente novamente.';
+        console.error('Erro ao guardar gÃ©neros:', err);
+        this.error = err.error?.message || 'Erro ao guardar gÃ©neros favoritos. Por favor, tente novamente.';
       }
     });
   }
 
   saltar() {
-    // Permitir saltar por agora (mais tarde pode tornar obrigatório)
     this.router.navigate(['/dashboard']);
+  }
+
+  selecionarTodos() {
+    if (this.generosSelecionados.length === this.generos.length) {
+      // Se todos estÃ£o selecionados, desselecionar todos
+      this.generosSelecionados = [];
+    } else {
+      // Selecionar todos os gÃ©neros
+      this.generosSelecionados = this.generos.map(g => g.id);
+    }
+  }
+
+  get todosSelecionados(): boolean {
+    return this.generos.length > 0 && this.generosSelecionados.length === this.generos.length;
   }
 }

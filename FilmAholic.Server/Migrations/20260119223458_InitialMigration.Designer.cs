@@ -12,7 +12,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace FilmAholic.Server.Migrations
 {
     [DbContext(typeof(FilmAholicDbContext))]
-    [Migration("20260119094508_InitialMigration")]
+    [Migration("20260119223458_InitialMigration")]
     partial class InitialMigration
     {
         /// <inheritdoc />
@@ -190,6 +190,9 @@ namespace FilmAholic.Server.Migrations
                         .HasColumnType("int");
 
                     b.Property<string>("Bio")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("CapaUrl")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("ConcurrencyStamp")

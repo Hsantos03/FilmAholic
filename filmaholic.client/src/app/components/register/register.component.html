@@ -2,7 +2,7 @@
   <div class="register-card">
     <div class="header">
       <h1>Registo</h1>
-      <p style="color: #6c757d;">Get started for free</p>
+      <p>Get started for free</p>
     </div>
 
     <!-- Mensagem de verificação de email -->
@@ -76,15 +76,21 @@
         title="A data não pode ser futura">
 
       <div class="password-container">
-        <input
-          type="password"
-          name="password"
-          [(ngModel)]="user.password"
-          (input)="checkPasswordRequirements()"
-          placeholder="Password"
-          required
-          class="password-input"
-          [class.password-invalid]="user.password && !isPasswordValid">
+        <div class="password-input-wrapper">
+          <input
+            [type]="showPassword ? 'text' : 'password'"
+            name="password"
+            [(ngModel)]="user.password"
+            (input)="checkPasswordRequirements()"
+            placeholder="Password"
+            required
+            class="password-input"
+            [class.password-invalid]="user.password && !isPasswordValid">
+          <button type="button" class="password-toggle-btn" (click)="toggleShowPassword()" tabindex="-1">
+            <span *ngIf="!showPassword">👁</span>
+            <span *ngIf="showPassword" class="eye-crossed">👁</span>
+          </button>
+        </div>
         
         <!-- Mensagem de erro se tentar submeter sem password válida -->
         <div *ngIf="showPasswordError && !isPasswordValid" class="password-error-message">
@@ -122,15 +128,21 @@
       </div>
 
       <div class="password-container">
-        <input
-          type="password"
-          name="confirmPassword"
-          [(ngModel)]="user.confirmPassword"
-          (input)="checkPasswordMatch()"
-          placeholder="Confirmar Password"
-          required
-          class="password-input"
-          [class.password-invalid]="user.confirmPassword && user.password !== user.confirmPassword">
+        <div class="password-input-wrapper">
+          <input
+            [type]="showConfirmPassword ? 'text' : 'password'"
+            name="confirmPassword"
+            [(ngModel)]="user.confirmPassword"
+            (input)="checkPasswordMatch()"
+            placeholder="Confirmar Password"
+            required
+            class="password-input"
+            [class.password-invalid]="user.confirmPassword && user.password !== user.confirmPassword">
+          <button type="button" class="password-toggle-btn" (click)="toggleShowConfirmPassword()" tabindex="-1">
+            <span *ngIf="!showConfirmPassword">👁</span>
+            <span *ngIf="showConfirmPassword" class="eye-crossed">👁</span>
+          </button>
+        </div>
         
         <div *ngIf="showPasswordMismatch || (user.confirmPassword && user.password !== user.confirmPassword)" class="password-error-message">
           As passwords não coincidem.
@@ -176,8 +188,8 @@
         </button>
       </div>
 
-      <div style="margin-top: 20px;">
-        <a routerLink="/login" style="color: #007bff; text-decoration: none; font-size: 14px;">Já tenho uma conta</a>
+      <div class="footer-links">
+        <a routerLink="/login">Já tenho uma conta</a>
       </div>
     </form>
   </div>

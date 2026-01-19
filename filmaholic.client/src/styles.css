@@ -1,22 +1,191 @@
-/* Reset global para remover as margens brancas à volta do ecrã */
+/* ============================================
+   VARIÃƒÂVEIS CSS GLOBAIS - CORES E ESTILOS
+   ============================================ */
+
+:root {
+  /* Cores Principais - Vermelho/Rosa */
+  --color-primary: #e91e63;
+  --color-primary-hover: #d81b60;
+  --color-primary-light: #ff6b9d;
+  --color-primary-dark: #944d65;
+  
+  /* Cores SecundÃƒÂ¡rias - Azul */
+  --color-secondary: #007bff;
+  --color-secondary-hover: #0056b3;
+  
+  /* Cores de Fundo */
+  --bg-dark: #000;
+  --bg-dark-secondary: #1c1c1c;
+  --bg-card: rgba(5, 10, 15, 0.95);
+  --bg-input: #0a1118;
+  --bg-input-hover: #0f1a25;
+  
+  /* Cores de Borda */
+  --border-dark: #1a2a3a;
+  --border-light: rgba(255, 255, 255, 0.1);
+  
+  /* Cores de Texto */
+  --text-primary: #fff;
+  --text-secondary: #ddd;
+  --text-muted: #aaa;
+  --text-disabled: #6c757d;
+  
+  /* Sombras e Efeitos */
+  --shadow-primary: 0px 0px 25px rgba(233, 30, 99, 0.4);
+  --shadow-primary-strong: 0px 0px 15px rgba(233, 30, 99, 0.5);
+  --shadow-blue: 0px 0px 25px rgba(0, 123, 255, 0.4);
+  
+  /* Bordas e Raio */
+  --border-radius: 15px;
+  --border-radius-sm: 8px;
+  --border-radius-md: 10px;
+  --border-radius-lg: 20px;
+  
+  /* EspaÃƒÂ§amentos */
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-md: 15px;
+  --spacing-lg: 20px;
+  --spacing-xl: 30px;
+  
+  /* TransiÃƒÂ§ÃƒÂµes */
+  --transition: all 0.3s ease;
+  --transition-fast: all 0.2s ease;
+}
+
 html, body {
   margin: 0 !important;
   padding: 0 !important;
   width: 100%;
   height: 100%;
   display: block;
-  background-color: #000; /* Cor de fundo caso a imagem demore a carregar */
-  overflow-x: hidden; /* Evita barras de scroll horizontais */
+  background-color: var(--bg-dark);
+  overflow-x: hidden;
   font-family: 'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif
 }
 
 * {
-  box-sizing: border-box; /* Garante que padding não "empurra" o tamanho dos elementos */
+  box-sizing: border-box;
 }
 
 body {
-  background-color: #1c1c1c;
-  color: #fff;
+  background-color: var(--bg-dark-secondary);
+  color: var(--text-primary);
   min-height: 100vh;
   font-family: Arial, sans-serif;
+}
+
+/* ============================================
+   CLASSES UTILITÃƒÂRIAS GLOBAIS
+   ============================================ */
+
+/* BotÃƒÂ£o PrimÃƒÂ¡rio (Vermelho/Rosa) */
+
+.btn-primary-global {
+  background-color: var(--color-primary);
+  color: var(--text-primary);
+  border: none;
+  padding: 15px 30px;
+  border-radius: var(--border-radius-md);
+  font-size: 16px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.btn-primary-global:hover:not(:disabled) {
+  background-color: var(--color-primary-hover);
+}
+
+.btn-primary-global:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  background-color: var(--color-primary-hover);
+}
+
+/* BotÃƒÂ£o SecundÃƒÂ¡rio */
+.btn-secondary-global {
+  background-color: var(--bg-input);
+  color: var(--text-muted);
+  border: 1px solid var(--border-dark);
+  padding: 15px 30px;
+  border-radius: var(--border-radius-md);
+  font-size: 16px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.btn-secondary-global:hover:not(:disabled) {
+  background-color: var(--bg-input-hover);
+  border-color: var(--color-primary);
+  color: var(--text-primary);
+}
+
+.btn-secondary-global:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Modal Box Global */
+.modal-box-global {
+  background-color: var(--bg-card);
+  border: 2px solid var(--color-primary);
+  box-shadow: var(--shadow-primary);
+  border-radius: var(--border-radius);
+  padding: 40px;
+  position: relative;
+  animation: slideUp 0.3s ease-out;
+}
+
+.modal-overlay-global {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+  animation: fadeIn 0.2s ease-out;
+}
+
+/* Input Global */
+.input-global {
+  width: 100%;
+  padding: var(--spacing-md);
+  background-color: var(--bg-input);
+  border: 1px solid var(--border-dark);
+  border-radius: var(--border-radius-sm);
+  color: var(--text-primary);
+  font-size: 15px;
+  box-sizing: border-box;
+  transition: var(--transition);
+}
+
+.input-global:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(233, 30, 99, 0.2);
+}
+
+/* AnimaÃƒÂ§ÃƒÂµes Globais */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
 }

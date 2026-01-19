@@ -46,6 +46,7 @@ namespace FilmAholic.Server.Controllers
                     sobrenome = u.Sobrenome,
                     email = u.Email,
                     fotoPerfilUrl = u.FotoPerfilUrl,
+                    capaUrl = u.CapaUrl,
                     dataCriacao = u.DataCriacao,
                     bio = u.Bio,
                     xp = u.XP,
@@ -80,6 +81,16 @@ namespace FilmAholic.Server.Controllers
             if (dto.Bio is not null)
             {
                 user.Bio = dto.Bio;
+            }
+
+            if (!string.IsNullOrWhiteSpace(dto.FotoPerfilUrl))
+            {
+                user.FotoPerfilUrl = dto.FotoPerfilUrl;
+            }
+
+            if (!string.IsNullOrWhiteSpace(dto.CapaUrl))
+            {
+                user.CapaUrl = dto.CapaUrl;
             }
 
             try
@@ -124,8 +135,8 @@ namespace FilmAholic.Server.Controllers
                     return StatusCode(500, new { message = "Failed to delete user.", errors = result.Errors });
 
                 await _context.SaveChangesAsync();
-                return NoContent();
-            }
+            return NoContent();
+        }
             catch (Exception ex)
             {
                 return StatusCode(500, new { message = "Error deleting account.", detail = ex.Message });
@@ -238,6 +249,8 @@ namespace FilmAholic.Server.Controllers
         {
             public string? UserName { get; set; }
             public string? Bio { get; set; }
+            public string? FotoPerfilUrl { get; set; }
+            public string? CapaUrl { get; set; }
         }
 
         public class AtualizarGenerosFavoritosDto

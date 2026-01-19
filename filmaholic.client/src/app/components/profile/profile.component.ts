@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
+import { Router } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
 import { UserMoviesService } from '../../services/user-movies.service';
 import { Filme, FilmesService } from '../../services/filmes.service';
@@ -14,7 +15,9 @@ export class ProfileComponent implements OnInit {
 
   userName = localStorage.getItem('userName') || 'RandomUser';
   joined = '14 hours ago';
-  bio = 'Lorem ipsum dolor sit amet consectetur adipisicing elit. Quisque faucibus ex sapien vitae pellentesque sem placerat.';
+  bio = '';
+  fotoPerfilUrl: string | null = null;
+  capaUrl: string | null = null;
 
   // XP / Level
   xp = 0;
@@ -29,7 +32,7 @@ export class ProfileComponent implements OnInit {
   totalHours = 0;
   stats: any;
 
-  // ✅ FR06 - Favorites
+  // âœ… FR06 - Favorites
   favoritosFilmes: number[] = [];
   favoritosAtores: string[] = [];
   novoAtor = '';
@@ -48,6 +51,12 @@ export class ProfileComponent implements OnInit {
   isEditing = false;
   editUserName = '';
   editBio = '';
+  editFotoPerfilUrl: string | null = null;
+  editCapaUrl: string | null = null;
+  
+  // Separate modals for images
+  isEditingCapa = false;
+  isEditingAvatar = false;
 
   // Delete account state
   isDeleting = false;
@@ -68,6 +77,7 @@ export class ProfileComponent implements OnInit {
 
   constructor(
     private http: HttpClient,
+    private router: Router,
     private authService: AuthService,
     private userMoviesService: UserMoviesService,
     private filmesService: FilmesService,
@@ -82,7 +92,7 @@ export class ProfileComponent implements OnInit {
     this.loadFavorites();
 
     if (!userId) {
-      console.warn('No user_id in localStorage â€” using fallback values.');
+      console.warn('No user_id in localStorage Ã¢â‚¬â€ using fallback values.');
       return;
     }
 
@@ -90,18 +100,16 @@ export class ProfileComponent implements OnInit {
       .get<any>(`${this.apiBase}/${encodeURIComponent(userId)}`, { withCredentials: true })
       .subscribe({
         next: (res) => {
-          // Backend returns fields like: id, userName, nome, sobrenome, email, dataCriacao
-          // Use userName if available and not empty, otherwise use nome + sobrenome, fallback to nome
           if (res?.userName && res.userName.trim() && res.userName !== res?.email) {
             this.userName = res.userName;
           } else if (res?.nome) {
-            // Use nome + sobrenome if available, otherwise just nome
             this.userName = res.sobrenome ? `${res.nome} ${res.sobrenome}` : res.nome;
           } else {
-            // Keep current userName as fallback
             this.userName = this.userName || 'User';
           }
-          this.bio = res?.bio ?? this.bio;
+          this.bio = res?.bio ?? '';
+          this.fotoPerfilUrl = res?.fotoPerfilUrl ?? null;
+          this.capaUrl = res?.capaUrl ?? null;
 
           if (res?.dataCriacao) {
             this.joined = new Date(res.dataCriacao).toLocaleString();
@@ -169,11 +177,9 @@ export class ProfileComponent implements OnInit {
   }
 
   removeFromLists(filmeId: number): void {
-    // Buscar o filme no catálogo pelo ID do seed
     const filme = this.catalogo.find(f => f.id === filmeId);
     if (!filme) return;
     
-    // Encontrar o UserMovie correspondente pelo título
     const userMovie = [...this.watchLater, ...this.watched].find(
       x => x?.filme?.titulo === filme.titulo || x?.filme?.Titulo === filme.titulo
     );
@@ -192,12 +198,10 @@ export class ProfileComponent implements OnInit {
   }
 
   private addMovieToList(filmeId: number, jaViu: boolean): void {
-    // Optimistic UI update: add a temporary entry to appropriate list
     const filmFromSeed = this.catalogo.find(f => f.id === filmeId);
 
     if (filmFromSeed) {
       if (!jaViu) {
-        // Watch later optimistic add
         const already = this.watchLater?.some(x => x?.filme?.titulo === filmFromSeed.titulo || x?.filme?.Titulo === filmFromSeed.titulo);
         if (!already) {
           const tempEntry = {
@@ -209,7 +213,6 @@ export class ProfileComponent implements OnInit {
           this.watchLater = [tempEntry, ...this.watchLater];
         }
       } else {
-        // Watched optimistic add
         const already = this.watched?.some(x => x?.filme?.titulo === filmFromSeed.titulo || x?.filme?.Titulo === filmFromSeed.titulo);
         if (!already) {
           const tempEntry = {
@@ -228,7 +231,6 @@ export class ProfileComponent implements OnInit {
       next: () => this.refreshAllListsAndStats(),
       error: (err) => {
         console.warn('addMovie failed', err);
-        // rollback optimistic add if it exists
         if (filmFromSeed) {
           if (!jaViu) {
             this.watchLater = this.watchLater.filter(
@@ -246,17 +248,14 @@ export class ProfileComponent implements OnInit {
   }
 
   inWatchLater(filmeId: number): boolean {
-    // Buscar o filme no catálogo pelo ID do seed
     const filme = this.catalogo.find(f => f.id === filmeId);
     if (!filme) return false;
     
-    // Comparar por título (mais confiável que ID)
     return this.watchLater?.some(x => x?.filme?.titulo === filme.titulo || 
                                       x?.filme?.Titulo === filme.titulo);
   }
 
   inWatched(filmeId: number): boolean {
-    // Buscar o filme no catálogo pelo ID do seed
     const filme = this.catalogo.find(f => f.id === filmeId);
     if (!filme) return false;
     
@@ -265,8 +264,9 @@ export class ProfileComponent implements OnInit {
   }
 
   // -----------------------
-  // ✅ FR06 - Favorites (Top 10)
+  // âœ… FR06 - Favorites (Top 10)
   // -----------------------
+
   loadFavorites(): void {
     this.favoritesService.getFavorites().subscribe({
       next: (fav: FavoritosDTO) => {
@@ -339,13 +339,11 @@ export class ProfileComponent implements OnInit {
     });
   }
 
-  // ✅ sub-task: filtro (catálogo só favoritos)
   get catalogoFiltrado(): Filme[] {
     if (!this.showOnlyFavorites) return this.catalogo;
     return (this.catalogo || []).filter(f => this.favoritosFilmes.includes(f.id));
   }
 
-  // para renderizar posters do Top10 de forma bonita
   get favoritosFilmesDetalhes(): Filme[] {
     return this.favoritosFilmes
       .map(id => this.catalogo.find(f => f.id === id))
@@ -355,6 +353,8 @@ export class ProfileComponent implements OnInit {
   // -----------------------
   // Manage account modal
   // -----------------------
+  // Manage Account - only username and bio
+
   openEdit(): void {
     this.editUserName = this.userName;
     this.editBio = this.bio;
@@ -376,7 +376,10 @@ export class ProfileComponent implements OnInit {
     this.http
       .put<any>(
         `${this.apiBase}/${encodeURIComponent(userId)}`,
-        { userName: this.userName, bio: this.bio },
+        { 
+          userName: this.userName, 
+          bio: this.bio
+        },
         { withCredentials: true }
       )
       .subscribe({
@@ -385,9 +388,104 @@ export class ProfileComponent implements OnInit {
       });
   }
 
+  // Edit Cover Photo
+  openEditCapa(): void {
+    this.editCapaUrl = this.capaUrl;
+    this.isEditingCapa = true;
+  }
+
+  closeEditCapa(): void {
+    this.isEditingCapa = false;
+  }
+
+  saveCapa(): void {
+    this.capaUrl = this.editCapaUrl;
+    this.isEditingCapa = false;
+
+    const userId = localStorage.getItem('user_id');
+    if (!userId) return;
+
+    this.http
+      .put<any>(
+        `${this.apiBase}/${encodeURIComponent(userId)}`,
+        { capaUrl: this.capaUrl },
+        { withCredentials: true }
+      )
+      .subscribe({
+        next: () => { },
+        error: (err) => console.warn('Failed to save cover photo.', err)
+      });
+  }
+
+  // Edit Avatar
+  openEditAvatar(): void {
+    this.editFotoPerfilUrl = this.fotoPerfilUrl;
+    this.isEditingAvatar = true;
+  }
+
+  closeEditAvatar(): void {
+    this.isEditingAvatar = false;
+  }
+
+  saveAvatar(): void {
+    this.fotoPerfilUrl = this.editFotoPerfilUrl;
+    this.isEditingAvatar = false;
+
+    const userId = localStorage.getItem('user_id');
+    if (!userId) return;
+
+    this.http
+      .put<any>(
+        `${this.apiBase}/${encodeURIComponent(userId)}`,
+        { fotoPerfilUrl: this.fotoPerfilUrl },
+        { withCredentials: true }
+      )
+      .subscribe({
+        next: () => { },
+        error: (err) => console.warn('Failed to save avatar.', err)
+      });
+  }
+
+  onAvatarFileSelected(event: any): void {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    if (file.size > 5 * 1024 * 1024) {
+      alert('A imagem Ã© muito grande. Por favor, escolha uma imagem menor que 5MB.');
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (e: any) => {
+      this.editFotoPerfilUrl = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  }
+
+  onCapaFileSelected(event: any): void {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    if (file.size > 5 * 1024 * 1024) {
+      alert('A imagem Ã© muito grande. Por favor, escolha uma imagem menor que 5MB.');
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (e: any) => {
+      this.editCapaUrl = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  }
+
+  goToHome(): void {
+    this.router.navigate(['/dashboard']);
+  }
+
   // -----------------------
   // Delete account modal
   // -----------------------
+
   openDeleteConfirm(): void {
     this.deleteInput = '';
     this.isDeleting = true;
@@ -419,7 +517,6 @@ export class ProfileComponent implements OnInit {
   openListModal(type: 'watchLater' | 'watched'): void {
     this.currentListType = type;
     this.showListModal = true;
-    // reset filter when opening list
     if (type === 'watchLater') this.watchLaterFilter = 'all';
     if (type === 'watched') this.watchedFilter = 'all';
   }
@@ -429,11 +526,9 @@ export class ProfileComponent implements OnInit {
     this.currentListType = null;
   }
 
-  // new: filtered list that applies filters for watch-later and watched
   get filteredCurrentList(): any[] {
     const list = this.currentList || [];
 
-    // normalize date value getter
     const parseDate = (m: any): Date | null => {
       const v = m?.data ?? m?.Data;
       if (!v) return null;
@@ -505,6 +600,7 @@ export class ProfileComponent implements OnInit {
   // -----------------------
   // Drag and Drop para Top 10
   // -----------------------
+
   onDragStart(event: DragEvent, index: number): void {
     this.draggedIndex = index;
     if (event.dataTransfer) {
@@ -561,6 +657,7 @@ export class ProfileComponent implements OnInit {
   // -----------------------
   // Drag and Drop para Top 10 Atores
   // -----------------------
+
   onActorDragStart(event: DragEvent, index: number): void {
     this.draggedActorIndex = index;
     if (event.dataTransfer) {

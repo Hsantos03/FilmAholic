@@ -11,15 +11,15 @@
   padding: 20px;
 }
 
-/* O Cartão com a borda azul igual ao registo */
+/* O Cartão com a borda vermelha */
 .selecionar-generos-card {
-  background-color: rgba(5, 10, 15, 0.95);
+  background-color: var(--bg-card);
   padding: 40px;
-  border-radius: 15px;
-  border: 2px solid #007bff;
+  border-radius: var(--border-radius);
+  border: 2px solid var(--color-primary);
   width: 100%;
   max-width: 800px;
-  box-shadow: 0px 0px 25px rgba(0, 123, 255, 0.4);
+  box-shadow: var(--shadow-primary);
   z-index: 1;
 }
 
@@ -37,7 +37,7 @@
 }
 
 .header p {
-  color: #6c757d;
+  color: var(--text-disabled);
   margin-bottom: 0;
 }
 
@@ -49,52 +49,71 @@
 }
 
 .genero-button {
-  padding: 15px 20px;
-  border: 1px solid #1a2a3a;
-  background-color: #0a1118;
-  border-radius: 8px;
+  padding: var(--spacing-md) 20px;
+  border: 1px solid var(--border-dark);
+  background-color: var(--bg-input);
+  border-radius: var(--border-radius-sm);
   cursor: pointer;
   font-size: 16px;
   font-weight: 500;
-  color: white;
-  transition: all 0.3s ease;
+  color: var(--text-primary);
+  transition: var(--transition);
 }
 
 .genero-button:hover {
-  border-color: #007bff;
-  background-color: #0f1a25;
+  border-color: var(--color-primary);
+  background-color: var(--bg-input-hover);
   transform: translateY(-2px);
-  box-shadow: 0 4px 8px rgba(0, 123, 255, 0.3);
+  box-shadow: 0 4px 8px rgba(233, 30, 99, 0.3);
 }
 
 .genero-button.selected {
-  background-color: #007bff;
-  color: white;
-  border-color: #007bff;
-  box-shadow: 0px 0px 15px rgba(0, 123, 255, 0.5);
+  background-color: var(--color-primary-dark);
+  color: var(--text-primary);
+  border-color: var(--color-primary-dark);
+  box-shadow: var(--shadow-primary-strong);
 }
 
-/* Botão Azul Grande igual ao registo */
+/* Botão Selecionar Todos */
+.btn-select-all {
+  padding: 10px 20px;
+  background-color: rgba(255, 255, 255, 0.1);
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.btn-select-all:hover {
+  background-color: rgba(255, 255, 255, 0.15);
+  border-color: #ff6b9d;
+  color: #ff6b9d;
+}
+
+/* Botão Vermelho/Rosa */
 .btn-primary {
-  padding: 15px 30px;
-  background-color: #007bff;
-  color: white;
+  padding: var(--spacing-md) var(--spacing-xl);
+  background-color: var(--color-primary);
+  color: var(--text-primary);
   border: none;
-  border-radius: 10px;
+  border-radius: var(--border-radius-md);
   font-size: 16px;
   font-weight: bold;
   cursor: pointer;
-  transition: 0.3s;
+  transition: var(--transition);
 }
 
 .btn-primary:hover:not(:disabled) {
-  background-color: #0056b3;
+  background-color: var(--color-primary-hover);
 }
 
 .btn-primary:disabled {
   opacity: 0.6;
   cursor: not-allowed;
-  background-color: #0056b3;
+  background-color: var(--color-primary-hover);
 }
 
 .btn-secondary {
@@ -111,8 +130,8 @@
 
 .btn-secondary:hover:not(:disabled) {
   background-color: #2a3a4a;
-  border-color: #007bff;
-  color: white;
+  border-color: var(--color-primary);
+  color: var(--text-primary);
 }
 
 .btn-secondary:disabled {

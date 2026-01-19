@@ -34,8 +34,18 @@ export class RegisterComponent {
   };
   showPasswordError = false;
   showPasswordMismatch = false;
+  showPassword = false;
+  showConfirmPassword = false;
 
   constructor(private authService: AuthService, private router: Router) { }
+
+  toggleShowPassword(): void {
+    this.showPassword = !this.showPassword;
+  }
+
+  toggleShowConfirmPassword(): void {
+    this.showConfirmPassword = !this.showConfirmPassword;
+  }
 
   // Verificar requisitos da password em tempo real
   checkPasswordRequirements(): void {

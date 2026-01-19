@@ -34,6 +34,7 @@ namespace FilmAholic.Server.Migrations
                     Sobrenome = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     DataNascimento = table.Column<DateTime>(type: "datetime2", nullable: false),
                     FotoPerfilUrl = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    CapaUrl = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     GeneroFavorito = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     TopFilmes = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     TopAtores = table.Column<string>(type: "nvarchar(max)", nullable: false),

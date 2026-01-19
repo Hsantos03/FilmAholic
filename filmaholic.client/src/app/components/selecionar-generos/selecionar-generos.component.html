@@ -13,6 +13,15 @@
       <p>A carregar géneros...</p>
     </div>
 
+    <div *ngIf="!isLoadingGeneros" style="margin-bottom: 15px; text-align: center;">
+      <button
+        type="button"
+        class="btn-select-all"
+        (click)="selecionarTodos()">
+        {{ todosSelecionados ? 'Desselecionar Todos' : 'Selecionar Todos' }}
+      </button>
+    </div>
+
     <div *ngIf="!isLoadingGeneros" class="generos-grid">
       <button
         *ngFor="let genero of generos"

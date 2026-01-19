@@ -1,37 +1,46 @@
 /* Contentor que faz o fundo da sala de cinema */
 .page-wrapper {
-  min-height: 100vh; /* Ocupa pelo menos 100% da altura do ecrã */
-  width: 100%;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: 100vw;
+  height: 100vh;
   display: flex;
   justify-content: center;
-  align-items: center;
+  align-items: flex-start;
+  padding: 20px;
+  overflow-y: auto;
   background: linear-gradient(rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.7)), url('../../../assets/fundo-cinema.png') no-repeat center center;
   background-size: cover;
-  background-attachment: fixed; /* A imagem fica fixa enquanto fazes scroll (se houver) */
+  background-attachment: fixed;
+  z-index: 999;
 }
 
-/* O Cartão com a borda azul do teu Figma */
+/* O CartÃ£o com a borda vermelha */
 .register-card {
-  background-color: rgba(5, 10, 15, 0.95); /* Quase preto com ligeira transparência */
+  background-color: var(--bg-card);
   padding: 40px;
-  border-radius: 15px;
-  border: 2px solid #007bff; /* Borda azul neon do teu template */
+  border-radius: var(--border-radius);
+  border: 2px solid var(--color-primary);
   width: 100%;
   max-width: 500px;
-  box-shadow: 0px 0px 25px rgba(0, 123, 255, 0.4); /* Brilho azul à volta */
+  box-shadow: var(--shadow-primary);
+  color: var(--text-primary);
+  text-align: left;
+  margin: 20px 0;
   z-index: 1;
 }
 
 .header h1 {
-  color: white;
   margin: 0;
   font-size: 28px;
-  font-weight: 500;
 }
 
 .header p {
-  color: #6c757d;
-  margin-bottom: 30px;
+  color: var(--text-disabled);
+  margin-bottom: 25px;
 }
 
 /* Inputs com o estilo escuro */
@@ -52,55 +61,49 @@
 
 input {
   width: 100%;
-  padding: 15px;
-  background-color: #0a1118;
-  border: 1px solid #1a2a3a;
-  border-radius: 8px;
-  color: white;
-  margin-bottom: 15px;
+  padding: var(--spacing-md);
+  background-color: var(--bg-input);
+  border: 1px solid var(--border-dark);
+  border-radius: var(--border-radius-sm);
+  color: var(--text-primary);
+  margin-bottom: var(--spacing-md);
   box-sizing: border-box;
 }
 
   input:focus {
     outline: none;
-    border-color: #007bff;
+    border-color: var(--color-primary);
   }
 
-  /* Foca especificamente no ícone do calendário dentro de inputs de data */
   input[type="date"]::-webkit-calendar-picker-indicator {
-    /* Inverte a cor do ícone (de preto para branco) */
     filter: invert(1);
-    /* Muda o cursor para uma mãozinha para mostrar que é clicável */
     cursor: pointer;
   }
 
   input[type="password"]::-ms-reveal,
   input[type="password"]::-ms-clear {
-    /* Inverte a cor do ícone (de preto para branco) */
     filter: invert(1);
-    /* Garante que o ícone é visível */
     display: inline-block !important;
-    /* Opcional: muda o cursor para uma mãozinha ao passar por cima */
     cursor: pointer;
   }
 
-/* Botão Azul Grande */
+/* BotÃ£o Vermelho/Rosa (mesmo do login) */
 .btn-register {
   width: 100%;
-  padding: 15px;
-  background-color: #007bff;
-  color: white;
+  padding: var(--spacing-md);
+  background-color: var(--color-primary);
+  color: var(--text-primary);
   border: none;
-  border-radius: 10px;
+  border-radius: var(--border-radius-md);
   font-size: 16px;
   font-weight: bold;
   cursor: pointer;
   margin-top: 10px;
-  transition: 0.3s;
+  transition: var(--transition);
 }
 
   .btn-register:hover {
-    background-color: #0056b3;
+    background-color: var(--color-primary-hover);
   }
 
 .footer-links {
@@ -109,7 +112,7 @@ input {
 }
 
   .footer-links a {
-    color: #007bff;
+    color: var(--color-secondary);
     text-decoration: none;
     font-size: 14px;
   }
@@ -124,22 +127,69 @@ input {
   margin-bottom: 15px;
 }
 
+.password-input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
 .password-input {
   width: 100%;
-  padding: 15px;
-  background-color: #0a1118;
-  border: 1px solid #1a2a3a;
-  border-radius: 8px;
-  color: white;
+  padding: var(--spacing-md) 45px var(--spacing-md) var(--spacing-md);
+  background-color: var(--bg-input);
+  border: 1px solid var(--border-dark);
+  border-radius: var(--border-radius-sm);
+  color: var(--text-primary);
   font-size: 15px;
   box-sizing: border-box;
-  transition: all 0.3s ease;
+  transition: var(--transition);
+}
+
+.password-toggle-btn {
+  position: absolute;
+  right: 10px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 5px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #aaa;
+  font-size: 18px;
+  transition: color 0.2s ease;
+  z-index: 10;
+}
+
+.password-toggle-btn:hover {
+  color: #fff;
+}
+
+.password-toggle-btn:focus {
+  outline: none;
+}
+
+.eye-crossed {
+  position: relative;
+  display: inline-block;
+}
+
+.eye-crossed::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%) rotate(-45deg);
+  width: 20px;
+  height: 2px;
+  background-color: currentColor;
+  opacity: 0.8;
 }
 
 .password-input:focus {
   outline: none;
-  border-color: #007bff;
-  box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.2);
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(233, 30, 99, 0.2);
 }
 
 .password-input.password-invalid {

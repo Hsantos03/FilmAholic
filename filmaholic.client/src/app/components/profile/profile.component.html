@@ -1,13 +1,18 @@
 <!-- Header -->
-<div class="profile-header">
-  <button class="edit-btn" (click)="openEdit()">✎</button>
+<div class="profile-header" [style.background-image]="capaUrl ? 'url(' + capaUrl + ')' : 'none'" [style.background-size]="'cover'" [style.background-position]="'center'">
+  <button class="back-btn" (click)="goToHome()" title="Voltar Ã  homepage">â†</button>
+  <button class="edit-btn" (click)="openEditCapa()" title="Editar capa">âœŽ</button>
 </div>
 
 <div class="profile-body">
 
   <!-- LEFT COLUMN -->
   <div class="profile-left">
-    <div class="avatar"><span>👤</span></div>
+    <div class="avatar">
+      <img *ngIf="fotoPerfilUrl" [src]="fotoPerfilUrl" alt="Profile picture" />
+      <span *ngIf="!fotoPerfilUrl">ðŸ‘¤</span>
+      <button class="avatar-edit-btn" (click)="openEditAvatar()" title="Editar foto de perfil">âœŽ</button>
+    </div>
 
     <aside class="profile-sidebar">
       <button class="primary-btn" (click)="openEdit()">Manage Account</button>
@@ -40,7 +45,6 @@
         </div>
       </div>
 
-      <!-- XP / Level block placed below Statistics -->
       <div class="xp-level">
         <h3>Progress</h3>
 
@@ -82,9 +86,9 @@
     <div class="profile-info">
       <h2>{{ userName }}</h2>
       <div class="meta-row">
-        <span class="joined">Joined · {{ joined }}</span>
+        <span class="joined">Joined Â· {{ joined }}</span>
       </div>
-      <p class="bio">{{ bio }}</p>
+      <p class="bio">{{ bio || 'No information yet' }}</p>
     </div>
 
     <div class="lists-top">
@@ -104,7 +108,7 @@
           </div>
 
           <button class="pill-btn" title="Watch later">
-            <span class="icon">🚀</span>
+            <span class="icon">ðŸš€</span>
           </button>
         </div>
       </div>
@@ -124,13 +128,13 @@
           </div>
 
           <button class="pill-btn gray" title="Watched">
-            <span class="icon">👁️</span>
+            <span class="icon">ðŸ‘ï¸</span>
           </button>
         </div>
       </div>
     </div>
 
-    <!-- ✅ FAVORITES (mais organizado) -->
+    <!-- âœ… FAVORITES (mais organizado) -->
     <div class="section fav-section">
       <div class="section-title">
         <h3>Favorites</h3>
@@ -144,7 +148,7 @@
         </label>
 
         <span class="fav-counter">
-          {{ favoritosFilmes.length }}/10 movies · {{ favoritosAtores.length }}/10 actors
+          {{ favoritosFilmes.length }}/10 movies Â· {{ favoritosAtores.length }}/10 actors
         </span>
       </div>
 
@@ -180,7 +184,7 @@
           <ng-template #noFavMovies>
             <div class="fav-empty">
               No favorite movies yet.<br />
-              <span class="fav-empty-hint">Use "★ Favorite" in the catalog (max 10).</span>
+              <span class="fav-empty-hint">Use "â˜… Favorite" in the catalog (max 10).</span>
             </div>
           </ng-template>
         </div>
@@ -224,7 +228,7 @@
                       class="actor-remove-btn" 
                       (click)="removeAtorFavorito(a)" 
                       [disabled]="isSavingFavorites"
-                      title="Remove actor">×</button>
+                      title="Remove actor">Ã—</button>
             </div>
           </div>
 
@@ -239,7 +243,7 @@
       </div>
     </div>
 
-    <!-- CATÁLOGO -->
+    <!-- CATÃLOGO -->
     <div class="section">
       <div class="section-title">
         <h3>Catalog</h3>
@@ -252,7 +256,7 @@
 
           <div class="movie-meta">
             <div class="movie-title">{{ f.titulo }}</div>
-            <div class="movie-sub">{{ f.genero }} · {{ f.duracao }} min</div>
+            <div class="movie-sub">{{ f.genero }} Â· {{ f.duracao }} min</div>
           </div>
 
           <div class="movie-actions">
@@ -265,7 +269,7 @@
             <button class="action-btn ghost"
                     (click)="addToWatched(f.id)"
                     [disabled]="isSavingMovie || inWatched(f.id)">
-              ✓ Watched
+              âœ“ Watched
             </button>
 
             <button class="action-btn danger"
@@ -280,7 +284,7 @@
                     (click)="toggleFavoriteFilme(f.id)"
                     [disabled]="isSavingFavorites"
                     [class.selected]="isFilmeFavorito(f.id)">
-              ★ Favorite
+              â˜… Favorite
             </button>
           </div>
         </div>
@@ -290,10 +294,10 @@
   </section>
 </div>
 
-<!-- EDITAR a Conta -->
+<!-- EDITAR a Conta (Username e Bio) -->
 <div class="modal-overlay" *ngIf="isEditing" (click)="closeEdit()">
   <div class="modal-box" (click)="$event.stopPropagation()">
-    <button class="modal-close" (click)="closeEdit()">×</button>
+    <button class="modal-close" (click)="closeEdit()">Ã—</button>
 
     <h3>Edit account</h3>
 
@@ -312,9 +316,53 @@
   </div>
 </div>
 
+<!-- EDITAR Capa -->
+<div class="modal-overlay" *ngIf="isEditingCapa" (click)="closeEditCapa()">
+  <div class="modal-box" (click)="$event.stopPropagation()">
+    <button class="modal-close" (click)="closeEditCapa()">Ã—</button>
+
+    <h3>Edit Cover Photo</h3>
+
+    <form (ngSubmit)="saveCapa()">
+      <label for="capaFile">Cover Photo</label>
+      <div class="image-preview-container">
+        <img *ngIf="editCapaUrl" [src]="editCapaUrl" alt="Cover preview" class="image-preview" />
+        <input id="capaFile" name="capaFile" type="file" accept="image/*" (change)="onCapaFileSelected($event)" />
+      </div>
+
+      <div class="modal-actions">
+        <button type="submit" class="save-btn">Save</button>
+        <button type="button" class="cancel-btn" (click)="closeEditCapa()">Cancel</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- EDITAR Avatar -->
+<div class="modal-overlay" *ngIf="isEditingAvatar" (click)="closeEditAvatar()">
+  <div class="modal-box" (click)="$event.stopPropagation()">
+    <button class="modal-close" (click)="closeEditAvatar()">Ã—</button>
+
+    <h3>Edit Profile Picture</h3>
+
+    <form (ngSubmit)="saveAvatar()">
+      <label for="avatarFile">Profile Picture</label>
+      <div class="image-preview-container">
+        <img *ngIf="editFotoPerfilUrl" [src]="editFotoPerfilUrl" alt="Avatar preview" class="image-preview avatar-preview" />
+        <input id="avatarFile" name="avatarFile" type="file" accept="image/*" (change)="onAvatarFileSelected($event)" />
+      </div>
+
+      <div class="modal-actions">
+        <button type="submit" class="save-btn">Save</button>
+        <button type="button" class="cancel-btn" (click)="closeEditAvatar()">Cancel</button>
+      </div>
+    </form>
+  </div>
+</div>
+
 <div class="modal-overlay list-modal-overlay" *ngIf="showListModal" (click)="closeListModal()">
   <div class="list-modal-box" (click)="$event.stopPropagation()">
-    <button class="modal-close" (click)="closeListModal()">×</button>
+    <button class="modal-close" (click)="closeListModal()">Ã—</button>
 
     <h3>{{ currentListTitle }}</h3>
     <span class="list-subtitle">{{ filteredCurrentList.length }} {{ filteredCurrentList.length === 1 ? 'Title' : 'Titles' }}</span>
@@ -352,7 +400,7 @@
           <div class="poster-title">{{ movie.filme?.titulo || movie.filme?.Titulo || 'Unknown' }}</div>
           <div class="poster-meta">
             <span *ngIf="movie.filme?.genero || movie.filme?.Genero">{{ movie.filme?.genero || movie.filme?.Genero }}</span>
-            <span *ngIf="movie.filme?.duracao || movie.filme?.Duracao"> · {{ movie.filme?.duracao || movie.filme?.Duracao }} min</span>
+            <span *ngIf="movie.filme?.duracao || movie.filme?.Duracao"> Â· {{ movie.filme?.duracao || movie.filme?.Duracao }} min</span>
           </div>
           <div class="poster-date" *ngIf="(movie.data || movie.Data)">
             Added: {{ (movie.data || movie.Data) | date:'short' }}
@@ -370,7 +418,7 @@
 <!-- APAGAR a Conta -->
 <div class="modal-overlay" *ngIf="isDeleting" (click)="closeDeleteConfirm()">
   <div class="modal-box" (click)="$event.stopPropagation()">
-    <button class="modal-close" (click)="closeDeleteConfirm()">×</button>
+    <button class="modal-close" (click)="closeDeleteConfirm()">Ã—</button>
 
     <h3>Delete account</h3>
     <p class="delete-info">Para apagar a sua conta escreva <strong>delete</strong></p>
