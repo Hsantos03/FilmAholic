@@ -1,7 +1,6 @@
 ﻿using FilmAholic.Server.Models;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
-using System.Reflection.Emit;
 
 namespace FilmAholic.Server.Data;
 
@@ -14,11 +13,17 @@ public class FilmAholicDbContext : IdentityDbContext<Utilizador>
     public DbSet<Filme> Filmes => Set<Filme>();
     public DbSet<Genero> Generos => Set<Genero>();
     public DbSet<UtilizadorGenero> UtilizadorGeneros => Set<UtilizadorGenero>();
+    public DbSet<Desafio> Desafios => Set<Desafio>();
+
+    // NEW: UserDesafios table to track user progress on desafios
+    public DbSet<UserDesafio> UserDesafios => Set<UserDesafio>();
+
     protected override void OnModelCreating(ModelBuilder builder)
     {
         builder.Entity<UserMovie>()
-        .HasIndex(um => new { um.UtilizadorId, um.FilmeId })
-        .IsUnique();
+            .HasIndex(um => new { um.UtilizadorId, um.FilmeId })
+            .IsUnique();
+
         base.OnModelCreating(builder);
         
         // Configurar relação many-to-many entre Utilizador e Genero
@@ -36,5 +41,32 @@ public class FilmAholicDbContext : IdentityDbContext<Utilizador>
             .WithMany(g => g.Utilizadores)
             .HasForeignKey(ug => ug.GeneroId)
             .OnDelete(DeleteBehavior.Cascade);
+
+        // Optional: basic configuration for Desafio
+        builder.Entity<Desafio>(e =>
+        {
+            e.Property(d => d.Descricao).HasMaxLength(2000);
+            e.Property(d => d.Genero).HasMaxLength(150);
+            e.HasIndex(d => d.Ativo);
+        });
+
+        // Configure UserDesafio: unique per user + desafio, and FKs
+        builder.Entity<UserDesafio>(ud =>
+        {
+            ud.HasIndex(x => new { x.UtilizadorId, x.DesafioId }).IsUnique();
+
+            ud.HasOne(x => x.Utilizador)
+              .WithMany() // no navigation required on Utilizador side; add if you add collection there
+              .HasForeignKey(x => x.UtilizadorId)
+              .OnDelete(DeleteBehavior.Cascade);
+
+            ud.HasOne(x => x.Desafio)
+              .WithMany() // no navigation required on Desafio side; add if you add collection there
+              .HasForeignKey(x => x.DesafioId)
+              .OnDelete(DeleteBehavior.Cascade);
+
+            ud.Property(x => x.QuantidadeProgresso).HasDefaultValue(0);
+            ud.Property(x => x.DataAtualizacao).HasDefaultValueSql("CURRENT_TIMESTAMP");
+        });
     }
 }

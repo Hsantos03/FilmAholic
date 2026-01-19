@@ -130,6 +130,43 @@
   padding: 4px 0;
 }
 
+/* XP / Level block (left sidebar) */
+.xp-level {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(255,255,255,0.08);
+}
+
+  .xp-level h3 {
+    margin: 0 0 10px;
+    color: #fff;
+  }
+
+  .xp-bar {
+    width: 100%;
+    height: 10px;
+    background: rgba(255,255,255,0.06);
+    border-radius: 6px;
+    overflow: hidden;
+    margin-top: 8px;
+    border: 1px solid rgba(255,255,255,0.03);
+  }
+
+  .xp-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #ff2f6d, #ff8a00);
+    width: 0%;
+    transition: width 0.35s ease;
+  }
+
+  .xp-text {
+    margin-top: 8px;
+    font-size: 0.82em;
+    color: #aaa;
+    display: block;
+}
+
+/* List counts */
 .list-counts {
   margin-top: 14px;
   padding-top: 12px;
@@ -167,7 +204,467 @@
   background: rgba(255,255,255,0.04);
   border: 1px solid rgba(255,255,255,0.06);
   border-radius: 16px;
-  padding: 18px 18px;
+  padding: 18px 18px 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 88px;
+  transition: all 0.2s ease;
+}
+
+  .list-box.clickable {
+    cursor: pointer;
+  }
+
+    .list-box.clickable:hover {
+      background: rgba(255,255,255,0.06);
+      border-color: rgba(255,255,255,0.1);
+      transform: translateY(-2px);
+    }
+
+  .list-box h3 {
+    color: #fff;
+    margin: 0;
+    font-size: 20px;
+  }
+
+.subtitle {
+  font-size: 0.85em;
+  color: #aaa;
+}
+
+.list-box-left {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.list-box-right {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+/* Posters dos Filmes */
+.mini-posters {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+  .mini-posters img {
+    width: 44px;
+    height: 64px;
+    object-fit: cover;
+    border-radius: 10px;
+    border: 1px solid rgba(255,255,255,0.10);
+    display: block;
+  }
+
+.list-box .mini-posters img,
+.list-box img {
+  max-width: 44px;
+  max-height: 64px;
+}
+
+.pill-btn {
+  width: 44px;
+  height: 44px;
+  border: none;
+  border-radius: 14px;
+  background: rgba(255, 47, 109, 0.15);
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+}
+
+  .pill-btn.gray {
+    background: rgba(255,255,255,0.10);
+  }
+
+  .pill-btn .icon {
+    font-size: 18px;
+  }
+
+.section {
+  margin-top: 26px;
+}
+
+.section-title {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+  .section-title h3 {
+    margin: 0;
+    color: #fff;
+  }
+
+.cards {
+  display: flex;
+  gap: 14px;
+  margin-top: 12px;
+  overflow-x: auto;
+  padding-bottom: 10px;
+}
+
+  .cards::-webkit-scrollbar {
+    height: 6px;
+  }
+
+  .cards::-webkit-scrollbar-thumb {
+    background: #444;
+    border-radius: 4px;
+  }
+
+.movie-card {
+  min-width: 280px;
+  border-radius: 14px;
+  overflow: hidden;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.06);
+  flex-shrink: 0;
+}
+
+.poster {
+  width: 100%;
+  height: 185px;
+  object-fit: cover;
+  display: block;
+}
+
+.movie-meta {
+  padding: 10px 12px 6px;
+  text-align: center;
+}
+
+.movie-title {
+  color: #fff;
+  font-weight: 700;
+}
+
+.movie-sub {
+  color: #aaa;
+  font-size: 0.85em;
+  margin-top: 2px;
+}
+
+.movie-actions {
+  display: flex;
+  gap: 8px;
+  padding: 10px 12px 14px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.action-btn {
+  border: none;
+  padding: 9px 12px;
+  border-radius: 12px;
+  cursor: pointer;
+  background: #ff2f6d;
+  color: #fff;
+  font-size: 0.85em;
+  font-weight: 600;
+}
+
+  .action-btn.ghost {
+    background: rgba(255,255,255,0.12);
+  }
+
+  .action-btn.danger {
+    background: rgba(255, 92, 92, 0.20);
+    color: #ff8a8a;
+  }
+
+  .action-btn:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+  }
+
+.save-btn {
+  background-color: #007bff;
+  color: white;
+  border: none;
+  padding: 15px 30px;
+  border-radius: 10px;
+  cursor: pointer;
+  font-weight: bold;
+  font-size: 16px;
+  transition: 0.3s;
+  min-width: 100px;
+}
+
+  .save-btn:hover:not(:disabled) {
+    background-color: #0056b3;
+  }
+
+  .save-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+.cancel-btn {
+  background-color: #1a2a3a;
+  color: #6c757d;
+  border: 1px solid #1a2a3a;
+  padding: 15px 30px;
+  border-radius: 10px;
+  cursor: pointer;
+  font-weight: 500;
+  font-size: 16px;
+  transition: 0.3s;
+  min-width: 100px;
+}
+
+  .cancel-btn:hover:not(:disabled) {
+    background-color: #2a3a4a;
+    border-color: #007bff;
+    color: white;
+  }
+
+.danger-btn {
+  background: #ff3b3b;
+  color: #fff;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 10px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 15px;
+  transition: all 0.2s ease;
+  min-width: 100px;
+}
+
+  .danger-btn:hover:not(:disabled) {
+    background: #ff2525;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(255, 59, 59, 0.3);
+  }
+
+  .danger-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+.delete-info {
+  color: #aaa;
+  font-size: 14px;
+  margin: 8px 0 16px 0;
+}
+
+  .delete-info strong {
+    color: #ff3b3b;
+  }
+
+.profile-header {
+  border-radius: 15px 15px 0 0;
+  margin: 2%;
+  height: 250px;
+  background-color: #f0eaf2;
+  position: relative;
+}
+
+/* Layout */
+.profile-body {
+  margin: -75px auto 0;
+  display: flex;
+  gap: 48px;
+  padding: 0 5%;
+}
+
+.profile-left {
+  width: 320px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.profile-main {
+  flex: 1;
+  padding-top: 75px;
+  max-width: 980px;
+  margin-left: 150px;
+}
+
+.edit-btn {
+  position: absolute;
+  right: 20px;
+  top: 20px;
+  border: none;
+  background: #fff;
+  padding: 8px 10px;
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+/* Avatar */
+.avatar {
+  width: 200px;
+  height: 200px;
+  background: #e6d9ff;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 42px;
+  margin-bottom: 20px;
+  z-index: 10;
+}
+
+/* Sidebar */
+.profile-sidebar {
+  width: 100%;
+  background: #010b15;
+  border-radius: 20px;
+  padding: 20px;
+  color: #fff;
+  box-shadow: 0 12px 30px rgba(0,0,0,0.35);
+}
+
+.primary-btn {
+  width: 100%;
+  background: #ff2f6d;
+  border: none;
+  color: white;
+  padding: 11px 12px;
+  border-radius: 12px;
+  cursor: pointer;
+  margin-bottom: 18px;
+  font-weight: 600;
+}
+
+.menu {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 18px 0;
+}
+
+  .menu li {
+    padding: 10px 0;
+    cursor: pointer;
+    color: #fff;
+  }
+
+    .menu li.logout {
+      color: #ff5c5c;
+    }
+
+.stats {
+  margin-top: 10px;
+  padding-top: 14px;
+  border-top: 1px solid rgba(255,255,255,0.08);
+}
+
+  .stats h3 {
+    margin: 0 0 10px;
+  }
+
+.stat-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin: 6px 0;
+  color: #ddd;
+  font-size: 0.92em;
+}
+
+  .stat-row strong {
+    color: #fff;
+    font-weight: 700;
+  }
+
+.genres {
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(255,255,255,0.08);
+}
+
+.genre-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.9em;
+  color: #ddd;
+  padding: 4px 0;
+}
+
+/* XP / Level block (left sidebar) */
+.xp-level {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(255,255,255,0.08);
+}
+
+  .xp-level h3 {
+    margin: 0 0 10px;
+    color: #fff;
+  }
+
+  .xp-bar {
+    width: 100%;
+    height: 10px;
+    background: rgba(255,255,255,0.06);
+    border-radius: 6px;
+    overflow: hidden;
+    margin-top: 8px;
+    border: 1px solid rgba(255,255,255,0.03);
+  }
+
+  .xp-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #ff2f6d, #ff8a00);
+    width: 0%;
+    transition: width 0.35s ease;
+  }
+
+  .xp-text {
+    margin-top: 8px;
+    font-size: 0.82em;
+    color: #aaa;
+    display: block;
+}
+
+/* List counts */
+.list-counts {
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(255,255,255,0.08);
+  color: #ddd;
+}
+
+/* InformaÃ§Ãµes do Perfil do Utilizador */
+.profile-info h2 {
+  margin: 0 0 6px;
+  color: #fff;
+  font-size: 28px;
+}
+
+.joined {
+  font-size: 0.9em;
+  color: #aaa;
+}
+
+.bio {
+  margin: 14px 0 20px;
+  line-height: 1.55;
+  color: #ddd;
+  max-width: 820px;
+}
+
+.lists-top {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin: 18px 0 26px;
+}
+
+.list-box {
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 16px;
+  padding: 18px 18px 14px;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -817,6 +1314,12 @@
     transform: scale(1.2);
   }
 
+.fav-poster.selected {
+  position: relative;
+  z-index: 1;
+}
+
+/* Actors input alinhado */
 .fav-actor-add {
   display: flex;
   gap: 10px;

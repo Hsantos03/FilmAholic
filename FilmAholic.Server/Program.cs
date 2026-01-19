@@ -135,7 +135,7 @@ app.MapControllers();
 
 app.MapFallbackToFile("/index.html");
 
-// Popular géneros iniciais se ainda não existirem
+// Popular géneros iniciais e desafios se ainda não existirem
 await using (var scope = app.Services.CreateAsyncScope())
 {
     var context = scope.ServiceProvider.GetRequiredService<FilmAholicDbContext>();
@@ -143,11 +143,10 @@ await using (var scope = app.Services.CreateAsyncScope())
     
     try
     {
-        // Verificar se a tabela Generos existe (pode não existir se a migração ainda não foi aplicada)
         var canConnect = await context.Database.CanConnectAsync();
         if (canConnect)
         {
-            // Tentar verificar se existem géneros (só funciona se a tabela existir)
+            // --------- Generos ----------
             var generosExist = false;
             try
             {
@@ -155,7 +154,6 @@ await using (var scope = app.Services.CreateAsyncScope())
             }
             catch (Exception)
             {
-                // Tabela ainda não existe - ignorar e continuar
                 logger.LogWarning("A tabela Generos ainda não existe. Por favor, aplique as migrações primeiro.");
             }
 
@@ -185,11 +183,41 @@ await using (var scope = app.Services.CreateAsyncScope())
                 await context.SaveChangesAsync();
                 logger.LogInformation("Géneros iniciais criados com sucesso.");
             }
+
+            // --------- Desafios ----------
+            var desafiosExist = false;
+            try
+            {
+                desafiosExist = await context.Desafios.AnyAsync();
+            }
+            catch (Exception)
+            {
+                logger.LogWarning("A tabela Desafios ainda não existe. Por favor, aplique as migrações primeiro.");
+            }
+
+            if (!desafiosExist)
+            {
+                // Map seed items into new entities (do not set Id explicitly to let DB generate it)
+                var seedList = DesafioSeed.Desafios.Select(d => new Desafio
+                {
+                    DataInicio = d.DataInicio,
+                    DataFim = d.DataFim,
+                    Descricao = d.Descricao,
+                    Ativo = d.Ativo,
+                    Genero = d.Genero,
+                    QuantidadeNecessaria = d.QuantidadeNecessaria,
+                    Xp = d.Xp
+                }).ToList();
+
+                context.Desafios.AddRange(seedList);
+                await context.SaveChangesAsync();
+                logger.LogInformation("Desafios seed inseridos com sucesso.");
+            }
         }
     }
     catch (Exception ex)
     {
-        logger.LogError(ex, "Erro ao popular géneros iniciais. Certifique-se de que as migrações foram aplicadas.");
+        logger.LogError(ex, "Erro ao popular dados iniciais. Certifique-se de que as migrações foram aplicadas.");
         // Não lançar a exceção para permitir que a aplicação continue a correr
     }
 }

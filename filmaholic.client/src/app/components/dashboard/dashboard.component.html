@@ -2,7 +2,58 @@
   <h1>Bem-vindo ao FilmAholic, {{ userName }}!</h1>
   <p>Login realizado com sucesso.</p>
 
-  <button class="profile-btn" routerLink="/profile">
-    Profile
-  </button>
+  <div class="dashboard-actions">
+    <button class="profile-btn" routerLink="/profile">
+      Profile
+    </button>
+
+    <button class="primary-btn" (click)="openDesafios()">
+      Desafios Semanais
+    </button>
+  </div>
+</div>
+
+<!-- Desafios Semanais modal (design matches Profile "Manage Account") -->
+<div class="modal-overlay" *ngIf="isDesafiosOpen" (click)="closeDesafios()">
+  <div class="modal-box" (click)="$event.stopPropagation()">
+    <button class="modal-close" (click)="closeDesafios()">×</button>
+
+    <h3>Desafios Semanais</h3>
+
+    <div *ngIf="isLoadingDesafios" style="color:#ddd;">Loading desafios...</div>
+
+    <div class="desafios-list" *ngIf="!isLoadingDesafios">
+      <div class="desafio-row" *ngFor="let d of desafios" [class.completed]="isCompleted(d)">
+        <div class="desafio-meta">
+          <h4 class="desafio-title">{{ d.descricao }}</h4>
+          <div class="desafio-sub">
+            {{ d.genero }} · {{ d.dataInicio | date:'shortDate' }} - {{ d.dataFim | date:'shortDate' }}
+          </div>
+        </div>
+
+        <div class="desafio-progress">
+          <div class="progress-text">
+            <span *ngIf="!isCompleted(d)">{{ d.progresso }} / {{ d.quantidadeNecessaria }}</span>
+            <span *ngIf="isCompleted(d)" aria-live="polite"> ✓ Completed </span>
+          </div>
+
+          <div class="progress-bar" aria-hidden="true">
+            <div class="progress-fill" [style.width.%]="computeProgressPercent(d.progresso, d.quantidadeNecessaria)"></div>
+          </div>
+
+          <div class="xp-badge">+{{ d.xp }} XP</div>
+        </div>
+
+
+      </div>
+
+      <div *ngIf="desafios.length === 0" class="empty-list-message">
+        Nenhum desafio disponível.
+      </div>
+    </div>
+
+    <div class="modal-actions">
+      <button class="save-btn" (click)="closeDesafios()">Close</button>
+    </div>
+  </div>
 </div>

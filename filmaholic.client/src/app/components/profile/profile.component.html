@@ -40,6 +40,29 @@
         </div>
       </div>
 
+      <!-- XP / Level block placed below Statistics -->
+      <div class="xp-level">
+        <h3>Progress</h3>
+
+        <div class="stat-row">
+          <span>XP</span>
+          <strong>{{ xp }}</strong>
+        </div>
+
+        <div class="stat-row">
+          <span>Level</span>
+          <strong>{{ level }}</strong>
+        </div>
+
+        <div class="xp-bar" aria-hidden="true">
+          <div class="xp-fill" [style.width.%]="(xp % 10) * 10"></div>
+        </div>
+
+        <div class="xp-text">
+          Next level in {{ 10 - (xp % 10) }} XP
+        </div>
+      </div>
+
       <div class="list-counts">
         <div class="stat-row">
           <span>Watch later</span>
@@ -58,7 +81,9 @@
 
     <div class="profile-info">
       <h2>{{ userName }}</h2>
-      <span class="joined">Joined · {{ joined }}</span>
+      <div class="meta-row">
+        <span class="joined">Joined · {{ joined }}</span>
+      </div>
       <p class="bio">{{ bio }}</p>
     </div>
 
@@ -292,10 +317,34 @@
     <button class="modal-close" (click)="closeListModal()">×</button>
 
     <h3>{{ currentListTitle }}</h3>
-    <span class="list-subtitle">{{ currentList.length }} {{ currentList.length === 1 ? 'Title' : 'Titles' }}</span>
+    <span class="list-subtitle">{{ filteredCurrentList.length }} {{ filteredCurrentList.length === 1 ? 'Title' : 'Titles' }}</span>
 
-    <div class="expanded-posters-grid" *ngIf="currentList.length > 0">
-      <div class="expanded-poster-card" *ngFor="let movie of currentList">
+    <!-- filter menu for watch later -->
+    <div class="filter-row" *ngIf="currentListType === 'watchLater'">
+      <label for="wlFilter">Filter:</label>
+      <select id="wlFilter" [(ngModel)]="watchLaterFilter">
+        <option value="all">All (newest first)</option>
+        <option value="newest">Newest first</option>
+        <option value="oldest">Oldest first</option>
+        <option value="7days">Added last 7 days</option>
+        <option value="30days">Added last 30 days</option>
+      </select>
+    </div>
+
+    <!-- filter menu for watched -->
+    <div class="filter-row" *ngIf="currentListType === 'watched'">
+      <label for="watFilter">Filter:</label>
+      <select id="watFilter" [(ngModel)]="watchedFilter">
+        <option value="all">All (newest first)</option>
+        <option value="newest">Newest first</option>
+        <option value="oldest">Oldest first</option>
+        <option value="7days">Added last 7 days</option>
+        <option value="30days">Added last 30 days</option>
+      </select>
+    </div>
+
+    <div class="expanded-posters-grid" *ngIf="filteredCurrentList.length > 0">
+      <div class="expanded-poster-card" *ngFor="let movie of filteredCurrentList">
         <img [src]="movie.filme?.posterUrl || movie.filme?.PosterUrl || 'https://via.placeholder.com/200x300'"
              [alt]="movie.filme?.titulo || movie.filme?.Titulo || 'Movie poster'"
              class="expanded-poster" />
@@ -305,11 +354,14 @@
             <span *ngIf="movie.filme?.genero || movie.filme?.Genero">{{ movie.filme?.genero || movie.filme?.Genero }}</span>
             <span *ngIf="movie.filme?.duracao || movie.filme?.Duracao"> · {{ movie.filme?.duracao || movie.filme?.Duracao }} min</span>
           </div>
+          <div class="poster-date" *ngIf="(movie.data || movie.Data)">
+            Added: {{ (movie.data || movie.Data) | date:'short' }}
+          </div>
         </div>
       </div>
     </div>
 
-    <div class="empty-list-message" *ngIf="currentList.length === 0">
+    <div class="empty-list-message" *ngIf="filteredCurrentList.length === 0">
       <p>Nenhum filme nesta lista ainda.</p>
     </div>
   </div>

@@ -48,6 +48,7 @@ namespace FilmAholic.Server.Controllers
                     fotoPerfilUrl = u.FotoPerfilUrl,
                     dataCriacao = u.DataCriacao,
                     bio = u.Bio,
+                    xp = u.XP,
                     generosFavoritos = u.GenerosFavoritos.Select(ug => new
                     {
                         id = ug.Genero.Id,
