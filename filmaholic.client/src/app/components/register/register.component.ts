@@ -194,7 +194,7 @@ export class RegisterComponent {
           errorMessage += 'Erro de ligaÃ§Ã£o ao servidor. Verifica se o servidor estÃ¡ a correr.';
         }
         if (!errorMessage.toLowerCase().includes('password') && !errorMessage.toLowerCase().includes('senha')) {
-          alert(errorMessage);
+        alert(errorMessage);
         }
       }
     });

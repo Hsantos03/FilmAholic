@@ -1,7 +1,20 @@
 <!-- Header -->
-<div class="profile-header" [style.background-image]="capaUrl ? 'url(' + capaUrl + ')' : 'none'" [style.background-size]="'cover'" [style.background-position]="'center'">
-  <button class="back-btn" (click)="goToHome()" title="Voltar ÃƒÂ  homepage">←</button>
-  <button class="edit-btn" (click)="openEditCapa()" title="Editar capa">✎</button>
+<div class="profile-header"
+     [style.background-image]="capaUrl ? 'url(' + capaUrl + ')' : 'none'"
+     [style.background-size]="'cover'"
+     [style.background-position]="'center'">
+
+  <button class="back-btn"
+          (click)="goToHome()"
+          title="Voltar a homepage">
+    &larr;
+  </button>
+
+  <button class="edit-btn"
+          (click)="openEditCapa()"
+          title="Editar capa">
+    <span style="display: inline-block; transform: rotate(-45deg);">✏</span>
+  </button>
 </div>
 
 <div class="profile-body">
@@ -11,7 +24,12 @@
     <div class="avatar">
       <img *ngIf="fotoPerfilUrl" [src]="fotoPerfilUrl" alt="Profile picture" />
       <span *ngIf="!fotoPerfilUrl">👤</span>
-      <button class="avatar-edit-btn" (click)="openEditAvatar()" title="Editar foto de perfil">✏️</button>
+
+      <button class="avatar-edit-btn"
+              (click)="openEditAvatar()"
+              title="Editar foto de perfil">
+        <span style="display: inline-block; transform: rotate(-45deg);">✏</span>
+      </button>
     </div>
 
     <aside class="profile-sidebar">
@@ -86,7 +104,7 @@
     <div class="profile-info">
       <h2>{{ userName }}</h2>
       <div class="meta-row">
-        <span class="joined">Joined Â· {{ joined }}</span>
+        <span class="joined">Joined &middot; {{ joined }}</span>
       </div>
       <p class="bio">{{ bio || 'No information yet' }}</p>
     </div>
@@ -113,7 +131,7 @@
         </div>
       </div>
 
-      <!-- Watched LIST -->
+      <!-- WATCHED LIST -->
       <div class="list-box clickable" (click)="openListModal('watched')">
         <div class="list-box-left">
           <h3>Watched</h3>
@@ -128,17 +146,17 @@
           </div>
 
           <button class="pill-btn gray" title="Watched">
-            <span class="icon">👁️</span>
+            <span class="icon">✅</span>
           </button>
         </div>
       </div>
     </div>
 
-    <!-- FAVORITES (mais organizado) -->
+    <!-- FAVORITES -->
     <div class="section fav-section">
       <div class="section-title">
         <h3>Favorites</h3>
-        <span class="subtitle">Top 10 Movies & Actors</span>
+        <span class="subtitle">Top 10 Movies &amp; Actors</span>
       </div>
 
       <div class="fav-header">
@@ -148,7 +166,7 @@
         </label>
 
         <span class="fav-counter">
-          {{ favoritosFilmes.length }}/10 movies Â· {{ favoritosAtores.length }}/10 actors
+          {{ favoritosFilmes.length }}/10 movies &middot; {{ favoritosAtores.length }}/10 actors
         </span>
       </div>
 
@@ -162,7 +180,7 @@
           </div>
 
           <div class="fav-posters-grid" *ngIf="favoritosFilmesDetalhes.length > 0; else noFavMovies">
-            <div class="fav-poster" 
+            <div class="fav-poster"
                  *ngFor="let f of favoritosFilmesDetalhes; let i = index"
                  draggable="true"
                  [attr.data-index]="i"
@@ -174,7 +192,7 @@
                  [class.drag-over]="dragOverIndex === i"
                  title="Drag to reorder">
               <span class="position-badge">{{ i + 1 }}</span>
-              <img [src]="f.posterUrl" 
+              <img [src]="f.posterUrl"
                    [alt]="f.titulo"
                    (dblclick)="removeFromFavorites(f.id)"
                    title="Double-click to remove from favorites" />
@@ -184,7 +202,7 @@
           <ng-template #noFavMovies>
             <div class="fav-empty">
               No favorite movies yet.<br />
-              <span class="fav-empty-hint">Use "â˜… Favorite" in the catalog (max 10).</span>
+              <span class="fav-empty-hint">Use "★ Favorite" in the catalog (max 10).</span>
             </div>
           </ng-template>
         </div>
@@ -211,7 +229,7 @@
           </div>
 
           <div class="fav-actors-list" *ngIf="favoritosAtores.length > 0; else noFavActors">
-            <div class="fav-actor-card" 
+            <div class="fav-actor-card"
                  *ngFor="let a of favoritosAtores; let i = index"
                  draggable="true"
                  [attr.data-index]="i"
@@ -224,11 +242,13 @@
                  title="Drag to reorder">
               <span class="actor-rank">{{ i + 1 }}</span>
               <span class="actor-name">{{ a }}</span>
-              <button type="button" 
-                      class="actor-remove-btn" 
-                      (click)="removeAtorFavorito(a)" 
+              <button type="button"
+                      class="actor-remove-btn"
+                      (click)="removeAtorFavorito(a)"
                       [disabled]="isSavingFavorites"
-                      title="Remove actor">&times;</button>
+                      title="Remove actor">
+                &times;
+              </button>
             </div>
           </div>
 
@@ -243,7 +263,7 @@
       </div>
     </div>
 
-    <!-- CATÃƒÂLOGO -->
+    <!-- CATALOGO -->
     <div class="section">
       <div class="section-title">
         <h3>Catalog</h3>
@@ -256,7 +276,7 @@
 
           <div class="movie-meta">
             <div class="movie-title">{{ f.titulo }}</div>
-            <div class="movie-sub">{{ f.genero }} Â· {{ f.duracao }} min</div>
+            <div class="movie-sub">{{ f.genero }} &middot; {{ f.duracao }} min</div>
           </div>
 
           <div class="movie-actions">
@@ -269,7 +289,7 @@
             <button class="action-btn ghost"
                     (click)="addToWatched(f.id)"
                     [disabled]="isSavingMovie || inWatched(f.id)">
-              âœ“ Watched
+              ✓ Watched
             </button>
 
             <button class="action-btn danger"
@@ -284,7 +304,7 @@
                     (click)="toggleFavoriteFilme(f.id)"
                     [disabled]="isSavingFavorites"
                     [class.selected]="isFilmeFavorito(f.id)">
-              â˜… Favorite
+              ★ Favorite
             </button>
           </div>
         </div>
@@ -360,12 +380,15 @@
   </div>
 </div>
 
+<!-- LIST MODAL -->
 <div class="modal-overlay list-modal-overlay" *ngIf="showListModal" (click)="closeListModal()">
   <div class="list-modal-box" (click)="$event.stopPropagation()">
     <button class="modal-close" (click)="closeListModal()">&times;</button>
 
     <h3>{{ currentListTitle }}</h3>
-    <span class="list-subtitle">{{ filteredCurrentList.length }} {{ filteredCurrentList.length === 1 ? 'Title' : 'Titles' }}</span>
+    <span class="list-subtitle">
+      {{ filteredCurrentList.length }} {{ filteredCurrentList.length === 1 ? 'Title' : 'Titles' }}
+    </span>
 
     <!-- filter menu for watch later -->
     <div class="filter-row" *ngIf="currentListType === 'watchLater'">
@@ -400,7 +423,7 @@
           <div class="poster-title">{{ movie.filme?.titulo || movie.filme?.Titulo || 'Unknown' }}</div>
           <div class="poster-meta">
             <span *ngIf="movie.filme?.genero || movie.filme?.Genero">{{ movie.filme?.genero || movie.filme?.Genero }}</span>
-            <span *ngIf="movie.filme?.duracao || movie.filme?.Duracao"> Â· {{ movie.filme?.duracao || movie.filme?.Duracao }} min</span>
+            <span *ngIf="movie.filme?.duracao || movie.filme?.Duracao"> &middot; {{ movie.filme?.duracao || movie.filme?.Duracao }} min</span>
           </div>
           <div class="poster-date" *ngIf="(movie.data || movie.Data)">
             Added: {{ (movie.data || movie.Data) | date:'short' }}
