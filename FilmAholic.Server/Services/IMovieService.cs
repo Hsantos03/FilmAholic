@@ -18,4 +18,6 @@ public interface IMovieService
     Task<Filme?> UpdateMovieFromApisAsync(int filmeId);
 
     Task<List<Filme>> GetPopularMoviesAsync(int page = 1, int count = 20);
+
+    Task<RatingsDto> GetRatingsAsync(string? tmdbId, string? title);
 }

@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace FilmAholic.Server.Migrations
 {
     [DbContext(typeof(FilmAholicDbContext))]
-    [Migration("20260127150603_initialMigration")]
-    partial class initialMigration
+    [Migration("20260127172103_InitialCreate")]
+    partial class InitialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)

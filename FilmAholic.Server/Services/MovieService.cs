@@ -342,7 +342,6 @@ public class MovieService : IMovieService
                 catch (Exception ex)
                 {
                     _logger.LogWarning(ex, "Error processing movie {TmdbId} from popular list", tmdbMovie.Id);
-                    // Continue with next movie
                 }
             }
 
@@ -352,6 +351,69 @@ public class MovieService : IMovieService
         {
             _logger.LogError(ex, "Error fetching popular movies from TMDb");
             return new List<Filme>();
+        } 
+    }
+
+    // Método para obter as classificações a partir do TMDb e OMDb
+    public async Task<RatingsDto> GetRatingsAsync(string? tmdbId, string? title)
+    {
+        var dto = new RatingsDto();
+
+        int? parsedTmdbId = null;
+
+        if (!string.IsNullOrWhiteSpace(tmdbId) && int.TryParse(tmdbId, out var tmp))
+            parsedTmdbId = tmp;
+
+        // Se não houver tmdbId válido, tenta descobrir pelo título
+        if (parsedTmdbId == null && !string.IsNullOrWhiteSpace(title))
+        {
+            try
+            {
+                var search = await SearchMoviesAsync(title, 1);
+                var first = search?.Results?.FirstOrDefault();
+                if (first != null)
+                    parsedTmdbId = first.Id;
+            }
+            catch
+            {
+            }
         }
+
+        // TMDb details tem o vote average + vote count + imdb id
+        TmdbMovieDto? tmdbMovie = null;
+
+        if (parsedTmdbId != null)
+        {
+            tmdbMovie = await GetMovieDetailsFromTmdbAsync(parsedTmdbId.Value);
+            if (tmdbMovie != null)
+            {
+                dto.TmdbVoteAverage = tmdbMovie.VoteAverage;
+                dto.TmdbVoteCount = tmdbMovie.VoteCount;
+                dto.ImdbId = tmdbMovie.ImdbId;
+            }
+        }
+
+        // OMDb tem o imdbRating + Metascore + RottenTomatoes
+        if (!string.IsNullOrWhiteSpace(dto.ImdbId))
+        {
+            var omdb = await GetMovieDetailsFromOmdbAsync(dto.ImdbId);
+            if (omdb != null)
+            {
+                dto.ImdbRating = string.IsNullOrWhiteSpace(omdb.ImdbRating) ? null : omdb.ImdbRating;
+                dto.Metascore = string.IsNullOrWhiteSpace(omdb.Metascore) ? null : omdb.Metascore;
+
+                if (omdb.Ratings != null && omdb.Ratings.Count > 0)
+                {
+                    var rt = omdb.Ratings.FirstOrDefault(r =>
+                        !string.IsNullOrWhiteSpace(r.Source) &&
+                        r.Source.ToLower().Contains("rotten tomatoes"));
+
+                    if (rt != null && !string.IsNullOrWhiteSpace(rt.Value))
+                        dto.RottenTomatoes = rt.Value;
+                }
+            }
+        }
+
+        return dto;
     }
 }

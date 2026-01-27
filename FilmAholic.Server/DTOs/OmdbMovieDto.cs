@@ -55,6 +55,12 @@ public class OmdbMovieDto
 
     [JsonPropertyName("imdbID")]
     public string ImdbId { get; set; } = "";
+    
+    [JsonPropertyName("Metascore")]
+    public string Metascore { get; set; } = "";
+
+    [JsonPropertyName("Ratings")]
+    public List<OmdbRatingDto> Ratings { get; set; } = new();
 
     [JsonPropertyName("Type")]
     public string Type { get; set; } = "";
@@ -64,4 +70,13 @@ public class OmdbMovieDto
 
     [JsonPropertyName("Error")]
     public string? Error { get; set; }
+}
+
+public class OmdbRatingDto
+{
+    [JsonPropertyName("Source")]
+    public string Source { get; set; } = "";
+
+    [JsonPropertyName("Value")]
+    public string Value { get; set; } = "";
 }

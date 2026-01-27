@@ -33,6 +33,15 @@ export interface TmdbMovieResult {
   imdb_id?: string | null;
 }
 
+export interface RatingsDto {
+  tmdbVoteAverage?: number | null;
+  tmdbVoteCount?: number | null;
+  imdbRating?: string | null;
+  metascore?: string | null;
+  rottenTomatoes?: string | null;
+  imdbId?: string | null;
+}
+
 @Injectable({ providedIn: 'root' })
 export class FilmesService {
   private apiUrl = 'https://localhost:7277/api/filmes';
@@ -64,5 +73,9 @@ export class FilmesService {
 
   updateMovie(id: number): Observable<Filme> {
     return this.http.put<Filme>(`${this.apiUrl}/${id}/update`, {});
+  }
+
+  getRatings(id: number): Observable<RatingsDto> {
+    return this.http.get<RatingsDto>(`${this.apiUrl}/${id}/ratings`);
   }
 }

@@ -19,9 +19,7 @@ namespace FilmAholic.Server.Controllers
             _context = context;
         }
 
-        /// <summary>
         /// Get all movies from database (always include popular TMDb movies if DB has few movies)
-        /// </summary>
         [HttpGet]
         public async Task<IActionResult> GetAll()
         {
@@ -78,9 +76,7 @@ namespace FilmAholic.Server.Controllers
             return Ok(allMovies);
         }
 
-        /// <summary>
         /// Get movie by ID from database or seed
-        /// </summary>
         [HttpGet("{id}")]
         public async Task<IActionResult> GetById(int id)
         {
@@ -96,9 +92,7 @@ namespace FilmAholic.Server.Controllers
             return Ok(filme);
         }
 
-        /// <summary>
         /// Search movies using TMDb API
-        /// </summary>
         [HttpGet("search")]
         public async Task<IActionResult> SearchMovies([FromQuery] string query, [FromQuery] int page = 1)
         {
@@ -122,9 +116,7 @@ namespace FilmAholic.Server.Controllers
             }
         }
 
-        /// <summary>
         /// Get movie details from TMDb by TMDb ID
-        /// </summary>
         [HttpGet("tmdb/{tmdbId}")]
         public async Task<IActionResult> GetMovieFromTmdb(int tmdbId)
         {
@@ -148,9 +140,7 @@ namespace FilmAholic.Server.Controllers
             }
         }
 
-        /// <summary>
         /// Get or create a movie in the database from TMDb ID
-        /// </summary>
         [HttpPost("tmdb/{tmdbId}")]
         public async Task<IActionResult> AddMovieFromTmdb(int tmdbId)
         {
@@ -169,9 +159,8 @@ namespace FilmAholic.Server.Controllers
             }
         }
 
-        /// <summary>
+        
         /// Update movie information from external APIs
-        /// </summary>
         [HttpPut("{id}/update")]
         public async Task<IActionResult> UpdateMovie(int id)
         {
@@ -189,6 +178,23 @@ namespace FilmAholic.Server.Controllers
             {
                 return StatusCode(500, new { error = "An error occurred while updating movie.", details = ex.Message });
             }
+        }
+
+        /// Ratings (TMDb + OMDb)
+        [HttpGet("{id}/ratings")]
+        public async Task<IActionResult> GetRatings(int id)
+        {
+            var filme = await _context.Set<Models.Filme>().FindAsync(id);
+
+            if (filme == null)
+            {
+                filme = FilmSeed.Filmes.FirstOrDefault(f => f.Id == id);
+                if (filme == null) return NotFound();
+            }
+
+            var ratings = await _movieService.GetRatingsAsync(filme.TmdbId, filme.Titulo);
+
+            return Ok(ratings);
         }
     }
 }
