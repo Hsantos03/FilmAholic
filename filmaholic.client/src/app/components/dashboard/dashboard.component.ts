@@ -1,23 +1,45 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { DesafiosService } from '../../services/desafios.service';
+import { Filme, FilmesService } from '../../services/filmes.service';
 
 @Component({
   selector: 'app-dashboard',
   templateUrl: './dashboard.component.html',
   styleUrls: ['./dashboard.component.css']
 })
-export class DashboardComponent implements OnInit {
+export class DashboardComponent implements OnInit, OnDestroy {
   userName: string = '';
-  isDesafiosOpen: boolean = false;
 
+  isDesafiosOpen: boolean = false;
   desafios: any[] = [];
   isLoadingDesafios = false;
 
-  constructor(private desafiosService: DesafiosService) { }
+  isLoadingMovies = false;
+  errorMovies = '';
+  searchTerm = '';
+
+  movies: Filme[] = [];
+  featured: Filme[] = [];
+  featuredIndex = 0;
+  featuredVisibleCount = 4;
+  top10: Filme[] = [];
+
+  private onResizeBound = () => this.updateVisibleCount();
+
+  constructor(
+    private desafiosService: DesafiosService,
+    private filmesService: FilmesService
+  ) { }
 
   ngOnInit(): void {
-    // Obter o nome do utilizador do localStorage
     this.userName = localStorage.getItem('user_nome') || 'Utilizador';
+    this.loadMovies();
+    this.updateVisibleCount();
+    window.addEventListener('resize', this.onResizeBound);
+  }
+
+  ngOnDestroy(): void {
+    window.removeEventListener('resize', this.onResizeBound);
   }
 
   public openDesafios(): void {
@@ -32,55 +54,100 @@ export class DashboardComponent implements OnInit {
   private loadDesafiosWithProgress(): void {
     this.isLoadingDesafios = true;
 
-    // Tentar primeiro o endpoint autenticado; se não autorizado, usar lista pública
     this.desafiosService.getWithUserProgress().subscribe({
       next: (res) => {
         this.desafios = res || [];
+        this.isLoadingDesafios = false;
       },
       error: (err) => {
         console.warn('Falha ao carregar desafios com progresso', err);
 
-        // Se não autorizado, fallback para o endpoint público que retorna todos os desafios (seed)
         if (err?.status === 401 || err?.status === 403) {
           this.desafiosService.getAll().subscribe({
-            next: (res) => {
-              this.desafios = res || [];
-            },
+            next: (res) => (this.desafios = res || []),
             error: (e) => {
               console.error('Falha ao carregar desafios públicos', e);
               this.desafios = [];
             },
-            complete: () => {
-              this.isLoadingDesafios = false;
-            }
+            complete: () => (this.isLoadingDesafios = false)
           });
         } else {
           this.isLoadingDesafios = false;
           this.desafios = [];
         }
-      },
-      complete: () => {
-        // Se a chamada autenticada terminar normalmente, pare de carregar.
-        this.isLoadingDesafios = false;
       }
     });
   }
 
-  // Helper de template: calcula a porcentagem de progresso (0-100)
   public computeProgressPercent(progresso: number | null | undefined, quantidade: number | null | undefined): number {
     const p = Number(progresso ?? 0);
     const q = Number(quantidade ?? 1);
     if (q <= 0) return 0;
-    const percent = (p / q) * 100;
-    // restringir a [0,100] e arredondar para inteiro
-    return Math.min(100, Math.max(0, Math.round(percent)));
+    return Math.min(100, Math.max(0, Math.round((p / q) * 100)));
   }
 
-  // Returns true when progresso >= quantidadeNecessaria
   public isCompleted(desafio: any): boolean {
     const p = Number(desafio?.progresso ?? 0);
     const q = Number(desafio?.quantidadeNecessaria ?? 1);
     if (q <= 0) return false;
     return p >= q;
   }
+
+  private loadMovies(): void {
+    this.isLoadingMovies = true;
+    this.errorMovies = '';
+
+    this.filmesService.getAll().subscribe({
+      next: (res) => {
+        this.movies = res || [];
+
+        // “Em Destaque”
+        this.featured = this.movies.slice(0, 12);
+
+        // “Top 10 filmes”
+        this.top10 = this.movies.slice(0, 10);
+
+        this.featuredIndex = 0;
+        this.isLoadingMovies = false;
+      },
+      error: () => {
+        this.errorMovies = 'Não foi possível carregar os filmes.';
+        this.movies = [];
+        this.featured = [];
+        this.top10 = [];
+        this.isLoadingMovies = false;
+      }
+    });
+  }
+
+  private updateVisibleCount(): void {
+    const w = window.innerWidth;
+
+    if (w < 520) this.featuredVisibleCount = 1;
+    else if (w < 860) this.featuredVisibleCount = 2;
+    else if (w < 1180) this.featuredVisibleCount = 3;
+    else this.featuredVisibleCount = 4;
+
+    const maxIndex = Math.max(0, this.featured.length - this.featuredVisibleCount);
+    this.featuredIndex = Math.min(this.featuredIndex, maxIndex);
+  }
+
+  get featuredVisible(): Filme[] {
+    return this.featured.slice(this.featuredIndex, this.featuredIndex + this.featuredVisibleCount);
+  }
+
+  prevFeatured(): void {
+    this.featuredIndex = Math.max(0, this.featuredIndex - this.featuredVisibleCount);
+  }
+
+  nextFeatured(): void {
+    const maxIndex = Math.max(0, this.featured.length - this.featuredVisibleCount);
+    this.featuredIndex = Math.min(maxIndex, this.featuredIndex + this.featuredVisibleCount);
+  }
+
+  posterOf(f: Filme): string {
+    return f?.posterUrl || 'https://via.placeholder.com/300x450?text=Poster';
+  }
+
+  openMenu(): void { }
 }
