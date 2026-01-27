@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using FilmAholic.Server.Data;
@@ -26,42 +26,47 @@ namespace FilmAholic.Server.Controllers
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
             if (userId == null) return Unauthorized();
 
-            // 1) Verificar se o filme existe no seed
-            var seedFilme = FilmSeed.Filmes.FirstOrDefault(f => f.Id == filmeId);
-            if (seedFilme == null)
-                return BadRequest("Filme inválido (não existe no catálogo hardcoded).");
+            // 1) Procurar o filme na base de dados primeiro (por ID)
+            Filme? dbFilme = await _context.Set<Filme>().FindAsync(filmeId);
+            
+            // 2) Se não encontrou na BD, procurar no seed como fallback
+            if (dbFilme == null)
+            {
+                var seedFilme = FilmSeed.Filmes.FirstOrDefault(f => f.Id == filmeId);
+                if (seedFilme == null)
+                    return BadRequest("Filme inválido (não existe no catálogo).");
 
-            // 2) Garantir que o filme existe na BD (tabela Filmes)
-            // Procurar primeiro por TmdbId (se existir) ou Titulo para evitar criar duplicados
-            Filme? dbFilme = null;
-            if (!string.IsNullOrEmpty(seedFilme.TmdbId))
-            {
-                // Se tem TmdbId, procurar por ele
-                dbFilme = await _context.Set<Filme>()
-                    .FirstOrDefaultAsync(f => f.TmdbId == seedFilme.TmdbId);
-            }
-            
-            // Se não encontrou por TmdbId ou não tem TmdbId, procurar por título
-            if (dbFilme == null)
-            {
-                dbFilme = await _context.Set<Filme>()
-                    .FirstOrDefaultAsync(f => f.Titulo == seedFilme.Titulo);
-            }
-            
-            if (dbFilme == null)
-            {
-                dbFilme = new Filme
+                // Garantir que o filme existe na BD (tabela Filmes)
+                // Procurar primeiro por TmdbId (se existir) ou Titulo para evitar criar duplicados
+                if (!string.IsNullOrEmpty(seedFilme.TmdbId))
                 {
-                    // Não definir Id - será gerado automaticamente pelo DB
-                    Titulo = seedFilme.Titulo,
-                    Duracao = seedFilme.Duracao,
-                    Genero = seedFilme.Genero,
-                    PosterUrl = seedFilme.PosterUrl ?? "",
-                    TmdbId = seedFilme.TmdbId ?? ""
-                };
+                    // Se tem TmdbId, procurar por ele
+                    dbFilme = await _context.Set<Filme>()
+                        .FirstOrDefaultAsync(f => f.TmdbId == seedFilme.TmdbId);
+                }
+                
+                // Se não encontrou por TmdbId ou não tem TmdbId, procurar por título
+                if (dbFilme == null)
+                {
+                    dbFilme = await _context.Set<Filme>()
+                        .FirstOrDefaultAsync(f => f.Titulo == seedFilme.Titulo);
+                }
+                
+                if (dbFilme == null)
+                {
+                    dbFilme = new Filme
+                    {
+                        // Não definir Id - será gerado automaticamente pelo DB
+                        Titulo = seedFilme.Titulo,
+                        Duracao = seedFilme.Duracao,
+                        Genero = seedFilme.Genero,
+                        PosterUrl = seedFilme.PosterUrl ?? "",
+                        TmdbId = seedFilme.TmdbId ?? ""
+                    };
 
-                _context.Set<Filme>().Add(dbFilme);
-                await _context.SaveChangesAsync();
+                    _context.Set<Filme>().Add(dbFilme);
+                    await _context.SaveChangesAsync();
+                }
             }
 
             // 3) Adicionar ou trocar a lista usando o Id real do filme na BD

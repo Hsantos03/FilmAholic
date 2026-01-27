@@ -103,6 +103,10 @@ builder.Services.AddScoped<IEmailService, EmailService>();
 // Registar serviço de preferências
 builder.Services.AddScoped<IPreferenciasService, PreferenciasService>();
 
+// Registar HttpClient e serviço de filmes para APIs externas
+builder.Services.AddHttpClient();
+builder.Services.AddScoped<IMovieService, MovieService>();
+
 builder.Services.AddCors(options => {
     options.AddPolicy("AllowAngular",
         policy => policy.WithOrigins("http://localhost:4200", "https://localhost:50905")
