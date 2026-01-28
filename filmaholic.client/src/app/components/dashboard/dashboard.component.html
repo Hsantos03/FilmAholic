@@ -1,97 +1,108 @@
 <div class="page">
-  <!-- TOPBAR (mockup style) -->
   <header class="topbar">
-    <button class="icon-btn" (click)="openMenu()" aria-label="Menu">☰</button>
+    <button class="icon-btn" (click)="openMenu()" aria-label="Menu">â˜°</button>
 
     <div class="brand">FilmAholic</div>
 
     <div class="search">
-      <input type="text"
-             [(ngModel)]="searchTerm"
-             placeholder="Pesquisar filmes..."
-             aria-label="Pesquisar" />
-      <button class="icon-btn search-btn" aria-label="Pesquisar">🔍</button>
+      <div class="search-pill" role="search">
+        <button class="pill-icon left" type="button" aria-label="OpÃ§Ãµes">
+          â˜°
+        </button>
+
+        <input type="text"
+               [(ngModel)]="searchTerm"
+               placeholder="Pesquisar filmes..."
+               aria-label="Pesquisar" />
+
+        <button class="pill-icon right" type="button" aria-label="Pesquisar">
+          ðŸ”ï¸Ž
+        </button>
+      </div>
     </div>
 
     <div class="top-actions">
-      <!-- ícone “bookmark” -->
-      <button class="icon-btn" aria-label="Favoritos">🔖</button>
+      <button class="icon-btn" aria-label="Favoritos">ðŸ”–</button>
 
-      <!-- perfil -->
-      <button class="icon-btn" routerLink="/profile" aria-label="Perfil">👤</button>
+      <button class="icon-btn" routerLink="/profile" aria-label="Perfil">ðŸ‘¤</button>
     </div>
   </header>
 
   <main class="content">
-    <!-- mini header/botoes -->
-    <div class="welcome-row">
-      <div class="welcome-text">
-        <div class="welcome-title">Bem-vindo, {{ userName }}!</div>
-        <div class="welcome-sub">Explora os filmes e acompanha os teus desafios.</div>
-      </div>
-
-      <div class="welcome-actions">
-        <button class="primary-btn" (click)="openDesafios()">Desafios Semanais</button>
-      </div>
-    </div>
-
-    <div class="state" *ngIf="isLoadingMovies">A carregar filmes…</div>
+    <div class="state" *ngIf="isLoadingMovies">A carregar filmesâ€¦</div>
     <div class="state error" *ngIf="!isLoadingMovies && errorMovies">
       {{ errorMovies }}
     </div>
 
-    <!-- EM DESTAQUE -->
-    <section class="section" *ngIf="!isLoadingMovies && featured.length">
-      <div class="section-head">
-        <h2>Em Destaque</h2>
-      </div>
-
-      <div class="carousel">
-        <button class="arrow left"
-                (click)="prevFeatured()"
-                [disabled]="featuredIndex === 0"
-                aria-label="Anterior">
-          ‹
-        </button>
-
-        <div class="carousel-track">
-          <a class="poster-card"
-             *ngFor="let f of featuredVisible"
-             [routerLink]="['/movie-detail', f.id]">
-            <img [src]="posterOf(f)" [alt]="f.titulo" />
-          </a>
+    <section class="strip strip-full" *ngIf="!isLoadingMovies && featured.length">
+      <div class="strip-inner">
+        <div class="section-head">
+          <h2>Em Destaque</h2>
         </div>
 
-        <button class="arrow right"
-                (click)="nextFeatured()"
-                [disabled]="featuredIndex >= (featured.length - featuredVisibleCount)"
-                aria-label="Seguinte">
-          ›
-        </button>
+        <div class="carousel hero">
+          <button class="chevron left"
+                  (click)="prevFeatured()"
+                  [disabled]="featuredIndex === 0"
+                  aria-label="Anterior">
+            â€¹
+          </button>
+
+          <div class="carousel-track">
+            <a class="poster-card hero"
+               *ngFor="let f of featuredVisible"
+               [routerLink]="['/movie-detail', f.id]">
+              <img [src]="posterOf(f)" [alt]="f.titulo" />
+            </a>
+          </div>
+
+          <button class="chevron right"
+                  (click)="nextFeatured()"
+                  [disabled]="featuredIndex >= (featured.length - featuredVisibleCount)"
+                  aria-label="Seguinte">
+            â€º
+          </button>
+        </div>
       </div>
     </section>
 
-    <!-- TOP 10 FILMES -->
-    <section class="section" *ngIf="!isLoadingMovies && top10.length">
-      <div class="section-head">
-        <h2>Top 10 filmes</h2>
-      </div>
+    <section class="strip strip-full top10-strip" *ngIf="!isLoadingMovies && top10.length">
+      <div class="strip-inner">
+        <div class="section-head">
+          <h2>Top 10 filmes</h2>
+        </div>
 
-      <div class="row-scroll">
-        <a class="poster-card small"
-           *ngFor="let f of top10"
-           [routerLink]="['/movie-detail', f.id]">
-          <img [src]="posterOf(f)" [alt]="f.titulo" />
-        </a>
+        <div class="carousel top10">
+          <button class="chevron left"
+                  (click)="prevTop10()"
+                  [disabled]="top10Index === 0"
+                  aria-label="Anterior">
+            â€¹
+          </button>
+
+          <div class="carousel-track">
+            <a class="poster-card small"
+               *ngFor="let f of top10Visible"
+               [routerLink]="['/movie-detail', f.id]">
+              <img [src]="posterOf(f)" [alt]="f.titulo" />
+            </a>
+          </div>
+
+          <button class="chevron right"
+                  (click)="nextTop10()"
+                  [disabled]="top10Index >= (top10.length - top10VisibleCount)"
+                  aria-label="Seguinte">
+            â€º
+          </button>
+        </div>
       </div>
     </section>
   </main>
 </div>
 
-<!-- ===== MODAL: DESAFIOS ===== -->
 <div class="modal-overlay" *ngIf="isDesafiosOpen" (click)="closeDesafios()">
   <div class="modal-box" (click)="$event.stopPropagation()">
-    <button class="modal-close" (click)="closeDesafios()">×</button>
+    <button class="modal-close" (click)="closeDesafios()">Ã—</button>
 
     <h3>Desafios Semanais</h3>
 
@@ -103,7 +114,7 @@
           <h4 class="desafio-title">{{ d.descricao }}</h4>
 
           <div class="desafio-sub">
-            {{ d.genero }} · {{ d.dataInicio | date:'shortDate' }} - {{ d.dataFim | date:'shortDate' }}
+            {{ d.genero }} Â· {{ d.dataInicio | date:'shortDate' }} - {{ d.dataFim | date:'shortDate' }}
           </div>
         </div>
 
@@ -113,7 +124,7 @@
               {{ d.progresso }} / {{ d.quantidadeNecessaria }}
             </span>
 
-            <span *ngIf="isCompleted(d)" aria-live="polite">✓ Completed</span>
+            <span *ngIf="isCompleted(d)" aria-live="polite">âœ“ Completed</span>
           </div>
 
           <div class="progress-bar" aria-hidden="true">
@@ -126,7 +137,7 @@
       </div>
 
       <div *ngIf="desafios.length === 0" class="empty-list-message">
-        Nenhum desafio disponível.
+        Nenhum desafio disponÃ­vel.
       </div>
     </div>
 

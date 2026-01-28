@@ -23,6 +23,8 @@ export class DashboardComponent implements OnInit, OnDestroy {
   featuredIndex = 0;
   featuredVisibleCount = 4;
   top10: Filme[] = [];
+  top10Index = 0;
+  top10VisibleCount = 4;
 
   private onResizeBound = () => this.updateVisibleCount();
 
@@ -66,7 +68,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
           this.desafiosService.getAll().subscribe({
             next: (res) => (this.desafios = res || []),
             error: (e) => {
-              console.error('Falha ao carregar desafios públicos', e);
+              console.error('Falha ao carregar desafios pÃºblicos', e);
               this.desafios = [];
             },
             complete: () => (this.isLoadingDesafios = false)
@@ -101,17 +103,16 @@ export class DashboardComponent implements OnInit, OnDestroy {
       next: (res) => {
         this.movies = res || [];
 
-        // “Em Destaque”
         this.featured = this.movies.slice(0, 12);
 
-        // “Top 10 filmes”
         this.top10 = this.movies.slice(0, 10);
 
         this.featuredIndex = 0;
+        this.top10Index = 0;
         this.isLoadingMovies = false;
       },
       error: () => {
-        this.errorMovies = 'Não foi possível carregar os filmes.';
+        this.errorMovies = 'NÃ£o foi possÃ­vel carregar os filmes.';
         this.movies = [];
         this.featured = [];
         this.top10 = [];
@@ -130,6 +131,14 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
     const maxIndex = Math.max(0, this.featured.length - this.featuredVisibleCount);
     this.featuredIndex = Math.min(this.featuredIndex, maxIndex);
+
+    if (w < 520) this.top10VisibleCount = 1;
+    else if (w < 860) this.top10VisibleCount = 2;
+    else if (w < 1180) this.top10VisibleCount = 3;
+    else this.top10VisibleCount = 4;
+
+    const maxTop10Index = Math.max(0, this.top10.length - this.top10VisibleCount);
+    this.top10Index = Math.min(this.top10Index, maxTop10Index);
   }
 
   get featuredVisible(): Filme[] {
@@ -143,6 +152,19 @@ export class DashboardComponent implements OnInit, OnDestroy {
   nextFeatured(): void {
     const maxIndex = Math.max(0, this.featured.length - this.featuredVisibleCount);
     this.featuredIndex = Math.min(maxIndex, this.featuredIndex + this.featuredVisibleCount);
+  }
+
+  get top10Visible(): Filme[] {
+    return this.top10.slice(this.top10Index, this.top10Index + this.top10VisibleCount);
+  }
+
+  prevTop10(): void {
+    this.top10Index = Math.max(0, this.top10Index - this.top10VisibleCount);
+  }
+
+  nextTop10(): void {
+    const maxIndex = Math.max(0, this.top10.length - this.top10VisibleCount);
+    this.top10Index = Math.min(maxIndex, this.top10Index + this.top10VisibleCount);
   }
 
   posterOf(f: Filme): string {
