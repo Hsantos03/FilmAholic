@@ -19,5 +19,7 @@ public interface IMovieService
 
     Task<List<Filme>> GetPopularMoviesAsync(int page = 1, int count = 20);
 
+    Task<List<PopularActorDto>> GetPopularActorsAsync(int page = 1, int count = 10);
+
     Task<RatingsDto> GetRatingsAsync(string? tmdbId, string? title);
 }

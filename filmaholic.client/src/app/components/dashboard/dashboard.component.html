@@ -1,13 +1,13 @@
 <div class="page">
   <header class="topbar">
-    <button class="icon-btn" (click)="openMenu()" aria-label="Menu">â˜°</button>
+    <button class="icon-btn" (click)="openMenu()" aria-label="Menu">&#9776;</button>
 
     <div class="brand">FilmAholic</div>
 
     <div class="search">
       <div class="search-pill" role="search">
-        <button class="pill-icon left" type="button" aria-label="OpÃ§Ãµes">
-          â˜°
+        <button class="pill-icon left" type="button" aria-label="Opcoes">
+          &#9776;
         </button>
 
         <input type="text"
@@ -16,20 +16,20 @@
                aria-label="Pesquisar" />
 
         <button class="pill-icon right" type="button" aria-label="Pesquisar">
-          ðŸ”ï¸Ž
+          &#128269;
         </button>
       </div>
     </div>
 
     <div class="top-actions">
-      <button class="icon-btn" aria-label="Favoritos">ðŸ”–</button>
+      <button class="icon-btn" aria-label="Favoritos">&#128278;</button>
 
-      <button class="icon-btn" routerLink="/profile" aria-label="Perfil">ðŸ‘¤</button>
+      <button class="icon-btn" routerLink="/profile" aria-label="Perfil">&#128100;</button>
     </div>
   </header>
 
   <main class="content">
-    <div class="state" *ngIf="isLoadingMovies">A carregar filmesâ€¦</div>
+    <div class="state" *ngIf="isLoadingMovies">A carregar filmes&hellip;</div>
     <div class="state error" *ngIf="!isLoadingMovies && errorMovies">
       {{ errorMovies }}
     </div>
@@ -45,7 +45,7 @@
                   (click)="prevFeatured()"
                   [disabled]="featuredIndex === 0"
                   aria-label="Anterior">
-            â€¹
+            &lsaquo;
           </button>
 
           <div class="carousel-track">
@@ -60,7 +60,7 @@
                   (click)="nextFeatured()"
                   [disabled]="featuredIndex >= (featured.length - featuredVisibleCount)"
                   aria-label="Seguinte">
-            â€º
+            &rsaquo;
           </button>
         </div>
       </div>
@@ -77,7 +77,7 @@
                   (click)="prevTop10()"
                   [disabled]="top10Index === 0"
                   aria-label="Anterior">
-            â€¹
+            &lsaquo;
           </button>
 
           <div class="carousel-track">
@@ -92,7 +92,43 @@
                   (click)="nextTop10()"
                   [disabled]="top10Index >= (top10.length - top10VisibleCount)"
                   aria-label="Seguinte">
-            â€º
+            &rsaquo;
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <div class="state" *ngIf="isLoadingActors">A carregar atores&hellip;</div>
+    <div class="state error" *ngIf="!isLoadingActors && errorActors">
+      {{ errorActors }}
+    </div>
+
+    <section class="strip strip-full" *ngIf="!isLoadingActors && atores.length">
+      <div class="strip-inner">
+        <div class="section-head">
+          <h2>Top 10 atores</h2>
+        </div>
+
+        <div class="carousel top10">
+          <button class="chevron left"
+                  (click)="prevAtores()"
+                  [disabled]="atoresIndex === 0"
+                  aria-label="Anterior">
+            &lsaquo;
+          </button>
+
+          <div class="carousel-track">
+            <div class="actor-card" *ngFor="let a of atoresVisible">
+              <img class="actor-photo" [src]="fotoAtor(a)" [alt]="a.nome" />
+              <div class="actor-name">{{ a.nome }}</div>
+            </div>
+          </div>
+
+          <button class="chevron right"
+                  (click)="nextAtores()"
+                  [disabled]="atoresIndex >= (atores.length - atoresVisibleCount)"
+                  aria-label="Seguinte">
+            &rsaquo;
           </button>
         </div>
       </div>
@@ -102,7 +138,7 @@
 
 <div class="modal-overlay" *ngIf="isDesafiosOpen" (click)="closeDesafios()">
   <div class="modal-box" (click)="$event.stopPropagation()">
-    <button class="modal-close" (click)="closeDesafios()">Ã—</button>
+    <button class="modal-close" (click)="closeDesafios()">&times;</button>
 
     <h3>Desafios Semanais</h3>
 
@@ -114,7 +150,7 @@
           <h4 class="desafio-title">{{ d.descricao }}</h4>
 
           <div class="desafio-sub">
-            {{ d.genero }} Â· {{ d.dataInicio | date:'shortDate' }} - {{ d.dataFim | date:'shortDate' }}
+            {{ d.genero }} &middot; {{ d.dataInicio | date:'shortDate' }} - {{ d.dataFim | date:'shortDate' }}
           </div>
         </div>
 
@@ -124,7 +160,7 @@
               {{ d.progresso }} / {{ d.quantidadeNecessaria }}
             </span>
 
-            <span *ngIf="isCompleted(d)" aria-live="polite">âœ“ Completed</span>
+            <span *ngIf="isCompleted(d)" aria-live="polite">&#10003; Completed</span>
           </div>
 
           <div class="progress-bar" aria-hidden="true">
@@ -137,7 +173,7 @@
       </div>
 
       <div *ngIf="desafios.length === 0" class="empty-list-message">
-        Nenhum desafio disponÃ­vel.
+        Nenhum desafio disponivel.
       </div>
     </div>
 

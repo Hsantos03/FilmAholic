@@ -139,7 +139,6 @@ public class MovieService : IMovieService
                 PropertyNameCaseInsensitive = false
             });
 
-            // Check if OMDb returned an error
             if (result != null && result.Response == "False" && !string.IsNullOrEmpty(result.Error))
             {
                 _logger.LogWarning("OMDb API returned error: {Error} for IMDb ID {ImdbId}", result.Error, imdbId);
@@ -174,7 +173,6 @@ public class MovieService : IMovieService
 
     public async Task<Filme> GetOrCreateMovieFromTmdbAsync(int tmdbId)
     {
-        // Check if movie already exists in database
         var existingMovie = await _context.Set<Filme>()
             .FirstOrDefaultAsync(f => f.TmdbId == tmdbId.ToString());
 
@@ -183,17 +181,14 @@ public class MovieService : IMovieService
             return existingMovie;
         }
 
-        // Get movie info from APIs
         var movieInfo = await GetMovieInfoAsync(tmdbId);
         if (movieInfo == null)
         {
             throw new InvalidOperationException($"Could not retrieve movie information for TMDb ID: {tmdbId}");
         }
 
-        // Ensure TmdbId is set
         movieInfo.TmdbId = tmdbId.ToString();
 
-        // Add to database
         _context.Set<Filme>().Add(movieInfo);
         await _context.SaveChangesAsync();
 
@@ -221,7 +216,6 @@ public class MovieService : IMovieService
             return filme;
         }
 
-        // Update movie properties
         filme.Titulo = updatedInfo.Titulo;
         filme.Genero = updatedInfo.Genero;
         filme.PosterUrl = updatedInfo.PosterUrl;
@@ -245,7 +239,6 @@ public class MovieService : IMovieService
             Duracao = tmdbMovie.Runtime ?? 0
         };
 
-        // Map genres from TMDb
         if (tmdbMovie.Genres != null && tmdbMovie.Genres.Any())
         {
             filme.Genero = string.Join(", ", tmdbMovie.Genres.Select(g => g.Name));
@@ -259,7 +252,6 @@ public class MovieService : IMovieService
             filme.Genero = "Unknown";
         }
 
-        // Use OMDb runtime if TMDb doesn't have it
         if (filme.Duracao == 0 && omdbMovie != null && !string.IsNullOrEmpty(omdbMovie.Runtime))
         {
             var runtimeStr = omdbMovie.Runtime.Replace(" min", "").Trim();
@@ -269,7 +261,6 @@ public class MovieService : IMovieService
             }
         }
 
-        // Use OMDb poster if TMDb doesn't have one
         if (string.IsNullOrEmpty(filme.PosterUrl) && omdbMovie != null && !string.IsNullOrEmpty(omdbMovie.Poster) && omdbMovie.Poster != "N/A")
         {
             filme.PosterUrl = omdbMovie.Poster;
@@ -329,7 +320,6 @@ public class MovieService : IMovieService
                         continue;
                     }
 
-                    // Get OMDb details if available
                     OmdbMovieDto? omdbMovie = null;
                     if (!string.IsNullOrEmpty(fullDetails.ImdbId))
                     {
@@ -354,7 +344,53 @@ public class MovieService : IMovieService
         } 
     }
 
-    // Método para obter as classificações a partir do TMDb e OMDb
+    public async Task<List<PopularActorDto>> GetPopularActorsAsync(int page = 1, int count = 10)
+    {
+        if (string.IsNullOrEmpty(_tmdbApiKey))
+        {
+            _logger.LogWarning("TMDb API key is not configured. Cannot fetch popular actors.");
+            return new List<PopularActorDto>();
+        }
+
+        try
+        {
+            var httpClient = _httpClientFactory.CreateClient();
+            var url = $"{_tmdbBaseUrl}/person/popular?api_key={_tmdbApiKey}&page={page}&language=pt-PT";
+
+            var response = await httpClient.GetAsync(url);
+            response.EnsureSuccessStatusCode();
+
+            var json = await response.Content.ReadAsStringAsync();
+            var result = JsonSerializer.Deserialize<TmdbPopularPeopleResponse>(json, new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = false
+            });
+
+            if (result?.Results == null || result.Results.Count == 0)
+            {
+                return new List<PopularActorDto>();
+            }
+
+            return result.Results
+                .Take(count)
+                .Select(p => new PopularActorDto
+                {
+                    Id = p.Id,
+                    Nome = p.Name,
+                    Popularidade = p.Popularity,
+                    FotoUrl = p.ProfilePath != null
+                        ? $"https://image.tmdb.org/t/p/w500{p.ProfilePath}"
+                        : ""
+                })
+                .ToList();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error fetching popular actors from TMDb");
+            return new List<PopularActorDto>();
+        }
+    }
+
     public async Task<RatingsDto> GetRatingsAsync(string? tmdbId, string? title)
     {
         var dto = new RatingsDto();
@@ -364,7 +400,6 @@ public class MovieService : IMovieService
         if (!string.IsNullOrWhiteSpace(tmdbId) && int.TryParse(tmdbId, out var tmp))
             parsedTmdbId = tmp;
 
-        // Se não houver tmdbId válido, tenta descobrir pelo título
         if (parsedTmdbId == null && !string.IsNullOrWhiteSpace(title))
         {
             try
@@ -379,7 +414,6 @@ public class MovieService : IMovieService
             }
         }
 
-        // TMDb details tem o vote average + vote count + imdb id
         TmdbMovieDto? tmdbMovie = null;
 
         if (parsedTmdbId != null)
@@ -393,7 +427,6 @@ public class MovieService : IMovieService
             }
         }
 
-        // OMDb tem o imdbRating + Metascore + RottenTomatoes
         if (!string.IsNullOrWhiteSpace(dto.ImdbId))
         {
             var omdb = await GetMovieDetailsFromOmdbAsync(dto.ImdbId);

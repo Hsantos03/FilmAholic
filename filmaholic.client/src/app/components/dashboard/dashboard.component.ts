@@ -1,6 +1,7 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { DesafiosService } from '../../services/desafios.service';
 import { Filme, FilmesService } from '../../services/filmes.service';
+import { AtoresService, PopularActor } from '../../services/atores.service';
 
 @Component({
   selector: 'app-dashboard',
@@ -18,6 +19,9 @@ export class DashboardComponent implements OnInit, OnDestroy {
   errorMovies = '';
   searchTerm = '';
 
+  isLoadingActors = false;
+  errorActors = '';
+
   movies: Filme[] = [];
   featured: Filme[] = [];
   featuredIndex = 0;
@@ -26,16 +30,22 @@ export class DashboardComponent implements OnInit, OnDestroy {
   top10Index = 0;
   top10VisibleCount = 4;
 
+  atores: PopularActor[] = [];
+  atoresIndex = 0;
+  atoresVisibleCount = 4;
+
   private onResizeBound = () => this.updateVisibleCount();
 
   constructor(
     private desafiosService: DesafiosService,
-    private filmesService: FilmesService
+    private filmesService: FilmesService,
+    private atoresService: AtoresService
   ) { }
 
   ngOnInit(): void {
     this.userName = localStorage.getItem('user_nome') || 'Utilizador';
     this.loadMovies();
+    this.loadAtores();
     this.updateVisibleCount();
     window.addEventListener('resize', this.onResizeBound);
   }
@@ -121,6 +131,24 @@ export class DashboardComponent implements OnInit, OnDestroy {
     });
   }
 
+  private loadAtores(): void {
+    this.isLoadingActors = true;
+    this.errorActors = '';
+
+    this.atoresService.getPopular(1, 10).subscribe({
+      next: (res) => {
+        this.atores = res || [];
+        this.atoresIndex = 0;
+        this.isLoadingActors = false;
+      },
+      error: () => {
+        this.errorActors = 'Não foi possível carregar os atores.';
+        this.atores = [];
+        this.isLoadingActors = false;
+      }
+    });
+  }
+
   private updateVisibleCount(): void {
     const w = window.innerWidth;
 
@@ -139,6 +167,14 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
     const maxTop10Index = Math.max(0, this.top10.length - this.top10VisibleCount);
     this.top10Index = Math.min(this.top10Index, maxTop10Index);
+
+    if (w < 520) this.atoresVisibleCount = 1;
+    else if (w < 860) this.atoresVisibleCount = 2;
+    else if (w < 1180) this.atoresVisibleCount = 3;
+    else this.atoresVisibleCount = 4;
+
+    const maxAtoresIndex = Math.max(0, this.atores.length - this.atoresVisibleCount);
+    this.atoresIndex = Math.min(this.atoresIndex, maxAtoresIndex);
   }
 
   get featuredVisible(): Filme[] {
@@ -165,6 +201,23 @@ export class DashboardComponent implements OnInit, OnDestroy {
   nextTop10(): void {
     const maxIndex = Math.max(0, this.top10.length - this.top10VisibleCount);
     this.top10Index = Math.min(maxIndex, this.top10Index + this.top10VisibleCount);
+  }
+
+  get atoresVisible(): PopularActor[] {
+    return this.atores.slice(this.atoresIndex, this.atoresIndex + this.atoresVisibleCount);
+  }
+
+  prevAtores(): void {
+    this.atoresIndex = Math.max(0, this.atoresIndex - this.atoresVisibleCount);
+  }
+
+  nextAtores(): void {
+    const maxIndex = Math.max(0, this.atores.length - this.atoresVisibleCount);
+    this.atoresIndex = Math.min(maxIndex, this.atoresIndex + this.atoresVisibleCount);
+  }
+
+  fotoAtor(a: PopularActor): string {
+    return a?.fotoUrl || 'https://via.placeholder.com/300x300?text=Actor';
   }
 
   posterOf(f: Filme): string {
