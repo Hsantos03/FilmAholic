@@ -65,7 +65,7 @@
   color: #fff;
   margin-bottom: 8px;
 }
-
+  
 .result-actions button {
   padding: 6px 10px;
   border-radius: 8px;
@@ -85,4 +85,61 @@
     width: 72px;
     height: 108px;
   }
+}
+
+/* ensure the pill is the positioning context for the menu */
+.search-pill {
+  position: relative;
+}
+
+/* Ensure the search-pill can show an overflowed dropdown (overrides global overflow:hidden) */
+.search .search-pill {
+  position: relative;
+  overflow: visible !important;
+  z-index: 1800;
+}
+
+/* Filter menu styles (positioned directly under the left button) */
+.filter-menu {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 8px; /* aligns with left button inside the pill */
+  transform: none;
+  width: min(300px, 100%);
+  max-width: 320px;
+  background: rgba(6, 12, 17, 0.98);
+  border: 1px solid rgba(255,255,255,0.06);
+  box-shadow: 0 14px 40px rgba(0,0,0,0.6);
+  border-radius: 10px;
+  z-index: 2500; /* ensure it sits above other UI */
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  pointer-events: auto;
+}
+
+/* filter buttons */
+.filter-item {
+  background: transparent;
+  border: none;
+  color: #fff;
+  padding: 8px 10px;
+  text-align: left;
+  width: 100%;
+  cursor: pointer;
+  border-radius: 8px;
+  font-weight: 600;
+}
+
+/* hover state */
+.filter-item:hover {
+  background: rgba(255,255,255,0.02);
+}
+
+/* selected state uses requested color */
+.filter-item.selected {
+  background: #ed6191;
+  color: #fff;
+  box-shadow: 0 6px 18px rgba(237,97,145,0.18);
 }

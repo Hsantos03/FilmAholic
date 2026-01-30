@@ -3,9 +3,9 @@
 
   <a class="brand" routerLink="/dashboard" aria-label="Go to dashboard">FilmAholic</a>
 
-  <div class="search">
+  <div class="search" #searchContainer>
     <div class="search-pill" role="search">
-      <button class="pill-icon left" type="button" aria-label="Opcoes">
+      <button class="pill-icon left" type="button" aria-label="Filtros" (click)="toggleFilterMenu()">
         &#9776;
       </button>
 
@@ -19,6 +19,12 @@
       <button class="pill-icon right" type="button" aria-label="Pesquisar" (click)="doSearch()">
         &#128269;
       </button>
+
+      <!-- Filter menu moved inside .search-pill so it appears right under the left button -->
+      <div class="filter-menu" *ngIf="showFilterMenu" role="menu" aria-label="Filtrar por género">
+        <button class="filter-item" (click)="applyGenre(null)" [class.selected]="!selectedGenre">All</button>
+        <button class="filter-item" *ngFor="let g of genres" (click)="applyGenre(g)" [class.selected]="selectedGenre === g">{{ g }}</button>
+      </div>
     </div>
   </div>
 
@@ -32,7 +38,7 @@
 <main class="content" style="padding-top:22px;">
   <div class="search-results-page">
     <div class="search-header">
-      <h2>Resultados para "{{ query }}"</h2>
+      <h2>Resultados para "{{ query }}" <span *ngIf="selectedGenre">· {{ selectedGenre }}</span></h2>
     </div>
 
     <div *ngIf="isLoading" class="state">A pesquisar&hellip;</div>
@@ -48,7 +54,6 @@
         <div class="result-meta">
           <div class="result-title">{{ r.titulo }}</div>
           <div class="result-actions">
-            <!-- pass whole item to openResult so function can handle DB id or tmdbId -->
             <button (click)="openResult(r)" [disabled]="isLoading">Abrir</button>
           </div>
         </div>
