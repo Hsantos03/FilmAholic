@@ -203,11 +203,14 @@ export class DashboardComponent implements OnInit, OnDestroy {
       .filter(m => (m?.titulo || '').toLowerCase().includes(q))
       .slice(0, 5);
 
-    this.showSearchMenu = this.searchResults.length > 0;
+    // Always show the menu if the user typed something, even when there are 0 matches,
+    // so we can display a friendly "no results" message.
+    this.showSearchMenu = q.length > 0;
   }
 
   public onSearchFocus(): void {
-    if ((this.searchResults || []).length > 0) {
+    const qlen = (this.searchTerm || '').trim().length;
+    if ((this.searchResults || []).length > 0 || qlen > 0) {
       this.showSearchMenu = true;
     }
   }
