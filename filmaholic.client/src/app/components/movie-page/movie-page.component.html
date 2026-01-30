@@ -12,9 +12,7 @@
 
       <!-- POSTER -->
       <aside class="poster-col">
-        <img class="movie-poster"
-             [src]="posterOf()"
-             [alt]="f.titulo" />
+        <img class="movie-poster" [src]="posterOf()" [alt]="f.titulo" />
 
         <div class="hours" *ngIf="totalHours">
           Total de horas vistas: {{ totalHours | number:'1.1-2' }}h
@@ -31,7 +29,7 @@
         </div>
 
         <!-- AÇÕES -->
-        <div class="actions-row centered">
+        <div class="actions-row">
           <button class="btn ghost" (click)="addQueroVer()">Quero Ver</button>
           <button class="btn primary" (click)="addJaVi()">Já Vi</button>
           <button class="btn danger" (click)="remove()">Remover</button>
@@ -55,31 +53,23 @@
               <div class="rating-label">TMDb</div>
               <div class="rating-value">
                 {{ ratings.tmdbVoteAverage | number:'1.1-1' }}/10
-                <span class="rating-sub">
-                  ({{ ratings.tmdbVoteCount }} votos)
-                </span>
+                <span class="rating-sub">({{ ratings.tmdbVoteCount }} votos)</span>
               </div>
             </div>
 
             <div class="rating-item">
               <div class="rating-label">IMDb</div>
-              <div class="rating-value">
-                {{ ratings.imdbRating || '—' }}/10
-              </div>
+              <div class="rating-value">{{ ratings.imdbRating || '—' }}/10</div>
             </div>
 
             <div class="rating-item">
               <div class="rating-label">Metacritic</div>
-              <div class="rating-value">
-                {{ ratings.metascore || '—' }}/100
-              </div>
+              <div class="rating-value">{{ ratings.metascore || '—' }}/100</div>
             </div>
 
             <div class="rating-item">
               <div class="rating-label">Rotten Tomatoes</div>
-              <div class="rating-value">
-                {{ ratings.rottenTomatoes || '—' }}
-              </div>
+              <div class="rating-value">{{ ratings.rottenTomatoes || '—' }}</div>
             </div>
           </div>
         </div>
@@ -90,63 +80,83 @@
           <p>{{ overview }}</p>
         </div>
 
-        <!-- COMMENTS -->
-        <div class="comment-row">
-          <div class="comment-box">
-            <input class="comment-input"
-                   type="text"
-                   placeholder="Write something"
-                   [(ngModel)]="newComment"
-                   [disabled]="isSendingComment" />
-            <button class="send-btn"
-                    (click)="sendComment()"
-                    [disabled]="isSendingComment">
-              ➤
-            </button>
-          </div>
+        <!-- COMMENTS WRAPPER -->
+        <div class="comments">
 
-          <div class="stars-box">
-            <span class="avatar">{{ userName.charAt(0) }}</span>
+          <!-- WRITE COMMENT -->
+          <div class="comment-row">
+            <div class="comment-box">
+              <input class="comment-input"
+                     type="text"
+                     placeholder="Write something"
+                     [(ngModel)]="newComment"
+                     [disabled]="isSendingComment" />
 
-            <div class="stars">
-              <button class="star"
-                      *ngFor="let s of [1,2,3,4,5]"
-                      (click)="selectRating(s)"
-                      [style.color]="s <= selectedRating ? '#ffcc00' : 'rgba(255,255,255,0.35)'"
+              <button class="send-btn"
+                      type="button"
+                      (click)="sendComment()"
                       [disabled]="isSendingComment"
-                      aria-label="star">
-                ★
+                      aria-label="Enviar comentário">
+                ➤
               </button>
             </div>
-          </div>
-        </div>
 
-        <div class="state error" *ngIf="commentError">
-          {{ commentError }}
-        </div>
+            <div class="stars-box" aria-label="Selecionar rating">
+              <span class="avatar avatar-sm">{{ userName.charAt(0) }}</span>
 
-        <!-- LISTA DE COMENTÁRIOS -->
-        <div class="comments-list" *ngIf="comments.length">
-          <div class="comment-item" *ngFor="let c of comments">
-            <div class="avatar">
-              {{ c.userName?.length ? c.userName.charAt(0) : 'U' }}
+              <div class="stars">
+                <button class="star"
+                        type="button"
+                        *ngFor="let s of [1,2,3,4,5]"
+                        (click)="selectRating(s)"
+                        [class.filled]="s <= selectedRating"
+                        [disabled]="isSendingComment"
+                        aria-label="star">
+                  ★
+                </button>
+              </div>
             </div>
+          </div>
 
-            <div class="comment-content">
-              <div class="comment-header">
-                <strong>{{ c.userName }}</strong>
+          <div class="state error" *ngIf="commentError">
+            {{ commentError }}
+          </div>
 
-                <span class="comment-stars">
-                  <span *ngFor="let s of [1,2,3,4,5]">
-                    {{ s <= c.rating ? '★' : '☆' }}
-                  </span>
-                </span>
+          <!-- LISTA DE COMENTÁRIOS -->
+          <div class="comments-list" *ngIf="comments.length; else noComments">
+            <div class="comment-item" *ngFor="let c of comments">
+
+              <div class="avatar avatar-md">
+                {{ c.userName?.length ? c.userName.charAt(0) : 'U' }}
               </div>
 
-              <p>{{ c.texto }}</p>
-              <small>{{ c.dataCriacao | date:'short' }}</small>
+              <div class="comment-content">
+                <div class="comment-header">
+                  <strong class="comment-user">{{ c.userName }}</strong>
+
+                  <!-- estrelas como mockup (sem quebrar linha) -->
+                  <span class="comment-stars" aria-label="Rating do comentário">
+                    <span class="comment-star"
+                          *ngFor="let s of [1,2,3,4,5]"
+                          [class.filled]="s <= (c.rating || 0)">
+                      ★
+                    </span>
+                  </span>
+                </div>
+
+                <p class="comment-text">{{ c.texto }}</p>
+
+                <div class="comment-meta">
+                  <span>{{ c.dataCriacao | date:'short' }}</span>
+                </div>
+              </div>
             </div>
           </div>
+
+          <ng-template #noComments>
+            <div class="comments-empty">Ainda não existem comentários.</div>
+          </ng-template>
+
         </div>
 
       </section>
