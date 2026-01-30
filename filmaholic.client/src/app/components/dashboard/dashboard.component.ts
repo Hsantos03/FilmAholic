@@ -1,4 +1,5 @@
 import { Component, OnInit, OnDestroy, ElementRef, ViewChild } from '@angular/core';
+import { Router } from '@angular/router';
 import { DesafiosService } from '../../services/desafios.service';
 import { Filme, FilmesService } from '../../services/filmes.service';
 import { AtoresService, PopularActor } from '../../services/atores.service';
@@ -46,7 +47,8 @@ export class DashboardComponent implements OnInit, OnDestroy {
   constructor(
     private desafiosService: DesafiosService,
     private filmesService: FilmesService,
-    private atoresService: AtoresService
+    private atoresService: AtoresService,
+    private router: Router
   ) { }
 
   ngOnInit(): void {
@@ -281,4 +283,10 @@ export class DashboardComponent implements OnInit, OnDestroy {
   }
 
   openMenu(): void { }
+
+  public doSearch(): void {
+    const q = (this.searchTerm || '').trim();
+    if (!q) return;
+    this.router.navigate(['/search'], { queryParams: { q } });
+  }
 }

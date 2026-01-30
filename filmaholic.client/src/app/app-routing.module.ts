@@ -8,6 +8,8 @@ import { ResetPasswordComponent } from './components/reset-password/reset-passwo
 import { DashboardComponent } from './components/dashboard/dashboard.component';
 import { ProfileComponent } from './components/profile/profile.component';
 import { SelecionarGenerosComponent } from './components/selecionar-generos/selecionar-generos.component';
+import { SearchResultsComponent } from './components/search-results/search-results.component';
+import { MoviePageComponent } from './components/movie-page/movie-page.component';
 
 const routes: Routes = [
   { path: 'register', component: RegisterComponent },
@@ -18,6 +20,8 @@ const routes: Routes = [
   { path: 'selecionar-generos', component: SelecionarGenerosComponent },
   { path: 'dashboard', component: DashboardComponent },
   { path: 'profile', component: ProfileComponent },
+  { path: 'search', component: SearchResultsComponent },
+  { path: 'movie-detail/:id', component: MoviePageComponent }, // new route
   { path: '', redirectTo: '/register', pathMatch: 'full' } // Rota inicial
 ];
 

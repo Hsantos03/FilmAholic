@@ -1,0 +1,48 @@
+<header class="topbar">
+  <button class="icon-btn" (click)="goBack()" aria-label="Back">&larr;</button>
+
+  <a class="brand" routerLink="/dashboard" aria-label="Go to dashboard">FilmAholic</a>
+
+  <div class="search">
+    <div class="search-pill" role="search">
+      <button class="pill-icon left" type="button" aria-label="Opcoes">&#9776;</button>
+      <input type="text" placeholder="Pesquisar filmes..." aria-label="Pesquisar" />
+      <button class="pill-icon right" type="button" aria-label="Pesquisar">&#128269;</button>
+    </div>
+  </div>
+
+  <div class="top-actions">
+    <button class="icon-btn" aria-label="Favoritos">&#128278;</button>
+    <button class="icon-btn" routerLink="/profile" aria-label="Perfil">&#128100;</button>
+  </div>
+</header>
+
+<main class="content">
+  <div *ngIf="isLoading" class="state">A carregar filme&hellip;</div>
+  <div *ngIf="error" class="state error">{{ error }}</div>
+
+  <div *ngIf="filme" class="movie-page-inner">
+    <div class="movie-card-large">
+      <img class="movie-poster" [src]="filme.posterUrl || 'https://via.placeholder.com/300x450?text=Poster'" [alt]="filme.titulo" />
+
+      <div class="movie-meta">
+        <h1 class="movie-title">{{ filme.titulo }}</h1>
+        <div class="movie-sub">{{ filme.genero }} &middot; {{ filme.duracao }} min</div>
+
+        <div class="movie-rating" *ngIf="ratings">
+          <strong>TMDb:</strong>
+          <span *ngIf="ratings.tmdbVoteAverage != null">{{ ratings.tmdbVoteAverage | number:'1.1-1' }}/10</span>
+          <span *ngIf="ratings.tmdbVoteCount != null"> ({{ ratings.tmdbVoteCount }} votos)</span>
+          <div *ngIf="ratings.imdbRating"><strong>IMDb:</strong> {{ ratings.imdbRating }}/10</div>
+        </div>
+
+        <div class="movie-overview" *ngIf="overview">
+          <h3>Sinopse</h3>
+          <p>{{ overview }}</p>
+        </div>
+
+        <app-movie-detail [filmeId]="filme.id"></app-movie-detail>
+      </div>
+    </div>
+  </div>
+</main>

@@ -14,10 +14,11 @@
                [(ngModel)]="searchTerm"
                (ngModelChange)="onSearchChange($event)"
                (focus)="onSearchFocus()"
+               (keyup.enter)="doSearch()"
                placeholder="Pesquisar filmes..."
                aria-label="Pesquisar" />
 
-        <button class="pill-icon right" type="button" aria-label="Pesquisar">
+        <button class="pill-icon right" type="button" aria-label="Pesquisar" (click)="doSearch()">
           &#128269;
         </button>
       </div>

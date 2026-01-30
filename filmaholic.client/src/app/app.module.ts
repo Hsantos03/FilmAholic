@@ -14,6 +14,9 @@ import { ResetPasswordComponent } from './components/reset-password/reset-passwo
 import { DashboardComponent } from './components/dashboard/dashboard.component';
 import { ProfileComponent } from './components/profile/profile.component';
 import { SelecionarGenerosComponent } from './components/selecionar-generos/selecionar-generos.component';
+import { SearchResultsComponent } from './components/search-results/search-results.component';
+import { MoviePageComponent } from './components/movie-page/movie-page.component';
+import { MovieDetailComponent } from './components/movie-detail/movie-detail.component';
 
 @NgModule({
   declarations: [
@@ -25,7 +28,10 @@ import { SelecionarGenerosComponent } from './components/selecionar-generos/sele
     ResetPasswordComponent,
     DashboardComponent,
     ProfileComponent,
-    SelecionarGenerosComponent
+    SelecionarGenerosComponent,
+    SearchResultsComponent,
+    MoviePageComponent,
+    MovieDetailComponent
   ],
   imports: [
     BrowserModule,

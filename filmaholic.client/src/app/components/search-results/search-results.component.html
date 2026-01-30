@@ -1,0 +1,58 @@
+<header class="topbar">
+  <button class="icon-btn" (click)="openMenu()" aria-label="Menu">&#9776;</button>
+
+  <a class="brand" routerLink="/dashboard" aria-label="Go to dashboard">FilmAholic</a>
+
+  <div class="search">
+    <div class="search-pill" role="search">
+      <button class="pill-icon left" type="button" aria-label="Opcoes">
+        &#9776;
+      </button>
+
+      <input
+        type="text"
+        [(ngModel)]="searchTerm"
+        (keyup.enter)="doSearch()"
+        placeholder="Pesquisar filmes..."
+        aria-label="Pesquisar" />
+
+      <button class="pill-icon right" type="button" aria-label="Pesquisar" (click)="doSearch()">
+        &#128269;
+      </button>
+    </div>
+  </div>
+
+  <div class="top-actions">
+    <button class="icon-btn" aria-label="Favoritos">&#128278;</button>
+
+    <button class="icon-btn" routerLink="/profile" aria-label="Perfil">&#128100;</button>
+  </div>
+</header>
+
+<main class="content" style="padding-top:22px;">
+  <div class="search-results-page">
+    <div class="search-header">
+      <h2>Resultados para "{{ query }}"</h2>
+    </div>
+
+    <div *ngIf="isLoading" class="state">A pesquisar&hellip;</div>
+    <div *ngIf="error" class="state error">{{ error }}</div>
+
+    <div *ngIf="!isLoading && results.length === 0 && !error" class="empty">
+      Nao foram encontrados resultados para "{{ query }}"
+    </div>
+
+    <div class="results-grid" *ngIf="results.length">
+      <div class="result-card" *ngFor="let r of results">
+        <img class="result-thumb" [src]="r.posterUrl || 'https://via.placeholder.com/140x210?text=No+Image'" [alt]="r.titulo" />
+        <div class="result-meta">
+          <div class="result-title">{{ r.titulo }}</div>
+          <div class="result-actions">
+            <!-- pass whole item to openResult so function can handle DB id or tmdbId -->
+            <button (click)="openResult(r)" [disabled]="isLoading">Abrir</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>

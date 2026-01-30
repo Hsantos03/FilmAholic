@@ -1,0 +1,88 @@
+.search-results-page {
+  padding: 18px 22px;
+  color: #fff;
+}
+
+.search-header h2 {
+  margin: 0 0 12px 0;
+  font-size: 20px;
+}
+
+.state { color: rgba(255,255,255,0.8); margin-bottom: 12px; }
+.state.error { color: #ff6b6b; }
+
+.empty {
+  color: rgba(255,255,255,0.75);
+  padding: 18px;
+  background: rgba(255,255,255,0.02);
+  border-radius: 10px;
+  border: 1px solid rgba(255,255,255,0.04);
+}
+
+/* page-specific styles (topbar styles pulled from dashboard CSS via styleUrls) */
+
+.content {
+  width: 100%;
+  padding: 0 22px 60px;
+  margin-top: 12px;
+}
+
+/* reuse the results layout from previous suggestion */
+.results-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 14px;
+  margin-top: 12px;
+}
+
+.result-card {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  padding: 10px;
+  background: rgba(255,255,255,0.02);
+  border-radius: 8px;
+  border: 1px solid rgba(255,255,255,0.04);
+}
+
+.result-thumb {
+  width: 88px;
+  height: 132px;
+  object-fit: cover;
+  border-radius: 6px;
+  flex: 0 0 auto;
+}
+
+.result-meta {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.result-title {
+  font-weight: 700;
+  color: #fff;
+  margin-bottom: 8px;
+}
+
+.result-actions button {
+  padding: 6px 10px;
+  border-radius: 8px;
+  background: #AE8191;
+  border: none;
+  color: white;
+  cursor: pointer;
+}
+
+/* small responsive tweak */
+@media (max-width: 620px) {
+  .results-grid {
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  }
+
+  .result-thumb {
+    width: 72px;
+    height: 108px;
+  }
+}

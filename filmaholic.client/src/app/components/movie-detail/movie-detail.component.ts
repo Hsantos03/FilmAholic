@@ -1,10 +1,11 @@
 import { Component, Input, OnInit } from '@angular/core';
-import { UserMoviesService } from 'src/app/services/user-movies.service';
-import { FilmesService, RatingsDto } from 'src/app/services/filmes.service';
+import { UserMoviesService } from '../../services/user-movies.service';
+import { FilmesService, RatingsDto } from '../../services/filmes.service';
 
 @Component({
   selector: 'app-movie-detail',
-  templateUrl: './movie-detail.component.html'
+  templateUrl: './movie-detail.component.html',
+  styleUrls: ['./movie-detail.component.css']
 })
 export class MovieDetailComponent implements OnInit {
   @Input() filmeId!: number;
@@ -25,8 +26,8 @@ export class MovieDetailComponent implements OnInit {
 
   loadTotalHours() {
     this.userMoviesService.getTotalHours().subscribe({
-      next: (hours) => this.totalHours = hours,
-      error: (err) => console.error(err)
+      next: (hours: number) => this.totalHours = hours,
+      error: (err: any) => console.error(err)
     });
   }
 
@@ -36,8 +37,8 @@ export class MovieDetailComponent implements OnInit {
     this.isLoadingRatings = true;
 
     this.filmesService.getRatings(this.filmeId).subscribe({
-      next: (res) => (this.ratings = res ?? null),
-      error: (err) => {
+      next: (res: RatingsDto) => (this.ratings = res ?? null),
+      error: (err: any) => {
         console.warn('Failed to load ratings', err);
         this.ratings = null;
       },
@@ -46,14 +47,23 @@ export class MovieDetailComponent implements OnInit {
   }
 
   addQueroVer() {
-    this.userMoviesService.addMovie(this.filmeId, false).subscribe(() => this.loadTotalHours());
+    this.userMoviesService.addMovie(this.filmeId, false).subscribe({
+      next: () => this.loadTotalHours(),
+      error: (err: any) => console.warn('addMovie failed', err)
+    });
   }
 
   addJaVi() {
-    this.userMoviesService.addMovie(this.filmeId, true).subscribe(() => this.loadTotalHours());
+    this.userMoviesService.addMovie(this.filmeId, true).subscribe({
+      next: () => this.loadTotalHours(),
+      error: (err: any) => console.warn('addMovie failed', err)
+    });
   }
 
   remove() {
-    this.userMoviesService.removeMovie(this.filmeId).subscribe(() => this.loadTotalHours());
+    this.userMoviesService.removeMovie(this.filmeId).subscribe({
+      next: () => this.loadTotalHours(),
+      error: (err: any) => console.warn('removeMovie failed', err)
+    });
   }
 }
