@@ -2,7 +2,7 @@
   <header class="topbar">
     <button class="icon-btn" (click)="openMenu()" aria-label="Menu">&#9776;</button>
 
-    <div class="brand">FilmAholic</div>
+    <a class="brand" routerLink="/dashboard" aria-label="Go to dashboard">FilmAholic</a>
 
     <div class="search" #searchContainer>
       <div class="search-pill" role="search">
@@ -113,6 +113,42 @@
                   aria-label="Seguinte">
             &rsaquo;
           </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- New section: O que vou ver a seguir -->
+    <section class="strip strip-full nextup-strip">
+      <div class="strip-inner">
+        <div class="section-head">
+          <h2>O que vou ver a seguir</h2>
+        </div>
+
+        <!-- button placed below title, centered -->
+        <div class="discover-wrap">
+          <button class="discover-btn" (click)="discoverNext()" [disabled]="isDiscovering || isLoadingMovies">
+            {{ isDiscovering ? 'A descobrir…' : 'Descobrir' }}
+          </button>
+        </div>
+
+        <div class="nextup-content">
+          <div *ngIf="!isLoadingMovies && movies.length === 0" class="empty-list-message">
+            Nenhum filme disponível.
+          </div>
+
+          <div class="nextup-card" *ngIf="nextToWatch">
+            <a [routerLink]="['/movie-detail', nextToWatch.id]">
+              <img class="nextup-poster" [src]="posterOf(nextToWatch)" [alt]="nextToWatch.titulo" />
+            </a>
+
+            <div class="nextup-meta">
+              <h3 class="nextup-title">{{ nextToWatch.titulo }}</h3>
+              <div class="nextup-sub">{{ nextToWatch.genero }} &middot; {{ nextToWatch.duracao }} min</div>
+              <div class="nextup-actions">
+                <button class="action-btn" (click)="goToMovieDetail(nextToWatch.id)">Ver detalhes</button>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </section>

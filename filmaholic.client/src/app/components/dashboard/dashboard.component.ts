@@ -41,6 +41,10 @@ export class DashboardComponent implements OnInit, OnDestroy {
   atoresIndex = 0;
   atoresVisibleCount = 4;
 
+  // New: next-to-watch / discover state
+  nextToWatch: Filme | null = null;
+  isDiscovering = false;
+
   private onResizeBound = () => this.updateVisibleCount();
   private onDocumentClickBound = (e: MouseEvent) => this.onDocumentClick(e);
 
@@ -233,6 +237,31 @@ export class DashboardComponent implements OnInit, OnDestroy {
       // Click outside search area -> close menu
       this.showSearchMenu = false;
     }
+  }
+
+  // New: pick a random film and set nextToWatch. Small "shuffle" animation.
+  public discoverNext(): void {
+    if ((this.movies || []).length === 0) {
+      this.nextToWatch = null;
+      return;
+    }
+
+    this.isDiscovering = true;
+    let iterations = 8;
+    const timer = setInterval(() => {
+      const idx = Math.floor(Math.random() * this.movies.length);
+      this.nextToWatch = this.movies[idx];
+      iterations--;
+      if (iterations <= 0) {
+        clearInterval(timer);
+        this.isDiscovering = false;
+      }
+    }, 80);
+  }
+
+  public goToMovieDetail(id: number | undefined): void {
+    if (!id) return;
+    this.router.navigate(['/movie-detail', id]);
   }
 
   get featuredVisible(): Filme[] {
