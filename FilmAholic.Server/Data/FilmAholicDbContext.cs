@@ -9,7 +9,7 @@ public class FilmAholicDbContext : IdentityDbContext<Utilizador>
     public DbSet<UserMovie> UserMovies { get; set; }
 
     public FilmAholicDbContext(DbContextOptions<FilmAholicDbContext> options) : base(options) { }
-
+    public DbSet<Comment> Comments { get; set; }
     public DbSet<Filme> Filmes => Set<Filme>();
     public DbSet<Genero> Generos => Set<Genero>();
     public DbSet<UtilizadorGenero> UtilizadorGeneros => Set<UtilizadorGenero>();

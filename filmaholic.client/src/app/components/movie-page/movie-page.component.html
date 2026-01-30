@@ -35,7 +35,11 @@
           <button class="btn ghost" (click)="addQueroVer()">Quero Ver</button>
           <button class="btn primary" (click)="addJaVi()">Já Vi</button>
           <button class="btn danger" (click)="remove()">Remover</button>
-          <button class="btn favorite"[class.active]="isFavorite" (click)="addFavorite()">⭐ Favorito</button>
+          <button class="btn favorite"
+                  [class.active]="isFavorite"
+                  (click)="toggleFavorite()">
+            ⭐ Favorito
+          </button>
         </div>
 
         <!-- RATINGS -->
@@ -51,23 +55,31 @@
               <div class="rating-label">TMDb</div>
               <div class="rating-value">
                 {{ ratings.tmdbVoteAverage | number:'1.1-1' }}/10
-                <span class="rating-sub">({{ ratings.tmdbVoteCount }} votos)</span>
+                <span class="rating-sub">
+                  ({{ ratings.tmdbVoteCount }} votos)
+                </span>
               </div>
             </div>
 
             <div class="rating-item">
               <div class="rating-label">IMDb</div>
-              <div class="rating-value">{{ ratings.imdbRating || '—' }}/10</div>
+              <div class="rating-value">
+                {{ ratings.imdbRating || '—' }}/10
+              </div>
             </div>
 
             <div class="rating-item">
               <div class="rating-label">Metacritic</div>
-              <div class="rating-value">{{ ratings.metascore || '—' }}/100</div>
+              <div class="rating-value">
+                {{ ratings.metascore || '—' }}/100
+              </div>
             </div>
 
             <div class="rating-item">
               <div class="rating-label">Rotten Tomatoes</div>
-              <div class="rating-value">{{ ratings.rottenTomatoes || '—' }}</div>
+              <div class="rating-value">
+                {{ ratings.rottenTomatoes || '—' }}
+              </div>
             </div>
           </div>
         </div>
@@ -76,6 +88,65 @@
         <div class="overview" *ngIf="overview">
           <h3>Sinopse</h3>
           <p>{{ overview }}</p>
+        </div>
+
+        <!-- COMMENTS -->
+        <div class="comment-row">
+          <div class="comment-box">
+            <input class="comment-input"
+                   type="text"
+                   placeholder="Write something"
+                   [(ngModel)]="newComment"
+                   [disabled]="isSendingComment" />
+            <button class="send-btn"
+                    (click)="sendComment()"
+                    [disabled]="isSendingComment">
+              ➤
+            </button>
+          </div>
+
+          <div class="stars-box">
+            <span class="avatar">{{ userName.charAt(0) }}</span>
+
+            <div class="stars">
+              <button class="star"
+                      *ngFor="let s of [1,2,3,4,5]"
+                      (click)="selectRating(s)"
+                      [style.color]="s <= selectedRating ? '#ffcc00' : 'rgba(255,255,255,0.35)'"
+                      [disabled]="isSendingComment"
+                      aria-label="star">
+                ★
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div class="state error" *ngIf="commentError">
+          {{ commentError }}
+        </div>
+
+        <!-- LISTA DE COMENTÁRIOS -->
+        <div class="comments-list" *ngIf="comments.length">
+          <div class="comment-item" *ngFor="let c of comments">
+            <div class="avatar">
+              {{ c.userName?.length ? c.userName.charAt(0) : 'U' }}
+            </div>
+
+            <div class="comment-content">
+              <div class="comment-header">
+                <strong>{{ c.userName }}</strong>
+
+                <span class="comment-stars">
+                  <span *ngFor="let s of [1,2,3,4,5]">
+                    {{ s <= c.rating ? '★' : '☆' }}
+                  </span>
+                </span>
+              </div>
+
+              <p>{{ c.texto }}</p>
+              <small>{{ c.dataCriacao | date:'short' }}</small>
+            </div>
+          </div>
         </div>
 
       </section>
