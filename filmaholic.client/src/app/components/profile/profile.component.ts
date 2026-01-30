@@ -91,6 +91,11 @@ export class ProfileComponent implements OnInit {
     this.refreshAllListsAndStats();
     this.loadFavorites();
 
+    this.favoritesService.favoritesChanged$
+      .subscribe(() => {
+        this.loadFavorites();
+      });
+
     if (!userId) {
       console.warn('No user_id in localStorage Ã¢â‚¬â€ using fallback values.');
       return;
