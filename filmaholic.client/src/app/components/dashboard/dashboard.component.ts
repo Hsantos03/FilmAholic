@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, ElementRef, ViewChild } from '@angular/core';
 import { DesafiosService } from '../../services/desafios.service';
 import { Filme, FilmesService } from '../../services/filmes.service';
 import { AtoresService, PopularActor } from '../../services/atores.service';
@@ -9,6 +9,8 @@ import { AtoresService, PopularActor } from '../../services/atores.service';
   styleUrls: ['./dashboard.component.css']
 })
 export class DashboardComponent implements OnInit, OnDestroy {
+  @ViewChild('searchContainer', { static: false }) searchContainerRef?: ElementRef;
+
   userName: string = '';
 
   isDesafiosOpen: boolean = false;
@@ -18,6 +20,10 @@ export class DashboardComponent implements OnInit, OnDestroy {
   isLoadingMovies = false;
   errorMovies = '';
   searchTerm = '';
+
+  // New: search dropdown state and results
+  searchResults: Filme[] = [];
+  showSearchMenu: boolean = false;
 
   isLoadingActors = false;
   errorActors = '';
@@ -35,6 +41,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
   atoresVisibleCount = 4;
 
   private onResizeBound = () => this.updateVisibleCount();
+  private onDocumentClickBound = (e: MouseEvent) => this.onDocumentClick(e);
 
   constructor(
     private desafiosService: DesafiosService,
@@ -48,10 +55,12 @@ export class DashboardComponent implements OnInit, OnDestroy {
     this.loadAtores();
     this.updateVisibleCount();
     window.addEventListener('resize', this.onResizeBound);
+    document.addEventListener('click', this.onDocumentClickBound);
   }
 
   ngOnDestroy(): void {
     window.removeEventListener('resize', this.onResizeBound);
+    document.removeEventListener('click', this.onDocumentClickBound);
   }
 
   public openDesafios(): void {
@@ -175,6 +184,50 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
     const maxAtoresIndex = Math.max(0, this.atores.length - this.atoresVisibleCount);
     this.atoresIndex = Math.min(this.atoresIndex, maxAtoresIndex);
+  }
+
+  // Search helpers
+
+  public onSearchChange(term: string): void {
+    this.searchTerm = term ?? '';
+    const q = (this.searchTerm || '').trim().toLowerCase();
+
+    if (q.length === 0) {
+      this.searchResults = [];
+      this.showSearchMenu = false;
+      return;
+    }
+
+    // Filter existing loaded movies and show up to 5 matches
+    this.searchResults = (this.movies || [])
+      .filter(m => (m?.titulo || '').toLowerCase().includes(q))
+      .slice(0, 5);
+
+    this.showSearchMenu = this.searchResults.length > 0;
+  }
+
+  public onSearchFocus(): void {
+    if ((this.searchResults || []).length > 0) {
+      this.showSearchMenu = true;
+    }
+  }
+
+  public closeSearchMenu(): void {
+    this.showSearchMenu = false;
+  }
+
+  private onDocumentClick(e: MouseEvent): void {
+    const container = this.searchContainerRef?.nativeElement as HTMLElement | undefined;
+    const target = e.target as Node | null;
+
+    if (!container) {
+      return;
+    }
+
+    if (!container.contains(target)) {
+      // Click outside search area -> close menu
+      this.showSearchMenu = false;
+    }
   }
 
   get featuredVisible(): Filme[] {

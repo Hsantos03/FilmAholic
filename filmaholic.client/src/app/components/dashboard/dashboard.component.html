@@ -4,7 +4,7 @@
 
     <div class="brand">FilmAholic</div>
 
-    <div class="search">
+    <div class="search" #searchContainer>
       <div class="search-pill" role="search">
         <button class="pill-icon left" type="button" aria-label="Opcoes">
           &#9776;
@@ -12,12 +12,30 @@
 
         <input type="text"
                [(ngModel)]="searchTerm"
+               (ngModelChange)="onSearchChange($event)"
+               (focus)="onSearchFocus()"
                placeholder="Pesquisar filmes..."
                aria-label="Pesquisar" />
 
         <button class="pill-icon right" type="button" aria-label="Pesquisar">
           &#128269;
         </button>
+      </div>
+
+      <!-- Search suggestion menu (stacked, cover image left of name) -->
+      <div class="search-menu" *ngIf="showSearchMenu" role="listbox" aria-label="Sugestões de filmes">
+        <a class="search-item"
+           *ngFor="let m of searchResults"
+           [routerLink]="['/movie-detail', m.id]"
+           (click)="closeSearchMenu()"
+           role="option">
+          <img class="search-thumb" [src]="posterOf(m)" [alt]="m.titulo" />
+          <div class="search-title">{{ m.titulo }}</div>
+        </a>
+
+        <div *ngIf="searchResults.length === 0" class="search-empty">
+          Nenhum resultado.
+        </div>
       </div>
     </div>
 
