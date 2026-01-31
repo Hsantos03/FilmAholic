@@ -22,7 +22,6 @@ export class DashboardComponent implements OnInit, OnDestroy {
   errorMovies = '';
   searchTerm = '';
 
-  // New: search dropdown state and results
   searchResults: Filme[] = [];
   showSearchMenu: boolean = false;
 
@@ -41,7 +40,6 @@ export class DashboardComponent implements OnInit, OnDestroy {
   atoresIndex = 0;
   atoresVisibleCount = 4;
 
-  // New: next-to-watch / discover state
   nextToWatch: Filme | null = null;
   isDiscovering = false;
 
@@ -192,8 +190,6 @@ export class DashboardComponent implements OnInit, OnDestroy {
     this.atoresIndex = Math.min(this.atoresIndex, maxAtoresIndex);
   }
 
-  // Search helpers
-
   public onSearchChange(term: string): void {
     this.searchTerm = term ?? '';
     const q = (this.searchTerm || '').trim().toLowerCase();
@@ -204,13 +200,10 @@ export class DashboardComponent implements OnInit, OnDestroy {
       return;
     }
 
-    // Filter existing loaded movies and show up to 5 matches
     this.searchResults = (this.movies || [])
       .filter(m => (m?.titulo || '').toLowerCase().includes(q))
       .slice(0, 5);
 
-    // Always show the menu if the user typed something, even when there are 0 matches,
-    // so we can display a friendly "no results" message.
     this.showSearchMenu = q.length > 0;
   }
 
@@ -234,12 +227,10 @@ export class DashboardComponent implements OnInit, OnDestroy {
     }
 
     if (!container.contains(target)) {
-      // Click outside search area -> close menu
       this.showSearchMenu = false;
     }
   }
 
-  // New: pick a random film and set nextToWatch. Small "shuffle" animation.
   public discoverNext(): void {
     if ((this.movies || []).length === 0) {
       this.nextToWatch = null;

@@ -78,4 +78,9 @@ export class FilmesService {
   getRatings(id: number): Observable<RatingsDto> {
     return this.http.get<RatingsDto>(`${this.apiUrl}/${id}/ratings`);
   }
+
+  getRecommendations(id: number, count: number = 10): Observable<Filme[]> {
+    const params = new HttpParams().set('count', count.toString());
+    return this.http.get<Filme[]>(`${this.apiUrl}/${id}/recomendacoes`, { params });
+  }
 }

@@ -134,7 +134,6 @@
                 <div class="comment-header">
                   <strong class="comment-user">{{ c.userName }}</strong>
 
-                  <!-- estrelas como mockup (sem quebrar linha) -->
                   <span class="comment-stars" aria-label="Rating do comentário">
                     <span class="comment-star"
                           *ngFor="let s of [1,2,3,4,5]"
@@ -154,12 +153,31 @@
           </div>
 
           <ng-template #noComments>
-            <div class="comments-empty">Ainda não existem comentários.</div>
+            <div class="comments-empty">Ainda nao existem comentarios.</div>
           </ng-template>
 
         </div>
 
       </section>
     </div>
+
+    <!-- RELACIONADOS / RECOMENDACOES -->
+    <section class="recommendations-section" *ngIf="!isLoadingRecommendations && recommendations.length">
+      <div class="section-head">
+        <h2>Relacionados</h2>
+      </div>
+
+      <div class="recommendations-grid">
+        <div class="rec-card"
+             *ngFor="let r of recommendations"
+             (click)="goToRecommendation(r)"
+             style="cursor: pointer;">
+          <img class="rec-poster" [src]="recommendationPoster(r)" [alt]="r.titulo" />
+        </div>
+      </div>
+    </section>
+
+    <div class="state" *ngIf="isLoadingRecommendations">A carregar recomendacoes...</div>
+
   </div>
 </main>

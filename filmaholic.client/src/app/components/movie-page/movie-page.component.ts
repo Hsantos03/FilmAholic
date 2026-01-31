@@ -1,5 +1,6 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
+import { Subscription } from 'rxjs';
 import { Filme, FilmesService, RatingsDto, TmdbSearchResponse, TmdbMovieResult } from '../../services/filmes.service';
 import { UserMoviesService } from '../../services/user-movies.service';
 import { FavoritesService } from '../../services/favorites.service';
@@ -10,7 +11,7 @@ import { CommentsService, CommentDTO } from '../../services/comments.service';
   templateUrl: './movie-page.component.html',
   styleUrls: ['./movie-page.component.css', '../dashboard/dashboard.component.css']
 })
-export class MoviePageComponent implements OnInit {
+export class MoviePageComponent implements OnInit, OnDestroy {
   filme: Filme | null = null;
   overview: string | null = null;
 
@@ -31,6 +32,12 @@ export class MoviePageComponent implements OnInit {
   isSendingComment = false;
   commentError = '';
 
+  // Recommendations
+  recommendations: Filme[] = [];
+  isLoadingRecommendations = false;
+
+  private routeSub!: Subscription;
+
   constructor(
     private route: ActivatedRoute,
     private router: Router,
@@ -41,16 +48,37 @@ export class MoviePageComponent implements OnInit {
   ) { }
 
   ngOnInit(): void {
-    const idParam = this.route.snapshot.paramMap.get('id');
-    const id = idParam ? Number(idParam) : NaN;
+    this.routeSub = this.route.paramMap.subscribe(params => {
+      const idParam = params.get('id');
+      const id = idParam ? Number(idParam) : NaN;
 
-    if (!id || isNaN(id)) {
-      this.error = 'Filme inválido.';
-      return;
+      if (!id || isNaN(id)) {
+        this.error = 'Filme invalido.';
+        return;
+      }
+
+      this.resetState();
+      this.loadFilm(id);
+      this.loadTotalHours();
+    });
+  }
+
+  ngOnDestroy(): void {
+    if (this.routeSub) {
+      this.routeSub.unsubscribe();
     }
+  }
 
-    this.loadFilm(id);
-    this.loadTotalHours();
+  private resetState(): void {
+    this.filme = null;
+    this.overview = null;
+    this.ratings = null;
+    this.comments = [];
+    this.recommendations = [];
+    this.newComment = '';
+    this.selectedRating = 0;
+    this.error = '';
+    this.isFavorite = false;
   }
 
   get canComment(): boolean {
@@ -70,6 +98,7 @@ export class MoviePageComponent implements OnInit {
           this.loadRatings(this.filme.id);
           this.loadOverviewFromTmdb(this.filme);
           this.loadComments(this.filme.id);
+          this.loadRecommendations(this.filme.id);
           this.syncFavoriteState();
         }
       },
@@ -133,6 +162,32 @@ export class MoviePageComponent implements OnInit {
         this.comments = [];
       }
     });
+  }
+
+  // RECOMMENDATIONS
+  loadRecommendations(movieId: number): void {
+    this.isLoadingRecommendations = true;
+    this.filmesService.getRecommendations(movieId, 10).subscribe({
+      next: (res) => {
+        this.recommendations = res || [];
+        this.isLoadingRecommendations = false;
+      },
+      error: (err) => {
+        console.warn('Failed to load recommendations', err);
+        this.recommendations = [];
+        this.isLoadingRecommendations = false;
+      }
+    });
+  }
+
+  recommendationPoster(f: Filme): string {
+    return f?.posterUrl || 'https://via.placeholder.com/300x450?text=Poster';
+  }
+
+  goToRecommendation(r: Filme): void {
+    if (r.id && r.id > 0) {
+      this.router.navigate(['/movie-detail', r.id]);
+    }
   }
 
   selectRating(value: number): void {
