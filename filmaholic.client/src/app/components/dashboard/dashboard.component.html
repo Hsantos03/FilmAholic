@@ -25,6 +25,14 @@
 
       <!-- Search suggestion menu (stacked, cover image left of name) -->
       <div class="search-menu" *ngIf="showSearchMenu" role="listbox" aria-label="Sugestões de filmes">
+        <div *ngIf="isSuggestionsMode" class="search-menu-title">Sugestões para si</div>
+        <div *ngIf="isSuggestionsMode && isLoadingSuggestions" class="search-empty">A carregar sugestões…</div>
+        <div *ngIf="isSuggestionsMode && !isLoadingSuggestions && searchResults.length === 0 && hasGenrePreferences" class="search-empty">
+          Nenhum filme dos seus géneros na lista.
+        </div>
+        <div *ngIf="isSuggestionsMode && !isLoadingSuggestions && searchResults.length === 0 && !hasGenrePreferences" class="search-empty">
+          Selecione géneros no perfil para ver sugestões.
+        </div>
         <a class="search-item"
            *ngFor="let m of searchResults"
            [routerLink]="['/movie-detail', m.id]"
@@ -33,8 +41,7 @@
           <img class="search-thumb" [src]="posterOf(m)" [alt]="m.titulo" />
           <div class="search-title">{{ m.titulo }}</div>
         </a>
-
-        <div *ngIf="searchResults.length === 0" class="search-empty">
+        <div *ngIf="!isSuggestionsMode && searchResults.length === 0" class="search-empty">
           Nao foram encontrados resultados para "{{ searchTerm }}"
         </div>
       </div>
