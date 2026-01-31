@@ -3,6 +3,7 @@ import { Router } from '@angular/router';
 import { DesafiosService } from '../../services/desafios.service';
 import { Filme, FilmesService } from '../../services/filmes.service';
 import { AtoresService, PopularActor } from '../../services/atores.service';
+import { ProfileService } from '../../services/profile.service';
 
 @Component({
   selector: 'app-dashboard',
@@ -25,6 +26,9 @@ export class DashboardComponent implements OnInit, OnDestroy {
   // New: search dropdown state and results
   searchResults: Filme[] = [];
   showSearchMenu: boolean = false;
+  isLoadingSuggestions = false;
+  isSuggestionsMode = false; // true when menu is open with empty search (suggestions by genre)
+  hasGenrePreferences = false; // true when user has favorite genres (for empty-state message)
 
   isLoadingActors = false;
   errorActors = '';
@@ -52,6 +56,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
     private desafiosService: DesafiosService,
     private filmesService: FilmesService,
     private atoresService: AtoresService,
+    private profileService: ProfileService,
     private router: Router
   ) { }
 
@@ -199,11 +204,13 @@ export class DashboardComponent implements OnInit, OnDestroy {
     const q = (this.searchTerm || '').trim().toLowerCase();
 
     if (q.length === 0) {
+      this.isSuggestionsMode = false;
       this.searchResults = [];
       this.showSearchMenu = false;
       return;
     }
 
+    this.isSuggestionsMode = false;
     // Filter existing loaded movies and show up to 5 matches
     this.searchResults = (this.movies || [])
       .filter(m => (m?.titulo || '').toLowerCase().includes(q))
@@ -216,9 +223,49 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
   public onSearchFocus(): void {
     const qlen = (this.searchTerm || '').trim().length;
-    if ((this.searchResults || []).length > 0 || qlen > 0) {
+    if (qlen > 0) {
+      this.isSuggestionsMode = false;
       this.showSearchMenu = true;
+      return;
     }
+    // Empty search: show suggestions based on user's favorite genres
+    this.isSuggestionsMode = true;
+    this.showSearchMenu = true;
+    this.loadGenreSuggestions();
+  }
+
+  private static readonly SUGGESTIONS_LIMIT = 5;
+
+  private loadGenreSuggestions(): void {
+    this.searchResults = [];
+    this.hasGenrePreferences = false;
+    const userId = localStorage.getItem('user_id');
+    if (!userId) {
+      return;
+    }
+    this.isLoadingSuggestions = true;
+    this.profileService.obterGenerosFavoritos(userId).subscribe({
+      next: (generos) => {
+        this.isLoadingSuggestions = false;
+        const genreNames = (generos || []).map((g: { nome: string }) => (g.nome || '').trim().toLowerCase()).filter(Boolean);
+        this.hasGenrePreferences = genreNames.length > 0;
+        if (genreNames.length === 0) {
+          this.searchResults = [];
+          return;
+        }
+        // Only include movies that have at least one genre matching exactly (case-insensitive)
+        const matches = (this.movies || []).filter(m => {
+          const movieGenres = (m?.genero || '').split(',').map(s => s.trim().toLowerCase()).filter(Boolean);
+          return movieGenres.some(mg => genreNames.includes(mg));
+        });
+        this.searchResults = matches.slice(0, DashboardComponent.SUGGESTIONS_LIMIT);
+      },
+      error: () => {
+        this.isLoadingSuggestions = false;
+        this.hasGenrePreferences = false;
+        this.searchResults = [];
+      }
+    });
   }
 
   public closeSearchMenu(): void {
