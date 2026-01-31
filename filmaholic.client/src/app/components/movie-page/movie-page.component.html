@@ -127,7 +127,7 @@
             <div class="comment-item" *ngFor="let c of comments">
 
               <div class="avatar avatar-md">
-                {{ c.userName?.length ? c.userName.charAt(0) : 'U' }}
+                {{ c.userName && c.userName.length ? c.userName.charAt(0) : 'U' }}
               </div>
 
               <div class="comment-content">

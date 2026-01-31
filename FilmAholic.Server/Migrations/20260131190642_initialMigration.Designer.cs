@@ -12,7 +12,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace FilmAholic.Server.Migrations
 {
     [DbContext(typeof(FilmAholicDbContext))]
-    [Migration("20260131180115_initialMigration")]
+    [Migration("20260131190642_initialMigration")]
     partial class initialMigration
     {
         /// <inheritdoc />

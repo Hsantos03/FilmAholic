@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
-import { UserMoviesService } from '../../services/user-movies.service';
+import { UserMoviesService, StatsComparison } from '../../services/user-movies.service';
 import { Filme, FilmesService } from '../../services/filmes.service';
 import { FavoritesService, FavoritosDTO } from '../../services/favorites.service';
 
@@ -31,6 +31,10 @@ export class ProfileComponent implements OnInit {
 
   totalHours = 0;
   stats: any;
+
+  // FR38 - Stats comparison
+  statsComparison: StatsComparison | null = null;
+  isLoadingComparison = false;
 
   // FR06 - Favorites
   favoritosFilmes: number[] = [];
@@ -71,7 +75,6 @@ export class ProfileComponent implements OnInit {
   // movies saving state
   isSavingMovie = false;
 
-  // -- new: watch later & watched filter state
   watchLaterFilter: 'all' | 'newest' | 'oldest' | '7days' | '30days' = 'all';
   watchedFilter: 'all' | 'newest' | 'oldest' | '7days' | '30days' = 'all';
 
@@ -128,13 +131,11 @@ export class ProfileComponent implements OnInit {
       });
   }
 
-  // -----------------------
-  // LOADERS (catalog/lists)
-  // -----------------------
   refreshAllListsAndStats(): void {
     this.loadLists();
     this.loadStats();
     this.loadTotalHours();
+    this.loadStatsComparison();
   }
 
   loadCatalogo(): void {
@@ -170,9 +171,31 @@ export class ProfileComponent implements OnInit {
     });
   }
 
-  // -----------------------
-  // FR05 - Watch later / Watched
-  // -----------------------
+  // FR38 - Load stats comparison
+  loadStatsComparison(): void {
+    this.isLoadingComparison = true;
+    this.userMoviesService.getStatsComparison().subscribe({
+      next: (res) => {
+        this.statsComparison = res;
+        this.isLoadingComparison = false;
+      },
+      error: () => {
+        this.statsComparison = null;
+        this.isLoadingComparison = false;
+      }
+    });
+  }
+
+  getComparisonBarWidth(userValue: number, globalValue: number): number {
+    const max = Math.max(userValue, globalValue, 1);
+    return (userValue / max) * 100;
+  }
+
+  getGlobalBarWidth(userValue: number, globalValue: number): number {
+    const max = Math.max(userValue, globalValue, 1);
+    return (globalValue / max) * 100;
+  }
+
   addToWatchLater(filmeId: number): void {
     this.addMovieToList(filmeId, false);
   }
@@ -268,10 +291,6 @@ export class ProfileComponent implements OnInit {
                                    x?.filme?.Titulo === filme.titulo);
   }
 
-  // -----------------------
-  // FR06 - Favorites (Top 10)
-  // -----------------------
-
   loadFavorites(): void {
     this.favoritesService.getFavorites().subscribe({
       next: (fav: FavoritosDTO) => {
@@ -354,11 +373,6 @@ export class ProfileComponent implements OnInit {
       .map(id => this.catalogo.find(f => f.id === id))
       .filter((x): x is Filme => !!x);
   }
-
-  // -----------------------
-  // Manage account modal
-  // -----------------------
-  // Manage Account - only username and bio
 
   openEdit(): void {
     this.editUserName = this.userName;
@@ -487,10 +501,6 @@ export class ProfileComponent implements OnInit {
     this.router.navigate(['/dashboard']);
   }
 
-  // -----------------------
-  // Delete account modal
-  // -----------------------
-
   openDeleteConfirm(): void {
     this.deleteInput = '';
     this.isDeleting = true;
@@ -602,10 +612,6 @@ export class ProfileComponent implements OnInit {
     this.authService.logout();
   }
 
-  // -----------------------
-  // Drag and Drop para Top 10
-  // -----------------------
-
   onDragStart(event: DragEvent, index: number): void {
     this.draggedIndex = index;
     if (event.dataTransfer) {
@@ -649,7 +655,6 @@ export class ProfileComponent implements OnInit {
   }
 
   onDragEnd(): void {
-    // Limpar feedback visual e remover estilos inline
     document.querySelectorAll('.fav-poster').forEach(el => {
       const htmlEl = el as HTMLElement;
       htmlEl.style.opacity = '';
@@ -658,10 +663,6 @@ export class ProfileComponent implements OnInit {
     this.draggedIndex = null;
     this.dragOverIndex = null;
   }
-
-  // -----------------------
-  // Drag and Drop para Top 10 Atores
-  // -----------------------
 
   onActorDragStart(event: DragEvent, index: number): void {
     this.draggedActorIndex = index;

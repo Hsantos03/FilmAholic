@@ -95,6 +95,85 @@
           <strong>{{ watched.length }}</strong>
         </div>
       </div>
+
+      <div class="stats-comparison" *ngIf="statsComparison">
+        <h3>Tu vs Media Global</h3>
+
+        <!-- Filmes comparison -->
+        <div class="comparison-item">
+          <div class="comparison-label">Filmes vistos</div>
+          <div class="comparison-bars">
+            <div class="bar-row">
+              <span class="bar-label">Tu</span>
+              <div class="bar-container">
+                <div class="bar user-bar"
+                     [style.width.%]="getComparisonBarWidth(statsComparison.user.totalFilmes, statsComparison.global.mediaFilmesPorUtilizador)">
+                </div>
+              </div>
+              <span class="bar-value">{{ statsComparison.user.totalFilmes }}</span>
+            </div>
+            <div class="bar-row">
+              <span class="bar-label">Media</span>
+              <div class="bar-container">
+                <div class="bar global-bar"
+                     [style.width.%]="getGlobalBarWidth(statsComparison.user.totalFilmes, statsComparison.global.mediaFilmesPorUtilizador)">
+                </div>
+              </div>
+              <span class="bar-value">{{ statsComparison.global.mediaFilmesPorUtilizador }}</span>
+            </div>
+          </div>
+          <div class="comparison-indicator"
+               [class.positive]="statsComparison.comparacao.filmesMaisQueMedia"
+               [class.negative]="!statsComparison.comparacao.filmesMaisQueMedia">
+            <span *ngIf="statsComparison.comparacao.filmesVsMedia >= 0">+</span>{{ statsComparison.comparacao.filmesVsMedia | number:'1.0-1' }} vs media
+          </div>
+        </div>
+
+        <!-- Horas comparison -->
+        <div class="comparison-item">
+          <div class="comparison-label">Horas vistas</div>
+          <div class="comparison-bars">
+            <div class="bar-row">
+              <span class="bar-label">Tu</span>
+              <div class="bar-container">
+                <div class="bar user-bar"
+                     [style.width.%]="getComparisonBarWidth(statsComparison.user.totalHoras, statsComparison.global.mediaHorasPorUtilizador)">
+                </div>
+              </div>
+              <span class="bar-value">{{ statsComparison.user.totalHoras }}h</span>
+            </div>
+            <div class="bar-row">
+              <span class="bar-label">Media</span>
+              <div class="bar-container">
+                <div class="bar global-bar"
+                     [style.width.%]="getGlobalBarWidth(statsComparison.user.totalHoras, statsComparison.global.mediaHorasPorUtilizador)">
+                </div>
+              </div>
+              <span class="bar-value">{{ statsComparison.global.mediaHorasPorUtilizador }}h</span>
+            </div>
+          </div>
+          <div class="comparison-indicator"
+               [class.positive]="statsComparison.comparacao.horasMaisQueMedia"
+               [class.negative]="!statsComparison.comparacao.horasMaisQueMedia">
+            <span *ngIf="statsComparison.comparacao.horasVsMedia >= 0">+</span>{{ statsComparison.comparacao.horasVsMedia }}h vs media
+          </div>
+        </div>
+
+        <!-- Percentile -->
+        <div class="percentile-box">
+          <div class="percentile-value">Top {{ 100 - statsComparison.comparacao.percentilFilmes }}%</div>
+          <div class="percentile-label">dos utilizadores da plataforma</div>
+        </div>
+
+        <!-- Platform info -->
+        <div class="platform-info">
+          <span>{{ statsComparison.global.totalUtilizadores }} utilizadores na plataforma</span>
+        </div>
+      </div>
+
+      <div class="stats-comparison loading" *ngIf="isLoadingComparison && !statsComparison">
+        A carregar comparacao...
+      </div>
     </aside>
   </div>
 

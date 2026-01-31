@@ -35,4 +35,42 @@ export class UserMoviesService {
   getStats(): Observable<any> {
     return this.http.get<any>(`${this.apiUrl}/stats`, { withCredentials: true });
   }
+
+  getStatsComparison(): Observable<StatsComparison> {
+    return this.http.get<StatsComparison>(`${this.apiUrl}/stats/comparison`, { withCredentials: true });
+  }
+}
+export interface GeneroStat {
+  genero: string;
+  total: number;
+  percentagem: number;
+}
+
+export interface UserStats {
+  totalFilmes: number;
+  totalHoras: number;
+  totalMinutos: number;
+  generos: GeneroStat[];
+}
+
+export interface GlobalStats {
+  totalUtilizadores: number;
+  mediaFilmesPorUtilizador: number;
+  mediaHorasPorUtilizador: number;
+  mediaMinutosPorUtilizador: number;
+  generos: GeneroStat[];
+}
+
+export interface ComparacaoStats {
+  filmesVsMedia: number;
+  horasVsMedia: number;
+  filmesMaisQueMedia: boolean;
+  horasMaisQueMedia: boolean;
+  percentilFilmes: number;
+}
+
+export interface StatsComparison {
+  user: UserStats;
+  global: GlobalStats;
+  comparacao: ComparacaoStats;
 }
