@@ -2,6 +2,23 @@ import { Component, OnInit, OnDestroy, ElementRef, ViewChild } from '@angular/co
 import { ActivatedRoute, Router } from '@angular/router';
 import { FilmesService, TmdbSearchResponse, TmdbMovieResult } from '../../services/filmes.service';
 
+export type SearchResultItem = {
+  id?: number;
+  tmdbId?: number;
+  titulo: string;
+  posterUrl: string | null;
+  release_date?: string | null;
+  vote_average?: number;
+  runtime?: number; // duration in minutes
+};
+
+export type SortOption =
+  | 'date-desc' | 'date-asc'
+  | 'rating-desc' | 'rating-asc'
+  | 'duration-desc' | 'duration-asc'
+  | 'name-asc' | 'name-desc'
+  | null;
+
 @Component({
   selector: 'app-search-results',
   templateUrl: './search-results.component.html',
@@ -9,10 +26,10 @@ import { FilmesService, TmdbSearchResponse, TmdbMovieResult } from '../../servic
 })
 export class SearchResultsComponent implements OnInit, OnDestroy {
   @ViewChild('searchContainer', { static: false }) searchContainerRef?: ElementRef;
+  @ViewChild('sortWrapper', { static: false }) sortWrapperRef?: ElementRef;
 
   query: string = '';
-  // allow either TMDb-only results (tmdbId) or DB results (id)
-  results: Array<{ id?: number; tmdbId?: number; titulo: string; posterUrl: string | null }> = [];
+  results: SearchResultItem[] = [];
   isLoading = false;
   error = '';
 
@@ -23,6 +40,10 @@ export class SearchResultsComponent implements OnInit, OnDestroy {
   showFilterMenu = false;
   genres: string[] = [];
   selectedGenre: string | null = null;
+
+  // sort: null = keep API order
+  sortBy: SortOption = null;
+  showSortMenu = false;
 
   private onDocumentClickBound = (e: MouseEvent) => this.onDocumentClick(e);
 
@@ -61,12 +82,87 @@ export class SearchResultsComponent implements OnInit, OnDestroy {
   }
 
   private onDocumentClick(e: MouseEvent): void {
-    const container = this.searchContainerRef?.nativeElement as HTMLElement | undefined;
     const target = e.target as Node | null;
-    if (!container) return;
-    if (!container.contains(target)) {
-      this.showFilterMenu = false;
+    const inSearch = this.searchContainerRef?.nativeElement?.contains(target);
+    const inSort = this.sortWrapperRef?.nativeElement?.contains(target);
+    if (!inSearch) this.showFilterMenu = false;
+    if (!inSort) this.showSortMenu = false;
+  }
+
+  get sortedResults(): SearchResultItem[] {
+    if (!this.sortBy || this.results.length === 0) return this.results;
+    const list = [...this.results];
+    switch (this.sortBy) {
+      case 'date-desc':
+        list.sort((a, b) => {
+          const da = a.release_date || '';
+          const db = b.release_date || '';
+          return db.localeCompare(da); // newest first
+        });
+        break;
+      case 'date-asc':
+        list.sort((a, b) => {
+          const da = a.release_date || '';
+          const db = b.release_date || '';
+          return da.localeCompare(db); // oldest first
+        });
+        break;
+      case 'rating-desc':
+        list.sort((a, b) => (b.vote_average ?? 0) - (a.vote_average ?? 0)); // highest first
+        break;
+      case 'rating-asc':
+        list.sort((a, b) => (a.vote_average ?? 0) - (b.vote_average ?? 0)); // lowest first
+        break;
+      case 'duration-desc':
+        // longest first; undefined runtime goes to end
+        list.sort((a, b) => {
+          const ra = a.runtime ?? -1;
+          const rb = b.runtime ?? -1;
+          return rb - ra;
+        });
+        break;
+      case 'duration-asc':
+        // shortest first; undefined runtime goes to end
+        list.sort((a, b) => {
+          const ra = a.runtime ?? 999999;
+          const rb = b.runtime ?? 999999;
+          return ra - rb;
+        });
+        break;
+      case 'name-asc':
+        list.sort((a, b) => (a.titulo || '').localeCompare(b.titulo || '', 'pt'));
+        break;
+      case 'name-desc':
+        list.sort((a, b) => (b.titulo || '').localeCompare(a.titulo || '', 'pt'));
+        break;
+      default:
+        break;
     }
+    return list;
+  }
+
+  get sortLabel(): string {
+    if (!this.sortBy) return '';
+    const labels: Record<NonNullable<SortOption>, string> = {
+      'date-desc': 'Data (mais recente)',
+      'date-asc': 'Data (mais antigo)',
+      'rating-desc': 'Classificação (maior)',
+      'rating-asc': 'Classificação (menor)',
+      'duration-desc': 'Duração (mais longo)',
+      'duration-asc': 'Duração (mais curto)',
+      'name-asc': 'Nome (A–Z)',
+      'name-desc': 'Nome (Z–A)'
+    };
+    return labels[this.sortBy] ?? '';
+  }
+
+  toggleSortMenu(): void {
+    this.showSortMenu = !this.showSortMenu;
+  }
+
+  applySort(option: SortOption): void {
+    this.sortBy = option;
+    this.showSortMenu = false;
   }
 
   loadResults(query: string, page: number): void {
@@ -78,10 +174,12 @@ export class SearchResultsComponent implements OnInit, OnDestroy {
       next: (res: TmdbSearchResponse) => {
         const list = res?.results || [];
         this.results = list.map((r: TmdbMovieResult) => ({
-          // no DB id here (undefined) — only TMDb id
           tmdbId: r.id,
           titulo: r.title || r.original_title || 'Untitled',
-          posterUrl: r.poster_path ? `https://image.tmdb.org/t/p/w300${r.poster_path}` : null
+          posterUrl: r.poster_path ? `https://image.tmdb.org/t/p/w300${r.poster_path}` : null,
+          release_date: r.release_date ?? null,
+          vote_average: r.vote_average ?? undefined,
+          runtime: r.runtime ?? undefined
         }));
         this.isLoading = false;
       },
@@ -131,7 +229,8 @@ export class SearchResultsComponent implements OnInit, OnDestroy {
         this.results = filtered.map(m => ({
           id: m.id,
           titulo: m.titulo,
-          posterUrl: m.posterUrl || null
+          posterUrl: m.posterUrl || null,
+          runtime: m.duracao ?? undefined
         }));
 
         // if DB returned nothing, fall back to TMDb search (no genre filtering possible)
@@ -185,7 +284,7 @@ export class SearchResultsComponent implements OnInit, OnDestroy {
    * - an item with a DB `id` -> navigate directly to /movie-detail/:id
    * - an item with a `tmdbId` -> call API to get-or-create DB record then navigate
    */
-  openResult(item: { id?: number; tmdbId?: number; titulo?: string }): void {
+  openResult(item: SearchResultItem): void {
     if (!item) return;
 
     // If we already have a DB id, navigate immediately
