@@ -16,7 +16,6 @@ import { ProfileComponent } from './components/profile/profile.component';
 import { SelecionarGenerosComponent } from './components/selecionar-generos/selecionar-generos.component';
 import { SearchResultsComponent } from './components/search-results/search-results.component';
 import { MoviePageComponent } from './components/movie-page/movie-page.component';
-import { MovieDetailComponent } from './components/movie-detail/movie-detail.component';
 
 @NgModule({
   declarations: [
@@ -30,8 +29,7 @@ import { MovieDetailComponent } from './components/movie-detail/movie-detail.com
     ProfileComponent,
     SelecionarGenerosComponent,
     SearchResultsComponent,
-    MoviePageComponent,
-    MovieDetailComponent
+    MoviePageComponent
   ],
   imports: [
     BrowserModule,

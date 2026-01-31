@@ -1,48 +1,165 @@
 <header class="topbar">
   <button class="icon-btn" (click)="goBack()" aria-label="Back">&larr;</button>
-
-  <a class="brand" routerLink="/dashboard" aria-label="Go to dashboard">FilmAholic</a>
-
-  <div class="search">
-    <div class="search-pill" role="search">
-      <button class="pill-icon left" type="button" aria-label="Opcoes">&#9776;</button>
-      <input type="text" placeholder="Pesquisar filmes..." aria-label="Pesquisar" />
-      <button class="pill-icon right" type="button" aria-label="Pesquisar">&#128269;</button>
-    </div>
-  </div>
-
-  <div class="top-actions">
-    <button class="icon-btn" aria-label="Favoritos">&#128278;</button>
-    <button class="icon-btn" routerLink="/profile" aria-label="Perfil">&#128100;</button>
-  </div>
+  <a class="brand" routerLink="/dashboard">FilmAholic</a>
 </header>
 
 <main class="content">
-  <div *ngIf="isLoading" class="state">A carregar filme&hellip;</div>
+  <div *ngIf="isLoading" class="state">A carregar filme…</div>
   <div *ngIf="error" class="state error">{{ error }}</div>
 
-  <div *ngIf="filme" class="movie-page-inner">
-    <div class="movie-card-large">
-      <img class="movie-poster" [src]="filme.posterUrl || 'https://via.placeholder.com/300x450?text=Poster'" [alt]="filme.titulo" />
+  <div *ngIf="filme as f" class="movie-page-inner">
+    <div class="movie-card">
 
-      <div class="movie-meta">
-        <h1 class="movie-title">{{ filme.titulo }}</h1>
-        <div class="movie-sub">{{ filme.genero }} &middot; {{ filme.duracao }} min</div>
+      <!-- POSTER -->
+      <aside class="poster-col">
+        <img class="movie-poster" [src]="posterOf()" [alt]="f.titulo" />
 
-        <div class="movie-rating" *ngIf="ratings">
-          <strong>TMDb:</strong>
-          <span *ngIf="ratings.tmdbVoteAverage != null">{{ ratings.tmdbVoteAverage | number:'1.1-1' }}/10</span>
-          <span *ngIf="ratings.tmdbVoteCount != null"> ({{ ratings.tmdbVoteCount }} votos)</span>
-          <div *ngIf="ratings.imdbRating"><strong>IMDb:</strong> {{ ratings.imdbRating }}/10</div>
+        <div class="hours" *ngIf="totalHours">
+          Total de horas vistas: {{ totalHours | number:'1.1-2' }}h
+        </div>
+      </aside>
+
+      <!-- INFO -->
+      <section class="info-col centered">
+
+        <!-- TÍTULO -->
+        <h1 class="movie-title">{{ f.titulo }}</h1>
+        <div class="movie-sub">
+          {{ f.genero }} · {{ f.duracao }} min
         </div>
 
-        <div class="movie-overview" *ngIf="overview">
+        <!-- AÇÕES -->
+        <div class="actions-row">
+          <button class="btn ghost" (click)="addQueroVer()">Quero Ver</button>
+          <button class="btn primary" (click)="addJaVi()">Já Vi</button>
+          <button class="btn danger" (click)="remove()">Remover</button>
+          <button class="btn favorite"
+                  [class.active]="isFavorite"
+                  (click)="toggleFavorite()">
+            ⭐ Favorito
+          </button>
+        </div>
+
+        <!-- RATINGS -->
+        <div class="ratings-block">
+          <div class="ratings-title">Ratings</div>
+
+          <div *ngIf="isLoadingRatings" class="ratings-loading">
+            A carregar ratings…
+          </div>
+
+          <div *ngIf="!isLoadingRatings && ratings" class="ratings-grid">
+            <div class="rating-item">
+              <div class="rating-label">TMDb</div>
+              <div class="rating-value">
+                {{ ratings.tmdbVoteAverage | number:'1.1-1' }}/10
+                <span class="rating-sub">({{ ratings.tmdbVoteCount }} votos)</span>
+              </div>
+            </div>
+
+            <div class="rating-item">
+              <div class="rating-label">IMDb</div>
+              <div class="rating-value">{{ ratings.imdbRating || '—' }}/10</div>
+            </div>
+
+            <div class="rating-item">
+              <div class="rating-label">Metacritic</div>
+              <div class="rating-value">{{ ratings.metascore || '—' }}/100</div>
+            </div>
+
+            <div class="rating-item">
+              <div class="rating-label">Rotten Tomatoes</div>
+              <div class="rating-value">{{ ratings.rottenTomatoes || '—' }}</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- SINOPSE -->
+        <div class="overview" *ngIf="overview">
           <h3>Sinopse</h3>
           <p>{{ overview }}</p>
         </div>
 
-        <app-movie-detail [filmeId]="filme.id"></app-movie-detail>
-      </div>
+        <!-- COMMENTS WRAPPER -->
+        <div class="comments">
+
+          <!-- WRITE COMMENT -->
+          <div class="comment-row">
+            <div class="comment-box">
+              <input class="comment-input"
+                     type="text"
+                     placeholder="Write something"
+                     [(ngModel)]="newComment"
+                     [disabled]="isSendingComment" />
+
+              <button class="send-btn"
+                      type="button"
+                      (click)="sendComment()"
+                      [disabled]="isSendingComment"
+                      aria-label="Enviar comentário">
+                ➤
+              </button>
+            </div>
+
+            <div class="stars-box" aria-label="Selecionar rating">
+              <span class="avatar avatar-sm">{{ userName.charAt(0) }}</span>
+
+              <div class="stars">
+                <button class="star"
+                        type="button"
+                        *ngFor="let s of [1,2,3,4,5]"
+                        (click)="selectRating(s)"
+                        [class.filled]="s <= selectedRating"
+                        [disabled]="isSendingComment"
+                        aria-label="star">
+                  ★
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div class="state error" *ngIf="commentError">
+            {{ commentError }}
+          </div>
+
+          <!-- LISTA DE COMENTÁRIOS -->
+          <div class="comments-list" *ngIf="comments.length; else noComments">
+            <div class="comment-item" *ngFor="let c of comments">
+
+              <div class="avatar avatar-md">
+                {{ c.userName?.length ? c.userName.charAt(0) : 'U' }}
+              </div>
+
+              <div class="comment-content">
+                <div class="comment-header">
+                  <strong class="comment-user">{{ c.userName }}</strong>
+
+                  <!-- estrelas como mockup (sem quebrar linha) -->
+                  <span class="comment-stars" aria-label="Rating do comentário">
+                    <span class="comment-star"
+                          *ngFor="let s of [1,2,3,4,5]"
+                          [class.filled]="s <= (c.rating || 0)">
+                      ★
+                    </span>
+                  </span>
+                </div>
+
+                <p class="comment-text">{{ c.texto }}</p>
+
+                <div class="comment-meta">
+                  <span>{{ c.dataCriacao | date:'short' }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <ng-template #noComments>
+            <div class="comments-empty">Ainda não existem comentários.</div>
+          </ng-template>
+
+        </div>
+
+      </section>
     </div>
   </div>
 </main>
