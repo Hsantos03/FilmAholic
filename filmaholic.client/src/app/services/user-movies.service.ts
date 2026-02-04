@@ -39,6 +39,10 @@ export class UserMoviesService {
   getStatsComparison(): Observable<StatsComparison> {
     return this.http.get<StatsComparison>(`${this.apiUrl}/stats/comparison`, { withCredentials: true });
   }
+
+  getStatsCharts(): Observable<StatsCharts> {
+    return this.http.get<StatsCharts>(`${this.apiUrl}/stats/charts`, { withCredentials: true });
+  }
 }
 export interface GeneroStat {
   genero: string;
@@ -73,4 +77,10 @@ export interface StatsComparison {
   user: UserStats;
   global: GlobalStats;
   comparacao: ComparacaoStats;
+}
+
+export interface StatsCharts {
+  generos: { genero: string; total: number }[];
+  porMes: { ano: number; mes: number; label: string; total: number }[];
+  resumo: { totalFilmes: number; totalHoras: number; totalMinutos: number };
 }

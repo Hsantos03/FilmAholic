@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
-import { UserMoviesService, StatsComparison } from '../../services/user-movies.service';
+import { UserMoviesService, StatsComparison, StatsCharts } from '../../services/user-movies.service';
 import { Filme, FilmesService } from '../../services/filmes.service';
 import { FavoritesService, FavoritosDTO } from '../../services/favorites.service';
 
@@ -35,6 +35,10 @@ export class ProfileComponent implements OnInit {
   // FR38 - Stats comparison
   statsComparison: StatsComparison | null = null;
   isLoadingComparison = false;
+
+  // FR31 - Chart data for graphics
+  chartData: StatsCharts | null = null;
+  isLoadingCharts = false;
 
   // FR06 - Favorites
   favoritosFilmes: number[] = [];
@@ -77,6 +81,9 @@ export class ProfileComponent implements OnInit {
 
   watchLaterFilter: 'all' | 'newest' | 'oldest' | '7days' | '30days' = 'all';
   watchedFilter: 'all' | 'newest' | 'oldest' | '7days' | '30days' = 'all';
+
+  // Vista do conteúdo principal: overview (perfil, listas) ou statistics (gráficos)
+  activeSection: 'overview' | 'statistics' = 'overview';
 
   constructor(
     private http: HttpClient,
@@ -136,6 +143,7 @@ export class ProfileComponent implements OnInit {
     this.loadStats();
     this.loadTotalHours();
     this.loadStatsComparison();
+    this.loadStatsCharts();
   }
 
   loadCatalogo(): void {
@@ -186,6 +194,20 @@ export class ProfileComponent implements OnInit {
     });
   }
 
+  loadStatsCharts(): void {
+    this.isLoadingCharts = true;
+    this.userMoviesService.getStatsCharts().subscribe({
+      next: (res) => {
+        this.chartData = res;
+        this.isLoadingCharts = false;
+      },
+      error: () => {
+        this.chartData = null;
+        this.isLoadingCharts = false;
+      }
+    });
+  }
+
   getComparisonBarWidth(userValue: number, globalValue: number): number {
     const max = Math.max(userValue, globalValue, 1);
     return (userValue / max) * 100;
@@ -194,6 +216,73 @@ export class ProfileComponent implements OnInit {
   getGlobalBarWidth(userValue: number, globalValue: number): number {
     const max = Math.max(userValue, globalValue, 1);
     return (globalValue / max) * 100;
+  }
+
+  // FR31 - Chart helpers
+  get chartBarMax(): number {
+    if (!this.chartData?.generos?.length) return 1;
+    return Math.max(...this.chartData.generos.map(g => g.total), 1);
+  }
+
+  chartBarWidth(total: number): number {
+    return (total / this.chartBarMax) * 100;
+  }
+
+  getPieSegmentStart(index: number): number {
+    if (!this.chartData?.generos?.length) return 0;
+    const total = this.chartData.generos.reduce((s, g) => s + g.total, 0);
+    if (total === 0) return 0;
+    let angle = 0;
+    for (let i = 0; i < index; i++) {
+      angle += (this.chartData.generos[i].total / total) * 360;
+    }
+    return angle;
+  }
+
+  getPieSegmentEnd(index: number): number {
+    if (!this.chartData?.generos?.length) return 0;
+    const total = this.chartData.generos.reduce((s, g) => s + g.total, 0);
+    if (total === 0) return 0;
+    let angle = 0;
+    for (let i = 0; i <= index; i++) {
+      angle += (this.chartData.generos[i].total / total) * 360;
+    }
+    return angle;
+  }
+
+  pieSegmentD(index: number): string {
+    const start = this.getPieSegmentStart(index);
+    const end = this.getPieSegmentEnd(index);
+    const r = 50;
+    const x0 = 50 + r * Math.cos((start - 90) * Math.PI / 180);
+    const y0 = 50 + r * Math.sin((start - 90) * Math.PI / 180);
+    const x1 = 50 + r * Math.cos((end - 90) * Math.PI / 180);
+    const y1 = 50 + r * Math.sin((end - 90) * Math.PI / 180);
+    const large = (end - start) > 180 ? 1 : 0;
+    return `M 50 50 L ${x0} ${y0} A ${r} ${r} 0 ${large} 1 ${x1} ${y1} Z`;
+  }
+
+  readonly chartColors = ['#ff2f6d', '#6366f1', '#22c55e', '#eab308', '#ec4899', '#14b8a6', '#f97316', '#8b5cf6'];
+  chartColor(i: number): string {
+    return this.chartColors[i % this.chartColors.length];
+  }
+
+  get lineChartMax(): number {
+    if (!this.chartData?.porMes?.length) return 1;
+    return Math.max(...this.chartData.porMes.map(m => m.total), 1);
+  }
+  lineChartY(total: number): number {
+    const m = this.lineChartMax;
+    return 100 - (total / m) * 100;
+  }
+  get lineChartPoints(): string {
+    if (!this.chartData?.porMes?.length) return '';
+    const max = this.lineChartMax;
+    const len = this.chartData.porMes.length;
+    const step = len > 1 ? 100 / (len - 1) : 0;
+    return this.chartData.porMes
+      .map((m, i) => `${step * i},${100 - (m.total / max) * 100}`)
+      .join(' ');
   }
 
   addToWatchLater(filmeId: number): void {
@@ -499,6 +588,14 @@ export class ProfileComponent implements OnInit {
 
   goToHome(): void {
     this.router.navigate(['/dashboard']);
+  }
+
+  showOverview(): void {
+    this.activeSection = 'overview';
+  }
+
+  showStatistics(): void {
+    this.activeSection = 'statistics';
   }
 
   openDeleteConfirm(): void {

@@ -36,32 +36,12 @@
       <button class="primary-btn" (click)="openEdit()">Manage Account</button>
 
       <ul class="menu">
-        <li>Preferences</li>
+        <li class="menu-item" [class.active]="activeSection === 'overview'" (click)="showOverview()">Preferences</li>
+        <li class="menu-item" [class.active]="activeSection === 'statistics'" (click)="showStatistics()">Statistics</li>
         <li>Achievements</li>
         <li class="logout" (click)="logout()">Log out</li>
         <li class="logout" (click)="openDeleteConfirm()">Delete account</li>
       </ul>
-
-      <div class="stats">
-        <h3>Statistics</h3>
-
-        <div class="stat-row">
-          <span>Movies watched</span>
-          <strong>{{ stats?.totalFilmes || 0 }}</strong>
-        </div>
-
-        <div class="stat-row">
-          <span>Total minutes</span>
-          <strong>{{ stats?.totalMinutos || 0 }} min</strong>
-        </div>
-
-        <div class="genres" *ngIf="stats?.generos?.length">
-          <div class="genre-row" *ngFor="let g of stats.generos">
-            <span>{{ g.genero }}</span>
-            <span>{{ g.total }}</span>
-          </div>
-        </div>
-      </div>
 
       <div class="xp-level">
         <h3>Progress</h3>
@@ -95,100 +75,23 @@
           <strong>{{ watched.length }}</strong>
         </div>
       </div>
-
-      <div class="stats-comparison" *ngIf="statsComparison">
-        <h3>Tu vs Media Global</h3>
-
-        <!-- Filmes comparison -->
-        <div class="comparison-item">
-          <div class="comparison-label">Filmes vistos</div>
-          <div class="comparison-bars">
-            <div class="bar-row">
-              <span class="bar-label">Tu</span>
-              <div class="bar-container">
-                <div class="bar user-bar"
-                     [style.width.%]="getComparisonBarWidth(statsComparison.user.totalFilmes, statsComparison.global.mediaFilmesPorUtilizador)">
-                </div>
-              </div>
-              <span class="bar-value">{{ statsComparison.user.totalFilmes }}</span>
-            </div>
-            <div class="bar-row">
-              <span class="bar-label">Media</span>
-              <div class="bar-container">
-                <div class="bar global-bar"
-                     [style.width.%]="getGlobalBarWidth(statsComparison.user.totalFilmes, statsComparison.global.mediaFilmesPorUtilizador)">
-                </div>
-              </div>
-              <span class="bar-value">{{ statsComparison.global.mediaFilmesPorUtilizador }}</span>
-            </div>
-          </div>
-          <div class="comparison-indicator"
-               [class.positive]="statsComparison.comparacao.filmesMaisQueMedia"
-               [class.negative]="!statsComparison.comparacao.filmesMaisQueMedia">
-            <span *ngIf="statsComparison.comparacao.filmesVsMedia >= 0">+</span>{{ statsComparison.comparacao.filmesVsMedia | number:'1.0-1' }} vs media
-          </div>
-        </div>
-
-        <!-- Horas comparison -->
-        <div class="comparison-item">
-          <div class="comparison-label">Horas vistas</div>
-          <div class="comparison-bars">
-            <div class="bar-row">
-              <span class="bar-label">Tu</span>
-              <div class="bar-container">
-                <div class="bar user-bar"
-                     [style.width.%]="getComparisonBarWidth(statsComparison.user.totalHoras, statsComparison.global.mediaHorasPorUtilizador)">
-                </div>
-              </div>
-              <span class="bar-value">{{ statsComparison.user.totalHoras }}h</span>
-            </div>
-            <div class="bar-row">
-              <span class="bar-label">Media</span>
-              <div class="bar-container">
-                <div class="bar global-bar"
-                     [style.width.%]="getGlobalBarWidth(statsComparison.user.totalHoras, statsComparison.global.mediaHorasPorUtilizador)">
-                </div>
-              </div>
-              <span class="bar-value">{{ statsComparison.global.mediaHorasPorUtilizador }}h</span>
-            </div>
-          </div>
-          <div class="comparison-indicator"
-               [class.positive]="statsComparison.comparacao.horasMaisQueMedia"
-               [class.negative]="!statsComparison.comparacao.horasMaisQueMedia">
-            <span *ngIf="statsComparison.comparacao.horasVsMedia >= 0">+</span>{{ statsComparison.comparacao.horasVsMedia }}h vs media
-          </div>
-        </div>
-
-        <!-- Percentile -->
-        <div class="percentile-box">
-          <div class="percentile-value">Top {{ 100 - statsComparison.comparacao.percentilFilmes }}%</div>
-          <div class="percentile-label">dos utilizadores da plataforma</div>
-        </div>
-
-        <!-- Platform info -->
-        <div class="platform-info">
-          <span>{{ statsComparison.global.totalUtilizadores }} utilizadores na plataforma</span>
-        </div>
-      </div>
-
-      <div class="stats-comparison loading" *ngIf="isLoadingComparison && !statsComparison">
-        A carregar comparacao...
-      </div>
     </aside>
   </div>
 
   <!-- RIGHT COLUMN -->
   <section class="profile-main">
 
-    <div class="profile-info">
-      <h2>{{ userName }}</h2>
-      <div class="meta-row">
-        <span class="joined">Joined &middot; {{ joined }}</span>
+    <!-- Vista: Preferences (overview) -->
+    <ng-container *ngIf="activeSection === 'overview'">
+      <div class="profile-info">
+        <h2>{{ userName }}</h2>
+        <div class="meta-row">
+          <span class="joined">Joined &middot; {{ joined }}</span>
+        </div>
+        <p class="bio">{{ bio || 'No information yet' }}</p>
       </div>
-      <p class="bio">{{ bio || 'No information yet' }}</p>
-    </div>
 
-    <div class="lists-top">
+      <div class="lists-top">
 
       <!-- WATCH LATER LIST -->
       <div class="list-box clickable" (click)="openListModal('watchLater')">
@@ -389,6 +292,160 @@
         </div>
       </div>
     </div>
+
+    </ng-container>
+
+    <!-- Vista: Statistics (resumo + Tu vs Media + gráficos) -->
+    <ng-container *ngIf="activeSection === 'statistics'">
+      <div class="statistics-view">
+        <!-- Bloco: Statistics (Movies watched, Total minutes, géneros) -->
+        <section class="stats-block stats-in-main stats">
+          <h3>Statistics</h3>
+          <div class="stat-row">
+            <span>Movies watched</span>
+            <strong>{{ stats?.totalFilmes || 0 }}</strong>
+          </div>
+          <div class="stat-row">
+            <span>Total minutes</span>
+            <strong>{{ stats?.totalMinutos || 0 }} min</strong>
+          </div>
+          <div class="genres" *ngIf="stats?.generos?.length">
+            <div class="genre-row" *ngFor="let g of stats.generos">
+              <span>{{ g.genero }}</span>
+              <span>{{ g.total }}</span>
+            </div>
+          </div>
+        </section>
+
+        <!-- Bloco: Tu vs Media Global -->
+        <section class="stats-comparison stats-comparison-in-main" *ngIf="statsComparison">
+          <h3>Tu vs Media Global</h3>
+          <div class="comparison-item">
+            <div class="comparison-label">Filmes vistos</div>
+            <div class="comparison-bars">
+              <div class="bar-row">
+                <span class="bar-label">Tu</span>
+                <div class="bar-container">
+                  <div class="bar user-bar"
+                       [style.width.%]="getComparisonBarWidth(statsComparison.user.totalFilmes, statsComparison.global.mediaFilmesPorUtilizador)"></div>
+                </div>
+                <span class="bar-value">{{ statsComparison.user.totalFilmes }}</span>
+              </div>
+              <div class="bar-row">
+                <span class="bar-label">Media</span>
+                <div class="bar-container">
+                  <div class="bar global-bar"
+                       [style.width.%]="getGlobalBarWidth(statsComparison.user.totalFilmes, statsComparison.global.mediaFilmesPorUtilizador)"></div>
+                </div>
+                <span class="bar-value">{{ statsComparison.global.mediaFilmesPorUtilizador }}</span>
+              </div>
+            </div>
+            <div class="comparison-indicator"
+                 [class.positive]="statsComparison.comparacao.filmesMaisQueMedia"
+                 [class.negative]="!statsComparison.comparacao.filmesMaisQueMedia">
+              <span *ngIf="statsComparison.comparacao.filmesVsMedia >= 0">+</span>{{ statsComparison.comparacao.filmesVsMedia | number:'1.0-1' }} vs media
+            </div>
+          </div>
+          <div class="comparison-item">
+            <div class="comparison-label">Horas vistas</div>
+            <div class="comparison-bars">
+              <div class="bar-row">
+                <span class="bar-label">Tu</span>
+                <div class="bar-container">
+                  <div class="bar user-bar"
+                       [style.width.%]="getComparisonBarWidth(statsComparison.user.totalHoras, statsComparison.global.mediaHorasPorUtilizador)"></div>
+                </div>
+                <span class="bar-value">{{ statsComparison.user.totalHoras }}h</span>
+              </div>
+              <div class="bar-row">
+                <span class="bar-label">Media</span>
+                <div class="bar-container">
+                  <div class="bar global-bar"
+                       [style.width.%]="getGlobalBarWidth(statsComparison.user.totalHoras, statsComparison.global.mediaHorasPorUtilizador)"></div>
+                </div>
+                <span class="bar-value">{{ statsComparison.global.mediaHorasPorUtilizador }}h</span>
+              </div>
+            </div>
+            <div class="comparison-indicator"
+                 [class.positive]="statsComparison.comparacao.horasMaisQueMedia"
+                 [class.negative]="!statsComparison.comparacao.horasMaisQueMedia">
+              <span *ngIf="statsComparison.comparacao.horasVsMedia >= 0">+</span>{{ statsComparison.comparacao.horasVsMedia }}h vs media
+            </div>
+          </div>
+          <div class="percentile-box">
+            <div class="percentile-value">Top {{ 100 - statsComparison.comparacao.percentilFilmes }}%</div>
+            <div class="percentile-label">dos utilizadores da plataforma</div>
+          </div>
+          <div class="platform-info">
+            <span>{{ statsComparison.global.totalUtilizadores }} utilizadores na plataforma</span>
+          </div>
+        </section>
+      </div>
+
+      <section class="charts-section" *ngIf="chartData">
+        <h3 class="charts-title">Estatísticas em gráfico</h3>
+
+        <div class="charts-grid">
+          <div class="chart-card">
+            <h4>Filmes por género</h4>
+            <div class="chart-bar-container" *ngIf="chartData.generos?.length; else noGenres">
+              <div class="chart-bar-row" *ngFor="let g of chartData.generos; let i = index">
+                <span class="chart-bar-label">{{ g.genero }}</span>
+                <div class="chart-bar-track">
+                  <div class="chart-bar-fill"
+                       [style.width.%]="chartBarWidth(g.total)"
+                       [style.background]="chartColor(i)"></div>
+                </div>
+                <span class="chart-bar-value">{{ g.total }}</span>
+              </div>
+            </div>
+            <ng-template #noGenres>
+              <p class="chart-empty">Ainda não há dados por género.</p>
+            </ng-template>
+          </div>
+
+          <div class="chart-card">
+            <h4>Distribuição por género</h4>
+            <div class="chart-pie-wrap" *ngIf="chartData.generos?.length; else noPie">
+              <svg class="chart-pie" viewBox="0 0 100 100">
+                <path *ngFor="let g of chartData.generos; let i = index"
+                      [attr.d]="pieSegmentD(i)"
+                      [attr.fill]="chartColor(i)"
+                      class="chart-pie-segment" />
+              </svg>
+              <div class="chart-pie-legend">
+                <span *ngFor="let g of chartData.generos; let i = index"
+                      class="chart-legend-item">
+                  <i [style.background]="chartColor(i)"></i>{{ g.genero }} ({{ g.total }})
+                </span>
+              </div>
+            </div>
+            <ng-template #noPie>
+              <p class="chart-empty">Ainda não há dados.</p>
+            </ng-template>
+          </div>
+
+          <div class="chart-card chart-card-full">
+            <h4>Filmes vistos por mês (últimos 12 meses)</h4>
+            <div class="chart-line-wrap" *ngIf="chartData.porMes?.length; else noLine">
+              <svg class="chart-line" viewBox="0 0 100 100" preserveAspectRatio="none">
+                <polyline
+                  [attr.points]="lineChartPoints"
+                  class="chart-line-poly" />
+              </svg>
+              <div class="chart-line-labels">
+                <span *ngFor="let m of chartData.porMes" class="chart-line-label">{{ m.label }}</span>
+              </div>
+            </div>
+            <ng-template #noLine>
+              <p class="chart-empty">Ainda não há dados por mês.</p>
+            </ng-template>
+          </div>
+        </div>
+      </section>
+      <div class="charts-section loading" *ngIf="isLoadingCharts && !chartData">A carregar gráficos...</div>
+      <p class="chart-empty" *ngIf="!isLoadingCharts && !chartData">Sem dados para mostrar.</p>
+    </ng-container>
 
   </section>
 </div>
