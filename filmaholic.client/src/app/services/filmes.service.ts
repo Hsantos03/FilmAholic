@@ -9,6 +9,7 @@ export interface Filme {
   genero: string;
   posterUrl: string;
   tmdbId?: string;
+  ano?: number | null;
 }
 
 export interface TmdbSearchResponse {

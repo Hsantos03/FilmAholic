@@ -5,9 +5,11 @@ import { Observable } from 'rxjs';
 export interface CommentDTO {
   id: number;
   userName: string;
+  fotoPerfilUrl?: string | null;
   texto: string;
   rating: number;
   dataCriacao: string;
+  canEdit?: boolean;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -21,6 +23,18 @@ export class CommentsService {
       `${this.apiUrl}/movie/${movieId}`,
       { withCredentials: true }
     );
+  }
+
+  update(commentId: number, texto: string, rating: number): Observable<CommentDTO> {
+    return this.http.put<CommentDTO>(
+      `${this.apiUrl}/${commentId}`,
+      { texto, rating },
+      { withCredentials: true }
+    );
+  }
+
+  delete(commentId: number): Observable<void> {
+    return this.http.delete<void>(`${this.apiUrl}/${commentId}`, { withCredentials: true });
   }
 
   create(movieId: number, texto: string, rating: number): Observable<CommentDTO> {

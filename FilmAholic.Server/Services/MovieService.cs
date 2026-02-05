@@ -221,6 +221,7 @@ public class MovieService : IMovieService
         filme.PosterUrl = updatedInfo.PosterUrl;
         filme.Duracao = updatedInfo.Duracao;
         filme.TmdbId = updatedInfo.TmdbId;
+        filme.Ano = updatedInfo.Ano;
 
         await _context.SaveChangesAsync();
 
@@ -264,6 +265,15 @@ public class MovieService : IMovieService
         if (string.IsNullOrEmpty(filme.PosterUrl) && omdbMovie != null && !string.IsNullOrEmpty(omdbMovie.Poster) && omdbMovie.Poster != "N/A")
         {
             filme.PosterUrl = omdbMovie.Poster;
+        }
+
+        if (!string.IsNullOrEmpty(tmdbMovie.ReleaseDate) && tmdbMovie.ReleaseDate.Length >= 4 && int.TryParse(tmdbMovie.ReleaseDate.Substring(0, 4), out var ano))
+        {
+            filme.Ano = ano;
+        }
+        if (filme.Ano == null && omdbMovie != null && !string.IsNullOrEmpty(omdbMovie.Year) && int.TryParse(omdbMovie.Year.Trim(), out var anoOmdb))
+        {
+            filme.Ano = anoOmdb;
         }
 
         return filme;

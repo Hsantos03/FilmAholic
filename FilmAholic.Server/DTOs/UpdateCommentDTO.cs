@@ -1,8 +1,7 @@
 namespace FilmAholic.Server.DTOs
 {
-    public class CreateCommentDTO
+    public class UpdateCommentDTO
     {
-        public int FilmeId { get; set; }
         public string Texto { get; set; } = string.Empty;
         public int Rating { get; set; }
     }

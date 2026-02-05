@@ -32,57 +32,45 @@ export class ProfileComponent implements OnInit {
   totalHours = 0;
   stats: any;
 
-  // FR38 - Stats comparison
   statsComparison: StatsComparison | null = null;
   isLoadingComparison = false;
 
-  // FR31 - Chart data for graphics
   chartData: StatsCharts | null = null;
   isLoadingCharts = false;
 
-  // FR06 - Favorites
   favoritosFilmes: number[] = [];
   favoritosAtores: string[] = [];
   novoAtor = '';
-  showOnlyFavorites = false;
   isSavingFavorites = false;
 
-  // Drag and drop state (filmes)
   draggedIndex: number | null = null;
   dragOverIndex: number | null = null;
 
-  // Drag and drop state (atores)
   draggedActorIndex: number | null = null;
   dragOverActorIndex: number | null = null;
 
-  // Modal / edit state
   isEditing = false;
   editUserName = '';
   editBio = '';
   editFotoPerfilUrl: string | null = null;
   editCapaUrl: string | null = null;
   
-  // Separate modals for images
   isEditingCapa = false;
   isEditingAvatar = false;
 
-  // Delete account state
   isDeleting = false;
   deleteInput = '';
   deleteRequiredText = 'delete';
   isDeletingSaving = false;
 
-  // List view modal state
   showListModal = false;
   currentListType: 'watchLater' | 'watched' | null = null;
 
-  // movies saving state
   isSavingMovie = false;
 
   watchLaterFilter: 'all' | 'newest' | 'oldest' | '7days' | '30days' = 'all';
   watchedFilter: 'all' | 'newest' | 'oldest' | '7days' | '30days' = 'all';
 
-  // Vista do conteúdo principal: overview (perfil, listas) ou statistics (gráficos)
   activeSection: 'overview' | 'statistics' = 'overview';
 
   constructor(
@@ -124,6 +112,7 @@ export class ProfileComponent implements OnInit {
           }
           this.bio = res?.bio ?? '';
           this.fotoPerfilUrl = res?.fotoPerfilUrl ?? null;
+          if (this.fotoPerfilUrl != null) localStorage.setItem('fotoPerfilUrl', this.fotoPerfilUrl);
           this.capaUrl = res?.capaUrl ?? null;
 
           if (res?.dataCriacao) {
@@ -179,7 +168,6 @@ export class ProfileComponent implements OnInit {
     });
   }
 
-  // FR38 - Load stats comparison
   loadStatsComparison(): void {
     this.isLoadingComparison = true;
     this.userMoviesService.getStatsComparison().subscribe({
@@ -218,7 +206,6 @@ export class ProfileComponent implements OnInit {
     return (globalValue / max) * 100;
   }
 
-  // FR31 - Chart helpers
   get chartBarMax(): number {
     if (!this.chartData?.generos?.length) return 1;
     return Math.max(...this.chartData.generos.map(g => g.total), 1);
@@ -452,11 +439,6 @@ export class ProfileComponent implements OnInit {
     });
   }
 
-  get catalogoFiltrado(): Filme[] {
-    if (!this.showOnlyFavorites) return this.catalogo;
-    return (this.catalogo || []).filter(f => this.favoritosFilmes.includes(f.id));
-  }
-
   get favoritosFilmesDetalhes(): Filme[] {
     return this.favoritosFilmes
       .map(id => this.catalogo.find(f => f.id === id))
@@ -496,7 +478,6 @@ export class ProfileComponent implements OnInit {
       });
   }
 
-  // Edit Cover Photo
   openEditCapa(): void {
     this.editCapaUrl = this.capaUrl;
     this.isEditingCapa = true;
@@ -525,7 +506,6 @@ export class ProfileComponent implements OnInit {
       });
   }
 
-  // Edit Avatar
   openEditAvatar(): void {
     this.editFotoPerfilUrl = this.fotoPerfilUrl;
     this.isEditingAvatar = true;
@@ -537,6 +517,7 @@ export class ProfileComponent implements OnInit {
 
   saveAvatar(): void {
     this.fotoPerfilUrl = this.editFotoPerfilUrl;
+    if (this.fotoPerfilUrl != null) localStorage.setItem('fotoPerfilUrl', this.fotoPerfilUrl);
     this.isEditingAvatar = false;
 
     const userId = localStorage.getItem('user_id');
@@ -738,7 +719,6 @@ export class ProfileComponent implements OnInit {
       return;
     }
 
-    // Reordenar o array de favoritos
     const newOrder = [...this.favoritosFilmes];
     const [removed] = newOrder.splice(this.draggedIndex, 1);
     newOrder.splice(dropIndex, 0, removed);
@@ -746,7 +726,6 @@ export class ProfileComponent implements OnInit {
     this.favoritosFilmes = newOrder;
     this.saveFavorites();
 
-    // Limpar estados
     this.draggedIndex = null;
     this.dragOverIndex = null;
   }
@@ -790,7 +769,6 @@ export class ProfileComponent implements OnInit {
       return;
     }
 
-    // Reordenar o array de atores
     const newOrder = [...this.favoritosAtores];
     const [removed] = newOrder.splice(this.draggedActorIndex, 1);
     newOrder.splice(dropIndex, 0, removed);
@@ -798,13 +776,11 @@ export class ProfileComponent implements OnInit {
     this.favoritosAtores = newOrder;
     this.saveFavorites();
 
-    // Limpar estados
     this.draggedActorIndex = null;
     this.dragOverActorIndex = null;
   }
 
   onActorDragEnd(): void {
-    // Limpar feedback visual e remover estilos inline
     document.querySelectorAll('.fav-actor-card').forEach(el => {
       const htmlEl = el as HTMLElement;
       htmlEl.style.opacity = '';

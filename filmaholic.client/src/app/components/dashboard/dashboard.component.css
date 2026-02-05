@@ -27,6 +27,13 @@
   letter-spacing: 0.3px;
   opacity: 0.95;
   white-space: nowrap;
+  color: #fff;
+  text-decoration: none;
+}
+
+.brand:hover {
+  color: #fff;
+  text-decoration: none;
 }
 
 .icon-btn {
@@ -337,6 +344,58 @@
     color: #fff;
   }
 
+/* Secção Desafios no dashboard */
+.desafios-strip .strip-inner {
+  padding-bottom: 20px;
+}
+
+.desafios-dashboard-cards {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  justify-content: center;
+}
+
+.desafio-card-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  min-width: 200px;
+  min-height: 140px;
+  padding: 24px;
+  border-radius: 16px;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.1);
+  color: #fff;
+  cursor: pointer;
+  transition: background 0.2s ease, transform 0.15s ease, box-shadow 0.2s ease;
+  font-family: inherit;
+}
+
+.desafio-card-btn:hover {
+  background: rgba(255,255,255,0.1);
+  transform: translateY(-2px);
+  box-shadow: 0 12px 28px rgba(0,0,0,0.35);
+}
+
+.desafio-card-icon {
+  font-size: 42px;
+  line-height: 1;
+  opacity: 0.95;
+}
+
+.desafio-card-label {
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.desafio-card-desc {
+  font-size: 13px;
+  opacity: 0.8;
+}
+
 .desafios-list {
   display: flex;
   flex-direction: column;
@@ -437,14 +496,13 @@
   text-align: center;
 }
 
-/* Next-up section styles (adjusted to center content) */
 .nextup-strip .section-head {
   display: flex;
   align-items: center;
-  justify-content: center; /* center title */
+  justify-content: center; 
   gap: 12px;
   margin-bottom: 12px;
-  flex-wrap: wrap; /* keep layout stable on small screens */
+  flex-wrap: wrap;
 }
 
 .discover-wrap {
@@ -469,11 +527,10 @@
   cursor: not-allowed;
 }
 
-/* ensure the content area centers its children */
 .nextup-content {
   display: flex;
   align-items: center;
-  justify-content: center; /* <-- center the movie card horizontally */
+  justify-content: center; 
   gap: 16px;
   padding: 12px;
   background: rgba(255,255,255,0.02);
@@ -482,7 +539,6 @@
   width: 100%;
 }
 
-/* center the movie card and meta vertically, show poster above title (centered) */
 .nextup-card {
   display: flex;
   flex-direction: column;
@@ -490,7 +546,7 @@
   align-items: center;
   justify-content: center;
   width: auto;
-  margin: 0 auto; /* defensive centering if container changes */
+  margin: 0 auto; 
 }
 
 .nextup-poster {
@@ -530,7 +586,6 @@
   cursor: pointer;
 }
 
-/* responsive */
 @media (max-width: 860px) {
   .topbar {
     grid-template-columns: 60px 120px 1fr 120px;

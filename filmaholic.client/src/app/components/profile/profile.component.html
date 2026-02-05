@@ -81,7 +81,6 @@
   <!-- RIGHT COLUMN -->
   <section class="profile-main">
 
-    <!-- Vista: Preferences (overview) -->
     <ng-container *ngIf="activeSection === 'overview'">
       <div class="profile-info">
         <h2>{{ userName }}</h2>
@@ -142,11 +141,6 @@
       </div>
 
       <div class="fav-header">
-        <label class="fav-toggle">
-          <input type="checkbox" [(ngModel)]="showOnlyFavorites" />
-          <span>Show only favorites in catalog</span>
-        </label>
-
         <span class="fav-counter">
           {{ favoritosFilmes.length }}/10 movies &middot; {{ favoritosAtores.length }}/10 actors
         </span>
@@ -184,7 +178,7 @@
           <ng-template #noFavMovies>
             <div class="fav-empty">
               No favorite movies yet.<br />
-              <span class="fav-empty-hint">Use "★ Favorite" in the catalog (max 10).</span>
+              <span class="fav-empty-hint">Use "★ Favorite" on movie pages (max 10).</span>
             </div>
           </ng-template>
         </div>
@@ -245,60 +239,10 @@
       </div>
     </div>
 
-    <!-- CATALOGO -->
-    <div class="section">
-      <div class="section-title">
-        <h3>Catalog</h3>
-        <span class="subtitle">Popular Movies</span>
-      </div>
-
-      <div class="cards">
-        <div class="movie-card" *ngFor="let f of catalogoFiltrado">
-          <img class="poster" [src]="f.posterUrl" [alt]="f.titulo" />
-
-          <div class="movie-meta">
-            <div class="movie-title">{{ f.titulo }}</div>
-            <div class="movie-sub">{{ f.genero }} &middot; {{ f.duracao }} min</div>
-          </div>
-
-          <div class="movie-actions">
-            <button class="action-btn"
-                    (click)="addToWatchLater(f.id)"
-                    [disabled]="isSavingMovie || inWatchLater(f.id)">
-              + Watch later
-            </button>
-
-            <button class="action-btn ghost"
-                    (click)="addToWatched(f.id)"
-                    [disabled]="isSavingMovie || inWatched(f.id)">
-              ✓ Watched
-            </button>
-
-            <button class="action-btn danger"
-                    *ngIf="inWatchLater(f.id) || inWatched(f.id)"
-                    (click)="removeFromLists(f.id)"
-                    [disabled]="isSavingMovie">
-              Remove
-            </button>
-
-            <button class="action-btn ghost fav-btn"
-                    type="button"
-                    (click)="toggleFavoriteFilme(f.id)"
-                    [disabled]="isSavingFavorites"
-                    [class.selected]="isFilmeFavorito(f.id)">
-              ★ Favorite
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-
     </ng-container>
 
-    <!-- Vista: Statistics (resumo + Tu vs Media + gráficos) -->
     <ng-container *ngIf="activeSection === 'statistics'">
       <div class="statistics-view">
-        <!-- Bloco: Statistics (Movies watched, Total minutes, géneros) -->
         <section class="stats-block stats-in-main stats">
           <h3>Statistics</h3>
           <div class="stat-row">
@@ -317,7 +261,6 @@
           </div>
         </section>
 
-        <!-- Bloco: Tu vs Media Global -->
         <section class="stats-comparison stats-comparison-in-main" *ngIf="statsComparison">
           <h3>Tu vs Media Global</h3>
           <div class="comparison-item">

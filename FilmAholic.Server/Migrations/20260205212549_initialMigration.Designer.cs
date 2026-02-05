@@ -12,7 +12,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace FilmAholic.Server.Migrations
 {
     [DbContext(typeof(FilmAholicDbContext))]
-    [Migration("20260131190642_initialMigration")]
+    [Migration("20260205212549_initialMigration")]
     partial class initialMigration
     {
         /// <inheritdoc />
@@ -109,6 +109,9 @@ namespace FilmAholic.Server.Migrations
                         .HasColumnType("int");
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int?>("Ano")
+                        .HasColumnType("int");
 
                     b.Property<int>("Duracao")
                         .HasColumnType("int");

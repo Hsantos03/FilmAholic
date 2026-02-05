@@ -1,4 +1,4 @@
-﻿namespace FilmAholic.Server.Models;
+namespace FilmAholic.Server.Models;
 
 public class Filme
 {
@@ -8,4 +8,5 @@ public class Filme
     public string Genero { get; set; } = "";
     public string PosterUrl { get; set; } = "";
     public int Duracao { get; set; } // duração em minutos
+    public int? Ano { get; set; } // ano de estreia
 }
