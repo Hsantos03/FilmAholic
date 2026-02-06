@@ -1,6 +1,7 @@
 ﻿using FilmAholic.Server.Models;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
+using System.Reflection.Emit;
 
 namespace FilmAholic.Server.Data;
 
@@ -10,6 +11,8 @@ public class FilmAholicDbContext : IdentityDbContext<Utilizador>
 
     public FilmAholicDbContext(DbContextOptions<FilmAholicDbContext> options) : base(options) { }
     public DbSet<Comment> Comments { get; set; }
+    public DbSet<MovieRating> MovieRatings { get; set; }
+
     public DbSet<Filme> Filmes => Set<Filme>();
     public DbSet<Genero> Generos => Set<Genero>();
     public DbSet<UtilizadorGenero> UtilizadorGeneros => Set<UtilizadorGenero>();
@@ -40,6 +43,16 @@ public class FilmAholicDbContext : IdentityDbContext<Utilizador>
             .HasOne(ug => ug.Genero)
             .WithMany(g => g.Utilizadores)
             .HasForeignKey(ug => ug.GeneroId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+       builder.Entity<MovieRating>()
+        .HasIndex(r => new { r.FilmeId, r.UserId })
+        .IsUnique();
+
+        builder.Entity<MovieRating>()
+            .HasOne(r => r.Filme)
+            .WithMany() // não precisas de coleção no Filme
+            .HasForeignKey(r => r.FilmeId)
             .OnDelete(DeleteBehavior.Cascade);
 
         // Optional: basic configuration for Desafio
