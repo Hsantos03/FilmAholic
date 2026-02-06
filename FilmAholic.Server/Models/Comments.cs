@@ -2,7 +2,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace FilmAholic.Server.Models
 {
-    public class Comment
+    public class Comments
     {
         public int Id { get; set; }
 
@@ -18,9 +18,6 @@ namespace FilmAholic.Server.Models
         [Required]
         [MaxLength(2000)]
         public string Texto { get; set; } = string.Empty;
-
-        [Range(1, 5)]
-        public int Rating { get; set; }
 
         public DateTime DataCriacao { get; set; } = DateTime.UtcNow;
     }

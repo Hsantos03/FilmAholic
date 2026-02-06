@@ -9,5 +9,9 @@ namespace FilmAholic.Server.DTOs
         public int Rating { get; set; }
         public DateTime DataCriacao { get; set; }
         public bool CanEdit { get; set; }
+
+        public int LikeCount { get; set; }
+        public int DislikeCount { get; set; }
+        public int MyVote { get; set; }
     }
 }

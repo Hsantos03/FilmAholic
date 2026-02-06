@@ -10,6 +10,10 @@ export interface CommentDTO {
   rating: number;
   dataCriacao: string;
   canEdit?: boolean;
+
+  likeCount: number;
+  dislikeCount: number;
+  myVote: number;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -25,10 +29,10 @@ export class CommentsService {
     );
   }
 
-  update(commentId: number, texto: string, rating: number): Observable<CommentDTO> {
+  update(commentId: number, texto: string): Observable<CommentDTO> {
     return this.http.put<CommentDTO>(
       `${this.apiUrl}/${commentId}`,
-      { texto, rating },
+      { texto},
       { withCredentials: true }
     );
   }
@@ -37,10 +41,18 @@ export class CommentsService {
     return this.http.delete<void>(`${this.apiUrl}/${commentId}`, { withCredentials: true });
   }
 
-  create(movieId: number, texto: string, rating: number): Observable<CommentDTO> {
+  create(movieId: number, texto: string): Observable<CommentDTO> {
     return this.http.post<CommentDTO>(
       this.apiUrl,
-      { filmeId: movieId, texto, rating },
+      { filmeId: movieId, texto },
+      { withCredentials: true }
+    );
+  }
+
+  vote(commentId: number, value: 1 | -1 | 0): Observable<CommentDTO> {
+    return this.http.post<CommentDTO>(
+      `${this.apiUrl}/${commentId}/vote`,
+      { value },
       { withCredentials: true }
     );
   }

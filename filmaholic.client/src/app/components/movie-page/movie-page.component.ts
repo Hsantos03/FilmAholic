@@ -102,12 +102,11 @@ export class MoviePageComponent implements OnInit, OnDestroy {
     this.comments = [];
     this.recommendations = [];
     this.newComment = '';
-    this.selectedRating = 0;
     this.error = '';
     this.isFavorite = false;
     this.editingCommentId = null;
     this.editText = '';
-    this.editRating = 0;
+    
 
     this.ourAverage = 0;
     this.ourCount = 0;
@@ -316,34 +315,6 @@ export class MoviePageComponent implements OnInit, OnDestroy {
     this.editRating = 0;
   }
 
-  saveEdit(): void {
-    if (this.editingCommentId == null || !this.filme) return;
-    if (!this.editText.trim()) {
-      this.commentError = 'Escreve um comentário.';
-      return;
-    }
-    if (this.editRating < 1 || this.editRating > 5) {
-      this.commentError = 'Escolhe uma avaliação (1 a 5 estrelas).';
-      return;
-    }
-    this.isSavingEdit = true;
-    this.commentError = '';
-    this.commentsService.update(this.editingCommentId, this.editText.trim(), this.editRating).subscribe({
-      next: (updated) => {
-        const idx = this.comments.findIndex(x => x.id === updated.id);
-        if (idx >= 0) {
-          this.comments[idx] = { ...updated, dataCriacao: this.comments[idx].dataCriacao };
-        }
-        this.cancelEdit();
-        this.isSavingEdit = false;
-      },
-      error: (err) => {
-        this.commentError = err?.error?.message || err?.status === 403 ? 'Não podes editar este comentário.' : 'Não foi possível guardar.';
-        this.isSavingEdit = false;
-      }
-    });
-  }
-
   deleteComment(c: CommentDTO): void {
     if (!this.filme || !c.canEdit) return;
     if (!confirm('Apagar este comentário?')) return;
@@ -360,8 +331,84 @@ export class MoviePageComponent implements OnInit, OnDestroy {
     });
   }
 
-  setEditRating(value: number): void {
-    this.editRating = value;
+  voteComment(c: CommentDTO, value: 1 | -1): void {
+    if (!this.canComment) {
+      this.commentError = 'Tens de ter sessão iniciada para votar.';
+      return;
+    }
+
+    // Toggle: se já tem o mesmo voto, remove (0)
+    const newValue: 1 | -1 | 0 = (c.myVote === value) ? 0 : value;
+
+    this.commentsService.vote(c.id, newValue).subscribe({
+      next: (res) => {
+        c.likeCount = res.likeCount;
+        c.dislikeCount = res.dislikeCount;
+        c.myVote = res.myVote;
+      },
+      error: (err) => {
+        console.warn('Vote failed', err);
+        this.commentError = 'Não foi possível votar.';
+      }
+    });
+  }
+
+  sendComment(): void {
+    this.commentError = '';
+    if (!this.filme) return;
+
+    if (!this.canComment) {
+      this.commentError = 'Tens de ter sessão iniciada para comentar.';
+      return;
+    }
+
+    if (!this.newComment.trim()) {
+      this.commentError = 'Escreve um comentário.';
+      return;
+    }
+
+    this.isSendingComment = true;
+
+    this.commentsService.create(this.filme.id, this.newComment.trim()).subscribe({
+      next: (created) => {
+        this.newComment = '';
+        this.comments = [created, ...this.comments];
+      },
+      error: (err) => {
+        console.error('Create comment failed', err);
+        this.commentError = err?.status === 401
+          ? 'A tua sessão expirou. Faz login novamente.'
+          : 'Não foi possível enviar o comentário.';
+      },
+      complete: () => (this.isSendingComment = false)
+    });
+  }
+
+  saveEdit(): void {
+    if (this.editingCommentId == null) return;
+
+    if (!this.editText.trim()) {
+      this.commentError = 'Escreve um comentário.';
+      return;
+    }
+
+    this.isSavingEdit = true;
+    this.commentError = '';
+
+    this.commentsService.update(this.editingCommentId, this.editText.trim()).subscribe({
+      next: (updated) => {
+        const idx = this.comments.findIndex(x => x.id === updated.id);
+        if (idx >= 0) this.comments[idx] = { ...this.comments[idx], ...updated };
+        this.cancelEdit();
+        this.isSavingEdit = false;
+      },
+      error: (err) => {
+        this.commentError = err?.status === 403
+          ? 'Não podes editar este comentário.'
+          : 'Não foi possível guardar.';
+        this.isSavingEdit = false;
+      }
+    });
   }
 
   // RECOMMENDATIONS
@@ -388,48 +435,6 @@ export class MoviePageComponent implements OnInit, OnDestroy {
     if (r.id && r.id > 0) {
       this.router.navigate(['/movie-detail', r.id]);
     }
-  }
-
-  selectRating(value: number): void {
-    this.selectedRating = value;
-  }
-
-  sendComment(): void {
-    this.commentError = '';
-
-    if (!this.filme) return;
-    if (!this.canComment) {
-      this.commentError = 'Tens de ter sessão iniciada para comentar.';
-      return;
-    }
-    if (!this.newComment.trim()) {
-      this.commentError = 'Escreve um comentário.';
-      return;
-    }
-    if (this.selectedRating < 1 || this.selectedRating > 5) {
-      this.commentError = 'Escolhe uma avaliação (1 a 5 estrelas).';
-      return;
-    }
-
-    this.isSendingComment = true;
-
-    this.commentsService.create(this.filme.id, this.newComment.trim(), this.selectedRating).subscribe({
-      next: () => {
-        this.newComment = '';
-        this.selectedRating = 0;
-        this.loadComments(this.filme!.id);
-      },
-      error: (err) => {
-        console.error('Create comment failed', err);
-
-        if (err?.status === 401) {
-          this.commentError = 'A tua sessão expirou. Faz login novamente.';
-        } else {
-          this.commentError = 'Não foi possível enviar o comentário.';
-        }
-      },
-      complete: () => (this.isSendingComment = false)
-    });
   }
 
 
