@@ -73,6 +73,16 @@ export class ProfileComponent implements OnInit {
 
   activeSection: 'overview' | 'statistics' = 'overview';
 
+  statsPeriod: 'all' | '7d' | '30d' | '3m' | '12m' = 'all';
+
+  readonly statsPeriodOptions: { value: 'all' | '7d' | '30d' | '3m' | '12m'; label: string }[] = [
+    { value: 'all', label: 'Todos os tempos' },
+    { value: '7d', label: 'Últimos 7 dias' },
+    { value: '30d', label: 'Últimos 30 dias' },
+    { value: '3m', label: 'Últimos 3 meses' },
+    { value: '12m', label: 'Últimos 12 meses' }
+  ];
+
   constructor(
     private http: HttpClient,
     private router: Router,
@@ -129,10 +139,45 @@ export class ProfileComponent implements OnInit {
 
   refreshAllListsAndStats(): void {
     this.loadLists();
-    this.loadStats();
     this.loadTotalHours();
-    this.loadStatsComparison();
-    this.loadStatsCharts();
+    this.loadStatsWithPeriod();
+  }
+
+  private getStatsPeriodParams(): { from?: string; to?: string } | undefined {
+    if (this.statsPeriod === 'all') return undefined;
+    const pad = (n: number) => String(n).padStart(2, '0');
+    const toDate = (d: Date) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+    const now = new Date();
+    const to = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    let from = new Date(to);
+    switch (this.statsPeriod) {
+      case '7d':
+        from.setDate(from.getDate() - 7);
+        break;
+      case '30d':
+        from.setDate(from.getDate() - 30);
+        break;
+      case '3m':
+        from.setMonth(from.getMonth() - 3);
+        break;
+      case '12m':
+        from.setMonth(from.getMonth() - 12);
+        break;
+      default:
+        return undefined;
+    }
+    return { from: toDate(from), to: toDate(to) };
+  }
+
+  loadStatsWithPeriod(): void {
+    const params = this.getStatsPeriodParams();
+    this.loadStats(params);
+    this.loadStatsComparison(params);
+    this.loadStatsCharts(params);
+  }
+
+  onStatsPeriodChange(): void {
+    this.loadStatsWithPeriod();
   }
 
   loadCatalogo(): void {
@@ -161,16 +206,16 @@ export class ProfileComponent implements OnInit {
     });
   }
 
-  loadStats(): void {
-    this.userMoviesService.getStats().subscribe({
+  loadStats(params?: { from?: string; to?: string }): void {
+    this.userMoviesService.getStats(params).subscribe({
       next: (res) => (this.stats = res),
       error: () => (this.stats = null)
     });
   }
 
-  loadStatsComparison(): void {
+  loadStatsComparison(params?: { from?: string; to?: string }): void {
     this.isLoadingComparison = true;
-    this.userMoviesService.getStatsComparison().subscribe({
+    this.userMoviesService.getStatsComparison(params).subscribe({
       next: (res) => {
         this.statsComparison = res;
         this.isLoadingComparison = false;
@@ -182,9 +227,9 @@ export class ProfileComponent implements OnInit {
     });
   }
 
-  loadStatsCharts(): void {
+  loadStatsCharts(params?: { from?: string; to?: string }): void {
     this.isLoadingCharts = true;
-    this.userMoviesService.getStatsCharts().subscribe({
+    this.userMoviesService.getStatsCharts(params).subscribe({
       next: (res) => {
         this.chartData = res;
         this.isLoadingCharts = false;
