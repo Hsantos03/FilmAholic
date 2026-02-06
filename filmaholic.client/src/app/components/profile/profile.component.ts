@@ -6,6 +6,8 @@ import { UserMoviesService, StatsComparison, StatsCharts } from '../../services/
 import { Filme, FilmesService } from '../../services/filmes.service';
 import { FavoritesService, FavoritosDTO } from '../../services/favorites.service';
 
+type StatsPeriod = 'all' | '7d' | '30d' | '3m' | '12m';
+
 @Component({
   selector: 'app-profile',
   templateUrl: './profile.component.html',
@@ -54,7 +56,7 @@ export class ProfileComponent implements OnInit {
   editBio = '';
   editFotoPerfilUrl: string | null = null;
   editCapaUrl: string | null = null;
-  
+
   isEditingCapa = false;
   isEditingAvatar = false;
 
@@ -73,9 +75,9 @@ export class ProfileComponent implements OnInit {
 
   activeSection: 'overview' | 'statistics' = 'overview';
 
-  statsPeriod: 'all' | '7d' | '30d' | '3m' | '12m' = 'all';
+  statsPeriod: StatsPeriod = 'all';
 
-  readonly statsPeriodOptions: { value: 'all' | '7d' | '30d' | '3m' | '12m'; label: string }[] = [
+  readonly statsPeriodOptions: { value: StatsPeriod; label: string }[] = [
     { value: 'all', label: 'Todos os tempos' },
     { value: '7d', label: 'Últimos 7 dias' },
     { value: '30d', label: 'Últimos 30 dias' },
@@ -105,7 +107,7 @@ export class ProfileComponent implements OnInit {
       });
 
     if (!userId) {
-      console.warn('No user_id in localStorage Ã¢â‚¬â€ using fallback values.');
+      console.warn('No user_id in localStorage — using fallback values.');
       return;
     }
 
@@ -145,11 +147,14 @@ export class ProfileComponent implements OnInit {
 
   private getStatsPeriodParams(): { from?: string; to?: string } | undefined {
     if (this.statsPeriod === 'all') return undefined;
+
     const pad = (n: number) => String(n).padStart(2, '0');
     const toDate = (d: Date) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+
     const now = new Date();
     const to = new Date(now.getFullYear(), now.getMonth(), now.getDate());
     let from = new Date(to);
+
     switch (this.statsPeriod) {
       case '7d':
         from.setDate(from.getDate() - 7);
@@ -166,6 +171,7 @@ export class ProfileComponent implements OnInit {
       default:
         return undefined;
     }
+
     return { from: toDate(from), to: toDate(to) };
   }
 
@@ -227,6 +233,7 @@ export class ProfileComponent implements OnInit {
     });
   }
 
+  // Charts
   loadStatsCharts(params?: { from?: string; to?: string }): void {
     this.isLoadingCharts = true;
     this.userMoviesService.getStatsCharts(params).subscribe({
@@ -303,10 +310,7 @@ export class ProfileComponent implements OnInit {
     if (!this.chartData?.porMes?.length) return 1;
     return Math.max(...this.chartData.porMes.map(m => m.total), 1);
   }
-  lineChartY(total: number): number {
-    const m = this.lineChartMax;
-    return 100 - (total / m) * 100;
-  }
+
   get lineChartPoints(): string {
     if (!this.chartData?.porMes?.length) return '';
     const max = this.lineChartMax;
@@ -317,6 +321,34 @@ export class ProfileComponent implements OnInit {
       .join(' ');
   }
 
+  // Generos de Filmes mais Vistos
+  get totalGenerosVistos(): number {
+    if (!this.chartData?.generos?.length) return 0;
+    return this.chartData.generos.reduce((s, g) => s + (g.total || 0), 0);
+  }
+
+  generoPercent(total: number): number {
+    const all = this.totalGenerosVistos;
+    if (!all) return 0;
+    return +(total * 100 / all).toFixed(1);
+  }
+
+  get genrePercentages(): { genero: string; total: number; percent: number }[] {
+    if (!this.chartData?.generos?.length) return [];
+    const all = this.totalGenerosVistos;
+    if (!all) return [];
+
+    return this.chartData.generos
+      .map(g => ({
+        genero: g.genero,
+        total: g.total,
+        percent: this.generoPercent(g.total)
+      }))
+      .sort((a, b) => b.percent - a.percent);
+  }
+
+
+  // Listas & Favoritos
   addToWatchLater(filmeId: number): void {
     this.addMovieToList(filmeId, false);
   }
@@ -328,7 +360,7 @@ export class ProfileComponent implements OnInit {
   removeFromLists(filmeId: number): void {
     const filme = this.catalogo.find(f => f.id === filmeId);
     if (!filme) return;
-    
+
     const userMovie = [...this.watchLater, ...this.watched].find(
       x => x?.filme?.titulo === filme.titulo || x?.filme?.Titulo === filme.titulo
     );
@@ -399,17 +431,17 @@ export class ProfileComponent implements OnInit {
   inWatchLater(filmeId: number): boolean {
     const filme = this.catalogo.find(f => f.id === filmeId);
     if (!filme) return false;
-    
-    return this.watchLater?.some(x => x?.filme?.titulo === filme.titulo || 
-                                      x?.filme?.Titulo === filme.titulo);
+
+    return this.watchLater?.some(x => x?.filme?.titulo === filme.titulo ||
+      x?.filme?.Titulo === filme.titulo);
   }
 
   inWatched(filmeId: number): boolean {
     const filme = this.catalogo.find(f => f.id === filmeId);
     if (!filme) return false;
-    
-    return this.watched?.some(x => x?.filme?.titulo === filme.titulo || 
-                                   x?.filme?.Titulo === filme.titulo);
+
+    return this.watched?.some(x => x?.filme?.titulo === filme.titulo ||
+      x?.filme?.Titulo === filme.titulo);
   }
 
   loadFavorites(): void {
@@ -511,8 +543,8 @@ export class ProfileComponent implements OnInit {
     this.http
       .put<any>(
         `${this.apiBase}/${encodeURIComponent(userId)}`,
-        { 
-          userName: this.userName, 
+        {
+          userName: this.userName,
           bio: this.bio
         },
         { withCredentials: true }
@@ -585,7 +617,7 @@ export class ProfileComponent implements OnInit {
     if (!file) return;
 
     if (file.size > 5 * 1024 * 1024) {
-      alert('A imagem e muito grande. Por favor, escolha uma imagem menor que 5MB.');
+      alert('A imagem é muito grande. Por favor, escolha uma imagem menor que 5MB.');
       return;
     }
 
@@ -601,7 +633,7 @@ export class ProfileComponent implements OnInit {
     if (!file) return;
 
     if (file.size > 5 * 1024 * 1024) {
-      alert('A imagem e muito grande. Por favor, escolha uma imagem menor que 5MB.');
+      alert('A imagem é muito grande. Por favor, escolha uma imagem menor que 5MB.');
       return;
     }
 
@@ -691,12 +723,12 @@ export class ProfileComponent implements OnInit {
         case '7days': {
           const cutoff = Date.now() - 7 * 24 * 60 * 60 * 1000;
           return list.filter(m => (parseDate(m)?.getTime() ?? 0) >= cutoff)
-                     .sort((a, b) => (parseDate(b)?.getTime() ?? 0) - (parseDate(a)?.getTime() ?? 0));
+            .sort((a, b) => (parseDate(b)?.getTime() ?? 0) - (parseDate(a)?.getTime() ?? 0));
         }
         case '30days': {
           const cutoff = Date.now() - 30 * 24 * 60 * 60 * 1000;
           return list.filter(m => (parseDate(m)?.getTime() ?? 0) >= cutoff)
-                     .sort((a, b) => (parseDate(b)?.getTime() ?? 0) - (parseDate(a)?.getTime() ?? 0));
+            .sort((a, b) => (parseDate(b)?.getTime() ?? 0) - (parseDate(a)?.getTime() ?? 0));
         }
         case 'all':
         default:
@@ -749,7 +781,7 @@ export class ProfileComponent implements OnInit {
     if (event.dataTransfer) {
       event.dataTransfer.dropEffect = 'move';
     }
-    
+
     const target = event.currentTarget as HTMLElement;
     const index = parseInt(target.getAttribute('data-index') || '0', 10);
     this.dragOverIndex = index;
@@ -799,7 +831,7 @@ export class ProfileComponent implements OnInit {
     if (event.dataTransfer) {
       event.dataTransfer.dropEffect = 'move';
     }
-    
+
     const target = event.currentTarget as HTMLElement;
     const index = parseInt(target.getAttribute('data-index') || '0', 10);
     this.dragOverActorIndex = index;

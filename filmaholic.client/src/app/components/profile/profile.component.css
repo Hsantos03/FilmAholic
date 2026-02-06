@@ -1532,3 +1532,71 @@
     grid-template-columns: 1fr;
   }
 }
+
+.fr32-section {
+  margin-top: 22px;
+}
+
+.fr32-bars {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.fr32-row {
+  display: grid;
+  grid-template-columns: 160px 1fr 110px;
+  gap: 12px;
+  align-items: center;
+}
+
+.fr32-label {
+  font-size: 12px;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.85);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.fr32-track {
+  height: 18px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 999px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.fr32-fill {
+  height: 100%;
+  border-radius: 999px;
+  min-width: 2px;
+  transition: width 0.4s ease;
+}
+
+.fr32-value {
+  text-align: right;
+  font-size: 12px;
+  font-weight: 800;
+  color: #fff;
+}
+
+.fr32-mini {
+  opacity: 0.65;
+  font-weight: 700;
+  margin-left: 4px;
+}
+
+.fr32-total {
+  margin: 12px 0 0;
+  font-size: 12px;
+  opacity: 0.75;
+  text-align: center;
+}
+
+@media (max-width: 768px) {
+  .fr32-row {
+    grid-template-columns: 120px 1fr 92px;
+  }
+}
