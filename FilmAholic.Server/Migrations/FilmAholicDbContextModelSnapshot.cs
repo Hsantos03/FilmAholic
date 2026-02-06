@@ -107,6 +107,9 @@ namespace FilmAholic.Server.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
+                    b.Property<int?>("Ano")
+                        .HasColumnType("int");
+
                     b.Property<int>("Duracao")
                         .HasColumnType("int");
 

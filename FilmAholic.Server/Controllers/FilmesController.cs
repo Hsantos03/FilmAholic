@@ -19,13 +19,11 @@ namespace FilmAholic.Server.Controllers
             _context = context;
         }
 
-        /// Get all movies from database (always include popular TMDb movies if DB has few movies)
         [HttpGet]
         public async Task<IActionResult> GetAll()
         {
             var dbMovies = await _context.Set<Models.Filme>().ToListAsync();
             
-            // If database has few movies (less than 10), fetch and add popular movies from TMDb
             if (dbMovies.Count < 10)
             {
                 try
@@ -33,10 +31,8 @@ namespace FilmAholic.Server.Controllers
                     var popularMovies = await _movieService.GetPopularMoviesAsync(page: 1, count: 20);
                     if (popularMovies.Any())
                     {
-                        // Save popular movies to database so they have valid IDs
                         foreach (var movie in popularMovies)
                         {
-                            // Check if movie already exists (by TmdbId or title)
                             var existing = await _context.Set<Models.Filme>()
                                 .FirstOrDefaultAsync(f => 
                                     (!string.IsNullOrEmpty(movie.TmdbId) && f.TmdbId == movie.TmdbId) ||
@@ -44,7 +40,6 @@ namespace FilmAholic.Server.Controllers
                             
                             if (existing == null)
                             {
-                                // Don't set Id - let database generate it
                                 movie.Id = 0;
                                 _context.Set<Models.Filme>().Add(movie);
                             }
@@ -55,8 +50,6 @@ namespace FilmAholic.Server.Controllers
                 }
                 catch (Exception ex)
                 {
-                    // Log error but continue - we'll return what we have in DB
-                    // If TMDb fails and DB is empty, fallback to seed
                     if (!dbMovies.Any())
                     {
                         return Ok(FilmSeed.Filmes);
@@ -64,10 +57,8 @@ namespace FilmAholic.Server.Controllers
                 }
             }
 
-            // Reload all movies from database (including newly added popular ones)
             var allMovies = await _context.Set<Models.Filme>().ToListAsync();
             
-            // If still empty after trying TMDb, return seed as fallback
             if (!allMovies.Any())
             {
                 return Ok(FilmSeed.Filmes);
@@ -76,23 +67,6 @@ namespace FilmAholic.Server.Controllers
             return Ok(allMovies);
         }
 
-        /// Get movie by ID from database or seed
-        [HttpGet("{id}")]
-        public async Task<IActionResult> GetById(int id)
-        {
-            var filme = await _context.Set<Models.Filme>().FindAsync(id);
-            
-            if (filme == null)
-            {
-                // Fallback to seed
-                filme = FilmSeed.Filmes.FirstOrDefault(f => f.Id == id);
-                if (filme == null) return NotFound();
-            }
-
-            return Ok(filme);
-        }
-
-        /// Search movies using TMDb API
         [HttpGet("search")]
         public async Task<IActionResult> SearchMovies([FromQuery] string query, [FromQuery] int page = 1)
         {
@@ -116,7 +90,20 @@ namespace FilmAholic.Server.Controllers
             }
         }
 
-        /// Get movie details from TMDb by TMDb ID
+        [HttpGet("{id:int}")]
+        public async Task<IActionResult> GetById(int id)
+        {
+            var filme = await _context.Set<Models.Filme>().FindAsync(id);
+            
+            if (filme == null)
+            {
+                filme = FilmSeed.Filmes.FirstOrDefault(f => f.Id == id);
+                if (filme == null) return NotFound();
+            }
+
+            return Ok(filme);
+        }
+
         [HttpGet("tmdb/{tmdbId}")]
         public async Task<IActionResult> GetMovieFromTmdb(int tmdbId)
         {
@@ -140,7 +127,6 @@ namespace FilmAholic.Server.Controllers
             }
         }
 
-        /// Get or create a movie in the database from TMDb ID
         [HttpPost("tmdb/{tmdbId}")]
         public async Task<IActionResult> AddMovieFromTmdb(int tmdbId)
         {
@@ -160,7 +146,6 @@ namespace FilmAholic.Server.Controllers
         }
 
         
-        /// Update movie information from external APIs
         [HttpPut("{id}/update")]
         public async Task<IActionResult> UpdateMovie(int id)
         {
@@ -180,7 +165,6 @@ namespace FilmAholic.Server.Controllers
             }
         }
 
-        /// Ratings (TMDb + OMDb)
         [HttpGet("{id}/ratings")]
         public async Task<IActionResult> GetRatings(int id)
         {
@@ -195,6 +179,45 @@ namespace FilmAholic.Server.Controllers
             var ratings = await _movieService.GetRatingsAsync(filme.TmdbId, filme.Titulo);
 
             return Ok(ratings);
+        }
+
+        [HttpGet("{id}/recomendacoes")]
+        public async Task<IActionResult> GetRecommendations(int id, [FromQuery] int count = 10)
+        {
+            var filme = await _context.Set<Models.Filme>().FindAsync(id);
+
+            if (filme == null)
+            {
+                filme = FilmSeed.Filmes.FirstOrDefault(f => f.Id == id);
+                if (filme == null) return NotFound();
+            }
+
+            if (string.IsNullOrEmpty(filme.TmdbId) || !int.TryParse(filme.TmdbId, out var tmdbId))
+            {
+                try
+                {
+                    var searchResult = await _movieService.SearchMoviesAsync(filme.Titulo, 1);
+                    var match = searchResult?.Results?.FirstOrDefault();
+                    if (match != null)
+                    {
+                        tmdbId = match.Id;
+                    }
+                    else
+                    {
+                        return Ok(new List<Models.Filme>()); 
+                    }
+                }
+                catch
+                {
+                    return Ok(new List<Models.Filme>()); 
+                }
+            }
+
+            if (count <= 0) count = 10;
+            if (count > 20) count = 20;
+
+            var recommendations = await _movieService.GetRecommendationsAsync(tmdbId, count);
+            return Ok(recommendations);
         }
     }
 }

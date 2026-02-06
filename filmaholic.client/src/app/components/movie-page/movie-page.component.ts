@@ -1,5 +1,7 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Location } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
+import { Subscription } from 'rxjs';
 import { Filme, FilmesService, RatingsDto, TmdbSearchResponse, TmdbMovieResult } from '../../services/filmes.service';
 import { UserMoviesService } from '../../services/user-movies.service';
 import { FavoritesService } from '../../services/favorites.service';
@@ -10,11 +12,17 @@ import { CommentsService, CommentDTO } from '../../services/comments.service';
   templateUrl: './movie-page.component.html',
   styleUrls: ['./movie-page.component.css', '../dashboard/dashboard.component.css']
 })
-export class MoviePageComponent implements OnInit {
+export class MoviePageComponent implements OnInit, OnDestroy {
   filme: Filme | null = null;
   overview: string | null = null;
 
   userName = localStorage.getItem('userName') || 'User';
+
+  /** Foto de perfil do utilizador atual (localStoragel). */
+  get userFotoPerfilUrl(): string | null {
+    const u = localStorage.getItem('fotoPerfilUrl');
+    return u && u.trim() ? u : null;
+  }
 
   ratings: RatingsDto | null = null;
   isLoadingRatings = false;
@@ -25,13 +33,28 @@ export class MoviePageComponent implements OnInit {
   isLoading = false;
   error = '';
 
+  inWatchLater = false;
+  inWatched = false;
+
   comments: CommentDTO[] = [];
   newComment = '';
   selectedRating = 0;
   isSendingComment = false;
   commentError = '';
 
+  editingCommentId: number | null = null;
+  editText = '';
+  editRating = 0;
+  isSavingEdit = false;
+  isDeletingComment = false;
+
+  recommendations: Filme[] = [];
+  isLoadingRecommendations = false;
+
+  private routeSub!: Subscription;
+
   constructor(
+    private location: Location,
     private route: ActivatedRoute,
     private router: Router,
     private filmesService: FilmesService,
@@ -41,16 +64,40 @@ export class MoviePageComponent implements OnInit {
   ) { }
 
   ngOnInit(): void {
-    const idParam = this.route.snapshot.paramMap.get('id');
-    const id = idParam ? Number(idParam) : NaN;
+    this.routeSub = this.route.paramMap.subscribe(params => {
+      const idParam = params.get('id');
+      const id = idParam ? Number(idParam) : NaN;
 
-    if (!id || isNaN(id)) {
-      this.error = 'Filme inválido.';
-      return;
+      if (!id || isNaN(id)) {
+        this.error = 'Filme invalido.';
+        return;
+      }
+
+      this.resetState();
+      this.loadFilm(id);
+      this.loadTotalHours();
+    });
+  }
+
+  ngOnDestroy(): void {
+    if (this.routeSub) {
+      this.routeSub.unsubscribe();
     }
+  }
 
-    this.loadFilm(id);
-    this.loadTotalHours();
+  private resetState(): void {
+    this.filme = null;
+    this.overview = null;
+    this.ratings = null;
+    this.comments = [];
+    this.recommendations = [];
+    this.newComment = '';
+    this.selectedRating = 0;
+    this.error = '';
+    this.isFavorite = false;
+    this.editingCommentId = null;
+    this.editText = '';
+    this.editRating = 0;
   }
 
   get canComment(): boolean {
@@ -70,7 +117,9 @@ export class MoviePageComponent implements OnInit {
           this.loadRatings(this.filme.id);
           this.loadOverviewFromTmdb(this.filme);
           this.loadComments(this.filme.id);
+          this.loadRecommendations(this.filme.id);
           this.syncFavoriteState();
+          this.syncListState();
         }
       },
       error: (err) => {
@@ -133,6 +182,93 @@ export class MoviePageComponent implements OnInit {
         this.comments = [];
       }
     });
+  }
+
+  startEdit(c: CommentDTO): void {
+    this.editingCommentId = c.id;
+    this.editText = c.texto;
+    this.editRating = c.rating || 0;
+    this.commentError = '';
+  }
+
+  cancelEdit(): void {
+    this.editingCommentId = null;
+    this.editText = '';
+    this.editRating = 0;
+  }
+
+  saveEdit(): void {
+    if (this.editingCommentId == null || !this.filme) return;
+    if (!this.editText.trim()) {
+      this.commentError = 'Escreve um comentário.';
+      return;
+    }
+    if (this.editRating < 1 || this.editRating > 5) {
+      this.commentError = 'Escolhe uma avaliação (1 a 5 estrelas).';
+      return;
+    }
+    this.isSavingEdit = true;
+    this.commentError = '';
+    this.commentsService.update(this.editingCommentId, this.editText.trim(), this.editRating).subscribe({
+      next: (updated) => {
+        const idx = this.comments.findIndex(x => x.id === updated.id);
+        if (idx >= 0) {
+          this.comments[idx] = { ...updated, dataCriacao: this.comments[idx].dataCriacao };
+        }
+        this.cancelEdit();
+        this.isSavingEdit = false;
+      },
+      error: (err) => {
+        this.commentError = err?.error?.message || err?.status === 403 ? 'Não podes editar este comentário.' : 'Não foi possível guardar.';
+        this.isSavingEdit = false;
+      }
+    });
+  }
+
+  deleteComment(c: CommentDTO): void {
+    if (!this.filme || !c.canEdit) return;
+    if (!confirm('Apagar este comentário?')) return;
+    this.isDeletingComment = true;
+    this.commentsService.delete(c.id).subscribe({
+      next: () => {
+        this.comments = this.comments.filter(x => x.id !== c.id);
+        this.isDeletingComment = false;
+      },
+      error: () => {
+        this.commentError = 'Não foi possível apagar o comentário.';
+        this.isDeletingComment = false;
+      }
+    });
+  }
+
+  setEditRating(value: number): void {
+    this.editRating = value;
+  }
+
+  // RECOMMENDATIONS
+  loadRecommendations(movieId: number): void {
+    this.isLoadingRecommendations = true;
+    this.filmesService.getRecommendations(movieId, 10).subscribe({
+      next: (res) => {
+        this.recommendations = res || [];
+        this.isLoadingRecommendations = false;
+      },
+      error: (err) => {
+        console.warn('Failed to load recommendations', err);
+        this.recommendations = [];
+        this.isLoadingRecommendations = false;
+      }
+    });
+  }
+
+  recommendationPoster(f: Filme): string {
+    return f?.posterUrl || 'https://via.placeholder.com/300x450?text=Poster';
+  }
+
+  goToRecommendation(r: Filme): void {
+    if (r.id && r.id > 0) {
+      this.router.navigate(['/movie-detail', r.id]);
+    }
   }
 
   selectRating(value: number): void {
@@ -222,11 +358,31 @@ export class MoviePageComponent implements OnInit {
     });
   }
 
-  
+  syncListState(): void {
+    if (!this.filme) return;
+    const id = this.filme.id;
+    this.userMoviesService.getList(false).subscribe({
+      next: (watchLater) => {
+        this.inWatchLater = (watchLater || []).some((x: any) => x.filmeId === id || x.filme?.id === id);
+      },
+      error: () => (this.inWatchLater = false)
+    });
+    this.userMoviesService.getList(true).subscribe({
+      next: (watched) => {
+        this.inWatched = (watched || []).some((x: any) => x.filmeId === id || x.filme?.id === id);
+      },
+      error: () => (this.inWatched = false)
+    });
+  }
+
   addQueroVer(): void {
     if (!this.filme) return;
     this.userMoviesService.addMovie(this.filme.id, false).subscribe({
-      next: () => this.loadTotalHours(),
+      next: () => {
+        this.loadTotalHours();
+        this.inWatchLater = true;
+        this.inWatched = false;
+      },
       error: (err: any) => console.warn('addMovie failed', err)
     });
   }
@@ -234,7 +390,11 @@ export class MoviePageComponent implements OnInit {
   addJaVi(): void {
     if (!this.filme) return;
     this.userMoviesService.addMovie(this.filme.id, true).subscribe({
-      next: () => this.loadTotalHours(),
+      next: () => {
+        this.loadTotalHours();
+        this.inWatched = true;
+        this.inWatchLater = false;
+      },
       error: (err: any) => console.warn('addMovie failed', err)
     });
   }
@@ -242,7 +402,11 @@ export class MoviePageComponent implements OnInit {
   remove(): void {
     if (!this.filme) return;
     this.userMoviesService.removeMovie(this.filme.id).subscribe({
-      next: () => this.loadTotalHours(),
+      next: () => {
+        this.loadTotalHours();
+        this.inWatchLater = false;
+        this.inWatched = false;
+      },
       error: (err: any) => console.warn('removeMovie failed', err)
     });
   }
@@ -252,6 +416,10 @@ export class MoviePageComponent implements OnInit {
   }
 
   goBack(): void {
-    this.router.navigate(['/dashboard']);
+    if (window.history.length > 1) {
+      this.location.back();
+    } else {
+      this.router.navigate(['/dashboard']);
+    }
   }
 }

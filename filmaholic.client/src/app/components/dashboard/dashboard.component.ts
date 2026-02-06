@@ -1,9 +1,18 @@
 import { Component, OnInit, OnDestroy, ElementRef, ViewChild } from '@angular/core';
 import { Router } from '@angular/router';
+import { Subject, Subscription } from 'rxjs';
+import { debounceTime, filter, switchMap } from 'rxjs/operators';
 import { DesafiosService } from '../../services/desafios.service';
 import { Filme, FilmesService } from '../../services/filmes.service';
 import { AtoresService, PopularActor } from '../../services/atores.service';
 import { ProfileService } from '../../services/profile.service';
+
+export interface SearchResultItem {
+  id?: number;
+  tmdbId?: number;
+  titulo: string;
+  posterUrl: string;
+}
 
 @Component({
   selector: 'app-dashboard',
@@ -23,12 +32,15 @@ export class DashboardComponent implements OnInit, OnDestroy {
   errorMovies = '';
   searchTerm = '';
 
-  // New: search dropdown state and results
-  searchResults: Filme[] = [];
+  searchResults: SearchResultItem[] = [];
+  searchResultsLoading = false;
   showSearchMenu: boolean = false;
   isLoadingSuggestions = false;
   isSuggestionsMode = false; // true when menu is open with empty search (suggestions by genre)
   hasGenrePreferences = false; // true when user has favorite genres (for empty-state message)
+
+  private searchTerm$ = new Subject<string>();
+  private searchSub?: Subscription;
 
   isLoadingActors = false;
   errorActors = '';
@@ -45,7 +57,6 @@ export class DashboardComponent implements OnInit, OnDestroy {
   atoresIndex = 0;
   atoresVisibleCount = 4;
 
-  // New: next-to-watch / discover state
   nextToWatch: Filme | null = null;
   isDiscovering = false;
 
@@ -67,9 +78,30 @@ export class DashboardComponent implements OnInit, OnDestroy {
     this.updateVisibleCount();
     window.addEventListener('resize', this.onResizeBound);
     document.addEventListener('click', this.onDocumentClickBound);
+
+    this.searchSub = this.searchTerm$.pipe(
+      debounceTime(400),
+      filter(q => q.length >= 2),
+      switchMap(q => this.filmesService.searchMovies(q, 1))
+    ).subscribe({
+      next: (res) => {
+        this.searchResultsLoading = false;
+        const list = res?.results || [];
+        this.searchResults = list.map(r => ({
+          tmdbId: r.id,
+          titulo: r.title || r.original_title || 'Sem título',
+          posterUrl: r.poster_path ? `https://image.tmdb.org/t/p/w300${r.poster_path}` : 'https://via.placeholder.com/300x450?text=Poster'
+        }));
+      },
+      error: () => {
+        this.searchResultsLoading = false;
+        this.searchResults = [];
+      }
+    });
   }
 
   ngOnDestroy(): void {
+    this.searchSub?.unsubscribe();
     window.removeEventListener('resize', this.onResizeBound);
     document.removeEventListener('click', this.onDocumentClickBound);
   }
@@ -98,7 +130,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
           this.desafiosService.getAll().subscribe({
             next: (res) => (this.desafios = res || []),
             error: (e) => {
-              console.error('Falha ao carregar desafios pÃºblicos', e);
+              console.error('Falha ao carregar desafios públicos', e);
               this.desafios = [];
             },
             complete: () => (this.isLoadingDesafios = false)
@@ -142,7 +174,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
         this.isLoadingMovies = false;
       },
       error: () => {
-        this.errorMovies = 'NÃ£o foi possÃ­vel carregar os filmes.';
+        this.errorMovies = 'Não foi possí­vel carregar os filmes.';
         this.movies = [];
         this.featured = [];
         this.top10 = [];
@@ -197,28 +229,35 @@ export class DashboardComponent implements OnInit, OnDestroy {
     this.atoresIndex = Math.min(this.atoresIndex, maxAtoresIndex);
   }
 
-  // Search helpers
-
   public onSearchChange(term: string): void {
     this.searchTerm = term ?? '';
-    const q = (this.searchTerm || '').trim().toLowerCase();
+    const q = (this.searchTerm || '').trim();
+    const qLower = q.toLowerCase();
 
     if (q.length === 0) {
       this.isSuggestionsMode = false;
       this.searchResults = [];
+      this.searchResultsLoading = false;
       this.showSearchMenu = false;
       return;
     }
 
-    this.isSuggestionsMode = false;
-    // Filter existing loaded movies and show up to 5 matches
-    this.searchResults = (this.movies || [])
-      .filter(m => (m?.titulo || '').toLowerCase().includes(q))
-      .slice(0, 5);
+    this.showSearchMenu = true;
 
-    // Always show the menu if the user typed something, even when there are 0 matches,
-    // so we can display a friendly "no results" message.
-    this.showSearchMenu = q.length > 0;
+    if (q.length >= 2) {
+      this.searchResultsLoading = true;
+      this.searchResults = (this.movies || [])
+        .filter(m => (m?.titulo || '').toLowerCase().includes(qLower))
+        .slice(0, 5)
+        .map(m => ({ id: m.id, titulo: m.titulo, posterUrl: m.posterUrl || '' }));
+      this.searchTerm$.next(q);
+    } else {
+      this.searchResultsLoading = false;
+      this.searchResults = (this.movies || [])
+        .filter(m => (m?.titulo || '').toLowerCase().includes(qLower))
+        .slice(0, 5)
+        .map(m => ({ id: m.id, titulo: m.titulo, posterUrl: m.posterUrl || '' }));
+    }
   }
 
   public onSearchFocus(): void {
@@ -272,6 +311,29 @@ export class DashboardComponent implements OnInit, OnDestroy {
     this.showSearchMenu = false;
   }
 
+  public openSearchResult(item: SearchResultItem): void {
+    if (!item) return;
+    this.closeSearchMenu();
+    if (item.id != null && item.id > 0) {
+      this.router.navigate(['/movie-detail', item.id]);
+      return;
+    }
+    const tmdbId = item.tmdbId;
+    if (tmdbId == null) return;
+    this.searchResultsLoading = true;
+    this.filmesService.addMovieFromTmdb(tmdbId).subscribe({
+      next: (movie) => {
+        this.searchResultsLoading = false;
+        if (movie?.id != null) {
+          this.router.navigate(['/movie-detail', movie.id]);
+        }
+      },
+      error: () => {
+        this.searchResultsLoading = false;
+      }
+    });
+  }
+
   private onDocumentClick(e: MouseEvent): void {
     const container = this.searchContainerRef?.nativeElement as HTMLElement | undefined;
     const target = e.target as Node | null;
@@ -281,12 +343,10 @@ export class DashboardComponent implements OnInit, OnDestroy {
     }
 
     if (!container.contains(target)) {
-      // Click outside search area -> close menu
       this.showSearchMenu = false;
     }
   }
 
-  // New: pick a random film and set nextToWatch. Small "shuffle" animation.
   public discoverNext(): void {
     if ((this.movies || []).length === 0) {
       this.nextToWatch = null;
@@ -354,11 +414,13 @@ export class DashboardComponent implements OnInit, OnDestroy {
     return a?.fotoUrl || 'https://via.placeholder.com/300x300?text=Actor';
   }
 
-  posterOf(f: Filme): string {
+  posterOf(f: Filme | SearchResultItem): string {
     return f?.posterUrl || 'https://via.placeholder.com/300x450?text=Poster';
   }
 
-  openMenu(): void { }
+  openMenu(): void {
+    this.openDesafios();
+  }
 
   public doSearch(): void {
     const q = (this.searchTerm || '').trim();

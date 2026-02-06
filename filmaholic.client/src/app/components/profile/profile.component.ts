@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
-import { UserMoviesService } from '../../services/user-movies.service';
+import { UserMoviesService, StatsComparison, StatsCharts } from '../../services/user-movies.service';
 import { Filme, FilmesService } from '../../services/filmes.service';
 import { FavoritesService, FavoritosDTO } from '../../services/favorites.service';
 
@@ -32,48 +32,46 @@ export class ProfileComponent implements OnInit {
   totalHours = 0;
   stats: any;
 
-  // FR06 - Favorites
+  statsComparison: StatsComparison | null = null;
+  isLoadingComparison = false;
+
+  chartData: StatsCharts | null = null;
+  isLoadingCharts = false;
+
   favoritosFilmes: number[] = [];
   favoritosAtores: string[] = [];
   novoAtor = '';
-  showOnlyFavorites = false;
   isSavingFavorites = false;
 
-  // Drag and drop state (filmes)
   draggedIndex: number | null = null;
   dragOverIndex: number | null = null;
 
-  // Drag and drop state (atores)
   draggedActorIndex: number | null = null;
   dragOverActorIndex: number | null = null;
 
-  // Modal / edit state
   isEditing = false;
   editUserName = '';
   editBio = '';
   editFotoPerfilUrl: string | null = null;
   editCapaUrl: string | null = null;
   
-  // Separate modals for images
   isEditingCapa = false;
   isEditingAvatar = false;
 
-  // Delete account state
   isDeleting = false;
   deleteInput = '';
   deleteRequiredText = 'delete';
   isDeletingSaving = false;
 
-  // List view modal state
   showListModal = false;
   currentListType: 'watchLater' | 'watched' | null = null;
 
-  // movies saving state
   isSavingMovie = false;
 
-  // -- new: watch later & watched filter state
   watchLaterFilter: 'all' | 'newest' | 'oldest' | '7days' | '30days' = 'all';
   watchedFilter: 'all' | 'newest' | 'oldest' | '7days' | '30days' = 'all';
+
+  activeSection: 'overview' | 'statistics' = 'overview';
 
   constructor(
     private http: HttpClient,
@@ -114,6 +112,7 @@ export class ProfileComponent implements OnInit {
           }
           this.bio = res?.bio ?? '';
           this.fotoPerfilUrl = res?.fotoPerfilUrl ?? null;
+          if (this.fotoPerfilUrl != null) localStorage.setItem('fotoPerfilUrl', this.fotoPerfilUrl);
           this.capaUrl = res?.capaUrl ?? null;
 
           if (res?.dataCriacao) {
@@ -128,13 +127,12 @@ export class ProfileComponent implements OnInit {
       });
   }
 
-  // -----------------------
-  // LOADERS (catalog/lists)
-  // -----------------------
   refreshAllListsAndStats(): void {
     this.loadLists();
     this.loadStats();
     this.loadTotalHours();
+    this.loadStatsComparison();
+    this.loadStatsCharts();
   }
 
   loadCatalogo(): void {
@@ -170,9 +168,110 @@ export class ProfileComponent implements OnInit {
     });
   }
 
-  // -----------------------
-  // FR05 - Watch later / Watched
-  // -----------------------
+  loadStatsComparison(): void {
+    this.isLoadingComparison = true;
+    this.userMoviesService.getStatsComparison().subscribe({
+      next: (res) => {
+        this.statsComparison = res;
+        this.isLoadingComparison = false;
+      },
+      error: () => {
+        this.statsComparison = null;
+        this.isLoadingComparison = false;
+      }
+    });
+  }
+
+  loadStatsCharts(): void {
+    this.isLoadingCharts = true;
+    this.userMoviesService.getStatsCharts().subscribe({
+      next: (res) => {
+        this.chartData = res;
+        this.isLoadingCharts = false;
+      },
+      error: () => {
+        this.chartData = null;
+        this.isLoadingCharts = false;
+      }
+    });
+  }
+
+  getComparisonBarWidth(userValue: number, globalValue: number): number {
+    const max = Math.max(userValue, globalValue, 1);
+    return (userValue / max) * 100;
+  }
+
+  getGlobalBarWidth(userValue: number, globalValue: number): number {
+    const max = Math.max(userValue, globalValue, 1);
+    return (globalValue / max) * 100;
+  }
+
+  get chartBarMax(): number {
+    if (!this.chartData?.generos?.length) return 1;
+    return Math.max(...this.chartData.generos.map(g => g.total), 1);
+  }
+
+  chartBarWidth(total: number): number {
+    return (total / this.chartBarMax) * 100;
+  }
+
+  getPieSegmentStart(index: number): number {
+    if (!this.chartData?.generos?.length) return 0;
+    const total = this.chartData.generos.reduce((s, g) => s + g.total, 0);
+    if (total === 0) return 0;
+    let angle = 0;
+    for (let i = 0; i < index; i++) {
+      angle += (this.chartData.generos[i].total / total) * 360;
+    }
+    return angle;
+  }
+
+  getPieSegmentEnd(index: number): number {
+    if (!this.chartData?.generos?.length) return 0;
+    const total = this.chartData.generos.reduce((s, g) => s + g.total, 0);
+    if (total === 0) return 0;
+    let angle = 0;
+    for (let i = 0; i <= index; i++) {
+      angle += (this.chartData.generos[i].total / total) * 360;
+    }
+    return angle;
+  }
+
+  pieSegmentD(index: number): string {
+    const start = this.getPieSegmentStart(index);
+    const end = this.getPieSegmentEnd(index);
+    const r = 50;
+    const x0 = 50 + r * Math.cos((start - 90) * Math.PI / 180);
+    const y0 = 50 + r * Math.sin((start - 90) * Math.PI / 180);
+    const x1 = 50 + r * Math.cos((end - 90) * Math.PI / 180);
+    const y1 = 50 + r * Math.sin((end - 90) * Math.PI / 180);
+    const large = (end - start) > 180 ? 1 : 0;
+    return `M 50 50 L ${x0} ${y0} A ${r} ${r} 0 ${large} 1 ${x1} ${y1} Z`;
+  }
+
+  readonly chartColors = ['#ff2f6d', '#6366f1', '#22c55e', '#eab308', '#ec4899', '#14b8a6', '#f97316', '#8b5cf6'];
+  chartColor(i: number): string {
+    return this.chartColors[i % this.chartColors.length];
+  }
+
+  get lineChartMax(): number {
+    if (!this.chartData?.porMes?.length) return 1;
+    return Math.max(...this.chartData.porMes.map(m => m.total), 1);
+  }
+  lineChartY(total: number): number {
+    const m = this.lineChartMax;
+    return 100 - (total / m) * 100;
+  }
+  get lineChartPoints(): string {
+    if (!this.chartData?.porMes?.length) return '';
+    const max = this.lineChartMax;
+    const len = this.chartData.porMes.length;
+    const step = len > 1 ? 100 / (len - 1) : 0;
+    return this.chartData.porMes
+      .map((m, i) => `${step * i},${100 - (m.total / max) * 100}`)
+      .join(' ');
+  }
+
   addToWatchLater(filmeId: number): void {
     this.addMovieToList(filmeId, false);
   }
@@ -268,10 +367,6 @@ export class ProfileComponent implements OnInit {
                                    x?.filme?.Titulo === filme.titulo);
   }
 
-  // -----------------------
-  // FR06 - Favorites (Top 10)
-  // -----------------------
-
   loadFavorites(): void {
     this.favoritesService.getFavorites().subscribe({
       next: (fav: FavoritosDTO) => {
@@ -344,21 +439,11 @@ export class ProfileComponent implements OnInit {
     });
   }
 
-  get catalogoFiltrado(): Filme[] {
-    if (!this.showOnlyFavorites) return this.catalogo;
-    return (this.catalogo || []).filter(f => this.favoritosFilmes.includes(f.id));
-  }
-
   get favoritosFilmesDetalhes(): Filme[] {
     return this.favoritosFilmes
       .map(id => this.catalogo.find(f => f.id === id))
       .filter((x): x is Filme => !!x);
   }
-
-  // -----------------------
-  // Manage account modal
-  // -----------------------
-  // Manage Account - only username and bio
 
   openEdit(): void {
     this.editUserName = this.userName;
@@ -393,7 +478,6 @@ export class ProfileComponent implements OnInit {
       });
   }
 
-  // Edit Cover Photo
   openEditCapa(): void {
     this.editCapaUrl = this.capaUrl;
     this.isEditingCapa = true;
@@ -422,7 +506,6 @@ export class ProfileComponent implements OnInit {
       });
   }
 
-  // Edit Avatar
   openEditAvatar(): void {
     this.editFotoPerfilUrl = this.fotoPerfilUrl;
     this.isEditingAvatar = true;
@@ -434,6 +517,7 @@ export class ProfileComponent implements OnInit {
 
   saveAvatar(): void {
     this.fotoPerfilUrl = this.editFotoPerfilUrl;
+    if (this.fotoPerfilUrl != null) localStorage.setItem('fotoPerfilUrl', this.fotoPerfilUrl);
     this.isEditingAvatar = false;
 
     const userId = localStorage.getItem('user_id');
@@ -487,9 +571,13 @@ export class ProfileComponent implements OnInit {
     this.router.navigate(['/dashboard']);
   }
 
-  // -----------------------
-  // Delete account modal
-  // -----------------------
+  showOverview(): void {
+    this.activeSection = 'overview';
+  }
+
+  showStatistics(): void {
+    this.activeSection = 'statistics';
+  }
 
   openDeleteConfirm(): void {
     this.deleteInput = '';
@@ -602,10 +690,6 @@ export class ProfileComponent implements OnInit {
     this.authService.logout();
   }
 
-  // -----------------------
-  // Drag and Drop para Top 10
-  // -----------------------
-
   onDragStart(event: DragEvent, index: number): void {
     this.draggedIndex = index;
     if (event.dataTransfer) {
@@ -635,7 +719,6 @@ export class ProfileComponent implements OnInit {
       return;
     }
 
-    // Reordenar o array de favoritos
     const newOrder = [...this.favoritosFilmes];
     const [removed] = newOrder.splice(this.draggedIndex, 1);
     newOrder.splice(dropIndex, 0, removed);
@@ -643,13 +726,11 @@ export class ProfileComponent implements OnInit {
     this.favoritosFilmes = newOrder;
     this.saveFavorites();
 
-    // Limpar estados
     this.draggedIndex = null;
     this.dragOverIndex = null;
   }
 
   onDragEnd(): void {
-    // Limpar feedback visual e remover estilos inline
     document.querySelectorAll('.fav-poster').forEach(el => {
       const htmlEl = el as HTMLElement;
       htmlEl.style.opacity = '';
@@ -658,10 +739,6 @@ export class ProfileComponent implements OnInit {
     this.draggedIndex = null;
     this.dragOverIndex = null;
   }
-
-  // -----------------------
-  // Drag and Drop para Top 10 Atores
-  // -----------------------
 
   onActorDragStart(event: DragEvent, index: number): void {
     this.draggedActorIndex = index;
@@ -692,7 +769,6 @@ export class ProfileComponent implements OnInit {
       return;
     }
 
-    // Reordenar o array de atores
     const newOrder = [...this.favoritosAtores];
     const [removed] = newOrder.splice(this.draggedActorIndex, 1);
     newOrder.splice(dropIndex, 0, removed);
@@ -700,13 +776,11 @@ export class ProfileComponent implements OnInit {
     this.favoritosAtores = newOrder;
     this.saveFavorites();
 
-    // Limpar estados
     this.draggedActorIndex = null;
     this.dragOverActorIndex = null;
   }
 
   onActorDragEnd(): void {
-    // Limpar feedback visual e remover estilos inline
     document.querySelectorAll('.fav-actor-card').forEach(el => {
       const htmlEl = el as HTMLElement;
       htmlEl.style.opacity = '';
