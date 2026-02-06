@@ -146,15 +146,17 @@ namespace FilmAholic.Server.Controllers
         }
 
         [HttpGet("stats")]
-        public async Task<IActionResult> GetStats()
+        public async Task<IActionResult> GetStats([FromQuery] DateTime? from, [FromQuery] DateTime? to)
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
             if (userId == null) return Unauthorized();
 
-            var movies = await _context.UserMovies
+            var query = _context.UserMovies
                 .Include(um => um.Filme)
-                .Where(um => um.UtilizadorId == userId && um.JaViu)
-                .ToListAsync();
+                .Where(um => um.UtilizadorId == userId && um.JaViu);
+
+            query = ApplyPeriodFilter(query, from, to);
+            var movies = await query.ToListAsync();
 
             var generosPorNome = CountByIndividualGenreTyped(movies)
                 .Select(g => new { genero = g.genero, total = g.total }).ToList();
@@ -169,15 +171,16 @@ namespace FilmAholic.Server.Controllers
         }
 
         [HttpGet("stats/comparison")]
-        public async Task<IActionResult> GetStatsComparison()
+        public async Task<IActionResult> GetStatsComparison([FromQuery] DateTime? from, [FromQuery] DateTime? to)
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
             if (userId == null) return Unauthorized();
 
-            var userMovies = await _context.UserMovies
+            var userQuery = _context.UserMovies
                 .Include(um => um.Filme)
-                .Where(um => um.UtilizadorId == userId && um.JaViu)
-                .ToListAsync();
+                .Where(um => um.UtilizadorId == userId && um.JaViu);
+            userQuery = ApplyPeriodFilter(userQuery, from, to);
+            var userMovies = await userQuery.ToListAsync();
 
             var userTotalFilmes = userMovies.Count;
             var userTotalMinutos = userMovies.Sum(m => m.Filme?.Duracao ?? 0);
@@ -194,10 +197,11 @@ namespace FilmAholic.Server.Controllers
             var totalUsers = allUserIds.Count;
             if (totalUsers == 0) totalUsers = 1;
 
-            var allWatchedMovies = await _context.UserMovies
+            var globalQuery = _context.UserMovies
                 .Include(um => um.Filme)
-                .Where(um => um.JaViu)
-                .ToListAsync();
+                .Where(um => um.JaViu);
+            globalQuery = ApplyPeriodFilter(globalQuery, from, to);
+            var allWatchedMovies = await globalQuery.ToListAsync();
 
             var globalTotalFilmes = allWatchedMovies.Count;
             var globalTotalMinutos = allWatchedMovies.Sum(m => m.Filme?.Duracao ?? 0);
@@ -250,6 +254,15 @@ namespace FilmAholic.Server.Controllers
             });
         }
 
+        private static IQueryable<UserMovie> ApplyPeriodFilter(IQueryable<UserMovie> query, DateTime? from, DateTime? to)
+        {
+            if (from.HasValue)
+                query = query.Where(um => um.Data >= from.Value);
+            if (to.HasValue)
+                query = query.Where(um => um.Data < to.Value.AddDays(1));
+            return query;
+        }
+
         private static List<(string genero, int total)> CountByIndividualGenreTyped(IEnumerable<UserMovie> movies)
         {
             return movies
@@ -281,15 +294,16 @@ namespace FilmAholic.Server.Controllers
         }
 
         [HttpGet("stats/charts")]
-        public async Task<IActionResult> GetStatsCharts()
+        public async Task<IActionResult> GetStatsCharts([FromQuery] DateTime? from, [FromQuery] DateTime? to)
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
             if (userId == null) return Unauthorized();
 
-            var movies = await _context.UserMovies
+            var query = _context.UserMovies
                 .Include(um => um.Filme)
-                .Where(um => um.UtilizadorId == userId && um.JaViu)
-                .ToListAsync();
+                .Where(um => um.UtilizadorId == userId && um.JaViu);
+            query = ApplyPeriodFilter(query, from, to);
+            var movies = await query.ToListAsync();
 
             var generos = CountByIndividualGenreTyped(movies).Take(12)
                 .Select(g => new { genero = g.genero, total = g.total }).ToList();

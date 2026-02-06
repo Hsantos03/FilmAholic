@@ -243,6 +243,14 @@
 
     <ng-container *ngIf="activeSection === 'statistics'">
       <div class="statistics-view">
+        <div class="stats-period-filter">
+          <label for="statsPeriod">Filtrar por período:</label>
+          <select id="statsPeriod"
+                  [(ngModel)]="statsPeriod"
+                  (ngModelChange)="onStatsPeriodChange()">
+            <option *ngFor="let opt of statsPeriodOptions" [value]="opt.value">{{ opt.label }}</option>
+          </select>
+        </div>
         <section class="stats-block stats-in-main stats">
           <h3>Statistics</h3>
           <div class="stat-row">

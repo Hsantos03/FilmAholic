@@ -37,8 +37,24 @@
 
 <main class="content" style="padding-top:22px;">
   <div class="search-results-page">
-    <div class="search-header">
-      <h2>Resultados para "{{ query }}" <span *ngIf="selectedGenre">· {{ selectedGenre }}</span></h2>
+    <div class="search-header-row">
+      <h2 class="search-header">Resultados para "{{ query }}" <span *ngIf="selectedGenre">· {{ selectedGenre }}</span></h2>
+      <div class="sort-wrap" #sortWrapper *ngIf="results.length">
+        <button type="button" class="sort-btn" (click)="toggleSortMenu()" [class.active]="showSortMenu" aria-label="Ordenar resultados" aria-haspopup="true" [attr.aria-expanded]="showSortMenu">
+          Ordenar {{ sortBy ? '· ' + sortLabel : '' }}
+        </button>
+        <div class="sort-menu" *ngIf="showSortMenu" role="menu" aria-label="Opções de ordenação">
+          <button type="button" class="sort-item" (click)="applySort('date-desc')" [class.selected]="sortBy === 'date-desc'" role="menuitem">Data (mais recente)</button>
+          <button type="button" class="sort-item" (click)="applySort('date-asc')" [class.selected]="sortBy === 'date-asc'" role="menuitem">Data (mais antigo)</button>
+          <button type="button" class="sort-item" (click)="applySort('rating-desc')" [class.selected]="sortBy === 'rating-desc'" role="menuitem">Classificação (maior)</button>
+          <button type="button" class="sort-item" (click)="applySort('rating-asc')" [class.selected]="sortBy === 'rating-asc'" role="menuitem">Classificação (menor)</button>
+          <button type="button" class="sort-item" (click)="applySort('duration-desc')" [class.selected]="sortBy === 'duration-desc'" role="menuitem">Duração (mais longo)</button>
+          <button type="button" class="sort-item" (click)="applySort('duration-asc')" [class.selected]="sortBy === 'duration-asc'" role="menuitem">Duração (mais curto)</button>
+          <button type="button" class="sort-item" (click)="applySort('name-asc')" [class.selected]="sortBy === 'name-asc'" role="menuitem">Nome (A–Z)</button>
+          <button type="button" class="sort-item" (click)="applySort('name-desc')" [class.selected]="sortBy === 'name-desc'" role="menuitem">Nome (Z–A)</button>
+          <button type="button" class="sort-item" (click)="applySort(null)" [class.selected]="sortBy === null" role="menuitem">Ordenação original</button>
+        </div>
+      </div>
     </div>
 
     <div *ngIf="isLoading" class="state">A pesquisar&hellip;</div>
@@ -49,7 +65,7 @@
     </div>
 
     <div class="results-grid" *ngIf="results.length">
-      <div class="result-card" *ngFor="let r of results">
+      <div class="result-card" *ngFor="let r of sortedResults">
         <img class="result-thumb" [src]="r.posterUrl || 'https://via.placeholder.com/140x210?text=No+Image'" [alt]="r.titulo" />
         <div class="result-meta">
           <div class="result-title">{{ r.titulo }}</div>
