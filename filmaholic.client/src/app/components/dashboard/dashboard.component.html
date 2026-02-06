@@ -1,6 +1,6 @@
 <div class="page">
   <header class="topbar">
-    <button class="icon-btn" (click)="openMenu()" aria-label="Menu">&#9776;</button>
+    <button class="icon-btn" (click)="openDesafios()" aria-label="Desafios">&#127942;</button>
 
     <a class="brand" routerLink="/dashboard" aria-label="Go to dashboard">FilmAholic</a>
 
@@ -23,7 +23,6 @@
         </button>
       </div>
 
-      <!-- Search suggestion menu (stacked, cover image left of name) -->
       <div class="search-menu" *ngIf="showSearchMenu" role="listbox" aria-label="Sugestões de filmes">
         <div *ngIf="isSuggestionsMode" class="search-menu-title">Sugestões para si</div>
         <div *ngIf="isSuggestionsMode && isLoadingSuggestions" class="search-empty">A carregar sugestões…</div>
@@ -33,15 +32,18 @@
         <div *ngIf="isSuggestionsMode && !isLoadingSuggestions && searchResults.length === 0 && !hasGenrePreferences" class="search-empty">
           Selecione géneros no perfil para ver sugestões.
         </div>
+        <div *ngIf="searchResultsLoading" class="search-empty">
+          A pesquisar…
+        </div>
         <a class="search-item"
            *ngFor="let m of searchResults"
-           [routerLink]="['/movie-detail', m.id]"
-           (click)="closeSearchMenu()"
+           href="javascript:void(0)"
+           (click)="openSearchResult(m)"
            role="option">
           <img class="search-thumb" [src]="posterOf(m)" [alt]="m.titulo" />
           <div class="search-title">{{ m.titulo }}</div>
         </a>
-        <div *ngIf="!isSuggestionsMode && searchResults.length === 0" class="search-empty">
+        <div *ngIf="!isSuggestionsMode && !searchResultsLoading && searchResults.length === 0" class="search-empty">
           Nao foram encontrados resultados para "{{ searchTerm }}"
         </div>
       </div>
@@ -124,14 +126,27 @@
       </div>
     </section>
 
-    <!-- New section: O que vou ver a seguir -->
+    <section class="strip strip-full desafios-strip">
+      <div class="strip-inner">
+        <div class="section-head">
+          <h2>Desafios Semanais</h2>
+        </div>
+        <div class="desafios-dashboard-cards">
+          <button class="desafio-card-btn" (click)="openDesafios()" type="button">
+            <span class="desafio-card-icon">&#127942;</span>
+            <span class="desafio-card-label">Ver desafios</span>
+            <span class="desafio-card-desc">Completa desafios e ganha XP</span>
+          </button>
+        </div>
+      </div>
+    </section>
+
     <section class="strip strip-full nextup-strip">
       <div class="strip-inner">
         <div class="section-head">
           <h2>O que vou ver a seguir</h2>
         </div>
 
-        <!-- button placed below title, centered -->
         <div class="discover-wrap">
           <button class="discover-btn" (click)="discoverNext()" [disabled]="isDiscovering || isLoadingMovies">
             {{ isDiscovering ? 'A descobrir…' : 'Descobrir' }}

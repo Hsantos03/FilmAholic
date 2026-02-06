@@ -67,20 +67,6 @@ namespace FilmAholic.Server.Controllers
             return Ok(allMovies);
         }
 
-        [HttpGet("{id}")]
-        public async Task<IActionResult> GetById(int id)
-        {
-            var filme = await _context.Set<Models.Filme>().FindAsync(id);
-            
-            if (filme == null)
-            {
-                filme = FilmSeed.Filmes.FirstOrDefault(f => f.Id == id);
-                if (filme == null) return NotFound();
-            }
-
-            return Ok(filme);
-        }
-
         [HttpGet("search")]
         public async Task<IActionResult> SearchMovies([FromQuery] string query, [FromQuery] int page = 1)
         {
@@ -102,6 +88,20 @@ namespace FilmAholic.Server.Controllers
             {
                 return StatusCode(500, new { error = "An error occurred while searching movies.", details = ex.Message });
             }
+        }
+
+        [HttpGet("{id:int}")]
+        public async Task<IActionResult> GetById(int id)
+        {
+            var filme = await _context.Set<Models.Filme>().FindAsync(id);
+            
+            if (filme == null)
+            {
+                filme = FilmSeed.Filmes.FirstOrDefault(f => f.Id == id);
+                if (filme == null) return NotFound();
+            }
+
+            return Ok(filme);
         }
 
         [HttpGet("tmdb/{tmdbId}")]

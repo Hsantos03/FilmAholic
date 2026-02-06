@@ -156,16 +156,15 @@ namespace FilmAholic.Server.Controllers
                 .Where(um => um.UtilizadorId == userId && um.JaViu)
                 .ToListAsync();
 
+            var generosPorNome = CountByIndividualGenreTyped(movies)
+                .Select(g => new { genero = g.genero, total = g.total }).ToList();
+
             return Ok(new
             {
                 totalFilmes = movies.Count,
-                totalHoras = movies.Sum(m => m.Filme.Duracao) / 60.0, 
+                totalHoras = movies.Sum(m => m.Filme.Duracao) / 60.0,
                 totalMinutos = movies.Sum(m => m.Filme.Duracao),
-                generos = movies
-                    .GroupBy(m => m.Filme.Genero)
-                    .Select(g => new { genero = g.Key, total = g.Count() })
-                    .OrderByDescending(x => x.total)
-                    .ToList()
+                generos = generosPorNome
             });
         }
 
@@ -184,12 +183,8 @@ namespace FilmAholic.Server.Controllers
             var userTotalMinutos = userMovies.Sum(m => m.Filme?.Duracao ?? 0);
             var userTotalHoras = userTotalMinutos / 60.0;
 
-            var userGeneros = userMovies
-                .Where(m => m.Filme != null && !string.IsNullOrEmpty(m.Filme.Genero))
-                .GroupBy(m => m.Filme.Genero)
-                .Select(g => new { genero = g.Key, total = g.Count() })
-                .OrderByDescending(x => x.total)
-                .ToList();
+            var userGeneros = CountByIndividualGenreTyped(userMovies)
+                .Select(g => new { genero = g.genero, total = g.total }).ToList();
 
             var allUserIds = await _context.UserMovies
                 .Select(um => um.UtilizadorId)
@@ -211,22 +206,20 @@ namespace FilmAholic.Server.Controllers
             var avgMinutosPerUser = (double)globalTotalMinutos / totalUsers;
             var avgHorasPerUser = avgMinutosPerUser / 60.0;
 
-            var globalGeneros = allWatchedMovies
-                .Where(m => m.Filme != null && !string.IsNullOrEmpty(m.Filme.Genero))
-                .GroupBy(m => m.Filme.Genero)
-                .Select(g => new { 
-                    genero = g.Key, 
-                    total = g.Count(),
-                    percentagem = globalTotalFilmes > 0 ? Math.Round((double)g.Count() / globalTotalFilmes * 100, 1) : 0
-                })
-                .OrderByDescending(x => x.total)
-                .Take(10)
-                .ToList();
+            var globalGenerosRaw = CountByIndividualGenreTyped(allWatchedMovies).Take(10).ToList();
+            var totalUserGenreHits = userGeneros.Sum(g => g.total);
+            var totalGlobalGenreHits = globalGenerosRaw.Sum(g => g.total);
+
+            var globalGeneros = globalGenerosRaw.Select(g => new {
+                genero = g.genero,
+                total = g.total,
+                percentagem = totalGlobalGenreHits > 0 ? Math.Round((double)g.total / totalGlobalGenreHits * 100, 1) : 0
+            }).ToList();
 
             var userGenerosComPercentagem = userGeneros.Select(g => new {
                 g.genero,
                 g.total,
-                percentagem = userTotalFilmes > 0 ? Math.Round((double)g.total / userTotalFilmes * 100, 1) : 0
+                percentagem = totalUserGenreHits > 0 ? Math.Round((double)g.total / totalUserGenreHits * 100, 1) : 0
             }).ToList();
 
             return Ok(new
@@ -257,6 +250,20 @@ namespace FilmAholic.Server.Controllers
             });
         }
 
+        private static List<(string genero, int total)> CountByIndividualGenreTyped(IEnumerable<UserMovie> movies)
+        {
+            return movies
+                .Where(m => m.Filme != null && !string.IsNullOrWhiteSpace(m.Filme.Genero))
+                .SelectMany(m => m.Filme.Genero
+                    .Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries)
+                    .Select(s => s.Trim())
+                    .Where(s => !string.IsNullOrEmpty(s)))
+                .GroupBy(g => g)
+                .Select(g => (g.Key, g.Count()))
+                .OrderByDescending(x => x.Item2)
+                .ToList();
+        }
+
         private int CalculatePercentile(string userId, List<string> allUserIds, List<UserMovie> allWatchedMovies)
         {
             var userCounts = allUserIds
@@ -271,6 +278,46 @@ namespace FilmAholic.Server.Controllers
             var usersWithLessOrEqual = userCounts.Count(x => x.Count <= currentUserCount);
 
             return (int)Math.Round((double)usersWithLessOrEqual / userCounts.Count * 100);
+        }
+
+        [HttpGet("stats/charts")]
+        public async Task<IActionResult> GetStatsCharts()
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (userId == null) return Unauthorized();
+
+            var movies = await _context.UserMovies
+                .Include(um => um.Filme)
+                .Where(um => um.UtilizadorId == userId && um.JaViu)
+                .ToListAsync();
+
+            var generos = CountByIndividualGenreTyped(movies).Take(12)
+                .Select(g => new { genero = g.genero, total = g.total }).ToList();
+
+            var now = DateTime.Now;
+            var twelveMonthsAgo = now.AddMonths(-12);
+            var porMes = movies
+                .Where(m => m.Data >= twelveMonthsAgo)
+                .GroupBy(m => new { m.Data.Year, m.Data.Month })
+                .Select(g => new
+                {
+                    ano = g.Key.Year,
+                    mes = g.Key.Month,
+                    label = new DateTime(g.Key.Year, g.Key.Month, 1).ToString("MMM yyyy", System.Globalization.CultureInfo.GetCultureInfo("pt-PT")),
+                    total = g.Count()
+                })
+                .OrderBy(x => x.ano).ThenBy(x => x.mes)
+                .ToList();
+
+            var totalFilmes = movies.Count;
+            var totalMinutos = movies.Sum(m => m.Filme?.Duracao ?? 0);
+
+            return Ok(new
+            {
+                generos,
+                porMes,
+                resumo = new { totalFilmes, totalHoras = Math.Round(totalMinutos / 60.0, 1), totalMinutos }
+            });
         }
 
         private async Task HandleDesafioProgressAsync(string userId, Filme filme)

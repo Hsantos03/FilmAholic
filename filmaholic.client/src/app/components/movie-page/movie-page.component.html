@@ -25,18 +25,34 @@
         <!-- TÍTULO -->
         <h1 class="movie-title">{{ f.titulo }}</h1>
         <div class="movie-sub">
-          {{ f.genero }} · {{ f.duracao }} min
+          {{ f.ano ? f.ano + ' · ' : '' }}{{ f.genero }} · {{ f.duracao }} min
         </div>
 
         <!-- AÇÕES -->
         <div class="actions-row">
-          <button class="btn ghost" (click)="addQueroVer()">Quero Ver</button>
-          <button class="btn primary" (click)="addJaVi()">Já Vi</button>
-          <button class="btn danger" (click)="remove()">Remover</button>
+          <button class="btn ghost"
+                  [class.active]="inWatchLater"
+                  (click)="addQueroVer()"
+                  title="Adicionar à lista Quero Ver">
+            Quero Ver
+          </button>
+          <button class="btn primary"
+                  [class.active]="inWatched"
+                  (click)="addJaVi()"
+                  title="Marcar como já visto">
+            Já Vi
+          </button>
+          <button class="btn danger"
+                  *ngIf="inWatchLater || inWatched"
+                  (click)="remove()"
+                  title="Remover das minhas listas (Quero Ver / Já Vi)">
+            Remover
+          </button>
           <button class="btn favorite"
                   [class.active]="isFavorite"
-                  (click)="toggleFavorite()">
-            ⭐ Favorito
+                  (click)="toggleFavorite()"
+                  title="Adicionar ou remover dos favoritos">
+            &#9733; Favorito
           </button>
         </div>
 
@@ -50,7 +66,9 @@
 
           <div *ngIf="!isLoadingRatings && ratings" class="ratings-grid">
             <div class="rating-item">
-              <div class="rating-label">TMDb</div>
+              <div class="rating-label">
+                <img class="rating-logo" src="https://www.themoviedb.org/assets/2/v4/logos/v2/blue_square_2-d537fb228cf3ded904ef09b136fe3fec72548ebc1fea3fbbd1ad9e36364db38b.svg" alt="TMDb" title="The Movie Database" />
+              </div>
               <div class="rating-value">
                 {{ ratings.tmdbVoteAverage | number:'1.1-1' }}/10
                 <span class="rating-sub">({{ ratings.tmdbVoteCount }} votos)</span>
@@ -58,17 +76,23 @@
             </div>
 
             <div class="rating-item">
-              <div class="rating-label">IMDb</div>
+              <div class="rating-label">
+                <img class="rating-logo" src="https://upload.wikimedia.org/wikipedia/commons/6/69/IMDB_Logo_2016.svg" alt="IMDb" title="Internet Movie Database" />
+              </div>
               <div class="rating-value">{{ ratings.imdbRating || '—' }}/10</div>
             </div>
 
             <div class="rating-item">
-              <div class="rating-label">Metacritic</div>
+              <div class="rating-label">
+                <img class="rating-logo" src="https://upload.wikimedia.org/wikipedia/commons/2/20/Metacritic.svg" alt="Metacritic" title="Metacritic" />
+              </div>
               <div class="rating-value">{{ ratings.metascore || '—' }}/100</div>
             </div>
 
             <div class="rating-item">
-              <div class="rating-label">Rotten Tomatoes</div>
+              <div class="rating-label">
+                <img class="rating-logo" src="https://upload.wikimedia.org/wikipedia/commons/5/5b/Rotten_Tomatoes.svg" alt="Rotten Tomatoes" title="Rotten Tomatoes" />
+              </div>
               <div class="rating-value">{{ ratings.rottenTomatoes || '—' }}</div>
             </div>
           </div>
@@ -102,7 +126,10 @@
             </div>
 
             <div class="stars-box" aria-label="Selecionar rating">
-              <span class="avatar avatar-sm">{{ userName.charAt(0) }}</span>
+              <div class="avatar avatar-sm">
+                <img *ngIf="userFotoPerfilUrl" class="avatar-img" [src]="userFotoPerfilUrl" [alt]="userName" />
+                <span *ngIf="!userFotoPerfilUrl">{{ userName.charAt(0) }}</span>
+              </div>
 
               <div class="stars">
                 <button class="star"
@@ -127,25 +154,45 @@
             <div class="comment-item" *ngFor="let c of comments">
 
               <div class="avatar avatar-md">
-                {{ c.userName && c.userName.length ? c.userName.charAt(0) : 'U' }}
+                <img *ngIf="c.fotoPerfilUrl" class="avatar-img" [src]="c.fotoPerfilUrl" [alt]="c.userName" />
+                <span *ngIf="!c.fotoPerfilUrl">{{ c.userName && c.userName.length ? c.userName.charAt(0) : 'U' }}</span>
               </div>
 
               <div class="comment-content">
                 <div class="comment-header">
                   <strong class="comment-user">{{ c.userName }}</strong>
 
-                  <span class="comment-stars" aria-label="Rating do comentário">
+                  <span class="comment-stars" aria-label="Rating do comentário"
+                        *ngIf="editingCommentId !== c.id">
                     <span class="comment-star"
                           *ngFor="let s of [1,2,3,4,5]"
                           [class.filled]="s <= (c.rating || 0)">
                       ★
                     </span>
                   </span>
+
+                  <div class="comment-actions" *ngIf="c.canEdit && editingCommentId !== c.id">
+                    <button type="button" class="comment-btn" (click)="startEdit(c)">Editar</button>
+                    <button type="button" class="comment-btn danger" (click)="deleteComment(c)" [disabled]="isDeletingComment">Apagar</button>
+                  </div>
                 </div>
 
-                <p class="comment-text">{{ c.texto }}</p>
+                <!-- Modo edição -->
+                <div class="comment-edit-form" *ngIf="editingCommentId === c.id">
+                  <textarea class="comment-edit-input" [(ngModel)]="editText" rows="3" [disabled]="isSavingEdit"></textarea>
+                  <div class="comment-edit-stars">
+                    <button type="button" class="star" *ngFor="let s of [1,2,3,4,5]"
+                            [class.filled]="s <= editRating" (click)="setEditRating(s)" [disabled]="isSavingEdit">★</button>
+                  </div>
+                  <div class="comment-edit-actions">
+                    <button type="button" class="btn primary" (click)="saveEdit()" [disabled]="isSavingEdit">Guardar</button>
+                    <button type="button" class="btn ghost" (click)="cancelEdit()" [disabled]="isSavingEdit">Cancelar</button>
+                  </div>
+                </div>
 
-                <div class="comment-meta">
+                <p class="comment-text" *ngIf="editingCommentId !== c.id">{{ c.texto }}</p>
+
+                <div class="comment-meta" *ngIf="editingCommentId !== c.id">
                   <span>{{ c.dataCriacao | date:'short' }}</span>
                 </div>
               </div>

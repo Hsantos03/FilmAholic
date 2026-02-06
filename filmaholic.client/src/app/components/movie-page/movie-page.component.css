@@ -72,24 +72,87 @@
   cursor: pointer;
   color: #fff;
   background: rgba(255,255,255,0.12);
+  transition: background 0.2s ease, transform 0.15s ease, box-shadow 0.2s ease;
 }
+
+.btn:hover {
+  background: rgba(255,255,255,0.22);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+}
+
+.btn:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 6px rgba(0,0,0,0.25);
+}
+
+.btn:focus-visible {
+  outline: 2px solid rgba(255,255,255,0.6);
+  outline-offset: 2px;
+}
+
+  .btn.ghost.active {
+    background: rgba(255,255,255,0.22);
+    border: 2px solid rgba(255,255,255,0.4);
+  }
 
   .btn.primary {
     background: #ff2f6d;
+  }
+
+  .btn.primary.active {
+    background: #ff2f6d;
+    border: 2px solid rgba(255,255,255,0.5);
+    box-shadow: 0 0 0 2px rgba(255, 47, 109, 0.4);
+  }
+
+  .btn.primary:hover {
+    background: #ff4d85;
+    box-shadow: 0 4px 16px rgba(255, 47, 109, 0.4);
+  }
+
+  .btn.primary:active {
+    background: #e91e5c;
   }
 
   .btn.danger {
     background: rgba(255,72,72,0.25);
   }
 
-  .btn.favorite {
-    background: rgba(255,215,0,0.18);
-    color: gold;
+  .btn.danger:hover {
+    background: rgba(255,72,72,0.4);
+    box-shadow: 0 4px 12px rgba(255, 72, 72, 0.3);
   }
 
-    .btn.favorite.active {
-      background: rgba(255,215,0,0.28);
-    }
+  .btn.danger:active {
+    background: rgba(255,72,72,0.5);
+  }
+
+  .btn.favorite {
+    background: rgba(255,215,0,0.18);
+    color: #d4af37;
+  }
+
+  .btn.favorite:hover {
+    background: rgba(255,215,0,0.32);
+    box-shadow: 0 4px 12px rgba(255, 215, 0, 0.25);
+  }
+
+  .btn.favorite:active {
+    background: rgba(255,215,0,0.4);
+  }
+
+  .btn.favorite.active {
+    background: linear-gradient(135deg, rgba(255,215,0,0.5), rgba(255,165,0,0.45));
+    color: #fff;
+    border: 2px solid #ffd700;
+    box-shadow: 0 0 14px rgba(255, 215, 0, 0.5), inset 0 0 12px rgba(255, 215, 0, 0.15);
+  }
+
+  .btn.favorite.active:hover {
+    background: linear-gradient(135deg, rgba(255,215,0,0.6), rgba(255,165,0,0.55));
+    box-shadow: 0 0 18px rgba(255, 215, 0, 0.6), inset 0 0 12px rgba(255, 215, 0, 0.2);
+  }
 
 /* RATINGS */
 .ratings-block {
@@ -122,8 +185,19 @@
 
 .rating-label {
   font-size: 12px;
-  opacity: 0.7;
+  opacity: 0.9;
   font-weight: 800;
+  display: flex;
+  align-items: center;
+  min-height: 28px;
+}
+
+.rating-logo {
+  height: 24px;
+  width: auto;
+  max-width: 80px;
+  object-fit: contain;
+  display: block;
 }
 
 .rating-value {
@@ -223,6 +297,13 @@
   font-size: 14px;
 }
 
+.avatar .avatar-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 999px;
+}
+
 .stars-box {
   display: inline-flex;
   align-items: center;
@@ -268,7 +349,6 @@
     cursor: not-allowed;
   }
 
-/* Lista */
 .comments-list {
   margin-top: 14px;
   display: flex;
@@ -329,6 +409,87 @@
   margin-top: 8px;
   font-size: 12px;
   opacity: 0.65;
+}
+
+.comment-actions {
+  display: flex;
+  gap: 8px;
+  margin-left: auto;
+}
+
+.comment-btn {
+  padding: 6px 12px;
+  font-size: 12px;
+  border-radius: 8px;
+  border: 1px solid rgba(255,255,255,0.2);
+  background: rgba(255,255,255,0.08);
+  color: #fff;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.comment-btn:hover {
+  background: rgba(255,255,255,0.14);
+}
+
+.comment-btn.danger {
+  border-color: rgba(255,72,72,0.4);
+  background: rgba(255,72,72,0.15);
+  color: #ff6b6b;
+}
+
+.comment-btn.danger:hover {
+  background: rgba(255,72,72,0.25);
+}
+
+.comment-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.comment-edit-form {
+  margin-top: 10px;
+  padding: 12px;
+  background: rgba(0,0,0,0.2);
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,0.1);
+}
+
+.comment-edit-input {
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid rgba(255,255,255,0.15);
+  background: rgba(0,0,0,0.3);
+  color: #fff;
+  font-size: 14px;
+  resize: vertical;
+  min-height: 60px;
+}
+
+.comment-edit-stars {
+  margin-top: 10px;
+  display: flex;
+  gap: 4px;
+}
+
+.comment-edit-stars .star {
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  padding: 0;
+  font-size: 18px;
+  color: rgba(255,255,255,0.3);
+}
+
+.comment-edit-stars .star.filled {
+  color: #ffcc00;
+}
+
+.comment-edit-actions {
+  margin-top: 12px;
+  display: flex;
+  gap: 10px;
 }
 
 .comments-empty {
