@@ -65,7 +65,33 @@ public class MovieService : IMovieService
                 PropertyNameCaseInsensitive = false
             });
 
-            return result ?? new TmdbSearchResponse();
+            if (result?.Results == null || result.Results.Count == 0)
+                return result ?? new TmdbSearchResponse();
+
+            // TMDb search does not return runtime; fetch details for each movie to get duration (with limited concurrency)
+            var semaphore = new SemaphoreSlim(5);
+            var tasks = result.Results.Select(async (movie) =>
+            {
+                if (movie.Runtime.HasValue && movie.Runtime.Value > 0) return;
+                await semaphore.WaitAsync();
+                try
+                {
+                    var details = await GetMovieDetailsFromTmdbAsync(movie.Id);
+                    if (details?.Runtime.HasValue == true)
+                        movie.Runtime = details.Runtime;
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogDebug(ex, "Could not fetch runtime for TMDb movie {Id}", movie.Id);
+                }
+                finally
+                {
+                    semaphore.Release();
+                }
+            });
+            await Task.WhenAll(tasks);
+
+            return result;
         }
         catch (Exception ex)
         {

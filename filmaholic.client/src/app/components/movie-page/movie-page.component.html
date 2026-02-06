@@ -98,6 +98,53 @@
           </div>
         </div>
 
+        <!-- FILMAHOLIC RATING -->
+        <div class="our-rating-block">
+          <div class="our-rating-head">
+            <div class="our-rating-title">Classificação FilmAholic</div>
+
+            <div class="our-rating-summary">
+              <span class="our-rating-avg">{{ ourAverage | number:'1.1-1' }}/10</span>
+              <span class="our-rating-count">({{ ourCount }} votos)</span>
+            </div>
+          </div>
+
+          <div class="our-rating-row" (mouseleave)="clearMovieStarHover()">
+            <div class="our-stars" [class.disabled]="!canRateMovie || isSavingMovieRating">
+              <button class="our-star-btn"
+                      type="button"
+                      *ngFor="let i of [1,2,3,4,5]"
+                      (mousemove)="onMovieStarHover(i, $event)"
+                      (click)="setMovieRating(i, $event)"
+                      [disabled]="!canRateMovie || isSavingMovieRating"
+                      aria-label="Avaliar">
+                <span class="our-star-visual"
+                      [class.full]="isStarFull(i)"
+                      [class.half]="isStarHalf(i)">★</span>
+              </button>
+            </div>
+
+            <div class="our-rating-me">
+              <span *ngIf="myScore !== null">A tua nota: <strong>{{ myScore }}/10</strong></span>
+              <span *ngIf="myScore === null" class="muted">Ainda não avaliaste</span>
+            </div>
+          </div>
+
+          <div class="our-rating-actions">
+            <button class="btn ghost"
+                    type="button"
+                    *ngIf="canRateMovie && myScore !== null"
+                    (click)="clearMyMovieRating()"
+                    [disabled]="isSavingMovieRating">
+              Remover avaliação
+            </button>
+
+            <span class="muted" *ngIf="!canRateMovie">Faz login para avaliar.</span>
+          </div>
+
+          <div class="state error" *ngIf="ratingError">{{ ratingError }}</div>
+        </div>
+
         <!-- SINOPSE -->
         <div class="overview" *ngIf="overview">
           <h3>Sinopse</h3>
@@ -182,7 +229,9 @@
                   <textarea class="comment-edit-input" [(ngModel)]="editText" rows="3" [disabled]="isSavingEdit"></textarea>
                   <div class="comment-edit-stars">
                     <button type="button" class="star" *ngFor="let s of [1,2,3,4,5]"
-                            [class.filled]="s <= editRating" (click)="setEditRating(s)" [disabled]="isSavingEdit">★</button>
+                            [class.filled]="s <= editRating" (click)="setEditRating(s)" [disabled]="isSavingEdit">
+                      ★
+                    </button>
                   </div>
                   <div class="comment-edit-actions">
                     <button type="button" class="btn primary" (click)="saveEdit()" [disabled]="isSavingEdit">Guardar</button>
