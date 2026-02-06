@@ -1288,6 +1288,46 @@
   margin-bottom: 28px;
 }
 
+.stats-period-filter {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.stats-period-filter label {
+  font-size: 14px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+  .stats-period-filter select {
+    padding: 10px 16px;
+    background: #12141a;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    color: #fff;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    color-scheme: dark;
+  }
+
+    .stats-period-filter select option {
+      background-color: #12141a;
+      color: #ffffff;
+      padding: 12px;
+    }
+
+    .stats-period-filter select:hover,
+    .stats-period-filter select:focus {
+      background-color: #1a1d25;
+      border-color: #ff2f6d; 
+      outline: none;
+      box-shadow: 0 0 0 3px rgba(255, 47, 109, 0.2);
+    }
+
 .stats-block.stats-in-main {
   padding: 20px;
   background: rgba(255, 255, 255, 0.04);

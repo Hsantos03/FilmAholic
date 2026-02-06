@@ -32,16 +32,26 @@ export class UserMoviesService {
     return this.http.get<number>(`${this.apiUrl}/totalhours`, { withCredentials: true });
   }
 
-  getStats(): Observable<any> {
-    return this.http.get<any>(`${this.apiUrl}/stats`, { withCredentials: true });
+  getStats(params?: { from?: string; to?: string }): Observable<any> {
+    const q = params ? this.buildPeriodParams(params) : '';
+    return this.http.get<any>(`${this.apiUrl}/stats${q}`, { withCredentials: true });
   }
 
-  getStatsComparison(): Observable<StatsComparison> {
-    return this.http.get<StatsComparison>(`${this.apiUrl}/stats/comparison`, { withCredentials: true });
+  getStatsComparison(params?: { from?: string; to?: string }): Observable<StatsComparison> {
+    const q = params ? this.buildPeriodParams(params) : '';
+    return this.http.get<StatsComparison>(`${this.apiUrl}/stats/comparison${q}`, { withCredentials: true });
   }
 
-  getStatsCharts(): Observable<StatsCharts> {
-    return this.http.get<StatsCharts>(`${this.apiUrl}/stats/charts`, { withCredentials: true });
+  getStatsCharts(params?: { from?: string; to?: string }): Observable<StatsCharts> {
+    const q = params ? this.buildPeriodParams(params) : '';
+    return this.http.get<StatsCharts>(`${this.apiUrl}/stats/charts${q}`, { withCredentials: true });
+  }
+
+  private buildPeriodParams(params: { from?: string; to?: string }): string {
+    const parts: string[] = [];
+    if (params.from) parts.push(`from=${encodeURIComponent(params.from)}`);
+    if (params.to) parts.push(`to=${encodeURIComponent(params.to)}`);
+    return parts.length ? '?' + parts.join('&') : '';
   }
 }
 export interface GeneroStat {

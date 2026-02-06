@@ -297,7 +297,17 @@ export class DashboardComponent implements OnInit, OnDestroy {
           const movieGenres = (m?.genero || '').split(',').map(s => s.trim().toLowerCase()).filter(Boolean);
           return movieGenres.some(mg => genreNames.includes(mg));
         });
-        this.searchResults = matches.slice(0, DashboardComponent.SUGGESTIONS_LIMIT);
+        this.searchResults = matches.slice(0, DashboardComponent.SUGGESTIONS_LIMIT).map(
+          (m): SearchResultItem => {
+            const parsed = m.tmdbId != null && m.tmdbId !== '' ? parseInt(m.tmdbId, 10) : NaN;
+            return {
+              id: m.id,
+              tmdbId: !isNaN(parsed) ? parsed : undefined,
+              titulo: m.titulo,
+              posterUrl: m.posterUrl || ''
+            };
+          }
+        );
       },
       error: () => {
         this.isLoadingSuggestions = false;
