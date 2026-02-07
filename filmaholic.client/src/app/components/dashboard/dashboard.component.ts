@@ -242,6 +242,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
       return;
     }
 
+    this.isSuggestionsMode = false;
     this.showSearchMenu = true;
 
     if (q.length >= 2) {
@@ -297,17 +298,12 @@ export class DashboardComponent implements OnInit, OnDestroy {
           const movieGenres = (m?.genero || '').split(',').map(s => s.trim().toLowerCase()).filter(Boolean);
           return movieGenres.some(mg => genreNames.includes(mg));
         });
-        this.searchResults = matches.slice(0, DashboardComponent.SUGGESTIONS_LIMIT).map(
-          (m): SearchResultItem => {
-            const parsed = m.tmdbId != null && m.tmdbId !== '' ? parseInt(m.tmdbId, 10) : NaN;
-            return {
-              id: m.id,
-              tmdbId: !isNaN(parsed) ? parsed : undefined,
-              titulo: m.titulo,
-              posterUrl: m.posterUrl || ''
-            };
-          }
-        );
+        this.searchResults = matches.slice(0, DashboardComponent.SUGGESTIONS_LIMIT).map(m => ({
+          id: m.id,
+          titulo: m.titulo,
+          posterUrl: m.posterUrl || '',
+          tmdbId: m.tmdbId && !isNaN(parseInt(m.tmdbId, 10)) ? parseInt(m.tmdbId, 10) : undefined
+        }));
       },
       error: () => {
         this.isLoadingSuggestions = false;

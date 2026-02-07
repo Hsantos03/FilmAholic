@@ -6,6 +6,7 @@ import { Filme, FilmesService, RatingsDto, TmdbSearchResponse, TmdbMovieResult }
 import { UserMoviesService } from '../../services/user-movies.service';
 import { FavoritesService } from '../../services/favorites.service';
 import { CommentsService, CommentDTO } from '../../services/comments.service';
+import { MovieRatingService, MovieRatingSummaryDTO } from '../../services/movie-rating.service';
 
 @Component({
   selector: 'app-movie-page',
@@ -51,6 +52,14 @@ export class MoviePageComponent implements OnInit, OnDestroy {
   recommendations: Filme[] = [];
   isLoadingRecommendations = false;
 
+  ourAverage = 0;
+  ourCount = 0;
+  myScore: number | null = null;
+  hoverScore: number | null = null;
+  isSavingMovieRating = false;
+  ratingError = '';
+  isLoadingMovieRating = false;
+
   private routeSub!: Subscription;
 
   constructor(
@@ -60,7 +69,8 @@ export class MoviePageComponent implements OnInit, OnDestroy {
     private filmesService: FilmesService,
     private userMoviesService: UserMoviesService,
     private favoritesService: FavoritesService,
-    private commentsService: CommentsService
+    private commentsService: CommentsService,
+    private movieRatingService: MovieRatingService
   ) { }
 
   ngOnInit(): void {
@@ -92,16 +102,27 @@ export class MoviePageComponent implements OnInit, OnDestroy {
     this.comments = [];
     this.recommendations = [];
     this.newComment = '';
-    this.selectedRating = 0;
     this.error = '';
     this.isFavorite = false;
     this.editingCommentId = null;
     this.editText = '';
-    this.editRating = 0;
+    
+
+    this.ourAverage = 0;
+    this.ourCount = 0;
+    this.myScore = null;
+    this.hoverScore = null;
+    this.ratingError = '';
+    this.isSavingMovieRating = false;
+    this.isLoadingMovieRating = false;
   }
 
   get canComment(): boolean {
     return !!localStorage.getItem('user_id') || !!localStorage.getItem('token');
+  }
+
+  get canRateMovie(): boolean {
+    return this.canComment;
   }
 
   private loadFilm(id: number): void {
@@ -120,6 +141,7 @@ export class MoviePageComponent implements OnInit, OnDestroy {
           this.loadRecommendations(this.filme.id);
           this.syncFavoriteState();
           this.syncListState();
+          this.loadMovieRating(this.filme.id);
         }
       },
       error: (err) => {
@@ -173,6 +195,102 @@ export class MoviePageComponent implements OnInit, OnDestroy {
     });
   }
 
+  loadMovieRating(movieId: number): void {
+    this.isLoadingMovieRating = true;
+    this.ratingError = '';
+
+    this.movieRatingService.getSummary(movieId).subscribe({
+      next: (dto: MovieRatingSummaryDTO) => {
+        this.ourAverage = dto?.average ?? 0;
+        this.ourCount = dto?.count ?? 0;
+        this.myScore = dto?.userScore ?? null;
+      },
+      error: (err) => {
+        console.warn('Failed to load movie rating', err);
+        this.ourAverage = 0;
+        this.ourCount = 0;
+        this.myScore = null;
+      },
+      complete: () => (this.isLoadingMovieRating = false)
+    });
+  }
+
+  get displayScore(): number {
+    return this.hoverScore ?? this.myScore ?? 0;
+  }
+
+  isStarFull(starIndex: number): boolean {
+    return this.displayScore >= 2 * starIndex;
+  }
+
+  isStarHalf(starIndex: number): boolean {
+    return this.displayScore === (2 * starIndex - 1);
+  }
+
+  private calcScoreFromEvent(starIndex: number, ev: MouseEvent): number {
+    const target = ev.currentTarget as HTMLElement;
+    const rect = target.getBoundingClientRect();
+    const x = ev.clientX - rect.left;
+    const isLeftHalf = x < rect.width / 2;
+    return (starIndex - 1) * 2 + (isLeftHalf ? 1 : 2);
+  }
+
+  onMovieStarHover(starIndex: number, ev: MouseEvent): void {
+    if (!this.canRateMovie) return;
+    this.hoverScore = this.calcScoreFromEvent(starIndex, ev);
+  }
+
+  clearMovieStarHover(): void {
+    this.hoverScore = null;
+  }
+
+  setMovieRating(starIndex: number, ev: MouseEvent): void {
+    if (!this.filme) return;
+
+    if (!this.canRateMovie) {
+      this.ratingError = 'Tens de ter sessão iniciada para avaliar.';
+      return;
+    }
+
+    const score = this.calcScoreFromEvent(starIndex, ev); // 1..10
+    this.isSavingMovieRating = true;
+    this.ratingError = '';
+
+    this.movieRatingService.setMyRating(this.filme.id, score).subscribe({
+      next: (dto) => {
+        this.ourAverage = dto?.average ?? this.ourAverage;
+        this.ourCount = dto?.count ?? this.ourCount;
+        this.myScore = dto?.userScore ?? score;
+      },
+      error: (err) => {
+        console.error('Failed to save movie rating', err);
+        this.ratingError = err?.status === 401
+          ? 'A tua sessão expirou. Faz login novamente.'
+          : 'Não foi possível guardar a tua avaliação.';
+      },
+      complete: () => (this.isSavingMovieRating = false)
+    });
+  }
+
+  clearMyMovieRating(): void {
+    if (!this.filme) return;
+    if (!this.canRateMovie) return;
+
+    this.isSavingMovieRating = true;
+    this.ratingError = '';
+
+    this.movieRatingService.clearMyRating(this.filme.id).subscribe({
+      next: () => {
+        this.myScore = null;
+        this.loadMovieRating(this.filme!.id);
+      },
+      error: () => {
+        this.ratingError = 'Não foi possível remover a tua avaliação.';
+      },
+      complete: () => (this.isSavingMovieRating = false)
+    });
+  }
+
   // COMMENTS
   loadComments(movieId: number): void {
     this.commentsService.getByMovie(movieId).subscribe({
@@ -197,34 +315,6 @@ export class MoviePageComponent implements OnInit, OnDestroy {
     this.editRating = 0;
   }
 
-  saveEdit(): void {
-    if (this.editingCommentId == null || !this.filme) return;
-    if (!this.editText.trim()) {
-      this.commentError = 'Escreve um comentário.';
-      return;
-    }
-    if (this.editRating < 1 || this.editRating > 5) {
-      this.commentError = 'Escolhe uma avaliação (1 a 5 estrelas).';
-      return;
-    }
-    this.isSavingEdit = true;
-    this.commentError = '';
-    this.commentsService.update(this.editingCommentId, this.editText.trim(), this.editRating).subscribe({
-      next: (updated) => {
-        const idx = this.comments.findIndex(x => x.id === updated.id);
-        if (idx >= 0) {
-          this.comments[idx] = { ...updated, dataCriacao: this.comments[idx].dataCriacao };
-        }
-        this.cancelEdit();
-        this.isSavingEdit = false;
-      },
-      error: (err) => {
-        this.commentError = err?.error?.message || err?.status === 403 ? 'Não podes editar este comentário.' : 'Não foi possível guardar.';
-        this.isSavingEdit = false;
-      }
-    });
-  }
-
   deleteComment(c: CommentDTO): void {
     if (!this.filme || !c.canEdit) return;
     if (!confirm('Apagar este comentário?')) return;
@@ -241,8 +331,84 @@ export class MoviePageComponent implements OnInit, OnDestroy {
     });
   }
 
-  setEditRating(value: number): void {
-    this.editRating = value;
+  voteComment(c: CommentDTO, value: 1 | -1): void {
+    if (!this.canComment) {
+      this.commentError = 'Tens de ter sessão iniciada para votar.';
+      return;
+    }
+
+    // Toggle: se já tem o mesmo voto, remove (0)
+    const newValue: 1 | -1 | 0 = (c.myVote === value) ? 0 : value;
+
+    this.commentsService.vote(c.id, newValue).subscribe({
+      next: (res) => {
+        c.likeCount = res.likeCount;
+        c.dislikeCount = res.dislikeCount;
+        c.myVote = res.myVote;
+      },
+      error: (err) => {
+        console.warn('Vote failed', err);
+        this.commentError = 'Não foi possível votar.';
+      }
+    });
+  }
+
+  sendComment(): void {
+    this.commentError = '';
+    if (!this.filme) return;
+
+    if (!this.canComment) {
+      this.commentError = 'Tens de ter sessão iniciada para comentar.';
+      return;
+    }
+
+    if (!this.newComment.trim()) {
+      this.commentError = 'Escreve um comentário.';
+      return;
+    }
+
+    this.isSendingComment = true;
+
+    this.commentsService.create(this.filme.id, this.newComment.trim()).subscribe({
+      next: (created) => {
+        this.newComment = '';
+        this.comments = [created, ...this.comments];
+      },
+      error: (err) => {
+        console.error('Create comment failed', err);
+        this.commentError = err?.status === 401
+          ? 'A tua sessão expirou. Faz login novamente.'
+          : 'Não foi possível enviar o comentário.';
+      },
+      complete: () => (this.isSendingComment = false)
+    });
+  }
+
+  saveEdit(): void {
+    if (this.editingCommentId == null) return;
+
+    if (!this.editText.trim()) {
+      this.commentError = 'Escreve um comentário.';
+      return;
+    }
+
+    this.isSavingEdit = true;
+    this.commentError = '';
+
+    this.commentsService.update(this.editingCommentId, this.editText.trim()).subscribe({
+      next: (updated) => {
+        const idx = this.comments.findIndex(x => x.id === updated.id);
+        if (idx >= 0) this.comments[idx] = { ...this.comments[idx], ...updated };
+        this.cancelEdit();
+        this.isSavingEdit = false;
+      },
+      error: (err) => {
+        this.commentError = err?.status === 403
+          ? 'Não podes editar este comentário.'
+          : 'Não foi possível guardar.';
+        this.isSavingEdit = false;
+      }
+    });
   }
 
   // RECOMMENDATIONS
@@ -269,48 +435,6 @@ export class MoviePageComponent implements OnInit, OnDestroy {
     if (r.id && r.id > 0) {
       this.router.navigate(['/movie-detail', r.id]);
     }
-  }
-
-  selectRating(value: number): void {
-    this.selectedRating = value;
-  }
-
-  sendComment(): void {
-    this.commentError = '';
-
-    if (!this.filme) return;
-    if (!this.canComment) {
-      this.commentError = 'Tens de ter sessão iniciada para comentar.';
-      return;
-    }
-    if (!this.newComment.trim()) {
-      this.commentError = 'Escreve um comentário.';
-      return;
-    }
-    if (this.selectedRating < 1 || this.selectedRating > 5) {
-      this.commentError = 'Escolhe uma avaliação (1 a 5 estrelas).';
-      return;
-    }
-
-    this.isSendingComment = true;
-
-    this.commentsService.create(this.filme.id, this.newComment.trim(), this.selectedRating).subscribe({
-      next: () => {
-        this.newComment = '';
-        this.selectedRating = 0;
-        this.loadComments(this.filme!.id);
-      },
-      error: (err) => {
-        console.error('Create comment failed', err);
-
-        if (err?.status === 401) {
-          this.commentError = 'A tua sessão expirou. Faz login novamente.';
-        } else {
-          this.commentError = 'Não foi possível enviar o comentário.';
-        }
-      },
-      complete: () => (this.isSendingComment = false)
-    });
   }
 
 

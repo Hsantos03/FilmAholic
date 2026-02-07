@@ -31,6 +31,8 @@ namespace FilmAholic.Server.Controllers
                 .OrderByDescending(c => c.DataCriacao)
                 .ToListAsync();
 
+            var commentIds = comments.Select(c => c.Id).ToList();
+
             var userIds = comments.Select(c => c.UserId).Distinct().ToList();
             var userFotos = await _context.Users
                 .Where(u => userIds.Contains(u.Id))
@@ -38,15 +40,45 @@ namespace FilmAholic.Server.Controllers
                 .ToListAsync();
             var fotoByUserId = userFotos.ToDictionary(x => x.Id, x => x.Foto);
 
+            var voteAgg = await _context.CommentVotes
+                .Where(v => commentIds.Contains(v.CommentId))
+                .GroupBy(v => v.CommentId)
+                .Select(g => new
+                {
+                    CommentId = g.Key,
+                    Likes = g.Count(x => x.IsLike),
+                    Dislikes = g.Count(x => !x.IsLike)
+                })
+                .ToListAsync();
+
+            var likesByComment = voteAgg.ToDictionary(x => x.CommentId, x => x.Likes);
+            var dislikesByComment = voteAgg.ToDictionary(x => x.CommentId, x => x.Dislikes);
+
+            Dictionary<int, int> myVoteByComment = new();
+            if (!string.IsNullOrWhiteSpace(userId))
+            {
+                var myVotes = await _context.CommentVotes
+                    .Where(v => commentIds.Contains(v.CommentId) && v.UserId == userId)
+                    .ToListAsync();
+
+                myVoteByComment = myVotes.ToDictionary(
+                    v => v.CommentId,
+                    v => v.IsLike ? 1 : -1
+                );
+            }
+
             var dtos = comments.Select(c => new CommentDTO
             {
                 Id = c.Id,
                 UserName = c.UserName,
                 FotoPerfilUrl = fotoByUserId.TryGetValue(c.UserId, out var url) ? url : null,
                 Texto = c.Texto,
-                Rating = c.Rating,
                 DataCriacao = c.DataCriacao,
-                CanEdit = userId != null && c.UserId == userId
+                CanEdit = userId != null && c.UserId == userId,
+
+                LikeCount = likesByComment.TryGetValue(c.Id, out var lc) ? lc : 0,
+                DislikeCount = dislikesByComment.TryGetValue(c.Id, out var dc) ? dc : 0,
+                MyVote = myVoteByComment.TryGetValue(c.Id, out var mv) ? mv : 0
             }).ToList();
 
             return Ok(dtos);
@@ -58,7 +90,6 @@ namespace FilmAholic.Server.Controllers
         {
             if (dto.FilmeId <= 0) return BadRequest("Filme inválido.");
             if (string.IsNullOrWhiteSpace(dto.Texto)) return BadRequest("Texto obrigatório.");
-            if (dto.Rating < 1 || dto.Rating > 5) return BadRequest("Rating tem de ser 1..5.");
 
             var filmeExists = await _context.Filmes.AnyAsync(f => f.Id == dto.FilmeId);
             if (!filmeExists) return NotFound("Filme não encontrado.");
@@ -81,6 +112,7 @@ namespace FilmAholic.Server.Controllers
                 else if (!string.IsNullOrEmpty(u.UserName) && !u.UserName.Contains("@"))
                     displayName = u.UserName;
             }
+
             if (displayName == "User")
             {
                 var fromClaims = User.Identity?.Name ?? User.FindFirstValue(ClaimTypes.Name) ?? User.FindFirstValue("name");
@@ -88,11 +120,10 @@ namespace FilmAholic.Server.Controllers
                     displayName = fromClaims;
             }
 
-            var comment = new Comment
+            var comment = new Comments
             {
                 FilmeId = dto.FilmeId,
                 Texto = dto.Texto.Trim(),
-                Rating = dto.Rating,
                 UserId = userId,
                 UserName = displayName,
                 DataCriacao = DateTime.UtcNow
@@ -107,8 +138,11 @@ namespace FilmAholic.Server.Controllers
                 UserName = comment.UserName,
                 FotoPerfilUrl = user is Utilizador u2 ? u2.FotoPerfilUrl : null,
                 Texto = comment.Texto,
-                Rating = comment.Rating,
-                DataCriacao = comment.DataCriacao
+                DataCriacao = comment.DataCriacao,
+                CanEdit = true,
+                LikeCount = 0,
+                DislikeCount = 0,
+                MyVote = 0
             };
 
             return Ok(outDto);
@@ -116,10 +150,9 @@ namespace FilmAholic.Server.Controllers
 
         [Authorize]
         [HttpPut("{id:int}")]
-        public async Task<ActionResult<CommentDTO>> Update(int id, [FromBody] UpdateCommentDTO dto)
+        public async Task<ActionResult<CommentDTO>> Update(int id, [FromBody] CreateCommentDTO dto)
         {
             if (string.IsNullOrWhiteSpace(dto.Texto)) return BadRequest("Texto obrigatório.");
-            if (dto.Rating < 1 || dto.Rating > 5) return BadRequest("Rating tem de ser 1..5.");
 
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue("sub") ?? "";
             if (string.IsNullOrWhiteSpace(userId)) return Unauthorized();
@@ -129,8 +162,14 @@ namespace FilmAholic.Server.Controllers
             if (comment.UserId != userId) return Forbid();
 
             comment.Texto = dto.Texto.Trim();
-            comment.Rating = dto.Rating;
             await _context.SaveChangesAsync();
+
+            var likeCount = await _context.CommentVotes.CountAsync(v => v.CommentId == id && v.IsLike);
+            var dislikeCount = await _context.CommentVotes.CountAsync(v => v.CommentId == id && !v.IsLike);
+            var myVote = await _context.CommentVotes
+                .Where(v => v.CommentId == id && v.UserId == userId)
+                .Select(v => v.IsLike ? 1 : -1)
+                .FirstOrDefaultAsync();
 
             var commentUser = await _context.Users.FindAsync(comment.UserId);
             var fotoUrl = (commentUser as Utilizador)?.FotoPerfilUrl;
@@ -141,9 +180,11 @@ namespace FilmAholic.Server.Controllers
                 UserName = comment.UserName,
                 FotoPerfilUrl = fotoUrl,
                 Texto = comment.Texto,
-                Rating = comment.Rating,
                 DataCriacao = comment.DataCriacao,
-                CanEdit = true
+                CanEdit = true,
+                LikeCount = likeCount,
+                DislikeCount = dislikeCount,
+                MyVote = myVote
             });
         }
 
@@ -161,6 +202,69 @@ namespace FilmAholic.Server.Controllers
             _context.Comments.Remove(comment);
             await _context.SaveChangesAsync();
             return NoContent();
+        }
+
+        [Authorize]
+        [HttpPost("{id:int}/vote")]
+        public async Task<ActionResult<CreateCommentDTO>> Vote(int id, [FromBody] CreateCommentDTO dto)
+        {
+            if (dto.Value != 1 && dto.Value != -1 && dto.Value != 0)
+                return BadRequest("Value tem de ser 1 (like), -1 (dislike) ou 0 (remover).");
+
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue("sub") ?? "";
+            if (string.IsNullOrWhiteSpace(userId)) return Unauthorized();
+
+            var commentExists = await _context.Comments.AnyAsync(c => c.Id == id);
+            if (!commentExists) return NotFound("Comentário não encontrado.");
+
+            var existing = await _context.CommentVotes
+                .FirstOrDefaultAsync(v => v.CommentId == id && v.UserId == userId);
+
+            if (dto.Value == 0)
+            {
+                if (existing != null)
+                {
+                    _context.CommentVotes.Remove(existing);
+                    await _context.SaveChangesAsync();
+                }
+            }
+            else
+            {
+                var isLike = dto.Value == 1;
+
+                if (existing == null)
+                {
+                    _context.CommentVotes.Add(new CommentVote
+                    {
+                        CommentId = id,
+                        UserId = userId,
+                        IsLike = isLike,
+                        DataCriacao = DateTime.UtcNow,
+                        DataAtualizacao = DateTime.UtcNow
+                    });
+                }
+                else
+                {
+                    existing.IsLike = isLike;
+                    existing.DataAtualizacao = DateTime.UtcNow;
+                }
+
+                await _context.SaveChangesAsync();
+            }
+
+            var likeCount = await _context.CommentVotes.CountAsync(v => v.CommentId == id && v.IsLike);
+            var dislikeCount = await _context.CommentVotes.CountAsync(v => v.CommentId == id && !v.IsLike);
+            var myVote = await _context.CommentVotes
+                .Where(v => v.CommentId == id && v.UserId == userId)
+                .Select(v => v.IsLike ? 1 : -1)
+                .FirstOrDefaultAsync();
+
+            return Ok(new CreateCommentDTO
+            {
+                LikeCount = likeCount,
+                DislikeCount = dislikeCount,
+                MyVote = myVote
+            });
         }
     }
 }

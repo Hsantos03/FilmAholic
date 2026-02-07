@@ -36,18 +36,21 @@
                   title="Adicionar à lista Quero Ver">
             Quero Ver
           </button>
+
           <button class="btn primary"
                   [class.active]="inWatched"
                   (click)="addJaVi()"
                   title="Marcar como já visto">
             Já Vi
           </button>
+
           <button class="btn danger"
                   *ngIf="inWatchLater || inWatched"
                   (click)="remove()"
                   title="Remover das minhas listas (Quero Ver / Já Vi)">
             Remover
           </button>
+
           <button class="btn favorite"
                   [class.active]="isFavorite"
                   (click)="toggleFavorite()"
@@ -56,7 +59,7 @@
           </button>
         </div>
 
-        <!-- RATINGS -->
+        <!-- RATINGS (APIs) -->
         <div class="ratings-block">
           <div class="ratings-title">Ratings</div>
 
@@ -67,7 +70,10 @@
           <div *ngIf="!isLoadingRatings && ratings" class="ratings-grid">
             <div class="rating-item">
               <div class="rating-label">
-                <img class="rating-logo" src="https://www.themoviedb.org/assets/2/v4/logos/v2/blue_square_2-d537fb228cf3ded904ef09b136fe3fec72548ebc1fea3fbbd1ad9e36364db38b.svg" alt="TMDb" title="The Movie Database" />
+                <img class="rating-logo"
+                     src="https://www.themoviedb.org/assets/2/v4/logos/v2/blue_square_2-d537fb228cf3ded904ef09b136fe3fec72548ebc1fea3fbbd1ad9e36364db38b.svg"
+                     alt="TMDb"
+                     title="The Movie Database" />
               </div>
               <div class="rating-value">
                 {{ ratings.tmdbVoteAverage | number:'1.1-1' }}/10
@@ -77,25 +83,81 @@
 
             <div class="rating-item">
               <div class="rating-label">
-                <img class="rating-logo" src="https://upload.wikimedia.org/wikipedia/commons/6/69/IMDB_Logo_2016.svg" alt="IMDb" title="Internet Movie Database" />
+                <img class="rating-logo"
+                     src="https://upload.wikimedia.org/wikipedia/commons/6/69/IMDB_Logo_2016.svg"
+                     alt="IMDb"
+                     title="Internet Movie Database" />
               </div>
               <div class="rating-value">{{ ratings.imdbRating || '—' }}/10</div>
             </div>
 
             <div class="rating-item">
               <div class="rating-label">
-                <img class="rating-logo" src="https://upload.wikimedia.org/wikipedia/commons/2/20/Metacritic.svg" alt="Metacritic" title="Metacritic" />
+                <img class="rating-logo"
+                     src="https://upload.wikimedia.org/wikipedia/commons/2/20/Metacritic.svg"
+                     alt="Metacritic"
+                     title="Metacritic" />
               </div>
               <div class="rating-value">{{ ratings.metascore || '—' }}/100</div>
             </div>
 
             <div class="rating-item">
               <div class="rating-label">
-                <img class="rating-logo" src="https://upload.wikimedia.org/wikipedia/commons/5/5b/Rotten_Tomatoes.svg" alt="Rotten Tomatoes" title="Rotten Tomatoes" />
+                <img class="rating-logo"
+                     src="https://upload.wikimedia.org/wikipedia/commons/5/5b/Rotten_Tomatoes.svg"
+                     alt="Rotten Tomatoes"
+                     title="Rotten Tomatoes" />
               </div>
               <div class="rating-value">{{ ratings.rottenTomatoes || '—' }}</div>
             </div>
           </div>
+        </div>
+
+        <!-- FILMAHOLIC RATING -->
+        <div class="our-rating-block">
+          <div class="our-rating-head">
+            <div class="our-rating-title">Classificação FilmAholic</div>
+
+            <div class="our-rating-summary">
+              <span class="our-rating-avg">{{ ourAverage | number:'1.1-1' }}/10</span>
+              <span class="our-rating-count">({{ ourCount }} votos)</span>
+            </div>
+          </div>
+
+          <div class="our-rating-row" (mouseleave)="clearMovieStarHover()">
+            <div class="our-stars" [class.disabled]="!canRateMovie || isSavingMovieRating">
+              <button class="our-star-btn"
+                      type="button"
+                      *ngFor="let i of [1,2,3,4,5]"
+                      (mousemove)="onMovieStarHover(i, $event)"
+                      (click)="setMovieRating(i, $event)"
+                      [disabled]="!canRateMovie || isSavingMovieRating"
+                      aria-label="Avaliar">
+                <span class="our-star-visual"
+                      [class.full]="isStarFull(i)"
+                      [class.half]="isStarHalf(i)">★</span>
+              </button>
+            </div>
+
+            <div class="our-rating-me">
+              <span *ngIf="myScore !== null">A tua nota: <strong>{{ myScore }}/10</strong></span>
+              <span *ngIf="myScore === null" class="muted">Ainda não avaliaste</span>
+            </div>
+          </div>
+
+          <div class="our-rating-actions">
+            <button class="btn ghost"
+                    type="button"
+                    *ngIf="canRateMovie && myScore !== null"
+                    (click)="clearMyMovieRating()"
+                    [disabled]="isSavingMovieRating">
+              Remover avaliação
+            </button>
+
+            <span class="muted" *ngIf="!canRateMovie">Faz login para avaliar.</span>
+          </div>
+
+          <div class="state error" *ngIf="ratingError">{{ ratingError }}</div>
         </div>
 
         <!-- SINOPSE -->
@@ -104,15 +166,21 @@
           <p>{{ overview }}</p>
         </div>
 
-        <!-- COMMENTS WRAPPER -->
+        <!-- COMMENTS -->
         <div class="comments">
+          <h3>Comentários</h3>
 
           <!-- WRITE COMMENT -->
           <div class="comment-row">
             <div class="comment-box">
+              <div class="avatar avatar-sm" title="Tu">
+                <img *ngIf="userFotoPerfilUrl" class="avatar-img" [src]="userFotoPerfilUrl" [alt]="userName" />
+                <span *ngIf="!userFotoPerfilUrl">{{ userName.charAt(0) }}</span>
+              </div>
+
               <input class="comment-input"
                      type="text"
-                     placeholder="Write something"
+                     placeholder="Escreve um comentário…"
                      [(ngModel)]="newComment"
                      [disabled]="isSendingComment" />
 
@@ -124,25 +192,6 @@
                 ➤
               </button>
             </div>
-
-            <div class="stars-box" aria-label="Selecionar rating">
-              <div class="avatar avatar-sm">
-                <img *ngIf="userFotoPerfilUrl" class="avatar-img" [src]="userFotoPerfilUrl" [alt]="userName" />
-                <span *ngIf="!userFotoPerfilUrl">{{ userName.charAt(0) }}</span>
-              </div>
-
-              <div class="stars">
-                <button class="star"
-                        type="button"
-                        *ngFor="let s of [1,2,3,4,5]"
-                        (click)="selectRating(s)"
-                        [class.filled]="s <= selectedRating"
-                        [disabled]="isSendingComment"
-                        aria-label="star">
-                  ★
-                </button>
-              </div>
-            </div>
           </div>
 
           <div class="state error" *ngIf="commentError">
@@ -150,7 +199,7 @@
           </div>
 
           <!-- LISTA DE COMENTÁRIOS -->
-          <div class="comments-list" *ngIf="comments.length; else noComments">
+          <div class="comments-list" *ngIf="comments?.length; else noComments">
             <div class="comment-item" *ngFor="let c of comments">
 
               <div class="avatar avatar-md">
@@ -162,31 +211,62 @@
                 <div class="comment-header">
                   <strong class="comment-user">{{ c.userName }}</strong>
 
-                  <span class="comment-stars" aria-label="Rating do comentário"
-                        *ngIf="editingCommentId !== c.id">
-                    <span class="comment-star"
-                          *ngFor="let s of [1,2,3,4,5]"
-                          [class.filled]="s <= (c.rating || 0)">
-                      ★
-                    </span>
-                  </span>
+                  <!-- AÇÕES + VOTOS (fora do modo edição) -->
+                  <div class="comment-actions" *ngIf="editingCommentId !== c.id">
+                    <button type="button"
+                            class="comment-btn"
+                            [class.active]="c.myVote === 1"
+                            (click)="voteComment(c, 1)"
+                            title="Like">
+                      👍 {{ c.likeCount || 0 }}
+                    </button>
 
-                  <div class="comment-actions" *ngIf="c.canEdit && editingCommentId !== c.id">
-                    <button type="button" class="comment-btn" (click)="startEdit(c)">Editar</button>
-                    <button type="button" class="comment-btn danger" (click)="deleteComment(c)" [disabled]="isDeletingComment">Apagar</button>
+                    <button type="button"
+                            class="comment-btn"
+                            [class.active]="c.myVote === -1"
+                            (click)="voteComment(c, -1)"
+                            title="Dislike">
+                      👎 {{ c.dislikeCount || 0 }}
+                    </button>
+
+                    <button type="button"
+                            class="comment-btn"
+                            *ngIf="c.canEdit"
+                            (click)="startEdit(c)">
+                      Editar
+                    </button>
+
+                    <button type="button"
+                            class="comment-btn danger"
+                            *ngIf="c.canEdit"
+                            (click)="deleteComment(c)"
+                            [disabled]="isDeletingComment">
+                      Apagar
+                    </button>
                   </div>
                 </div>
 
                 <!-- Modo edição -->
                 <div class="comment-edit-form" *ngIf="editingCommentId === c.id">
-                  <textarea class="comment-edit-input" [(ngModel)]="editText" rows="3" [disabled]="isSavingEdit"></textarea>
-                  <div class="comment-edit-stars">
-                    <button type="button" class="star" *ngFor="let s of [1,2,3,4,5]"
-                            [class.filled]="s <= editRating" (click)="setEditRating(s)" [disabled]="isSavingEdit">★</button>
-                  </div>
+                  <textarea class="comment-edit-input"
+                            [(ngModel)]="editText"
+                            rows="3"
+                            [disabled]="isSavingEdit"></textarea>
+
                   <div class="comment-edit-actions">
-                    <button type="button" class="btn primary" (click)="saveEdit()" [disabled]="isSavingEdit">Guardar</button>
-                    <button type="button" class="btn ghost" (click)="cancelEdit()" [disabled]="isSavingEdit">Cancelar</button>
+                    <button type="button"
+                            class="btn primary"
+                            (click)="saveEdit()"
+                            [disabled]="isSavingEdit">
+                      Guardar
+                    </button>
+
+                    <button type="button"
+                            class="btn ghost"
+                            (click)="cancelEdit()"
+                            [disabled]="isSavingEdit">
+                      Cancelar
+                    </button>
                   </div>
                 </div>
 
@@ -200,15 +280,14 @@
           </div>
 
           <ng-template #noComments>
-            <div class="comments-empty">Ainda nao existem comentarios.</div>
+            <div class="comments-empty">Ainda não existem comentários.</div>
           </ng-template>
-
         </div>
 
       </section>
     </div>
 
-    <!-- RELACIONADOS / RECOMENDACOES -->
+    <!-- RELACIONADOS / RECOMENDAÇÕES -->
     <section class="recommendations-section" *ngIf="!isLoadingRecommendations && recommendations.length">
       <div class="section-head">
         <h2>Relacionados</h2>
@@ -224,7 +303,6 @@
       </div>
     </section>
 
-    <div class="state" *ngIf="isLoadingRecommendations">A carregar recomendacoes...</div>
-
+    <div class="state" *ngIf="isLoadingRecommendations">A carregar recomendações...</div>
   </div>
 </main>

@@ -92,155 +92,156 @@
 
       <div class="lists-top">
 
-      <!-- WATCH LATER LIST -->
-      <div class="list-box clickable" (click)="openListModal('watchLater')">
-        <div class="list-box-left">
-          <h3>Watch later</h3>
-          <span class="subtitle">{{ watchLater.length }} Titles</span>
-        </div>
-
-        <div class="list-box-right">
-          <div class="mini-posters">
-            <img *ngFor="let movie of watchLater | slice:0:5"
-                 [src]="movie.filme?.posterUrl || 'https://via.placeholder.com/120x180'"
-                 alt="movie poster" />
+        <!-- WATCH LATER LIST -->
+        <div class="list-box clickable" (click)="openListModal('watchLater')">
+          <div class="list-box-left">
+            <h3>Watch later</h3>
+            <span class="subtitle">{{ watchLater.length }} Titles</span>
           </div>
 
-          <button class="pill-btn" title="Watch later">
-            <span class="icon">🚀</span>
-          </button>
-        </div>
-      </div>
-
-      <!-- WATCHED LIST -->
-      <div class="list-box clickable" (click)="openListModal('watched')">
-        <div class="list-box-left">
-          <h3>Watched</h3>
-          <span class="subtitle">{{ watched.length }} Titles</span>
-        </div>
-
-        <div class="list-box-right">
-          <div class="mini-posters">
-            <img *ngFor="let movie of watched | slice:0:5"
-                 [src]="movie.filme?.posterUrl || 'https://via.placeholder.com/120x180'"
-                 alt="movie poster" />
-          </div>
-
-          <button class="pill-btn gray" title="Watched">
-            <span class="icon">✅</span>
-          </button>
-        </div>
-      </div>
-    </div>
-
-    <!-- FAVORITES -->
-    <div class="section fav-section">
-      <div class="section-title">
-        <h3>Favorites</h3>
-        <span class="subtitle">Top 10 Movies &amp; Actors</span>
-      </div>
-
-      <div class="fav-header">
-        <span class="fav-counter">
-          {{ favoritosFilmes.length }}/10 movies &middot; {{ favoritosAtores.length }}/10 actors
-        </span>
-      </div>
-
-      <div class="fav-grid">
-
-        <!-- Top 10 Movies -->
-        <div class="fav-card">
-          <div class="fav-card-head">
-            <h4>Top 10 Movies</h4>
-            <span class="fav-mini">{{ favoritosFilmes.length }}/10</span>
-          </div>
-
-          <div class="fav-posters-grid" *ngIf="favoritosFilmesDetalhes.length > 0; else noFavMovies">
-            <div class="fav-poster"
-                 *ngFor="let f of favoritosFilmesDetalhes; let i = index"
-                 draggable="true"
-                 [attr.data-index]="i"
-                 (dragstart)="onDragStart($event, i)"
-                 (dragover)="onDragOver($event)"
-                 (drop)="onDrop($event, i)"
-                 (dragend)="onDragEnd()"
-                 [class.dragging]="draggedIndex === i"
-                 [class.drag-over]="dragOverIndex === i"
-                 title="Drag to reorder">
-              <span class="position-badge">{{ i + 1 }}</span>
-              <img [src]="f.posterUrl"
-                   [alt]="f.titulo"
-                   (dblclick)="removeFromFavorites(f.id)"
-                   title="Double-click to remove from favorites" />
+          <div class="list-box-right">
+            <div class="mini-posters">
+              <img *ngFor="let movie of watchLater | slice:0:5"
+                   [src]="movie.filme?.posterUrl || 'https://via.placeholder.com/120x180'"
+                   alt="movie poster" />
             </div>
-          </div>
 
-          <ng-template #noFavMovies>
-            <div class="fav-empty">
-              No favorite movies yet.<br />
-              <span class="fav-empty-hint">Use "★ Favorite" on movie pages (max 10).</span>
-            </div>
-          </ng-template>
-        </div>
-
-        <!-- Top 10 Actors -->
-        <div class="fav-card">
-          <div class="fav-card-head">
-            <h4>Top 10 Actors</h4>
-            <span class="fav-mini">{{ favoritosAtores.length }}/10</span>
-          </div>
-
-          <div class="fav-actor-add">
-            <input type="text"
-                   [(ngModel)]="novoAtor"
-                   placeholder="Add actor name..."
-                   [disabled]="isSavingFavorites || favoritosAtores.length >= 10" />
-
-            <button type="button"
-                    class="action-btn"
-                    (click)="addAtorFavorito()"
-                    [disabled]="isSavingFavorites || !novoAtor.trim() || favoritosAtores.length >= 10">
-              Add
+            <button class="pill-btn" title="Watch later">
+              <span class="icon">🚀</span>
             </button>
           </div>
-
-          <div class="fav-actors-list" *ngIf="favoritosAtores.length > 0; else noFavActors">
-            <div class="fav-actor-card"
-                 *ngFor="let a of favoritosAtores; let i = index"
-                 draggable="true"
-                 [attr.data-index]="i"
-                 (dragstart)="onActorDragStart($event, i)"
-                 (dragover)="onActorDragOver($event)"
-                 (drop)="onActorDrop($event, i)"
-                 (dragend)="onActorDragEnd()"
-                 [class.dragging-actor]="draggedActorIndex === i"
-                 [class.drag-over-actor]="dragOverActorIndex === i"
-                 title="Drag to reorder">
-              <span class="actor-rank">{{ i + 1 }}</span>
-              <span class="actor-name">{{ a }}</span>
-              <button type="button"
-                      class="actor-remove-btn"
-                      (click)="removeAtorFavorito(a)"
-                      [disabled]="isSavingFavorites"
-                      title="Remove actor">
-                &times;
-              </button>
-            </div>
-          </div>
-
-          <ng-template #noFavActors>
-            <div class="fav-empty">
-              No favorite actors yet.<br />
-              <span class="fav-empty-hint">Add up to 10.</span>
-            </div>
-          </ng-template>
         </div>
 
+        <!-- WATCHED LIST -->
+        <div class="list-box clickable" (click)="openListModal('watched')">
+          <div class="list-box-left">
+            <h3>Watched</h3>
+            <span class="subtitle">{{ watched.length }} Titles</span>
+          </div>
+
+          <div class="list-box-right">
+            <div class="mini-posters">
+              <img *ngFor="let movie of watched | slice:0:5"
+                   [src]="movie.filme?.posterUrl || 'https://via.placeholder.com/120x180'"
+                   alt="movie poster" />
+            </div>
+
+            <button class="pill-btn gray" title="Watched">
+              <span class="icon">✅</span>
+            </button>
+          </div>
+        </div>
       </div>
-    </div>
+
+      <!-- FAVORITES -->
+      <div class="section fav-section">
+        <div class="section-title">
+          <h3>Favorites</h3>
+          <span class="subtitle">Top 10 Movies &amp; Actors</span>
+        </div>
+
+        <div class="fav-header">
+          <span class="fav-counter">
+            {{ favoritosFilmes.length }}/10 movies &middot; {{ favoritosAtores.length }}/10 actors
+          </span>
+        </div>
+
+        <div class="fav-grid">
+
+          <!-- Top 10 Movies -->
+          <div class="fav-card">
+            <div class="fav-card-head">
+              <h4>Top 10 Movies</h4>
+              <span class="fav-mini">{{ favoritosFilmes.length }}/10</span>
+            </div>
+
+            <div class="fav-posters-grid" *ngIf="favoritosFilmesDetalhes.length > 0; else noFavMovies">
+              <div class="fav-poster"
+                   *ngFor="let f of favoritosFilmesDetalhes; let i = index"
+                   draggable="true"
+                   [attr.data-index]="i"
+                   (dragstart)="onDragStart($event, i)"
+                   (dragover)="onDragOver($event)"
+                   (drop)="onDrop($event, i)"
+                   (dragend)="onDragEnd()"
+                   [class.dragging]="draggedIndex === i"
+                   [class.drag-over]="dragOverIndex === i"
+                   title="Drag to reorder">
+                <span class="position-badge">{{ i + 1 }}</span>
+                <img [src]="f.posterUrl"
+                     [alt]="f.titulo"
+                     (dblclick)="removeFromFavorites(f.id)"
+                     title="Double-click to remove from favorites" />
+              </div>
+            </div>
+
+            <ng-template #noFavMovies>
+              <div class="fav-empty">
+                No favorite movies yet.<br />
+                <span class="fav-empty-hint">Use "★ Favorite" on movie pages (max 10).</span>
+              </div>
+            </ng-template>
+          </div>
+
+          <!-- Top 10 Actors -->
+          <div class="fav-card">
+            <div class="fav-card-head">
+              <h4>Top 10 Actors</h4>
+              <span class="fav-mini">{{ favoritosAtores.length }}/10</span>
+            </div>
+
+            <div class="fav-actor-add">
+              <input type="text"
+                     [(ngModel)]="novoAtor"
+                     placeholder="Add actor name..."
+                     [disabled]="isSavingFavorites || favoritosAtores.length >= 10" />
+
+              <button type="button"
+                      class="action-btn"
+                      (click)="addAtorFavorito()"
+                      [disabled]="isSavingFavorites || !novoAtor.trim() || favoritosAtores.length >= 10">
+                Add
+              </button>
+            </div>
+
+            <div class="fav-actors-list" *ngIf="favoritosAtores.length > 0; else noFavActors">
+              <div class="fav-actor-card"
+                   *ngFor="let a of favoritosAtores; let i = index"
+                   draggable="true"
+                   [attr.data-index]="i"
+                   (dragstart)="onActorDragStart($event, i)"
+                   (dragover)="onActorDragOver($event)"
+                   (drop)="onActorDrop($event, i)"
+                   (dragend)="onActorDragEnd()"
+                   [class.dragging-actor]="draggedActorIndex === i"
+                   [class.drag-over-actor]="dragOverActorIndex === i"
+                   title="Drag to reorder">
+                <span class="actor-rank">{{ i + 1 }}</span>
+                <span class="actor-name">{{ a }}</span>
+                <button type="button"
+                        class="actor-remove-btn"
+                        (click)="removeAtorFavorito(a)"
+                        [disabled]="isSavingFavorites"
+                        title="Remove actor">
+                  &times;
+                </button>
+              </div>
+            </div>
+
+            <ng-template #noFavActors>
+              <div class="fav-empty">
+                No favorite actors yet.<br />
+                <span class="fav-empty-hint">Add up to 10.</span>
+              </div>
+            </ng-template>
+          </div>
+
+        </div>
+      </div>
 
     </ng-container>
 
+    <!-- Estatísticas -->
     <ng-container *ngIf="activeSection === 'statistics'">
       <div class="statistics-view">
         <div class="stats-period-filter">
@@ -251,6 +252,7 @@
             <option *ngFor="let opt of statsPeriodOptions" [value]="opt.value">{{ opt.label }}</option>
           </select>
         </div>
+
         <section class="stats-block stats-in-main stats">
           <h3>Statistics</h3>
           <div class="stat-row">
@@ -271,6 +273,7 @@
 
         <section class="stats-comparison stats-comparison-in-main" *ngIf="statsComparison">
           <h3>Tu vs Media Global</h3>
+
           <div class="comparison-item">
             <div class="comparison-label">Filmes vistos</div>
             <div class="comparison-bars">
@@ -297,6 +300,7 @@
               <span *ngIf="statsComparison.comparacao.filmesVsMedia >= 0">+</span>{{ statsComparison.comparacao.filmesVsMedia | number:'1.0-1' }} vs media
             </div>
           </div>
+
           <div class="comparison-item">
             <div class="comparison-label">Horas vistas</div>
             <div class="comparison-bars">
@@ -323,16 +327,19 @@
               <span *ngIf="statsComparison.comparacao.horasVsMedia >= 0">+</span>{{ statsComparison.comparacao.horasVsMedia }}h vs media
             </div>
           </div>
+
           <div class="percentile-box">
             <div class="percentile-value">Top {{ 100 - statsComparison.comparacao.percentilFilmes }}%</div>
             <div class="percentile-label">dos utilizadores da plataforma</div>
           </div>
+
           <div class="platform-info">
             <span>{{ statsComparison.global.totalUtilizadores }} utilizadores na plataforma</span>
           </div>
         </section>
       </div>
 
+      <!-- Charts -->
       <section class="charts-section" *ngIf="chartData">
         <h3 class="charts-title">Estatísticas em gráfico</h3>
 
@@ -364,10 +371,12 @@
                       [attr.fill]="chartColor(i)"
                       class="chart-pie-segment" />
               </svg>
+
               <div class="chart-pie-legend">
                 <span *ngFor="let g of chartData.generos; let i = index"
                       class="chart-legend-item">
-                  <i [style.background]="chartColor(i)"></i>{{ g.genero }} ({{ g.total }})
+                  <i [style.background]="chartColor(i)"></i>
+                  {{ g.genero }} — {{ generoPercent(g.total) | number:'1.0-0' }}% ({{ g.total }})
                 </span>
               </div>
             </div>
@@ -380,9 +389,8 @@
             <h4>Filmes vistos por mês (últimos 12 meses)</h4>
             <div class="chart-line-wrap" *ngIf="chartData.porMes?.length; else noLine">
               <svg class="chart-line" viewBox="0 0 100 100" preserveAspectRatio="none">
-                <polyline
-                  [attr.points]="lineChartPoints"
-                  class="chart-line-poly" />
+                <polyline [attr.points]="lineChartPoints"
+                          class="chart-line-poly" />
               </svg>
               <div class="chart-line-labels">
                 <span *ngFor="let m of chartData.porMes" class="chart-line-label">{{ m.label }}</span>
@@ -394,6 +402,38 @@
           </div>
         </div>
       </section>
+
+      <section class="charts-section fr32-section" *ngIf="genrePercentages.length">
+        <h3 class="charts-title">Percentagens de géneros mais vistos</h3>
+
+        <div class="charts-grid">
+          <div class="chart-card chart-card-full">
+            <h4>Distribuição em percentagem</h4>
+
+            <div class="fr32-bars">
+              <div class="fr32-row" *ngFor="let g of genrePercentages; let i = index">
+                <span class="fr32-label">{{ g.genero }}</span>
+
+                <div class="fr32-track">
+                  <div class="fr32-fill"
+                       [style.width.%]="g.percent"
+                       [style.background]="chartColor(i)"></div>
+                </div>
+
+                <span class="fr32-value">
+                  {{ g.percent | number:'1.0-0' }}%
+                  <span class="fr32-mini">({{ g.total }})</span>
+                </span>
+              </div>
+            </div>
+
+            <p class="fr32-total" *ngIf="totalGenerosVistos">
+              Total analisado: <strong>{{ totalGenerosVistos }}</strong> géneros vistos
+            </p>
+          </div>
+        </div>
+      </section>
+
       <div class="charts-section loading" *ngIf="isLoadingCharts && !chartData">A carregar gráficos...</div>
       <p class="chart-empty" *ngIf="!isLoadingCharts && !chartData">Sem dados para mostrar.</p>
     </ng-container>
@@ -467,7 +507,7 @@
   </div>
 </div>
 
-<!-- LIST MODAL -->
+<!-- LIST Menus Watched e Watch Later -->
 <div class="modal-overlay list-modal-overlay" *ngIf="showListModal" (click)="closeListModal()">
   <div class="list-modal-box" (click)="$event.stopPropagation()">
     <button class="modal-close" (click)="closeListModal()">&times;</button>
@@ -477,7 +517,6 @@
       {{ filteredCurrentList.length }} {{ filteredCurrentList.length === 1 ? 'Title' : 'Titles' }}
     </span>
 
-    <!-- filter menu for watch later -->
     <div class="filter-row" *ngIf="currentListType === 'watchLater'">
       <label for="wlFilter">Filter:</label>
       <select id="wlFilter" [(ngModel)]="watchLaterFilter">
@@ -489,7 +528,6 @@
       </select>
     </div>
 
-    <!-- filter menu for watched -->
     <div class="filter-row" *ngIf="currentListType === 'watched'">
       <label for="watFilter">Filter:</label>
       <select id="watFilter" [(ngModel)]="watchedFilter">

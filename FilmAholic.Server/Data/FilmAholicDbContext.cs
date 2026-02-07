@@ -9,7 +9,9 @@ public class FilmAholicDbContext : IdentityDbContext<Utilizador>
     public DbSet<UserMovie> UserMovies { get; set; }
 
     public FilmAholicDbContext(DbContextOptions<FilmAholicDbContext> options) : base(options) { }
-    public DbSet<Comment> Comments { get; set; }
+    public DbSet<Comments> Comments { get; set; }
+    public DbSet<MovieRating> MovieRatings { get; set; }
+    public DbSet<CommentVote> CommentVotes { get; set; }
     public DbSet<Filme> Filmes => Set<Filme>();
     public DbSet<Genero> Generos => Set<Genero>();
     public DbSet<UtilizadorGenero> UtilizadorGeneros => Set<UtilizadorGenero>();
@@ -40,6 +42,26 @@ public class FilmAholicDbContext : IdentityDbContext<Utilizador>
             .HasOne(ug => ug.Genero)
             .WithMany(g => g.Utilizadores)
             .HasForeignKey(ug => ug.GeneroId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+       builder.Entity<MovieRating>()
+        .HasIndex(r => new { r.FilmeId, r.UserId })
+        .IsUnique();
+
+        builder.Entity<MovieRating>()
+            .HasOne(r => r.Filme)
+            .WithMany()
+            .HasForeignKey(r => r.FilmeId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder.Entity<CommentVote>()
+            .HasIndex(v => new { v.CommentId, v.UserId })
+            .IsUnique();
+
+        builder.Entity<CommentVote>()
+            .HasOne(v => v.Comment)
+            .WithMany()
+            .HasForeignKey(v => v.CommentId)
             .OnDelete(DeleteBehavior.Cascade);
 
         // Optional: basic configuration for Desafio
