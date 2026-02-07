@@ -309,9 +309,11 @@ namespace FilmAholic.Server.Controllers
                 .Select(g => new { genero = g.genero, total = g.total }).ToList();
 
             var now = DateTime.Now;
-            var twelveMonthsAgo = now.AddMonths(-12);
-            var porMes = movies
-                .Where(m => m.Data >= twelveMonthsAgo)
+            var startDate = now.AddMonths(-11); // Include current month + 11 previous = 12 months total
+            
+            // User data by month
+            var userPorMes = movies
+                .Where(m => m.Data >= startDate)
                 .GroupBy(m => new { m.Data.Year, m.Data.Month })
                 .Select(g => new
                 {
@@ -323,13 +325,57 @@ namespace FilmAholic.Server.Controllers
                 .OrderBy(x => x.ano).ThenBy(x => x.mes)
                 .ToList();
 
+            // Global average data by month
+            var globalQuery = _context.UserMovies
+                .Include(um => um.Filme)
+                .Where(um => um.JaViu && um.Data >= startDate);
+            var allMoviesForChart = await globalQuery.ToListAsync();
+
+            var allUserIds = await _context.UserMovies
+                .Select(um => um.UtilizadorId)
+                .Distinct()
+                .ToListAsync();
+
+            var totalUsers = allUserIds.Count;
+            if (totalUsers == 0) totalUsers = 1;
+
+            var globalPorMes = allMoviesForChart
+                .GroupBy(m => new { m.Data.Year, m.Data.Month })
+                .Select(g => new
+                {
+                    ano = g.Key.Year,
+                    mes = g.Key.Month,
+                    label = new DateTime(g.Key.Year, g.Key.Month, 1).ToString("MMM yyyy", System.Globalization.CultureInfo.GetCultureInfo("pt-PT")),
+                    average = (double)g.Count() / totalUsers
+                })
+                .OrderBy(x => x.ano).ThenBy(x => x.mes)
+                .ToList();
+
+            // Combine user and global data
+            var combinedPorMes = new List<object>();
+            for (int i = 0; i < 12; i++)
+            {
+                var monthDate = startDate.AddMonths(i);
+                var userMonth = userPorMes.FirstOrDefault(x => x.ano == monthDate.Year && x.mes == monthDate.Month);
+                var globalMonth = globalPorMes.FirstOrDefault(x => x.ano == monthDate.Year && x.mes == monthDate.Month);
+                
+                combinedPorMes.Add(new
+                {
+                    ano = monthDate.Year,
+                    mes = monthDate.Month,
+                    label = monthDate.ToString("MMM yyyy", System.Globalization.CultureInfo.GetCultureInfo("pt-PT")),
+                    total = userMonth?.total ?? 0,
+                    globalAverage = Math.Round(globalMonth?.average ?? 0, 1)
+                });
+            }
+
             var totalFilmes = movies.Count;
             var totalMinutos = movies.Sum(m => m.Filme?.Duracao ?? 0);
 
             return Ok(new
             {
                 generos,
-                porMes,
+                porMes = combinedPorMes,
                 resumo = new { totalFilmes, totalHoras = Math.Round(totalMinutos / 60.0, 1), totalMinutos }
             });
         }

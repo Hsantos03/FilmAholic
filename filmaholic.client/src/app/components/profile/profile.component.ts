@@ -186,6 +186,23 @@ export class ProfileComponent implements OnInit {
     this.loadStatsWithPeriod();
   }
 
+  showStatsPeriodMenu = false;
+
+  toggleStatsPeriodMenu(): void {
+    this.showStatsPeriodMenu = !this.showStatsPeriodMenu;
+  }
+
+  getCurrentPeriodLabel(): string {
+    const option = this.statsPeriodOptions.find(opt => opt.value === this.statsPeriod);
+    return option ? option.label : 'Todos os tempos';
+  }
+
+  selectStatsPeriod(value: StatsPeriod): void {
+    this.statsPeriod = value;
+    this.showStatsPeriodMenu = false;
+    this.onStatsPeriodChange();
+  }
+
   loadCatalogo(): void {
     this.filmesService.getAll().subscribe({
       next: (res) => (this.catalogo = res || []),
@@ -308,17 +325,21 @@ export class ProfileComponent implements OnInit {
 
   get lineChartMax(): number {
     if (!this.chartData?.porMes?.length) return 1;
-    return Math.max(...this.chartData.porMes.map(m => m.total), 1);
+    const userValues = this.chartData.porMes.map(m => m.total);
+    const globalValues = this.chartData.porMes.map(m => this.getGlobalAverageForMonth(m));
+    const allValues = [...userValues, ...globalValues];
+    if (allValues.length === 0) return 1;
+    return Math.max(...allValues, 1);
+  }
+  
+  getBarHeight(value: number): number {
+    const max = this.lineChartMax;
+    if (max === 0 || value === 0) return 0;
+    return Math.max((value / max) * 100, 5); // Minimum 5% height for visibility
   }
 
-  get lineChartPoints(): string {
-    if (!this.chartData?.porMes?.length) return '';
-    const max = this.lineChartMax;
-    const len = this.chartData.porMes.length;
-    const step = len > 1 ? 100 / (len - 1) : 0;
-    return this.chartData.porMes
-      .map((m, i) => `${step * i},${100 - (m.total / max) * 100}`)
-      .join(' ');
+  getGlobalAverageForMonth(monthData: any): number {
+    return monthData.globalAverage || 0;
   }
 
   // Generos de Filmes mais Vistos

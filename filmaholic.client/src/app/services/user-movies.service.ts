@@ -91,6 +91,6 @@ export interface StatsComparison {
 
 export interface StatsCharts {
   generos: { genero: string; total: number }[];
-  porMes: { ano: number; mes: number; label: string; total: number }[];
+  porMes: { ano: number; mes: number; label: string; total: number; globalAverage: number }[];
   resumo: { totalFilmes: number; totalHoras: number; totalMinutos: number };
 }
