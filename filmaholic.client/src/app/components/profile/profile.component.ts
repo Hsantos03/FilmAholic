@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
-import { UserMoviesService, StatsComparison, StatsCharts } from '../../services/user-movies.service';
+import { UserMoviesService, StatsComparison, StatsCharts, ChartDataPoint } from '../../services/user-movies.service';
 import { Filme, FilmesService } from '../../services/filmes.service';
 import { FavoritesService, FavoritosDTO } from '../../services/favorites.service';
 
@@ -166,7 +166,7 @@ export class ProfileComponent implements OnInit {
         from.setMonth(from.getMonth() - 3);
         break;
       case '12m':
-        from.setMonth(from.getMonth() - 12);
+        from.setMonth(from.getMonth() - 11); // -11 months = 12 months total including current
         break;
       default:
         return undefined;
@@ -184,6 +184,39 @@ export class ProfileComponent implements OnInit {
 
   onStatsPeriodChange(): void {
     this.loadStatsWithPeriod();
+  }
+
+  showStatsPeriodMenu = false;
+
+  toggleStatsPeriodMenu(): void {
+    this.showStatsPeriodMenu = !this.showStatsPeriodMenu;
+  }
+
+  getCurrentPeriodLabel(): string {
+    const option = this.statsPeriodOptions.find(opt => opt.value === this.statsPeriod);
+    return option ? option.label : 'Todos os tempos';
+  }
+
+  getChartTitle(): string {
+    switch (this.statsPeriod) {
+      case '7d':
+        return 'Filmes vistos por dia (últimos 7 dias)';
+      case '30d':
+        return 'Filmes vistos por mês (mês atual + anterior)';
+      case '3m':
+        return 'Filmes vistos por semana (últimos 3 meses)';
+      case '12m':
+        return 'Filmes vistos por mês (últimos 12 meses)';
+      case 'all':
+      default:
+        return 'Filmes vistos por mês (todos os tempos)';
+    }
+  }
+
+  selectStatsPeriod(value: StatsPeriod): void {
+    this.statsPeriod = value;
+    this.showStatsPeriodMenu = false;
+    this.onStatsPeriodChange();
   }
 
   loadCatalogo(): void {
@@ -241,7 +274,8 @@ export class ProfileComponent implements OnInit {
         this.chartData = res;
         this.isLoadingCharts = false;
       },
-      error: () => {
+      error: (err) => {
+        console.error('Error loading chart data:', err);
         this.chartData = null;
         this.isLoadingCharts = false;
       }
@@ -308,17 +342,21 @@ export class ProfileComponent implements OnInit {
 
   get lineChartMax(): number {
     if (!this.chartData?.porMes?.length) return 1;
-    return Math.max(...this.chartData.porMes.map(m => m.total), 1);
+    const userValues = this.chartData.porMes.map(m => m.total);
+    const globalValues = this.chartData.porMes.map(m => this.getGlobalAverageForMonth(m));
+    const allValues = [...userValues, ...globalValues];
+    if (allValues.length === 0) return 1;
+    return Math.max(...allValues, 1);
+  }
+  
+  getBarHeight(value: number): number {
+    const max = this.lineChartMax;
+    if (max === 0 || value === 0) return 0;
+    return Math.max((value / max) * 100, 5); // Minimum 5% height for visibility
   }
 
-  get lineChartPoints(): string {
-    if (!this.chartData?.porMes?.length) return '';
-    const max = this.lineChartMax;
-    const len = this.chartData.porMes.length;
-    const step = len > 1 ? 100 / (len - 1) : 0;
-    return this.chartData.porMes
-      .map((m, i) => `${step * i},${100 - (m.total / max) * 100}`)
-      .join(' ');
+  getGlobalAverageForMonth(monthData: any): number {
+    return monthData.globalAverage || 0;
   }
 
   // Generos de Filmes mais Vistos

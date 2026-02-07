@@ -246,11 +246,14 @@
       <div class="statistics-view">
         <div class="stats-period-filter">
           <label for="statsPeriod">Filtrar por período:</label>
-          <select id="statsPeriod"
-                  [(ngModel)]="statsPeriod"
-                  (ngModelChange)="onStatsPeriodChange()">
-            <option *ngFor="let opt of statsPeriodOptions" [value]="opt.value">{{ opt.label }}</option>
-          </select>
+          <div class="sort-wrap">
+            <button type="button" class="sort-btn" (click)="toggleStatsPeriodMenu()" [class.active]="showStatsPeriodMenu" aria-label="Filtrar por período" aria-haspopup="true" [attr.aria-expanded]="showStatsPeriodMenu">
+              {{ getCurrentPeriodLabel() }}
+            </button>
+            <div class="sort-menu" *ngIf="showStatsPeriodMenu" role="menu" aria-label="Opções de período">
+              <button type="button" class="sort-item" (click)="selectStatsPeriod(opt.value)" [class.selected]="statsPeriod === opt.value" role="menuitem" *ngFor="let opt of statsPeriodOptions">{{ opt.label }}</button>
+            </div>
+          </div>
         </div>
 
         <section class="stats-block stats-in-main stats">
@@ -386,14 +389,36 @@
           </div>
 
           <div class="chart-card chart-card-full">
-            <h4>Filmes vistos por mês (últimos 12 meses)</h4>
-            <div class="chart-line-wrap" *ngIf="chartData.porMes?.length; else noLine">
-              <svg class="chart-line" viewBox="0 0 100 100" preserveAspectRatio="none">
-                <polyline [attr.points]="lineChartPoints"
-                          class="chart-line-poly" />
-              </svg>
-              <div class="chart-line-labels">
-                <span *ngFor="let m of chartData.porMes" class="chart-line-label">{{ m.label }}</span>
+            <h4>{{ getChartTitle() }}</h4>
+            <div class="chart-bar-container" *ngIf="chartData.porMes && chartData.porMes.length > 0; else noLine">
+              <div class="chart-bars-grid">
+                <div *ngFor="let m of chartData.porMes; let i = index" class="chart-bar-month">
+                  <div class="chart-bars-pair">
+                    <!-- User bar -->
+                    <div class="chart-bar user-bar" 
+                         [style.height.%]="getBarHeight(m.total)"
+                         [attr.title]="m.total + ' filmes (Você)'">
+                      <div class="chart-bar-value">{{ m.total }}</div>
+                    </div>
+                    <!-- Global average bar -->
+                    <div class="chart-bar global-bar" 
+                         [style.height.%]="getBarHeight(getGlobalAverageForMonth(m))"
+                         [attr.title]="getGlobalAverageForMonth(m).toFixed(1) + ' filmes (Média)'">
+                      <div class="chart-bar-value">{{ getGlobalAverageForMonth(m).toFixed(1) }}</div>
+                    </div>
+                  </div>
+                  <div class="chart-bar-label">{{ m.label }}</div>
+                </div>
+              </div>
+              <div class="chart-line-legend">
+                <span class="legend-item user-legend">
+                  <i class="legend-dot" style="background: #ff2f6d"></i>
+                  Você
+                </span>
+                <span class="legend-item global-legend">
+                  <i class="legend-dot" style="background: #6366f1"></i>
+                  Média Global
+                </span>
               </div>
             </div>
             <ng-template #noLine>
