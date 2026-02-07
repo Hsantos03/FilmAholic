@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
-import { UserMoviesService, StatsComparison, StatsCharts } from '../../services/user-movies.service';
+import { UserMoviesService, StatsComparison, StatsCharts, ChartDataPoint } from '../../services/user-movies.service';
 import { Filme, FilmesService } from '../../services/filmes.service';
 import { FavoritesService, FavoritosDTO } from '../../services/favorites.service';
 
@@ -166,7 +166,7 @@ export class ProfileComponent implements OnInit {
         from.setMonth(from.getMonth() - 3);
         break;
       case '12m':
-        from.setMonth(from.getMonth() - 12);
+        from.setMonth(from.getMonth() - 11); // -11 months = 12 months total including current
         break;
       default:
         return undefined;
@@ -195,6 +195,22 @@ export class ProfileComponent implements OnInit {
   getCurrentPeriodLabel(): string {
     const option = this.statsPeriodOptions.find(opt => opt.value === this.statsPeriod);
     return option ? option.label : 'Todos os tempos';
+  }
+
+  getChartTitle(): string {
+    switch (this.statsPeriod) {
+      case '7d':
+        return 'Filmes vistos por dia (últimos 7 dias)';
+      case '30d':
+        return 'Filmes vistos por mês (mês atual + anterior)';
+      case '3m':
+        return 'Filmes vistos por semana (últimos 3 meses)';
+      case '12m':
+        return 'Filmes vistos por mês (últimos 12 meses)';
+      case 'all':
+      default:
+        return 'Filmes vistos por mês (todos os tempos)';
+    }
   }
 
   selectStatsPeriod(value: StatsPeriod): void {
@@ -258,7 +274,8 @@ export class ProfileComponent implements OnInit {
         this.chartData = res;
         this.isLoadingCharts = false;
       },
-      error: () => {
+      error: (err) => {
+        console.error('Error loading chart data:', err);
         this.chartData = null;
         this.isLoadingCharts = false;
       }

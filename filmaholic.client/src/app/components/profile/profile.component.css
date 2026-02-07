@@ -1547,19 +1547,19 @@
 
 .chart-bars-grid {
   display: flex;
-  gap: 12px;
+  gap: 2px;
   align-items: end;
-  height: 160px;
-  margin-bottom: 10px;
-  justify-content: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 0 5px;
 }
 
 .chart-bar-month {
   flex: 1;
+  min-width: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
-  min-width: 0;
 }
 
 .chart-bars-pair {

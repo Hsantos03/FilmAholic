@@ -389,7 +389,7 @@
           </div>
 
           <div class="chart-card chart-card-full">
-            <h4>Filmes vistos por mês (últimos 12 meses)</h4>
+            <h4>{{ getChartTitle() }}</h4>
             <div class="chart-bar-container" *ngIf="chartData.porMes && chartData.porMes.length > 0; else noLine">
               <div class="chart-bars-grid">
                 <div *ngFor="let m of chartData.porMes; let i = index" class="chart-bar-month">
