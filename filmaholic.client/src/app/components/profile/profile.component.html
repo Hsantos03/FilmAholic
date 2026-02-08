@@ -355,7 +355,8 @@
                 <span class="bar-label">Tu</span>
                 <div class="bar-container">
                   <div class="bar user-bar"
-                       [style.width.%]="getComparisonBarWidth(statsComparison.user.totalFilmes, statsComparison.global.mediaFilmesPorUtilizador)"></div>
+                       [style.width.%]="getComparisonBarWidth(statsComparison.user.totalFilmes, statsComparison.global.mediaFilmesPorUtilizador)"
+                       [style.background]="getUserBarGradient()"></div>
                 </div>
                 <span class="bar-value">{{ statsComparison.user.totalFilmes }}</span>
               </div>
@@ -363,7 +364,8 @@
                 <span class="bar-label">Media</span>
                 <div class="bar-container">
                   <div class="bar global-bar"
-                       [style.width.%]="getGlobalBarWidth(statsComparison.user.totalFilmes, statsComparison.global.mediaFilmesPorUtilizador)"></div>
+                       [style.width.%]="getGlobalBarWidth(statsComparison.user.totalFilmes, statsComparison.global.mediaFilmesPorUtilizador)"
+                       [style.background]="getGlobalBarGradient()"></div>
                 </div>
                 <span class="bar-value">{{ statsComparison.global.mediaFilmesPorUtilizador }}</span>
               </div>
@@ -382,7 +384,8 @@
                 <span class="bar-label">Tu</span>
                 <div class="bar-container">
                   <div class="bar user-bar"
-                       [style.width.%]="getComparisonBarWidth(statsComparison.user.totalHoras, statsComparison.global.mediaHorasPorUtilizador)"></div>
+                       [style.width.%]="getComparisonBarWidth(statsComparison.user.totalHoras, statsComparison.global.mediaHorasPorUtilizador)"
+                       [style.background]="getUserBarGradient()"></div>
                 </div>
                 <span class="bar-value">{{ statsComparison.user.totalHoras }}h</span>
               </div>
@@ -390,7 +393,8 @@
                 <span class="bar-label">Media</span>
                 <div class="bar-container">
                   <div class="bar global-bar"
-                       [style.width.%]="getGlobalBarWidth(statsComparison.user.totalHoras, statsComparison.global.mediaHorasPorUtilizador)"></div>
+                       [style.width.%]="getGlobalBarWidth(statsComparison.user.totalHoras, statsComparison.global.mediaHorasPorUtilizador)"
+                       [style.background]="getGlobalBarGradient()"></div>
                 </div>
                 <span class="bar-value">{{ statsComparison.global.mediaHorasPorUtilizador }}h</span>
               </div>
@@ -415,7 +419,139 @@
 
       <!-- Charts -->
       <section class="charts-section" *ngIf="chartData">
-        <h3 class="charts-title">Estatísticas em gráfico</h3>
+        <div class="charts-header">
+          <h3 class="charts-title">Estatísticas em gráfico</h3>
+          
+          <!-- Graph Customize Button -->
+          <div style="position: relative;">
+            <button class="graph-customize-btn" 
+                    [class.active]="showGraphCustomizeMenu"
+                    (click)="toggleGraphCustomize()"
+                    title="Customize graphs">
+              ⚙
+            </button>
+
+            <!-- Graph Customize Menu -->
+            <div class="graph-customize-menu" *ngIf="showGraphCustomizeMenu">
+              <h4 class="customize-menu-title">Graph Settings</h4>
+
+              <!-- Visibility Section -->
+              <div class="customize-section">
+                <h5 class="customize-section-title">Visibility</h5>
+                <div class="visibility-list">
+                  <div class="visibility-item">
+                    <span class="visibility-label">Genre Bar Chart</span>
+                    <div class="toggle-switch" 
+                         [class.active]="graphSettings.showGenreBar"
+                         (click)="toggleGraphVisibility('showGenreBar')">
+                      <div class="toggle-slider"></div>
+                    </div>
+                  </div>
+                  <div class="visibility-item">
+                    <span class="visibility-label">Genre Pie Chart</span>
+                    <div class="toggle-switch" 
+                         [class.active]="graphSettings.showGenrePie"
+                         (click)="toggleGraphVisibility('showGenrePie')">
+                      <div class="toggle-slider"></div>
+                    </div>
+                  </div>
+                  <div class="visibility-item">
+                    <span class="visibility-label">Monthly Viewing Chart</span>
+                    <div class="toggle-switch" 
+                         [class.active]="graphSettings.showMonthlyChart"
+                         (click)="toggleGraphVisibility('showMonthlyChart')">
+                      <div class="toggle-slider"></div>
+                    </div>
+                  </div>
+                  <div class="visibility-item">
+                    <span class="visibility-label">Genre Percentages</span>
+                    <div class="toggle-switch" 
+                         [class.active]="graphSettings.showGenrePercentages"
+                         (click)="toggleGraphVisibility('showGenrePercentages')">
+                      <div class="toggle-slider"></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Color Customization -->
+              <div class="customize-section">
+                <h5 class="customize-section-title">Monthly Chart Colors</h5>
+                <div class="color-pickers">
+                  <div class="color-picker-item">
+                    <span class="color-picker-label">User Data Color</span>
+                    <div class="color-picker-input">
+                      <input type="color" 
+                             [(ngModel)]="graphSettings.userColor"
+                             (change)="updateGraphColors()">
+                    </div>
+                  </div>
+                  <div class="color-picker-item">
+                    <span class="color-picker-label">Global Data Color</span>
+                    <div class="color-picker-input">
+                      <input type="color" 
+                             [(ngModel)]="graphSettings.globalColor"
+                             (change)="updateGraphColors()">
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Chart Genre Colors -->
+              <div class="customize-section">
+                <h5 class="customize-section-title">Chart Colors (Top 5 Genres)</h5>
+                <div class="color-pickers">
+                  <div class="color-picker-item">
+                    <span class="color-picker-label">Genre 1 Color</span>
+                    <div class="color-picker-input">
+                      <input type="color" 
+                             [(ngModel)]="graphSettings.chartColor1"
+                             (change)="updateGraphColors()">
+                    </div>
+                  </div>
+                  <div class="color-picker-item">
+                    <span class="color-picker-label">Genre 2 Color</span>
+                    <div class="color-picker-input">
+                      <input type="color" 
+                             [(ngModel)]="graphSettings.chartColor2"
+                             (change)="updateGraphColors()">
+                    </div>
+                  </div>
+                  <div class="color-picker-item">
+                    <span class="color-picker-label">Genre 3 Color</span>
+                    <div class="color-picker-input">
+                      <input type="color" 
+                             [(ngModel)]="graphSettings.chartColor3"
+                             (change)="updateGraphColors()">
+                    </div>
+                  </div>
+                  <div class="color-picker-item">
+                    <span class="color-picker-label">Genre 4 Color</span>
+                    <div class="color-picker-input">
+                      <input type="color" 
+                             [(ngModel)]="graphSettings.chartColor4"
+                             (change)="updateGraphColors()">
+                    </div>
+                  </div>
+                  <div class="color-picker-item">
+                    <span class="color-picker-label">Genre 5 Color</span>
+                    <div class="color-picker-input">
+                      <input type="color" 
+                             [(ngModel)]="graphSettings.chartColor5"
+                             (change)="updateGraphColors()">
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Reset Button -->
+              <button class="customize-reset-btn" 
+                      (click)="resetGraphSettings()">
+                Reset to Defaults
+              </button>
+            </div>
+          </div>
+        </div>
 
         <div class="charts-grid">
           <div class="chart-card">
@@ -500,7 +636,7 @@
             </ng-template>
           </div>
 
-          <div class="chart-card chart-card-full">
+          <div class="chart-card chart-card-full" [class.hidden]="!graphSettings.showMonthlyChart">
             <h4>{{ getChartTitle() }}</h4>
             <div class="chart-bar-container" *ngIf="chartData.porMes && chartData.porMes.length > 0; else noLine">
               <div class="chart-bars-grid">
@@ -509,12 +645,14 @@
                     <!-- User bar -->
                     <div class="chart-bar user-bar" 
                          [style.height.%]="getBarHeight(m.total)"
+                         [style.background]="getUserBarGradient()"
                          [attr.title]="m.total + ' filmes (Você)'">
                       <div class="chart-bar-value">{{ m.total }}</div>
                     </div>
                     <!-- Global average bar -->
                     <div class="chart-bar global-bar" 
                          [style.height.%]="getBarHeight(getGlobalAverageForMonth(m))"
+                         [style.background]="getGlobalBarGradient()"
                          [attr.title]="getGlobalAverageForMonth(m).toFixed(1) + ' filmes (Média)'">
                       <div class="chart-bar-value">{{ getGlobalAverageForMonth(m).toFixed(1) }}</div>
                     </div>
@@ -524,11 +662,11 @@
               </div>
               <div class="chart-line-legend">
                 <span class="legend-item user-legend">
-                  <i class="legend-dot" style="background: #ff2f6d"></i>
+                  <i class="legend-dot" [style.background]="graphSettings.userColor"></i>
                   Você
                 </span>
                 <span class="legend-item global-legend">
-                  <i class="legend-dot" style="background: #6366f1"></i>
+                  <i class="legend-dot" [style.background]="graphSettings.globalColor"></i>
                   Média Global
                 </span>
               </div>
@@ -540,7 +678,7 @@
         </div>
       </section>
 
-      <section class="charts-section fr32-section" *ngIf="genrePercentages.length">
+      <section class="charts-section fr32-section" *ngIf="genrePercentages.length && graphSettings.showGenrePercentages">
         <h3 class="charts-title">Percentagens de géneros mais vistos</h3>
 
         <div class="charts-grid">
@@ -554,7 +692,7 @@
                 <div class="fr32-track">
                   <div class="fr32-fill"
                        [style.width.%]="g.percent"
-                       [style.background]="chartColor(i)"></div>
+                       [style.background]="getCustomChartColor(i)"></div>
                 </div>
 
                 <span class="fr32-value">
