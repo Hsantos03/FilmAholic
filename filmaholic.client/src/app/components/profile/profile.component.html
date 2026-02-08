@@ -433,14 +433,14 @@
 
             <!-- Graph Customize Menu -->
             <div class="graph-customize-menu" *ngIf="showGraphCustomizeMenu">
-              <h4 class="customize-menu-title">Graph Settings</h4>
+              <h4 class="customize-menu-title">Definições dos gráficos</h4>
 
               <!-- Visibility Section -->
               <div class="customize-section">
-                <h5 class="customize-section-title">Visibility</h5>
+                <h5 class="customize-section-title">Visibilidade</h5>
                 <div class="visibility-list">
                   <div class="visibility-item">
-                    <span class="visibility-label">Genre Bar Chart</span>
+                    <span class="visibility-label">Filmes por duração</span>
                     <div class="toggle-switch" 
                          [class.active]="graphSettings.showGenreBar"
                          (click)="toggleGraphVisibility('showGenreBar')">
@@ -448,7 +448,7 @@
                     </div>
                   </div>
                   <div class="visibility-item">
-                    <span class="visibility-label">Genre Pie Chart</span>
+                    <span class="visibility-label">Distribuição por duração</span>
                     <div class="toggle-switch" 
                          [class.active]="graphSettings.showGenrePie"
                          (click)="toggleGraphVisibility('showGenrePie')">
@@ -456,7 +456,23 @@
                     </div>
                   </div>
                   <div class="visibility-item">
-                    <span class="visibility-label">Monthly Viewing Chart</span>
+                    <span class="visibility-label">Filmes por período</span>
+                    <div class="toggle-switch" 
+                         [class.active]="graphSettings.showPeriodBar"
+                         (click)="toggleGraphVisibility('showPeriodBar')">
+                      <div class="toggle-slider"></div>
+                    </div>
+                  </div>
+                  <div class="visibility-item">
+                    <span class="visibility-label">Distribuição por período</span>
+                    <div class="toggle-switch" 
+                         [class.active]="graphSettings.showPeriodPie"
+                         (click)="toggleGraphVisibility('showPeriodPie')">
+                      <div class="toggle-slider"></div>
+                    </div>
+                  </div>
+                  <div class="visibility-item">
+                    <span class="visibility-label">Gráfico por mês</span>
                     <div class="toggle-switch" 
                          [class.active]="graphSettings.showMonthlyChart"
                          (click)="toggleGraphVisibility('showMonthlyChart')">
@@ -464,7 +480,7 @@
                     </div>
                   </div>
                   <div class="visibility-item">
-                    <span class="visibility-label">Genre Percentages</span>
+                    <span class="visibility-label">Percentagens de géneros</span>
                     <div class="toggle-switch" 
                          [class.active]="graphSettings.showGenrePercentages"
                          (click)="toggleGraphVisibility('showGenrePercentages')">
@@ -476,10 +492,10 @@
 
               <!-- Color Customization -->
               <div class="customize-section">
-                <h5 class="customize-section-title">Monthly Chart Colors</h5>
+                <h5 class="customize-section-title">Cores do gráfico mensal</h5>
                 <div class="color-pickers">
                   <div class="color-picker-item">
-                    <span class="color-picker-label">User Data Color</span>
+                    <span class="color-picker-label">Cor (você)</span>
                     <div class="color-picker-input">
                       <input type="color" 
                              [(ngModel)]="graphSettings.userColor"
@@ -487,7 +503,7 @@
                     </div>
                   </div>
                   <div class="color-picker-item">
-                    <span class="color-picker-label">Global Data Color</span>
+                    <span class="color-picker-label">Cor (média global)</span>
                     <div class="color-picker-input">
                       <input type="color" 
                              [(ngModel)]="graphSettings.globalColor"
@@ -497,12 +513,12 @@
                 </div>
               </div>
 
-              <!-- Chart Genre Colors -->
+              <!-- Chart Colors -->
               <div class="customize-section">
-                <h5 class="customize-section-title">Chart Colors (Top 5 Genres)</h5>
+                <h5 class="customize-section-title">Cores dos gráficos</h5>
                 <div class="color-pickers">
                   <div class="color-picker-item">
-                    <span class="color-picker-label">Genre 1 Color</span>
+                    <span class="color-picker-label">Cor 1</span>
                     <div class="color-picker-input">
                       <input type="color" 
                              [(ngModel)]="graphSettings.chartColor1"
@@ -510,7 +526,7 @@
                     </div>
                   </div>
                   <div class="color-picker-item">
-                    <span class="color-picker-label">Genre 2 Color</span>
+                    <span class="color-picker-label">Cor 2</span>
                     <div class="color-picker-input">
                       <input type="color" 
                              [(ngModel)]="graphSettings.chartColor2"
@@ -518,7 +534,7 @@
                     </div>
                   </div>
                   <div class="color-picker-item">
-                    <span class="color-picker-label">Genre 3 Color</span>
+                    <span class="color-picker-label">Cor 3</span>
                     <div class="color-picker-input">
                       <input type="color" 
                              [(ngModel)]="graphSettings.chartColor3"
@@ -526,7 +542,7 @@
                     </div>
                   </div>
                   <div class="color-picker-item">
-                    <span class="color-picker-label">Genre 4 Color</span>
+                    <span class="color-picker-label">Cor 4</span>
                     <div class="color-picker-input">
                       <input type="color" 
                              [(ngModel)]="graphSettings.chartColor4"
@@ -534,7 +550,7 @@
                     </div>
                   </div>
                   <div class="color-picker-item">
-                    <span class="color-picker-label">Genre 5 Color</span>
+                    <span class="color-picker-label">Cor 5</span>
                     <div class="color-picker-input">
                       <input type="color" 
                              [(ngModel)]="graphSettings.chartColor5"
@@ -547,14 +563,14 @@
               <!-- Reset Button -->
               <button class="customize-reset-btn" 
                       (click)="resetGraphSettings()">
-                Reset to Defaults
+                Repor predefinidos
               </button>
             </div>
           </div>
         </div>
 
         <div class="charts-grid">
-          <div class="chart-card">
+          <div class="chart-card" [class.hidden]="!graphSettings.showGenreBar">
             <h4>Filmes por duração</h4>
             <div class="chart-bar-container" *ngIf="chartData.porDuracao?.length; else noDuracao">
               <div class="chart-bar-row" *ngFor="let d of chartData.porDuracao; let i = index">
@@ -562,7 +578,7 @@
                 <div class="chart-bar-track">
                   <div class="chart-bar-fill"
                        [style.width.%]="chartBarWidthDuracao(d.total)"
-                       [style.background]="chartColor(i)"></div>
+                       [style.background]="getCustomChartColor(i)"></div>
                 </div>
                 <span class="chart-bar-value">{{ d.total }}</span>
               </div>
@@ -572,20 +588,20 @@
             </ng-template>
           </div>
 
-          <div class="chart-card">
+          <div class="chart-card" [class.hidden]="!graphSettings.showGenrePie">
             <h4>Distribuição por duração</h4>
             <div class="chart-pie-wrap" *ngIf="chartData.porDuracao?.length; else noPieDuracao">
               <svg class="chart-pie" viewBox="0 0 100 100">
                 <path *ngFor="let d of chartData.porDuracao; let i = index"
                       [attr.d]="pieSegmentDDuracao(i)"
-                      [attr.fill]="chartColor(i)"
+                      [attr.fill]="getCustomChartColor(i)"
                       class="chart-pie-segment" />
               </svg>
 
               <div class="chart-pie-legend">
                 <span *ngFor="let d of chartData.porDuracao; let i = index"
                       class="chart-legend-item">
-                  <i [style.background]="chartColor(i)"></i>
+                  <i [style.background]="getCustomChartColor(i)"></i>
                   {{ d.label }} — {{ duracaoPercent(d.total) | number:'1.0-0' }}% ({{ d.total }})
                 </span>
               </div>
@@ -595,7 +611,7 @@
             </ng-template>
           </div>
 
-          <div class="chart-card">
+          <div class="chart-card" [class.hidden]="!graphSettings.showPeriodBar">
             <h4>Filmes por período (ano de estreia)</h4>
             <div class="chart-bar-container" *ngIf="chartData.porIntervaloAnos?.length; else noIntervaloAnos">
               <div class="chart-bar-row" *ngFor="let d of chartData.porIntervaloAnos; let i = index">
@@ -603,7 +619,7 @@
                 <div class="chart-bar-track">
                   <div class="chart-bar-fill"
                        [style.width.%]="chartBarWidthIntervaloAnos(d.total)"
-                       [style.background]="chartColor(i)"></div>
+                       [style.background]="getCustomChartColor(i)"></div>
                 </div>
                 <span class="chart-bar-value">{{ d.total }}</span>
               </div>
@@ -613,20 +629,20 @@
             </ng-template>
           </div>
 
-          <div class="chart-card">
+          <div class="chart-card" [class.hidden]="!graphSettings.showPeriodPie">
             <h4>Distribuição por período</h4>
             <div class="chart-pie-wrap" *ngIf="chartData.porIntervaloAnos?.length && totalIntervaloAnosVistos > 0; else noPieIntervaloAnos">
               <svg class="chart-pie" viewBox="0 0 100 100">
                 <path *ngFor="let d of chartData.porIntervaloAnos; let i = index"
                       [attr.d]="pieSegmentDIntervaloAnos(i)"
-                      [attr.fill]="chartColor(i)"
+                      [attr.fill]="getCustomChartColor(i)"
                       class="chart-pie-segment" />
               </svg>
 
               <div class="chart-pie-legend">
                 <span *ngFor="let d of chartData.porIntervaloAnos; let i = index"
                       class="chart-legend-item">
-                  <i [style.background]="chartColor(i)"></i>
+                  <i [style.background]="getCustomChartColor(i)"></i>
                   {{ d.label }} — {{ intervaloAnosPercent(d.total) | number:'1.0-0' }}% ({{ d.total }})
                 </span>
               </div>

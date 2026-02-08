@@ -9,8 +9,10 @@ import { FavoritesService, FavoritosDTO } from '../../services/favorites.service
 type StatsPeriod = 'all' | '7d' | '30d' | '3m' | '12m';
 
 interface GraphSettings {
-  showGenreBar: boolean;
-  showGenrePie: boolean;
+  showGenreBar: boolean;   // Filmes por duração
+  showGenrePie: boolean;   // Distribuição por duração
+  showPeriodBar: boolean;  // Filmes por período
+  showPeriodPie: boolean;  // Distribuição por período
   showMonthlyChart: boolean;
   showGenrePercentages: boolean;
   userColor: string;
@@ -108,6 +110,8 @@ export class ProfileComponent implements OnInit {
   graphSettings: GraphSettings = {
     showGenreBar: true,
     showGenrePie: true,
+    showPeriodBar: true,
+    showPeriodPie: true,
     showMonthlyChart: true,
     showGenrePercentages: true,
     userColor: '#ff2f6d',
@@ -122,6 +126,8 @@ export class ProfileComponent implements OnInit {
   private readonly defaultGraphSettings: GraphSettings = {
     showGenreBar: true,
     showGenrePie: true,
+    showPeriodBar: true,
+    showPeriodPie: true,
     showMonthlyChart: true,
     showGenrePercentages: true,
     userColor: '#ff2f6d',
@@ -197,7 +203,7 @@ export class ProfileComponent implements OnInit {
     this.showGraphCustomizeMenu = !this.showGraphCustomizeMenu;
   }
 
-  toggleGraphVisibility(key: 'showGenreBar' | 'showGenrePie' | 'showMonthlyChart' | 'showGenrePercentages'): void {
+  toggleGraphVisibility(key: 'showGenreBar' | 'showGenrePie' | 'showPeriodBar' | 'showPeriodPie' | 'showMonthlyChart' | 'showGenrePercentages'): void {
     this.graphSettings[key] = !this.graphSettings[key];
     this.saveGraphSettings();
   }
