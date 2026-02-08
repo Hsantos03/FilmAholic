@@ -8,6 +8,20 @@ import { FavoritesService, FavoritosDTO } from '../../services/favorites.service
 
 type StatsPeriod = 'all' | '7d' | '30d' | '3m' | '12m';
 
+interface GraphSettings {
+  showGenreBar: boolean;
+  showGenrePie: boolean;
+  showMonthlyChart: boolean;
+  showGenrePercentages: boolean;
+  userColor: string;
+  globalColor: string;
+  chartColor1: string;
+  chartColor2: string;
+  chartColor3: string;
+  chartColor4: string;
+  chartColor5: string;
+}
+
 @Component({
   selector: 'app-profile',
   templateUrl: './profile.component.html',
@@ -85,6 +99,38 @@ export class ProfileComponent implements OnInit {
     { value: '12m', label: 'Últimos 12 meses' }
   ];
 
+  // Graph Customization
+  showGraphCustomizeMenu = false;
+  graphSettings: GraphSettings = {
+    showGenreBar: true,
+    showGenrePie: true,
+    showMonthlyChart: true,
+    showGenrePercentages: true,
+    userColor: '#ff2f6d',
+    globalColor: '#6366f1',
+    chartColor1: '#ff2f6d',
+    chartColor2: '#6366f1',
+    chartColor3: '#22c55e',
+    chartColor4: '#eab308',
+    chartColor5: '#ec4899'
+  };
+
+  private readonly defaultGraphSettings: GraphSettings = {
+    showGenreBar: true,
+    showGenrePie: true,
+    showMonthlyChart: true,
+    showGenrePercentages: true,
+    userColor: '#ff2f6d',
+    globalColor: '#6366f1',
+    chartColor1: '#ff2f6d',
+    chartColor2: '#6366f1',
+    chartColor3: '#22c55e',
+    chartColor4: '#eab308',
+    chartColor5: '#ec4899'
+  };
+
+  private readonly GRAPH_SETTINGS_KEY = 'filmaholic_graph_settings';
+
   constructor(
     private http: HttpClient,
     private router: Router,
@@ -96,6 +142,9 @@ export class ProfileComponent implements OnInit {
 
   ngOnInit(): void {
     const userId = localStorage.getItem('user_id');
+
+    // Load graph settings from localStorage
+    this.loadGraphSettings();
 
     this.loadCatalogo();
     this.refreshAllListsAndStats();
@@ -139,6 +188,95 @@ export class ProfileComponent implements OnInit {
       });
   }
 
+  // Graph Customization Methods
+  toggleGraphCustomize(): void {
+    this.showGraphCustomizeMenu = !this.showGraphCustomizeMenu;
+  }
+
+  toggleGraphVisibility(key: 'showGenreBar' | 'showGenrePie' | 'showMonthlyChart' | 'showGenrePercentages'): void {
+    this.graphSettings[key] = !this.graphSettings[key];
+    this.saveGraphSettings();
+  }
+
+  updateGraphColors(): void {
+    this.saveGraphSettings();
+  }
+
+  resetGraphSettings(): void {
+    this.graphSettings = { ...this.defaultGraphSettings };
+    this.saveGraphSettings();
+  }
+
+  private loadGraphSettings(): void {
+    try {
+      const stored = localStorage.getItem(this.GRAPH_SETTINGS_KEY);
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        this.graphSettings = { ...this.defaultGraphSettings, ...parsed };
+      }
+    } catch (error) {
+      console.warn('Failed to load graph settings from localStorage', error);
+      this.graphSettings = { ...this.defaultGraphSettings };
+    }
+  }
+
+  private saveGraphSettings(): void {
+    try {
+      localStorage.setItem(this.GRAPH_SETTINGS_KEY, JSON.stringify(this.graphSettings));
+    } catch (error) {
+      console.warn('Failed to save graph settings to localStorage', error);
+    }
+  }
+
+  getCustomChartColor(index: number): string {
+    const baseColors = [
+      this.graphSettings.chartColor1,
+      this.graphSettings.chartColor2,
+      this.graphSettings.chartColor3,
+      this.graphSettings.chartColor4,
+      this.graphSettings.chartColor5,
+      '#14b8a6',
+      '#f97316',
+      '#8b5cf6'
+    ];
+    return baseColors[index % baseColors.length];
+  }
+
+  getUserBarGradient(): string {
+    const color = this.graphSettings.userColor;
+    const lighterColor = this.adjustColorBrightness(color, 20);
+    return `linear-gradient(135deg, ${color}, ${lighterColor})`;
+  }
+
+  getGlobalBarGradient(): string {
+    const color = this.graphSettings.globalColor;
+    const lighterColor = this.adjustColorBrightness(color, 20);
+    return `linear-gradient(135deg, ${color}, ${lighterColor})`;
+  }
+
+  private adjustColorBrightness(hex: string, percent: number): string {
+    // Remove # if present
+    hex = hex.replace('#', '');
+
+    // Convert to RGB
+    const r = parseInt(hex.substring(0, 2), 16);
+    const g = parseInt(hex.substring(2, 4), 16);
+    const b = parseInt(hex.substring(4, 6), 16);
+
+    // Adjust brightness
+    const adjustedR = Math.min(255, Math.max(0, r + percent));
+    const adjustedG = Math.min(255, Math.max(0, g + percent));
+    const adjustedB = Math.min(255, Math.max(0, b + percent));
+
+    // Convert back to hex
+    const toHex = (n: number) => {
+      const hex = Math.round(n).toString(16);
+      return hex.length === 1 ? '0' + hex : hex;
+    };
+
+    return `#${toHex(adjustedR)}${toHex(adjustedG)}${toHex(adjustedB)}`;
+  }
+
   refreshAllListsAndStats(): void {
     this.loadLists();
     this.loadTotalHours();
@@ -166,7 +304,7 @@ export class ProfileComponent implements OnInit {
         from.setMonth(from.getMonth() - 3);
         break;
       case '12m':
-        from.setMonth(from.getMonth() - 11); // -11 months = 12 months total including current
+        from.setMonth(from.getMonth() - 11);
         break;
       default:
         return undefined;
@@ -266,7 +404,6 @@ export class ProfileComponent implements OnInit {
     });
   }
 
-  // Charts
   loadStatsCharts(params?: { from?: string; to?: string }): void {
     this.isLoadingCharts = true;
     this.userMoviesService.getStatsCharts(params).subscribe({
@@ -352,14 +489,13 @@ export class ProfileComponent implements OnInit {
   getBarHeight(value: number): number {
     const max = this.lineChartMax;
     if (max === 0 || value === 0) return 0;
-    return Math.max((value / max) * 100, 5); // Minimum 5% height for visibility
+    return Math.max((value / max) * 100, 5);
   }
 
   getGlobalAverageForMonth(monthData: any): number {
     return monthData.globalAverage || 0;
   }
 
-  // Generos de Filmes mais Vistos
   get totalGenerosVistos(): number {
     if (!this.chartData?.generos?.length) return 0;
     return this.chartData.generos.reduce((s, g) => s + (g.total || 0), 0);
@@ -385,8 +521,6 @@ export class ProfileComponent implements OnInit {
       .sort((a, b) => b.percent - a.percent);
   }
 
-
-  // Listas & Favoritos
   addToWatchLater(filmeId: number): void {
     this.addMovieToList(filmeId, false);
   }
