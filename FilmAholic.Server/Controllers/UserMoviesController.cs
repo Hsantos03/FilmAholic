@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using FilmAholic.Server.Data;
 using FilmAholic.Server.Models;
+using FilmAholic.Server.Services;
 using System.Security.Claims;
 
 namespace FilmAholic.Server.Controllers
@@ -13,10 +14,12 @@ namespace FilmAholic.Server.Controllers
     public class UserMoviesController : ControllerBase
     {
         private readonly FilmAholicDbContext _context;
+        private readonly IMovieService _movieService;
 
-        public UserMoviesController(FilmAholicDbContext context)
+        public UserMoviesController(FilmAholicDbContext context, IMovieService movieService)
         {
             _context = context;
+            _movieService = movieService;
         }
 
         [HttpPost("add")]
@@ -53,7 +56,8 @@ namespace FilmAholic.Server.Controllers
                         Duracao = seedFilme.Duracao,
                         Genero = seedFilme.Genero,
                         PosterUrl = seedFilme.PosterUrl ?? "",
-                        TmdbId = seedFilme.TmdbId ?? ""
+                        TmdbId = seedFilme.TmdbId ?? "",
+                        Ano = seedFilme.Ano
                     };
 
                     _context.Set<Filme>().Add(dbFilme);
@@ -305,8 +309,67 @@ namespace FilmAholic.Server.Controllers
             query = ApplyPeriodFilter(query, from, to);
             var movies = await query.ToListAsync();
 
+            var filmIdsSemAno = movies
+                .Where(m => m.Filme != null && (m.Filme.Ano == null || m.Filme.Ano == 0) && !string.IsNullOrEmpty(m.Filme.TmdbId))
+                .Select(m => m.Filme!.Id)
+                .Distinct()
+                .Take(10)
+                .ToList();
+            foreach (var fid in filmIdsSemAno)
+            {
+                try
+                {
+                    await _movieService.UpdateMovieFromApisAsync(fid);
+                }
+                catch { }
+            }
+            if (filmIdsSemAno.Count > 0)
+                movies = await query.ToListAsync();
+
             var generos = CountByIndividualGenreTyped(movies).Take(12)
                 .Select(g => new { genero = g.genero, total = g.total }).ToList();
+
+            var buckets = new[] {
+                (min: 0, max: 60, label: "Até 1h"),
+                (min: 61, max: 90, label: "1h – 1h30"),
+                (min: 91, max: 120, label: "1h30 – 2h"),
+                (min: 121, max: 150, label: "2h – 2h30"),
+                (min: 151, max: 180, label: "2h30 – 3h"),
+                (min: 181, max: int.MaxValue, label: "Mais de 3h")
+            };
+            var porDuracao = buckets.Select(b => new
+            {
+                label = b.label,
+                total = movies.Count(m => (m.Filme?.Duracao ?? 0) >= b.min && (m.Filme?.Duracao ?? 0) <= b.max)
+            }).Where(x => x.total > 0).ToList();
+            if (porDuracao.Count == 0)
+                porDuracao = buckets.Select(b => new { label = b.label, total = 0 }).ToList();
+
+            var filmesComAno = movies.Where(m => m.Filme?.Ano != null && m.Filme.Ano > 0).ToList();
+            var porIntervaloAnos = new List<object>();
+            if (filmesComAno.Count > 0)
+            {
+                var minYear = filmesComAno.Min(m => m.Filme!.Ano!.Value);
+                var maxYear = filmesComAno.Max(m => m.Filme!.Ano!.Value);
+                var span = maxYear - minYear + 1;
+                var anosComDados = filmesComAno.Select(m => m.Filme!.Ano!.Value).Distinct().Count();
+
+                int intervalSize = anosComDados >= 12 ? 5 : anosComDados >= 6 ? 10 : Math.Max(10, (int)Math.Ceiling(span / 4.0));
+                intervalSize = Math.Min(20, Math.Max(5, intervalSize));
+
+                var start = minYear;
+                while (start <= maxYear)
+                {
+                    var end = Math.Min(start + intervalSize - 1, maxYear);
+                    var count = filmesComAno.Count(m => m.Filme!.Ano >= start && m.Filme.Ano <= end);
+                    if (count > 0)
+                    {
+                        var label = start == end ? start.ToString() : $"{start}–{end}";
+                        porIntervaloAnos.Add(new { label, total = count });
+                    }
+                    start += intervalSize;
+                }
+            }
 
             DateTime startDate;
             DateTime endDate = to ?? DateTime.Now;
@@ -490,6 +553,8 @@ namespace FilmAholic.Server.Controllers
             return Ok(new
             {
                 generos,
+                porDuracao,
+                porIntervaloAnos,
                 porMes = combinedPorPeriodo,
                 resumo = new { totalFilmes, totalHoras = Math.Round(totalMinutos / 60.0, 1), totalMinutos }
             });

@@ -337,7 +337,7 @@
   gap: 14px;
 }
 
-/* Posters dos Filmes */
+/* Capas dos Filmes */
 .mini-posters {
   display: flex;
   gap: 10px;
@@ -726,6 +726,46 @@
   margin-top: 24px;
 }
 
+/* Modal Ver todos os favoritos */
+.modal-favoritos-todos {
+  max-width: 900px;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.modal-fav-desc {
+  color: #aaa;
+  font-size: 0.9em;
+  margin: -8px 0 16px 0;
+}
+
+.fav-modal-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+}
+
+.fav-modal-col h4 {
+  margin: 0 0 12px 0;
+  font-size: 1em;
+  color: #ddd;
+}
+
+.fav-modal-col .fav-posters-grid {
+  max-height: 320px;
+  overflow-y: auto;
+}
+
+.fav-modal-col .fav-actors-list {
+  max-height: 280px;
+  overflow-y: auto;
+}
+
+@media (max-width: 700px) {
+  .fav-modal-grid {
+    grid-template-columns: 1fr;
+  }
+}
 
 /* MODAL LISTA EXPANDIDA */
 .list-modal-overlay {
@@ -877,6 +917,11 @@
   font-size: 0.85em;
 }
 
+.ver-todos-fav-btn {
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
 .fav-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -912,7 +957,7 @@
   font-size: 0.85em;
 }
 
-/* Posters em grelha */
+/* Capas em grelha */
 .fav-posters-grid {
   display: grid;
   grid-template-columns: repeat(5, 1fr);
@@ -1280,7 +1325,6 @@
   color: rgba(255, 255, 255, 0.5);
 }
 
-/* Statistics view (main area): resumo + Tu vs Media */
 .statistics-view {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -1393,9 +1437,6 @@
   }
 }
 
-/* =======================
-   FR31 - Estatísticas em gráfico
-======================= */
 .charts-section {
   margin-bottom: 32px;
   padding: 20px;
@@ -1540,7 +1581,6 @@
   padding: 10px 0;
 }
 
-/* Bar chart for monthly viewing */
 .chart-bar-container {
   padding: 20px 0;
 }

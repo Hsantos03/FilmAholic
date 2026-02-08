@@ -40,10 +40,14 @@ export class ProfileComponent implements OnInit {
   chartData: StatsCharts | null = null;
   isLoadingCharts = false;
 
+  readonly MAX_FAVORITES = 50;
+  readonly TOP_10 = 10;
+
   favoritosFilmes: number[] = [];
   favoritosAtores: string[] = [];
   novoAtor = '';
   isSavingFavorites = false;
+  showAllFavoritesModal = false;
 
   draggedIndex: number | null = null;
   dragOverIndex: number | null = null;
@@ -166,7 +170,7 @@ export class ProfileComponent implements OnInit {
         from.setMonth(from.getMonth() - 3);
         break;
       case '12m':
-        from.setMonth(from.getMonth() - 11); // -11 months = 12 months total including current
+        from.setMonth(from.getMonth() - 11);
         break;
       default:
         return undefined;
@@ -301,6 +305,114 @@ export class ProfileComponent implements OnInit {
     return (total / this.chartBarMax) * 100;
   }
 
+  get chartBarMaxDuracao(): number {
+    if (!this.chartData?.porDuracao?.length) return 1;
+    return Math.max(...this.chartData.porDuracao.map(d => d.total), 1);
+  }
+
+  chartBarWidthDuracao(total: number): number {
+    return (total / this.chartBarMaxDuracao) * 100;
+  }
+
+  get totalDuracaoVistos(): number {
+    if (!this.chartData?.porDuracao?.length) return 0;
+    return this.chartData.porDuracao.reduce((s, d) => s + (d.total || 0), 0);
+  }
+
+  duracaoPercent(total: number): number {
+    const all = this.totalDuracaoVistos;
+    if (!all) return 0;
+    return +(total * 100 / all).toFixed(1);
+  }
+
+  getPieSegmentStartDuracao(index: number): number {
+    if (!this.chartData?.porDuracao?.length) return 0;
+    const total = this.totalDuracaoVistos;
+    if (total === 0) return 0;
+    let angle = 0;
+    for (let i = 0; i < index; i++) {
+      angle += ((this.chartData.porDuracao[i].total || 0) / total) * 360;
+    }
+    return angle;
+  }
+
+  getPieSegmentEndDuracao(index: number): number {
+    if (!this.chartData?.porDuracao?.length) return 0;
+    const total = this.totalDuracaoVistos;
+    if (total === 0) return 0;
+    let angle = 0;
+    for (let i = 0; i <= index; i++) {
+      angle += ((this.chartData.porDuracao[i].total || 0) / total) * 360;
+    }
+    return angle;
+  }
+
+  pieSegmentDDuracao(index: number): string {
+    const start = this.getPieSegmentStartDuracao(index);
+    const end = this.getPieSegmentEndDuracao(index);
+    const r = 50;
+    const x0 = 50 + r * Math.cos((start - 90) * Math.PI / 180);
+    const y0 = 50 + r * Math.sin((start - 90) * Math.PI / 180);
+    const x1 = 50 + r * Math.cos((end - 90) * Math.PI / 180);
+    const y1 = 50 + r * Math.sin((end - 90) * Math.PI / 180);
+    const large = (end - start) > 180 ? 1 : 0;
+    return `M 50 50 L ${x0} ${y0} A ${r} ${r} 0 ${large} 1 ${x1} ${y1} Z`;
+  }
+
+  get chartBarMaxIntervaloAnos(): number {
+    if (!this.chartData?.porIntervaloAnos?.length) return 1;
+    return Math.max(...this.chartData.porIntervaloAnos.map(d => d.total), 1);
+  }
+
+  chartBarWidthIntervaloAnos(total: number): number {
+    return (total / this.chartBarMaxIntervaloAnos) * 100;
+  }
+
+  get totalIntervaloAnosVistos(): number {
+    if (!this.chartData?.porIntervaloAnos?.length) return 0;
+    return this.chartData.porIntervaloAnos.reduce((s, d) => s + (d.total || 0), 0);
+  }
+
+  intervaloAnosPercent(total: number): number {
+    const all = this.totalIntervaloAnosVistos;
+    if (!all) return 0;
+    return +(total * 100 / all).toFixed(1);
+  }
+
+  getPieSegmentStartIntervaloAnos(index: number): number {
+    if (!this.chartData?.porIntervaloAnos?.length) return 0;
+    const total = this.totalIntervaloAnosVistos;
+    if (total === 0) return 0;
+    let angle = 0;
+    for (let i = 0; i < index; i++) {
+      angle += ((this.chartData.porIntervaloAnos[i].total || 0) / total) * 360;
+    }
+    return angle;
+  }
+
+  getPieSegmentEndIntervaloAnos(index: number): number {
+    if (!this.chartData?.porIntervaloAnos?.length) return 0;
+    const total = this.totalIntervaloAnosVistos;
+    if (total === 0) return 0;
+    let angle = 0;
+    for (let i = 0; i <= index; i++) {
+      angle += ((this.chartData.porIntervaloAnos[i].total || 0) / total) * 360;
+    }
+    return angle;
+  }
+
+  pieSegmentDIntervaloAnos(index: number): string {
+    const start = this.getPieSegmentStartIntervaloAnos(index);
+    const end = this.getPieSegmentEndIntervaloAnos(index);
+    const r = 50;
+    const x0 = 50 + r * Math.cos((start - 90) * Math.PI / 180);
+    const y0 = 50 + r * Math.sin((start - 90) * Math.PI / 180);
+    const x1 = 50 + r * Math.cos((end - 90) * Math.PI / 180);
+    const y1 = 50 + r * Math.sin((end - 90) * Math.PI / 180);
+    const large = (end - start) > 180 ? 1 : 0;
+    return `M 50 50 L ${x0} ${y0} A ${r} ${r} 0 ${large} 1 ${x1} ${y1} Z`;
+  }
+
   getPieSegmentStart(index: number): number {
     if (!this.chartData?.generos?.length) return 0;
     const total = this.chartData.generos.reduce((s, g) => s + g.total, 0);
@@ -352,7 +464,7 @@ export class ProfileComponent implements OnInit {
   getBarHeight(value: number): number {
     const max = this.lineChartMax;
     if (max === 0 || value === 0) return 0;
-    return Math.max((value / max) * 100, 5); // Minimum 5% height for visibility
+    return Math.max((value / max) * 100, 5);
   }
 
   getGlobalAverageForMonth(monthData: any): number {
@@ -485,14 +597,39 @@ export class ProfileComponent implements OnInit {
   loadFavorites(): void {
     this.favoritesService.getFavorites().subscribe({
       next: (fav: FavoritosDTO) => {
-        this.favoritosFilmes = (fav?.filmes || []).slice(0, 10);
-        this.favoritosAtores = (fav?.atores || []).slice(0, 10);
+        const filmes = fav?.filmes ?? (fav as any)?.Filmes ?? [];
+        const atores = fav?.atores ?? (fav as any)?.Atores ?? [];
+        this.favoritosFilmes = Array.isArray(filmes) ? filmes : [];
+        this.favoritosAtores = Array.isArray(atores) ? atores : [];
+        this.ensureCatalogoHasFavorites();
       },
       error: () => {
         this.favoritosFilmes = [];
         this.favoritosAtores = [];
       }
     });
+  }
+
+  private ensureCatalogoHasFavorites(): void {
+    const missing = this.favoritosFilmes.filter(id => !this.catalogo.some(f => f.id === id));
+    missing.forEach(id => {
+      this.filmesService.getById(id).subscribe({
+        next: (f) => {
+          if (f && !this.catalogo.some(c => c.id === f.id)) {
+            this.catalogo.push(f);
+          }
+        },
+        error: () => { }
+      });
+    });
+  }
+
+  openVerTodosFavoritos(): void {
+    this.showAllFavoritesModal = true;
+  }
+
+  closeVerTodosFavoritos(): void {
+    this.showAllFavoritesModal = false;
   }
 
   isFilmeFavorito(filmeId: number): boolean {
@@ -505,7 +642,7 @@ export class ProfileComponent implements OnInit {
     if (idx >= 0) {
       this.favoritosFilmes.splice(idx, 1);
     } else {
-      if (this.favoritosFilmes.length >= 10) return;
+      if (this.favoritosFilmes.length >= this.MAX_FAVORITES) return;
       this.favoritosFilmes.push(filmeId);
     }
 
@@ -527,7 +664,7 @@ export class ProfileComponent implements OnInit {
       this.novoAtor = '';
       return;
     }
-    if (this.favoritosAtores.length >= 10) return;
+    if (this.favoritosAtores.length >= this.MAX_FAVORITES) return;
 
     this.favoritosAtores.push(nome);
     this.novoAtor = '';
@@ -543,8 +680,8 @@ export class ProfileComponent implements OnInit {
     this.isSavingFavorites = true;
 
     const dto: FavoritosDTO = {
-      filmes: this.favoritosFilmes.slice(0, 10),
-      atores: this.favoritosAtores.slice(0, 10)
+      filmes: this.favoritosFilmes,
+      atores: this.favoritosAtores
     };
 
     this.favoritesService.saveFavorites(dto).subscribe({
@@ -558,6 +695,17 @@ export class ProfileComponent implements OnInit {
     return this.favoritosFilmes
       .map(id => this.catalogo.find(f => f.id === id))
       .filter((x): x is Filme => !!x);
+  }
+
+  get favoritosFilmesDetalhesTop10(): Filme[] {
+    return this.favoritosFilmes
+      .slice(0, this.TOP_10)
+      .map(id => this.catalogo.find(f => f.id === id))
+      .filter((x): x is Filme => !!x);
+  }
+
+  get favoritosAtoresTop10(): string[] {
+    return this.favoritosAtores.slice(0, this.TOP_10);
   }
 
   openEdit(): void {
@@ -835,8 +983,7 @@ export class ProfileComponent implements OnInit {
     }
 
     const newOrder = [...this.favoritosFilmes];
-    const [removed] = newOrder.splice(this.draggedIndex, 1);
-    newOrder.splice(dropIndex, 0, removed);
+    [newOrder[this.draggedIndex], newOrder[dropIndex]] = [newOrder[dropIndex], newOrder[this.draggedIndex]];
 
     this.favoritosFilmes = newOrder;
     this.saveFavorites();
@@ -885,8 +1032,7 @@ export class ProfileComponent implements OnInit {
     }
 
     const newOrder = [...this.favoritosAtores];
-    const [removed] = newOrder.splice(this.draggedActorIndex, 1);
-    newOrder.splice(dropIndex, 0, removed);
+    [newOrder[this.draggedActorIndex], newOrder[dropIndex]] = [newOrder[dropIndex], newOrder[this.draggedActorIndex]];
 
     this.favoritosAtores = newOrder;
     this.saveFavorites();

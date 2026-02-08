@@ -1,4 +1,4 @@
-﻿using FilmAholic.Server.Data;
+using FilmAholic.Server.Data;
 using FilmAholic.Server.DTOs;
 using FilmAholic.Server.Models;
 using FilmAholic.Server.Services;
@@ -193,10 +193,6 @@ namespace FilmAholic.Server.Controllers
             }
         }
 
-        // ---------------------------
-        // ✅ FR06 - Favorites (Top 10)
-        // ---------------------------
-
         [Authorize]
         [HttpGet("favorites")]
         public async Task<IActionResult> GetFavorites()
@@ -224,10 +220,12 @@ namespace FilmAholic.Server.Controllers
 
             return Ok(new FavoritosDTO
             {
-                Filmes = filmes.Take(10).ToList(),
-                Atores = atores.Take(10).ToList()
+                Filmes = filmes,
+                Atores = atores
             });
         }
+
+        private const int MaxFavoritesStored = 50;
 
         [Authorize]
         [HttpPut("favorites")]
@@ -237,8 +235,8 @@ namespace FilmAholic.Server.Controllers
             var user = await _context.Users.FindAsync(userId);
             if (user == null) return NotFound();
 
-            user.TopFilmes = JsonSerializer.Serialize(dto.Filmes.Take(10).ToList());
-            user.TopAtores = JsonSerializer.Serialize(dto.Atores.Take(10).ToList());
+            user.TopFilmes = JsonSerializer.Serialize((dto.Filmes ?? new List<int>()).Take(MaxFavoritesStored).ToList());
+            user.TopAtores = JsonSerializer.Serialize((dto.Atores ?? new List<string>()).Take(MaxFavoritesStored).ToList());
 
             await _context.SaveChangesAsync();
             return Ok();

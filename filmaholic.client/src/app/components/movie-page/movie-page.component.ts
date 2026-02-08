@@ -19,7 +19,7 @@ export class MoviePageComponent implements OnInit, OnDestroy {
 
   userName = localStorage.getItem('userName') || 'User';
 
-  /** Foto de perfil do utilizador atual (localStoragel). */
+  /** Foto de perfil do utilizador atual */
   get userFotoPerfilUrl(): string | null {
     const u = localStorage.getItem('fotoPerfilUrl');
     return u && u.trim() ? u : null;
@@ -252,7 +252,7 @@ export class MoviePageComponent implements OnInit, OnDestroy {
       return;
     }
 
-    const score = this.calcScoreFromEvent(starIndex, ev); // 1..10
+    const score = this.calcScoreFromEvent(starIndex, ev);
     this.isSavingMovieRating = true;
     this.ratingError = '';
 
@@ -337,7 +337,6 @@ export class MoviePageComponent implements OnInit, OnDestroy {
       return;
     }
 
-    // Toggle: se já tem o mesmo voto, remove (0)
     const newValue: 1 | -1 | 0 = (c.myVote === value) ? 0 : value;
 
     this.commentsService.vote(c.id, newValue).subscribe({
@@ -450,22 +449,29 @@ export class MoviePageComponent implements OnInit, OnDestroy {
     });
   }
 
+  private readonly MAX_FAVORITES = 50;
+
   toggleFavorite(): void {
     if (!this.filme) return;
 
     this.favoritesService.getFavorites().subscribe({
       next: fav => {
-        const filmes = fav?.filmes ?? [];
-        const atores = fav?.atores ?? [];
+        const filmes = fav?.filmes ?? (fav as any)?.Filmes ?? [];
+        const atores = fav?.atores ?? (fav as any)?.Atores ?? [];
+        const filmesList = Array.isArray(filmes) ? filmes : [];
 
-        const isAlready = filmes.includes(this.filme!.id);
-        const updatedFilmes = isAlready
-          ? filmes.filter(id => id !== this.filme!.id)
-          : [...filmes, this.filme!.id].slice(0, 10);
+        const isAlready = filmesList.includes(this.filme!.id);
+        let updatedFilmes: number[];
+        if (isAlready) {
+          updatedFilmes = filmesList.filter(id => id !== this.filme!.id);
+        } else {
+          if (filmesList.length >= this.MAX_FAVORITES) return;
+          updatedFilmes = [...filmesList, this.filme!.id];
+        }
 
         this.isFavorite = !isAlready;
 
-        this.favoritesService.saveFavorites({ filmes: updatedFilmes, atores }).subscribe({
+        this.favoritesService.saveFavorites({ filmes: updatedFilmes, atores: Array.isArray(atores) ? atores : [] }).subscribe({
           next: () => this.favoritesService.notifyFavoritesChanged(),
           error: (err) => console.warn('saveFavorites failed', err)
         });
