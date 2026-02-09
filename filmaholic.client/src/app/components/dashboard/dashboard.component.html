@@ -165,7 +165,7 @@
 
             <div class="nextup-meta">
               <h3 class="nextup-title">{{ nextToWatch.titulo }}</h3>
-              <div class="nextup-sub">{{ nextToWatch.genero }} &middot; {{ nextToWatch.duracao }} min</div>
+              <div class="nextup-sub">{{ nextToWatch.genero }} &middot; {{ nextToWatch.duracao | formatDuration }}</div>
               <div class="nextup-actions">
                 <button class="action-btn" (click)="goToMovieDetail(nextToWatch.id)">Ver detalhes</button>
               </div>

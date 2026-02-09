@@ -10,7 +10,7 @@
   <div *ngIf="filme as f" class="movie-page-inner">
     <div class="movie-card">
 
-      <!-- POSTER -->
+      <!--  CAPA -->
       <aside class="poster-col">
         <img class="movie-poster" [src]="posterOf()" [alt]="f.titulo" />
 
@@ -25,7 +25,7 @@
         <!-- TÍTULO -->
         <h1 class="movie-title">{{ f.titulo }}</h1>
         <div class="movie-sub">
-          {{ f.ano ? f.ano + ' · ' : '' }}{{ f.genero }} · {{ f.duracao }} min
+          {{ f.ano ? f.ano + ' · ' : '' }}{{ f.genero }} · {{ f.duracao | formatDuration }}
         </div>
 
         <!-- AÇÕES -->

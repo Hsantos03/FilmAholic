@@ -16,10 +16,12 @@ import { ProfileComponent } from './components/profile/profile.component';
 import { SelecionarGenerosComponent } from './components/selecionar-generos/selecionar-generos.component';
 import { SearchResultsComponent } from './components/search-results/search-results.component';
 import { MoviePageComponent } from './components/movie-page/movie-page.component';
+import { FormatDurationPipe } from './pipes/format-duration.pipe';
 
 @NgModule({
   declarations: [
     AppComponent,
+    FormatDurationPipe,
     RegisterComponent,
     LoginComponent,
     EmailConfirmadoComponent,
