@@ -20,6 +20,7 @@ namespace FilmAholic.Server.Models
         public string Texto { get; set; } = string.Empty;
 
         public DateTime DataCriacao { get; set; } = DateTime.UtcNow;
+        public DateTime? DataEdicao { get; set; }
     }
 
 }
