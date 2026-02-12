@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { environment } from '../../environments/environment';
 
 export interface Filme {
   id: number;
@@ -45,7 +46,8 @@ export interface RatingsDto {
 
 @Injectable({ providedIn: 'root' })
 export class FilmesService {
-  private apiUrl = 'https://localhost:7277/api/filmes';
+  private readonly apiBase = environment.apiBaseUrl || '';
+  private apiUrl = this.apiBase ? `${this.apiBase}/api/filmes` : '/api/filmes';
 
   constructor(private http: HttpClient) { }
 

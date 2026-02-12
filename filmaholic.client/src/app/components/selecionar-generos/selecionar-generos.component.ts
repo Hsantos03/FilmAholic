@@ -21,11 +21,9 @@ export class SelecionarGenerosComponent implements OnInit {
   ) { }
 
   ngOnInit() {
-    // Obter userId do localStorage
     this.userId = localStorage.getItem('user_id') || '';
     
     if (!this.userId) {
-      // Se nÃ£o houver userId, redirecionar para login
       this.router.navigate(['/login']);
       return;
     }
@@ -41,8 +39,8 @@ export class SelecionarGenerosComponent implements OnInit {
         this.isLoadingGeneros = false;
       },
       error: (err) => {
-        console.error('Erro ao carregar gÃ©neros:', err);
-        this.error = 'Erro ao carregar gÃ©neros. Por favor, tente novamente.';
+        console.error('Erro ao carregar géneros:', err);
+        this.error = 'Erro ao carregar géneros. Por favor, tente novamente.';
         this.isLoadingGeneros = false;
       }
     });
@@ -51,10 +49,8 @@ export class SelecionarGenerosComponent implements OnInit {
   toggleGenero(generoId: number) {
     const index = this.generosSelecionados.indexOf(generoId);
     if (index > -1) {
-      // Remover se jÃ¡ estiver selecionado
       this.generosSelecionados.splice(index, 1);
     } else {
-      // Adicionar se nÃ£o estiver selecionado
       this.generosSelecionados.push(generoId);
     }
   }
@@ -65,7 +61,7 @@ export class SelecionarGenerosComponent implements OnInit {
 
   salvarGeneros() {
     if (this.generosSelecionados.length === 0) {
-      alert('Por favor, selecione pelo menos um gÃ©nero favorito.');
+      alert('Por favor, selecione pelo menos um género favorito.');
       return;
     }
 
@@ -79,8 +75,8 @@ export class SelecionarGenerosComponent implements OnInit {
       },
       error: (err) => {
         this.isLoading = false;
-        console.error('Erro ao guardar gÃ©neros:', err);
-        this.error = err.error?.message || 'Erro ao guardar gÃ©neros favoritos. Por favor, tente novamente.';
+        console.error('Erro ao guardar géneros:', err);
+        this.error = err.error?.message || 'Erro ao guardar géneros favoritos. Por favor, tente novamente.';
       }
     });
   }
@@ -91,10 +87,8 @@ export class SelecionarGenerosComponent implements OnInit {
 
   selecionarTodos() {
     if (this.generosSelecionados.length === this.generos.length) {
-      // Se todos estÃ£o selecionados, desselecionar todos
       this.generosSelecionados = [];
     } else {
-      // Selecionar todos os gÃ©neros
       this.generosSelecionados = this.generos.map(g => g.id);
     }
   }
