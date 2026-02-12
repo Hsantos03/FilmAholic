@@ -12,7 +12,9 @@ export class LoginComponent implements OnInit {
   loginData = { email: '', password: '' };
   showEmailVerificationMessage = false;
   emailParaVerificar = '';
+
   isLoading = false;
+
   externalSuccess = false;
   externalNome = '';
   externalEmail = '';

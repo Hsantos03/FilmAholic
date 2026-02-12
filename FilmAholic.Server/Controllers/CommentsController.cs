@@ -74,6 +74,7 @@ namespace FilmAholic.Server.Controllers
                 FotoPerfilUrl = fotoByUserId.TryGetValue(c.UserId, out var url) ? url : null,
                 Texto = c.Texto,
                 DataCriacao = c.DataCriacao,
+                DataEdicao = c.DataEdicao,
                 CanEdit = userId != null && c.UserId == userId,
 
                 LikeCount = likesByComment.TryGetValue(c.Id, out var lc) ? lc : 0,
@@ -162,6 +163,7 @@ namespace FilmAholic.Server.Controllers
             if (comment.UserId != userId) return Forbid();
 
             comment.Texto = dto.Texto.Trim();
+            comment.DataEdicao = DateTime.UtcNow;
             await _context.SaveChangesAsync();
 
             var likeCount = await _context.CommentVotes.CountAsync(v => v.CommentId == id && v.IsLike);
@@ -181,6 +183,7 @@ namespace FilmAholic.Server.Controllers
                 FotoPerfilUrl = fotoUrl,
                 Texto = comment.Texto,
                 DataCriacao = comment.DataCriacao,
+                DataEdicao = comment.DataEdicao,
                 CanEdit = true,
                 LikeCount = likeCount,
                 DislikeCount = dislikeCount,

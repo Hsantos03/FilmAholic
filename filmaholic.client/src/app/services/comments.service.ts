@@ -10,6 +10,7 @@ export interface CommentDTO {
   texto: string;
   rating: number;
   dataCriacao: string;
+  dataEdicao?: string | null;
   canEdit?: boolean;
 
   likeCount: number;

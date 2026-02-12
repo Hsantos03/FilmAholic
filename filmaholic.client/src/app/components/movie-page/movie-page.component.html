@@ -270,10 +270,18 @@
                   </div>
                 </div>
 
-                <p class="comment-text" *ngIf="editingCommentId !== c.id">{{ c.texto }}</p>
+                <p class="comment-text" *ngIf="editingCommentId !== c.id">
+                  {{ c.texto }}
+                </p>
 
                 <div class="comment-meta" *ngIf="editingCommentId !== c.id">
-                  <span>{{ c.dataCriacao | date:'short' }}</span>
+                  <span *ngIf="c.dataEdicao; else createdDate">
+                    Editado: {{ c.dataEdicao | date:'dd/MM/yyyy, HH:mm':'':'pt-PT' }}
+                  </span>
+
+                  <ng-template #createdDate>
+                    {{ c.dataCriacao | date:'dd/MM/yyyy, HH:mm':'':'pt-PT' }}
+                  </ng-template>
                 </div>
               </div>
             </div>
