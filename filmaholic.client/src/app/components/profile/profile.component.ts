@@ -187,7 +187,7 @@ export class ProfileComponent implements OnInit {
           this.capaUrl = res?.capaUrl ?? null;
 
           if (res?.dataCriacao) {
-            this.joined = new Date(res.dataCriacao).toLocaleString();
+            this.joined = new Date(res.dataCriacao).toLocaleString('pt-PT');
           }
 
           this.xp = res?.xp ?? 0;
@@ -1077,9 +1077,9 @@ export class ProfileComponent implements OnInit {
 
   get currentListTitle(): string {
     if (this.currentListType === 'watchLater') {
-      return 'Watch Later';
+      return 'Quero ver';
     } else if (this.currentListType === 'watched') {
-      return 'Watched';
+      return 'Já vi';
     }
     return '';
   }

@@ -65,9 +65,6 @@ namespace FilmAholic.Server.Migrations
                     b.Property<DateTime>("DataCriacao")
                         .HasColumnType("datetime2");
 
-                    b.Property<DateTime?>("DataEdicao")
-                        .HasColumnType("datetime2");
-
                     b.Property<int>("FilmeId")
                         .HasColumnType("int");
 

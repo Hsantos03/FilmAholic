@@ -6,7 +6,7 @@
 
   <button class="back-btn"
           (click)="goToHome()"
-          title="Voltar a homepage">
+          title="Voltar ao painel">
     &larr;
   </button>
 
@@ -22,7 +22,7 @@
   <!-- LEFT COLUMN -->
   <div class="profile-left">
     <div class="avatar">
-      <img *ngIf="fotoPerfilUrl" [src]="fotoPerfilUrl" alt="Profile picture" />
+      <img *ngIf="fotoPerfilUrl" [src]="fotoPerfilUrl" alt="Foto de perfil" />
       <span *ngIf="!fotoPerfilUrl">👤</span>
 
       <button class="avatar-edit-btn"
@@ -33,18 +33,18 @@
     </div>
 
     <aside class="profile-sidebar">
-      <button class="primary-btn" (click)="openEdit()">Manage Account</button>
+      <button class="primary-btn" (click)="openEdit()">Editar conta</button>
 
       <ul class="menu">
-        <li class="menu-item" [class.active]="activeSection === 'overview'" (click)="showOverview()">Preferences</li>
-        <li class="menu-item" [class.active]="activeSection === 'statistics'" (click)="showStatistics()">Statistics</li>
-        <li>Achievements</li>
-        <li class="logout" (click)="logout()">Log out</li>
-        <li class="logout" (click)="openDeleteConfirm()">Delete account</li>
+        <li class="menu-item" [class.active]="activeSection === 'overview'" (click)="showOverview()">Preferências</li>
+        <li class="menu-item" [class.active]="activeSection === 'statistics'" (click)="showStatistics()">Estatísticas</li>
+        <li>Conquistas</li>
+        <li class="logout" (click)="logout()">Terminar sessão</li>
+        <li class="logout" (click)="openDeleteConfirm()">Apagar conta</li>
       </ul>
 
       <div class="xp-level">
-        <h3>Progress</h3>
+        <h3>Progresso</h3>
 
         <div class="stat-row">
           <span>XP</span>
@@ -52,7 +52,7 @@
         </div>
 
         <div class="stat-row">
-          <span>Level</span>
+          <span>Nível</span>
           <strong>{{ level }}</strong>
         </div>
 
@@ -61,17 +61,17 @@
         </div>
 
         <div class="xp-text">
-          Next level in {{ 10 - (xp % 10) }} XP
+          Faltam {{ 10 - (xp % 10) }} XP para o próximo nível
         </div>
       </div>
 
       <div class="list-counts">
         <div class="stat-row">
-          <span>Watch later</span>
+          <span>Quero Ver</span>
           <strong>{{ watchLater.length }}</strong>
         </div>
         <div class="stat-row">
-          <span>Watched</span>
+          <span>Já Vi</span>
           <strong>{{ watched.length }}</strong>
         </div>
       </div>
@@ -85,9 +85,9 @@
       <div class="profile-info">
         <h2>{{ userName }}</h2>
         <div class="meta-row">
-          <span class="joined">Joined &middot; {{ joined }}</span>
+          <span class="joined">Membro desde &middot; {{ joined }}</span>
         </div>
-        <p class="bio">{{ bio || 'No information yet' }}</p>
+        <p class="bio">{{ bio || 'Sem informação ainda' }}</p>
       </div>
 
       <div class="lists-top">
@@ -95,18 +95,18 @@
         <!-- WATCH LATER LIST -->
         <div class="list-box clickable" (click)="openListModal('watchLater')">
           <div class="list-box-left">
-            <h3>Watch later</h3>
-            <span class="subtitle">{{ watchLater.length }} Titles</span>
+            <h3>Quero Ver</h3>
+            <span class="subtitle">{{ watchLater.length }} {{ watchLater.length === 1 ? 'filme' : 'filmes' }}</span>
           </div>
 
           <div class="list-box-right">
             <div class="mini-posters">
               <img *ngFor="let movie of watchLater | slice:0:5"
                    [src]="movie.filme?.posterUrl || 'https://via.placeholder.com/120x180'"
-                   alt="movie poster" />
+                   alt="Cartaz do filme" />
             </div>
 
-            <button class="pill-btn" title="Watch later">
+            <button class="pill-btn" title="Ver mais tarde">
               <span class="icon">🚀</span>
             </button>
           </div>
@@ -115,18 +115,18 @@
         <!-- WATCHED LIST -->
         <div class="list-box clickable" (click)="openListModal('watched')">
           <div class="list-box-left">
-            <h3>Watched</h3>
-            <span class="subtitle">{{ watched.length }} Titles</span>
+            <h3>Já Vi</h3>
+            <span class="subtitle">{{ watched.length }} {{ watched.length === 1 ? 'filme' : 'filmes' }}</span>
           </div>
 
           <div class="list-box-right">
             <div class="mini-posters">
               <img *ngFor="let movie of watched | slice:0:5"
                    [src]="movie.filme?.posterUrl || 'https://via.placeholder.com/120x180'"
-                   alt="movie poster" />
+                   alt="Cartaz do filme" />
             </div>
 
-            <button class="pill-btn gray" title="Watched">
+            <button class="pill-btn gray" title="Vistos">
               <span class="icon">✅</span>
             </button>
           </div>
@@ -136,13 +136,13 @@
       <!-- FAVORITES -->
       <div class="section fav-section">
         <div class="section-title">
-          <h3>Favorites</h3>
-          <span class="subtitle">Top 10 Movies &amp; Actors</span>
+          <h3>Favoritos</h3>
+          <span class="subtitle">Top 10 Filmes &amp; Atores</span>
         </div>
 
         <div class="fav-header">
           <span class="fav-counter">
-            {{ favoritosFilmes.length }}/{{ MAX_FAVORITES }} movies &middot; {{ favoritosAtores.length }}/{{ MAX_FAVORITES }} actors
+            {{ favoritosFilmes.length }}/{{ MAX_FAVORITES }} filmes &middot; {{ favoritosAtores.length }}/{{ MAX_FAVORITES }} atores
           </span>
           <button type="button" class="action-btn ver-todos-fav-btn" (click)="openVerTodosFavoritos()">
             Ver todos os favoritos
@@ -154,7 +154,7 @@
           <!-- Top 10 Movies -->
           <div class="fav-card">
             <div class="fav-card-head">
-              <h4>Top 10 Movies</h4>
+              <h4>Top 10 Filmes</h4>
               <span class="fav-mini">{{ favoritosFilmesDetalhesTop10.length }}/10</span>
             </div>
 
@@ -169,7 +169,7 @@
                    (dragend)="onDragEnd()"
                    [class.dragging]="draggedIndex === i"
                    [class.drag-over]="dragOverIndex === i"
-                   title="Drag to reorder">
+                   title="Arrasta para reordenar">
                 <span class="position-badge">{{ i + 1 }}</span>
                 <img [src]="f.posterUrl"
                      [alt]="f.titulo"
@@ -180,8 +180,8 @@
 
             <ng-template #noFavMovies>
               <div class="fav-empty">
-                No favorite movies yet.<br />
-                <span class="fav-empty-hint">Use "★ Favorite" on movie pages (até {{ MAX_FAVORITES }}).</span>
+                Ainda não escolheu filmes favoritos.<br />
+                <span class="fav-empty-hint">Usa "★ Favorito" nas páginas dos filmes (até {{ MAX_FAVORITES }}).</span>
               </div>
             </ng-template>
           </div>
@@ -189,21 +189,21 @@
           <!-- Top 10 Actors -->
           <div class="fav-card">
             <div class="fav-card-head">
-              <h4>Top 10 Actors</h4>
+              <h4>Top 10 Atores</h4>
               <span class="fav-mini">{{ favoritosAtoresTop10.length }}/10</span>
             </div>
 
             <div class="fav-actor-add">
               <input type="text"
                      [(ngModel)]="novoAtor"
-                     placeholder="Add actor name..."
+                     placeholder="Adicionar nome do ator..."
                      [disabled]="isSavingFavorites || favoritosAtores.length >= MAX_FAVORITES" />
 
               <button type="button"
                       class="action-btn"
                       (click)="addAtorFavorito()"
                       [disabled]="isSavingFavorites || !novoAtor.trim() || favoritosAtores.length >= MAX_FAVORITES">
-                Add
+                Adicionar
               </button>
             </div>
 
@@ -218,14 +218,14 @@
                    (dragend)="onActorDragEnd()"
                    [class.dragging-actor]="draggedActorIndex === i"
                    [class.drag-over-actor]="dragOverActorIndex === i"
-                   title="Drag to reorder">
+                   title="Arrasta para reordenar">
                 <span class="actor-rank">{{ i + 1 }}</span>
                 <span class="actor-name">{{ a }}</span>
                 <button type="button"
                         class="actor-remove-btn"
                         (click)="removeAtorFavorito(a)"
                         [disabled]="isSavingFavorites"
-                        title="Remove actor">
+                        title="Remover ator">
                   &times;
                 </button>
               </div>
@@ -233,8 +233,8 @@
 
             <ng-template #noFavActors>
               <div class="fav-empty">
-                No favorite actors yet.<br />
-                <span class="fav-empty-hint">Add up to {{ MAX_FAVORITES }}.</span>
+                Ainda não tens atores favoritos.<br />
+                <span class="fav-empty-hint">Adiciona até {{ MAX_FAVORITES }}.</span>
               </div>
             </ng-template>
           </div>
@@ -263,7 +263,7 @@
                      (dragend)="onDragEnd()"
                      [class.dragging]="draggedIndex === i"
                      [class.drag-over]="dragOverIndex === i"
-                     title="Drag to reorder">
+                     title="Arrasta para reordenar">
                   <span class="position-badge">{{ i + 1 }}</span>
                   <img [src]="f.posterUrl" [alt]="f.titulo"
                        (dblclick)="removeFromFavorites(f.id)"
@@ -274,14 +274,18 @@
                 <p class="chart-empty">Nenhum filme nos favoritos.</p>
               </ng-template>
             </div>
+
             <div class="fav-modal-col">
               <h4>Atores ({{ favoritosAtores.length }})</h4>
               <div class="fav-actor-add">
-                <input type="text" [(ngModel)]="novoAtor" placeholder="Add actor..."
+                <input type="text" [(ngModel)]="novoAtor" placeholder="Adicionar ator..."
                        [disabled]="isSavingFavorites || favoritosAtores.length >= MAX_FAVORITES" />
                 <button type="button" class="action-btn" (click)="addAtorFavorito()"
-                        [disabled]="isSavingFavorites || !novoAtor.trim() || favoritosAtores.length >= MAX_FAVORITES">Add</button>
+                        [disabled]="isSavingFavorites || !novoAtor.trim() || favoritosAtores.length >= MAX_FAVORITES">
+                  Adicionar
+                </button>
               </div>
+
               <div class="fav-actors-list" *ngIf="favoritosAtores.length > 0; else noFavActorsModal">
                 <div class="fav-actor-card"
                      *ngFor="let a of favoritosAtores; let i = index"
@@ -293,17 +297,19 @@
                      (dragend)="onActorDragEnd()"
                      [class.dragging-actor]="draggedActorIndex === i"
                      [class.drag-over-actor]="dragOverActorIndex === i"
-                     title="Drag to reorder">
+                     title="Arrasta para reordenar">
                   <span class="actor-rank">{{ i + 1 }}</span>
                   <span class="actor-name">{{ a }}</span>
-                  <button type="button" class="actor-remove-btn" (click)="removeAtorFavorito(a)" [disabled]="isSavingFavorites" title="Remove">&times;</button>
+                  <button type="button" class="actor-remove-btn" (click)="removeAtorFavorito(a)" [disabled]="isSavingFavorites" title="Remover">&times;</button>
                 </div>
               </div>
+
               <ng-template #noFavActorsModal>
                 <p class="chart-empty">Nenhum ator nos favoritos.</p>
               </ng-template>
             </div>
           </div>
+
           <div class="modal-actions">
             <button type="button" class="save-btn" (click)="closeVerTodosFavoritos()">Fechar</button>
           </div>
@@ -318,19 +324,31 @@
         <div class="stats-period-filter">
           <label for="statsPeriod">Filtrar por período:</label>
           <div class="sort-wrap">
-            <button type="button" class="sort-btn" (click)="toggleStatsPeriodMenu()" [class.active]="showStatsPeriodMenu" aria-label="Filtrar por período" aria-haspopup="true" [attr.aria-expanded]="showStatsPeriodMenu">
+            <button type="button" class="sort-btn" (click)="toggleStatsPeriodMenu()"
+                    [class.active]="showStatsPeriodMenu"
+                    aria-label="Filtrar por período"
+                    aria-haspopup="true"
+                    [attr.aria-expanded]="showStatsPeriodMenu">
               {{ getCurrentPeriodLabel() }}
             </button>
+
             <div class="sort-menu" *ngIf="showStatsPeriodMenu" role="menu" aria-label="Opções de período">
-              <button type="button" class="sort-item" (click)="selectStatsPeriod(opt.value)" [class.selected]="statsPeriod === opt.value" role="menuitem" *ngFor="let opt of statsPeriodOptions">{{ opt.label }}</button>
+              <button type="button"
+                      class="sort-item"
+                      (click)="selectStatsPeriod(opt.value)"
+                      [class.selected]="statsPeriod === opt.value"
+                      role="menuitem"
+                      *ngFor="let opt of statsPeriodOptions">
+                {{ opt.label }}
+              </button>
             </div>
           </div>
         </div>
 
         <section class="stats-block stats-in-main stats">
-          <h3>Statistics</h3>
+          <h3>Estatísticas</h3>
           <div class="stat-row">
-            <span>Movies watched</span>
+            <span>Filmes vistos</span>
             <strong>{{ stats?.totalFilmes || 0 }}</strong>
           </div>
           <div class="stat-row">
@@ -346,7 +364,7 @@
         </section>
 
         <section class="stats-comparison stats-comparison-in-main" *ngIf="statsComparison">
-          <h3>Tu vs Media Global</h3>
+          <h3>Tu vs Média Global</h3>
 
           <div class="comparison-item">
             <div class="comparison-label">Filmes vistos</div>
@@ -361,7 +379,7 @@
                 <span class="bar-value">{{ statsComparison.user.totalFilmes }}</span>
               </div>
               <div class="bar-row">
-                <span class="bar-label">Media</span>
+                <span class="bar-label">Média</span>
                 <div class="bar-container">
                   <div class="bar global-bar"
                        [style.width.%]="getGlobalBarWidth(statsComparison.user.totalFilmes, statsComparison.global.mediaFilmesPorUtilizador)"
@@ -373,7 +391,7 @@
             <div class="comparison-indicator"
                  [class.positive]="statsComparison.comparacao.filmesMaisQueMedia"
                  [class.negative]="!statsComparison.comparacao.filmesMaisQueMedia">
-              <span *ngIf="statsComparison.comparacao.filmesVsMedia >= 0">+</span>{{ statsComparison.comparacao.filmesVsMedia | number:'1.0-1' }} vs media
+              <span *ngIf="statsComparison.comparacao.filmesVsMedia >= 0">+</span>{{ statsComparison.comparacao.filmesVsMedia | number:'1.0-1' }} vs média
             </div>
           </div>
 
@@ -390,7 +408,7 @@
                 <span class="bar-value">{{ statsComparison.user.totalHoras }}h</span>
               </div>
               <div class="bar-row">
-                <span class="bar-label">Media</span>
+                <span class="bar-label">Média</span>
                 <div class="bar-container">
                   <div class="bar global-bar"
                        [style.width.%]="getGlobalBarWidth(statsComparison.user.totalHoras, statsComparison.global.mediaHorasPorUtilizador)"
@@ -402,7 +420,7 @@
             <div class="comparison-indicator"
                  [class.positive]="statsComparison.comparacao.horasMaisQueMedia"
                  [class.negative]="!statsComparison.comparacao.horasMaisQueMedia">
-              <span *ngIf="statsComparison.comparacao.horasVsMedia >= 0">+</span>{{ statsComparison.comparacao.horasVsMedia }}h vs media
+              <span *ngIf="statsComparison.comparacao.horasVsMedia >= 0">+</span>{{ statsComparison.comparacao.horasVsMedia }}h vs média
             </div>
           </div>
 
@@ -421,67 +439,69 @@
       <section class="charts-section" *ngIf="chartData">
         <div class="charts-header">
           <h3 class="charts-title">Estatísticas em gráfico</h3>
-          
-          <!-- Graph Customize Button -->
+
           <div style="position: relative;">
-            <button class="graph-customize-btn" 
+            <button class="graph-customize-btn"
                     [class.active]="showGraphCustomizeMenu"
                     (click)="toggleGraphCustomize()"
-                    title="Customize graphs">
+                    title="Personalizar gráficos">
               ⚙
             </button>
 
-            <!-- Graph Customize Menu -->
             <div class="graph-customize-menu" *ngIf="showGraphCustomizeMenu">
               <h4 class="customize-menu-title">Definições dos gráficos</h4>
 
-              <!-- Visibility Section -->
               <div class="customize-section">
                 <h5 class="customize-section-title">Visibilidade</h5>
                 <div class="visibility-list">
                   <div class="visibility-item">
                     <span class="visibility-label">Filmes por duração</span>
-                    <div class="toggle-switch" 
+                    <div class="toggle-switch"
                          [class.active]="graphSettings.showGenreBar"
                          (click)="toggleGraphVisibility('showGenreBar')">
                       <div class="toggle-slider"></div>
                     </div>
                   </div>
+
                   <div class="visibility-item">
                     <span class="visibility-label">Distribuição por duração</span>
-                    <div class="toggle-switch" 
+                    <div class="toggle-switch"
                          [class.active]="graphSettings.showGenrePie"
                          (click)="toggleGraphVisibility('showGenrePie')">
                       <div class="toggle-slider"></div>
                     </div>
                   </div>
+
                   <div class="visibility-item">
                     <span class="visibility-label">Filmes por período</span>
-                    <div class="toggle-switch" 
+                    <div class="toggle-switch"
                          [class.active]="graphSettings.showPeriodBar"
                          (click)="toggleGraphVisibility('showPeriodBar')">
                       <div class="toggle-slider"></div>
                     </div>
                   </div>
+
                   <div class="visibility-item">
                     <span class="visibility-label">Distribuição por período</span>
-                    <div class="toggle-switch" 
+                    <div class="toggle-switch"
                          [class.active]="graphSettings.showPeriodPie"
                          (click)="toggleGraphVisibility('showPeriodPie')">
                       <div class="toggle-slider"></div>
                     </div>
                   </div>
+
                   <div class="visibility-item">
                     <span class="visibility-label">Gráfico por mês</span>
-                    <div class="toggle-switch" 
+                    <div class="toggle-switch"
                          [class.active]="graphSettings.showMonthlyChart"
                          (click)="toggleGraphVisibility('showMonthlyChart')">
                       <div class="toggle-slider"></div>
                     </div>
                   </div>
+
                   <div class="visibility-item">
                     <span class="visibility-label">Percentagens de géneros</span>
-                    <div class="toggle-switch" 
+                    <div class="toggle-switch"
                          [class.active]="graphSettings.showGenrePercentages"
                          (click)="toggleGraphVisibility('showGenrePercentages')">
                       <div class="toggle-slider"></div>
@@ -490,14 +510,13 @@
                 </div>
               </div>
 
-              <!-- Color Customization -->
               <div class="customize-section">
                 <h5 class="customize-section-title">Cores do gráfico mensal</h5>
                 <div class="color-pickers">
                   <div class="color-picker-item">
-                    <span class="color-picker-label">Cor (você)</span>
+                    <span class="color-picker-label">Cor (tu)</span>
                     <div class="color-picker-input">
-                      <input type="color" 
+                      <input type="color"
                              [(ngModel)]="graphSettings.userColor"
                              (change)="updateGraphColors()">
                     </div>
@@ -505,7 +524,7 @@
                   <div class="color-picker-item">
                     <span class="color-picker-label">Cor (média global)</span>
                     <div class="color-picker-input">
-                      <input type="color" 
+                      <input type="color"
                              [(ngModel)]="graphSettings.globalColor"
                              (change)="updateGraphColors()">
                     </div>
@@ -513,56 +532,43 @@
                 </div>
               </div>
 
-              <!-- Chart Colors -->
               <div class="customize-section">
                 <h5 class="customize-section-title">Cores dos gráficos</h5>
                 <div class="color-pickers">
                   <div class="color-picker-item">
                     <span class="color-picker-label">Cor 1</span>
                     <div class="color-picker-input">
-                      <input type="color" 
-                             [(ngModel)]="graphSettings.chartColor1"
-                             (change)="updateGraphColors()">
+                      <input type="color" [(ngModel)]="graphSettings.chartColor1" (change)="updateGraphColors()">
                     </div>
                   </div>
                   <div class="color-picker-item">
                     <span class="color-picker-label">Cor 2</span>
                     <div class="color-picker-input">
-                      <input type="color" 
-                             [(ngModel)]="graphSettings.chartColor2"
-                             (change)="updateGraphColors()">
+                      <input type="color" [(ngModel)]="graphSettings.chartColor2" (change)="updateGraphColors()">
                     </div>
                   </div>
                   <div class="color-picker-item">
                     <span class="color-picker-label">Cor 3</span>
                     <div class="color-picker-input">
-                      <input type="color" 
-                             [(ngModel)]="graphSettings.chartColor3"
-                             (change)="updateGraphColors()">
+                      <input type="color" [(ngModel)]="graphSettings.chartColor3" (change)="updateGraphColors()">
                     </div>
                   </div>
                   <div class="color-picker-item">
                     <span class="color-picker-label">Cor 4</span>
                     <div class="color-picker-input">
-                      <input type="color" 
-                             [(ngModel)]="graphSettings.chartColor4"
-                             (change)="updateGraphColors()">
+                      <input type="color" [(ngModel)]="graphSettings.chartColor4" (change)="updateGraphColors()">
                     </div>
                   </div>
                   <div class="color-picker-item">
                     <span class="color-picker-label">Cor 5</span>
                     <div class="color-picker-input">
-                      <input type="color" 
-                             [(ngModel)]="graphSettings.chartColor5"
-                             (change)="updateGraphColors()">
+                      <input type="color" [(ngModel)]="graphSettings.chartColor5" (change)="updateGraphColors()">
                     </div>
                   </div>
                 </div>
               </div>
 
-              <!-- Reset Button -->
-              <button class="customize-reset-btn" 
-                      (click)="resetGraphSettings()">
+              <button class="customize-reset-btn" (click)="resetGraphSettings()">
                 Repor predefinidos
               </button>
             </div>
@@ -599,8 +605,7 @@
               </svg>
 
               <div class="chart-pie-legend">
-                <span *ngFor="let d of chartData.porDuracao; let i = index"
-                      class="chart-legend-item">
+                <span *ngFor="let d of chartData.porDuracao; let i = index" class="chart-legend-item">
                   <i [style.background]="getCustomChartColor(i)"></i>
                   {{ d.label }} — {{ duracaoPercent(d.total) | number:'1.0-0' }}% ({{ d.total }})
                 </span>
@@ -640,8 +645,7 @@
               </svg>
 
               <div class="chart-pie-legend">
-                <span *ngFor="let d of chartData.porIntervaloAnos; let i = index"
-                      class="chart-legend-item">
+                <span *ngFor="let d of chartData.porIntervaloAnos; let i = index" class="chart-legend-item">
                   <i [style.background]="getCustomChartColor(i)"></i>
                   {{ d.label }} — {{ intervaloAnosPercent(d.total) | number:'1.0-0' }}% ({{ d.total }})
                 </span>
@@ -658,15 +662,14 @@
               <div class="chart-bars-grid">
                 <div *ngFor="let m of chartData.porMes; let i = index" class="chart-bar-month">
                   <div class="chart-bars-pair">
-                    <!-- User bar -->
-                    <div class="chart-bar user-bar" 
+                    <div class="chart-bar user-bar"
                          [style.height.%]="getBarHeight(m.total)"
                          [style.background]="getUserBarGradient()"
-                         [attr.title]="m.total + ' filmes (Você)'">
+                         [attr.title]="m.total + ' filmes (Tu)'">
                       <div class="chart-bar-value">{{ m.total }}</div>
                     </div>
-                    <!-- Global average bar -->
-                    <div class="chart-bar global-bar" 
+
+                    <div class="chart-bar global-bar"
                          [style.height.%]="getBarHeight(getGlobalAverageForMonth(m))"
                          [style.background]="getGlobalBarGradient()"
                          [attr.title]="getGlobalAverageForMonth(m).toFixed(1) + ' filmes (Média)'">
@@ -676,17 +679,19 @@
                   <div class="chart-bar-label">{{ m.label }}</div>
                 </div>
               </div>
+
               <div class="chart-line-legend">
                 <span class="legend-item user-legend">
                   <i class="legend-dot" [style.background]="graphSettings.userColor"></i>
-                  Você
+                  Tu
                 </span>
                 <span class="legend-item global-legend">
                   <i class="legend-dot" [style.background]="graphSettings.globalColor"></i>
-                  Média Global
+                  Média global
                 </span>
               </div>
             </div>
+
             <ng-template #noLine>
               <p class="chart-empty">Ainda não há dados por mês.</p>
             </ng-template>
@@ -737,18 +742,18 @@
   <div class="modal-box" (click)="$event.stopPropagation()">
     <button class="modal-close" (click)="closeEdit()">&times;</button>
 
-    <h3>Edit account</h3>
+    <h3>Editar conta</h3>
 
     <form (ngSubmit)="saveChanges()">
-      <label for="userName">Username</label>
+      <label for="userName">Nome de utilizador</label>
       <input id="userName" name="userName" type="text" [(ngModel)]="editUserName" required />
 
       <label for="bio">Bio</label>
       <textarea id="bio" name="bio" rows="4" [(ngModel)]="editBio"></textarea>
 
       <div class="modal-actions">
-        <button type="submit" class="save-btn">Save</button>
-        <button type="button" class="cancel-btn" (click)="closeEdit()">Cancel</button>
+        <button type="submit" class="save-btn">Guardar</button>
+        <button type="button" class="cancel-btn" (click)="closeEdit()">Cancelar</button>
       </div>
     </form>
   </div>
@@ -759,18 +764,18 @@
   <div class="modal-box" (click)="$event.stopPropagation()">
     <button class="modal-close" (click)="closeEditCapa()">&times;</button>
 
-    <h3>Edit Cover Photo</h3>
+    <h3>Editar foto de capa</h3>
 
     <form (ngSubmit)="saveCapa()">
-      <label for="capaFile">Cover Photo</label>
+      <label for="capaFile">Foto de capa</label>
       <div class="image-preview-container">
-        <img *ngIf="editCapaUrl" [src]="editCapaUrl" alt="Cover preview" class="image-preview" />
+        <img *ngIf="editCapaUrl" [src]="editCapaUrl" alt="Pré-visualização da capa" class="image-preview" />
         <input id="capaFile" name="capaFile" type="file" accept="image/*" (change)="onCapaFileSelected($event)" />
       </div>
 
       <div class="modal-actions">
-        <button type="submit" class="save-btn">Save</button>
-        <button type="button" class="cancel-btn" (click)="closeEditCapa()">Cancel</button>
+        <button type="submit" class="save-btn">Guardar</button>
+        <button type="button" class="cancel-btn" (click)="closeEditCapa()">Cancelar</button>
       </div>
     </form>
   </div>
@@ -781,18 +786,18 @@
   <div class="modal-box" (click)="$event.stopPropagation()">
     <button class="modal-close" (click)="closeEditAvatar()">&times;</button>
 
-    <h3>Edit Profile Picture</h3>
+    <h3>Editar foto de perfil</h3>
 
     <form (ngSubmit)="saveAvatar()">
-      <label for="avatarFile">Profile Picture</label>
+      <label for="avatarFile">Foto de perfil</label>
       <div class="image-preview-container">
-        <img *ngIf="editFotoPerfilUrl" [src]="editFotoPerfilUrl" alt="Avatar preview" class="image-preview avatar-preview" />
+        <img *ngIf="editFotoPerfilUrl" [src]="editFotoPerfilUrl" alt="Pré-visualização do avatar" class="image-preview avatar-preview" />
         <input id="avatarFile" name="avatarFile" type="file" accept="image/*" (change)="onAvatarFileSelected($event)" />
       </div>
 
       <div class="modal-actions">
-        <button type="submit" class="save-btn">Save</button>
-        <button type="button" class="cancel-btn" (click)="closeEditAvatar()">Cancel</button>
+        <button type="submit" class="save-btn">Guardar</button>
+        <button type="button" class="cancel-btn" (click)="closeEditAvatar()">Cancelar</button>
       </div>
     </form>
   </div>
@@ -805,44 +810,44 @@
 
     <h3>{{ currentListTitle }}</h3>
     <span class="list-subtitle">
-      {{ filteredCurrentList.length }} {{ filteredCurrentList.length === 1 ? 'Title' : 'Titles' }}
+      {{ filteredCurrentList.length }} {{ filteredCurrentList.length === 1 ? 'filme' : 'filmes' }}
     </span>
 
     <div class="filter-row" *ngIf="currentListType === 'watchLater'">
-      <label for="wlFilter">Filter:</label>
+      <label for="wlFilter">Filtrar:</label>
       <select id="wlFilter" [(ngModel)]="watchLaterFilter">
-        <option value="all">All (newest first)</option>
-        <option value="newest">Newest first</option>
-        <option value="oldest">Oldest first</option>
-        <option value="7days">Added last 7 days</option>
-        <option value="30days">Added last 30 days</option>
+        <option value="all">Todos (mais recentes primeiro)</option>
+        <option value="newest">Mais recentes primeiro</option>
+        <option value="oldest">Mais antigos primeiro</option>
+        <option value="7days">Adicionados nos últimos 7 dias</option>
+        <option value="30days">Adicionados nos últimos 30 dias</option>
       </select>
     </div>
 
     <div class="filter-row" *ngIf="currentListType === 'watched'">
-      <label for="watFilter">Filter:</label>
+      <label for="watFilter">Filtrar:</label>
       <select id="watFilter" [(ngModel)]="watchedFilter">
-        <option value="all">All (newest first)</option>
-        <option value="newest">Newest first</option>
-        <option value="oldest">Oldest first</option>
-        <option value="7days">Added last 7 days</option>
-        <option value="30days">Added last 30 days</option>
+        <option value="all">Todos (mais recentes primeiro)</option>
+        <option value="newest">Mais recentes primeiro</option>
+        <option value="oldest">Mais antigos primeiro</option>
+        <option value="7days">Adicionados nos últimos 7 dias</option>
+        <option value="30days">Adicionados nos últimos 30 dias</option>
       </select>
     </div>
 
     <div class="expanded-posters-grid" *ngIf="filteredCurrentList.length > 0">
       <div class="expanded-poster-card" *ngFor="let movie of filteredCurrentList">
         <img [src]="movie.filme?.posterUrl || movie.filme?.PosterUrl || 'https://via.placeholder.com/200x300'"
-             [alt]="movie.filme?.titulo || movie.filme?.Titulo || 'Movie poster'"
+             [alt]="movie.filme?.titulo || movie.filme?.Titulo || 'Cartaz do filme'"
              class="expanded-poster" />
         <div class="poster-info">
-          <div class="poster-title">{{ movie.filme?.titulo || movie.filme?.Titulo || 'Unknown' }}</div>
+          <div class="poster-title">{{ movie.filme?.titulo || movie.filme?.Titulo || 'Desconhecido' }}</div>
           <div class="poster-meta">
             <span *ngIf="movie.filme?.genero || movie.filme?.Genero">{{ movie.filme?.genero || movie.filme?.Genero }}</span>
             <span *ngIf="movie.filme?.duracao || movie.filme?.Duracao"> &middot; {{ (movie.filme?.duracao ?? movie.filme?.Duracao) | formatDuration }}</span>
           </div>
           <div class="poster-date" *ngIf="(movie.data || movie.Data)">
-            Added: {{ (movie.data || movie.Data) | date:'short' }}
+            Adicionado: {{ (movie.data || movie.Data) | date:'dd/MM/yyyy, HH:mm':'':'pt-PT' }}
           </div>
         </div>
       </div>
@@ -859,7 +864,7 @@
   <div class="modal-box" (click)="$event.stopPropagation()">
     <button class="modal-close" (click)="closeDeleteConfirm()">&times;</button>
 
-    <h3>Delete account</h3>
+    <h3>Apagar conta</h3>
     <p class="delete-info">Para apagar a sua conta escreva <strong>delete</strong></p>
 
     <form (ngSubmit)="confirmDelete()">
@@ -874,14 +879,14 @@
         <button type="submit"
                 class="danger-btn"
                 [disabled]="(deleteInput || '').trim().toLowerCase() !== deleteRequiredText || isDeletingSaving">
-          Confirm
+          Confirmar
         </button>
 
         <button type="button"
                 class="cancel-btn"
                 (click)="closeDeleteConfirm()"
                 [disabled]="isDeletingSaving">
-          Cancel
+          Cancelar
         </button>
       </div>
     </form>
