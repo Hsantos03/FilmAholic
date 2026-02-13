@@ -57,6 +57,8 @@ export class ProfileComponent implements OnInit {
   chartData: StatsCharts | null = null;
   isLoadingCharts = false;
 
+  periodWaffleCells: { i: number; label: string }[] = [];
+
   readonly MAX_FAVORITES = 50;
   readonly TOP_10 = 10;
 
@@ -414,15 +416,59 @@ export class ProfileComponent implements OnInit {
     this.userMoviesService.getStatsCharts(params).subscribe({
       next: (res) => {
         this.chartData = res;
+        this.periodWaffleCells = this.buildPeriodWaffleCells();
         this.isLoadingCharts = false;
       },
       error: (err) => {
         console.error('Error loading chart data:', err);
         this.chartData = null;
+        this.periodWaffleCells = [];
         this.isLoadingCharts = false;
       }
     });
   }
+
+  lollipopPosIntervaloAnos(total: number): number {
+    const p = this.chartBarWidthIntervaloAnos(total);
+    if (total <= 0) return 0;
+    return Math.max(p, 4);
+  }
+
+  private buildPeriodWaffleCells(): { i: number; label: string }[] {
+    const data = this.chartData?.porIntervaloAnos ?? [];
+    const total = this.totalIntervaloAnosVistos;
+
+    if (!data.length || !total) return [];
+
+    const raw = data.map((d, i) => {
+      const t = d.total || 0;
+      const exact = (t / total) * 100;
+      const base = Math.floor(exact);
+      const frac = exact - base;
+      return { i, label: d.label, base, frac };
+    });
+
+    let used = raw.reduce((s, r) => s + r.base, 0);
+    let remaining = 100 - used;
+
+    const order = raw
+      .map((r, idx) => ({ idx, frac: r.frac }))
+      .sort((a, b) => b.frac - a.frac);
+
+    let k = 0;
+    while (remaining > 0 && order.length) {
+      raw[order[k].idx].base += 1;
+      remaining--;
+      k = (k + 1) % order.length;
+    }
+
+    const cells: { i: number; label: string }[] = [];
+    raw.sort((a, b) => a.i - b.i).forEach(r => {
+      for (let c = 0; c < r.base; c++) cells.push({ i: r.i, label: r.label });
+    });
+    return cells.slice(0, 100);
+  }
+
 
   getComparisonBarWidth(userValue: number, globalValue: number): number {
     const max = Math.max(userValue, globalValue, 1);
@@ -598,7 +644,7 @@ export class ProfileComponent implements OnInit {
     if (allValues.length === 0) return 1;
     return Math.max(...allValues, 1);
   }
-  
+
   getBarHeight(value: number): number {
     const max = this.lineChartMax;
     if (max === 0 || value === 0) return 0;

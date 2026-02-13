@@ -618,15 +618,21 @@
 
           <div class="chart-card" [class.hidden]="!graphSettings.showPeriodBar">
             <h4>Filmes por período (ano de estreia)</h4>
-            <div class="chart-bar-container" *ngIf="chartData.porIntervaloAnos?.length; else noIntervaloAnos">
-              <div class="chart-bar-row" *ngFor="let d of chartData.porIntervaloAnos; let i = index">
-                <span class="chart-bar-label">{{ d.label }}</span>
-                <div class="chart-bar-track">
-                  <div class="chart-bar-fill"
-                       [style.width.%]="chartBarWidthIntervaloAnos(d.total)"
-                       [style.background]="getCustomChartColor(i)"></div>
+
+            <div class="period-lollipop" *ngIf="chartData.porIntervaloAnos?.length; else noIntervaloAnos">
+              <div class="period-row" *ngFor="let d of chartData.porIntervaloAnos; let i = index">
+                <span class="period-label">{{ d.label }}</span>
+
+                <div class="period-track">
+                  <div class="period-line"></div>
+                  <div class="period-dot"
+                       [style.left.%]="lollipopPosIntervaloAnos(d.total)"
+                       [style.background]="getCustomChartColor(i)"
+                       [attr.title]="d.total + ' filmes'">
+                  </div>
                 </div>
-                <span class="chart-bar-value">{{ d.total }}</span>
+
+                <span class="period-value">{{ d.total }}</span>
               </div>
             </div>
             <ng-template #noIntervaloAnos>
@@ -634,15 +640,20 @@
             </ng-template>
           </div>
 
+
           <div class="chart-card" [class.hidden]="!graphSettings.showPeriodPie">
             <h4>Distribuição por período</h4>
-            <div class="chart-pie-wrap" *ngIf="chartData.porIntervaloAnos?.length && totalIntervaloAnosVistos > 0; else noPieIntervaloAnos">
-              <svg class="chart-pie" viewBox="0 0 100 100">
-                <path *ngFor="let d of chartData.porIntervaloAnos; let i = index"
-                      [attr.d]="pieSegmentDIntervaloAnos(i)"
-                      [attr.fill]="getCustomChartColor(i)"
-                      class="chart-pie-segment" />
-              </svg>
+
+            <div class="period-waffle-wrap"
+                 *ngIf="chartData.porIntervaloAnos?.length && totalIntervaloAnosVistos > 0; else noPieIntervaloAnos">
+
+              <div class="period-waffle-grid" role="img" aria-label="Distribuição por período em waffle">
+                <div class="period-waffle-cell"
+                     *ngFor="let cell of periodWaffleCells"
+                     [style.background]="getCustomChartColor(cell.i)"
+                     [attr.title]="cell.label">
+                </div>
+              </div>
 
               <div class="chart-pie-legend">
                 <span *ngFor="let d of chartData.porIntervaloAnos; let i = index" class="chart-legend-item">
@@ -655,6 +666,7 @@
               <p class="chart-empty">Ainda não há dados por período.</p>
             </ng-template>
           </div>
+
 
           <div class="chart-card chart-card-full" [class.hidden]="!graphSettings.showMonthlyChart">
             <h4>{{ getChartTitle() }}</h4>
