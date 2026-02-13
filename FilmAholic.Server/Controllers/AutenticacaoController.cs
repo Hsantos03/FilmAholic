@@ -244,11 +244,17 @@ namespace FilmAholic.Server.Controllers
         [HttpGet("google-login")]
         public IActionResult GoogleLogin()
         {
-            var scheme = Request.Scheme;
-            if (!Request.IsHttps && Request.Headers["X-Forwarded-Proto"].ToString().ToLower() != "https")
+            var clientId = _configuration["Authentication:Google:ClientId"];
+            var clientSecret = _configuration["Authentication:Google:ClientSecret"];
+            if (string.IsNullOrWhiteSpace(clientId) || string.IsNullOrWhiteSpace(clientSecret))
             {
-                scheme = "https";
+                _logger.LogWarning("Google login chamado mas OAuth não configurado (ClientId/ClientSecret em falta). Defina no Azure: Authentication__Google__ClientId e Authentication__Google__ClientSecret.");
+                return StatusCode(503, new { message = "Login com Google não está configurado no servidor. Defina Authentication__Google__ClientId e Authentication__Google__ClientSecret nas Definições de aplicação no Azure." });
             }
+
+            var scheme = Request.Scheme;
+            if (!Request.IsHttps && (Request.Headers["X-Forwarded-Proto"].ToString()?.ToLower() ?? "") != "https")
+                scheme = "https";
             var redirectUrl = Url.Action(nameof(GoogleCallback), "Autenticacao", null, scheme, Request.Host.Value);
             var properties = _signInManager.ConfigureExternalAuthenticationProperties("Google", redirectUrl);
             return Challenge(properties, "Google");
@@ -257,11 +263,17 @@ namespace FilmAholic.Server.Controllers
         [HttpGet("facebook-login")]
         public IActionResult FacebookLogin()
         {
-            var scheme = Request.Scheme;
-            if (!Request.IsHttps && Request.Headers["X-Forwarded-Proto"].ToString().ToLower() != "https")
+            var appId = _configuration["Authentication:Facebook:AppId"];
+            var appSecret = _configuration["Authentication:Facebook:AppSecret"];
+            if (string.IsNullOrWhiteSpace(appId) || string.IsNullOrWhiteSpace(appSecret))
             {
-                scheme = "https";
+                _logger.LogWarning("Facebook login chamado mas OAuth não configurado (AppId/AppSecret em falta). Defina no Azure: Authentication__Facebook__AppId e Authentication__Facebook__AppSecret.");
+                return StatusCode(503, new { message = "Login com Facebook não está configurado no servidor. Defina Authentication__Facebook__AppId e Authentication__Facebook__AppSecret nas Definições de aplicação no Azure." });
             }
+
+            var scheme = Request.Scheme;
+            if (!Request.IsHttps && (Request.Headers["X-Forwarded-Proto"].ToString()?.ToLower() ?? "") != "https")
+                scheme = "https";
             var redirectUrl = Url.Action(nameof(FacebookCallback), "Autenticacao", null, scheme, Request.Host.Value);
             var properties = _signInManager.ConfigureExternalAuthenticationProperties("Facebook", redirectUrl);
             return Challenge(properties, "Facebook");
@@ -371,17 +383,29 @@ namespace FilmAholic.Server.Controllers
 
         private string GetFrontendBaseUrl()
         {
-            var configured = _configuration["EmailSettings:AngularUrl"];
-            if (!string.IsNullOrWhiteSpace(configured))
-                return configured.TrimEnd('/');
-
             var host = Request.Host.Value ?? "";
-            if (host.Contains("localhost", StringComparison.OrdinalIgnoreCase))
+            var isBackendLocalhost = host.Contains("localhost", StringComparison.OrdinalIgnoreCase);
+
+            // Em produção (Azure) definir FrontendBaseUrl ou EmailSettings:AngularUrl com o URL do site Angular
+            var configured = _configuration["FrontendBaseUrl"]
+                ?? _configuration["EmailSettings:AngularUrl"];
+            if (!string.IsNullOrWhiteSpace(configured))
+            {
+                var url = configured.TrimEnd('/');
+                // Se o backend está no Azure e a config tem localhost, ignorar (evitar redirect para localhost)
+                if (!isBackendLocalhost && url.Contains("localhost", StringComparison.OrdinalIgnoreCase))
+                    configured = null;
+                else if (!string.IsNullOrEmpty(url))
+                    return url;
+            }
+
+            if (isBackendLocalhost)
                 return "https://localhost:50905";
 
             var scheme = Request.Scheme;
-            if (!Request.IsHttps && Request.Headers["X-Forwarded-Proto"].ToString().ToLower() != "https")
+            if (!Request.IsHttps && (Request.Headers["X-Forwarded-Proto"].ToString()?.ToLower() ?? "") != "https")
                 scheme = "https";
+            // Mesmo origem: frontend e API no mesmo host (ex.: Azure App Service)
             return $"{scheme}://{host}";
         }
     }

@@ -375,6 +375,7 @@ export class MoviePageComponent implements OnInit, OnDestroy {
       },
       error: (err) => {
         console.error('Create comment failed', err);
+        if (err?.error?.detail) console.error('Server detail:', err.error.detail);
         this.commentError = err?.status === 401
           ? 'A tua sessão expirou. Faz login novamente.'
           : 'Não foi possível enviar o comentário.';

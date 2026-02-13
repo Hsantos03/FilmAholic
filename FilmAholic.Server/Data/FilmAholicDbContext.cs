@@ -1,4 +1,4 @@
-﻿using FilmAholic.Server.Models;
+using FilmAholic.Server.Models;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 
@@ -53,6 +53,12 @@ public class FilmAholicDbContext : IdentityDbContext<Utilizador>
             .WithMany()
             .HasForeignKey(r => r.FilmeId)
             .OnDelete(DeleteBehavior.Cascade);
+
+        // Compatibilidade: tabela Comments sem coluna DataEdicao; coluna do filme usa nome EF por defeito (FilmeId)
+        builder.Entity<Comments>(e =>
+        {
+            e.Ignore(c => c.DataEdicao);
+        });
 
         builder.Entity<CommentVote>()
             .HasIndex(v => new { v.CommentId, v.UserId })

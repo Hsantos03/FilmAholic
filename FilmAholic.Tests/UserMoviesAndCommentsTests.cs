@@ -9,6 +9,8 @@ using FilmAholic.Server.Services;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
 using Xunit;
 
@@ -206,7 +208,7 @@ namespace FilmAholic.Tests
                 context.Set<Filme>().Add(new Filme { Id = filmeId, Titulo = "Matrix" });
                 await context.SaveChangesAsync();
 
-                var controller = new CommentsController(context);
+                var controller = new CommentsController(context, NullLogger<CommentsController>.Instance);
 
                 var user = new ClaimsPrincipal(new ClaimsIdentity(new Claim[] {
                     new Claim(ClaimTypes.NameIdentifier, userId)
@@ -263,7 +265,7 @@ namespace FilmAholic.Tests
                 context.Comments.Add(comentarioExistente);
                 await context.SaveChangesAsync();
 
-                var controller = new CommentsController(context);
+                var controller = new CommentsController(context, NullLogger<CommentsController>.Instance);
                 var user = new ClaimsPrincipal(new ClaimsIdentity(new Claim[] {
                     new Claim(ClaimTypes.NameIdentifier, userId)
                 }, "mock"));
@@ -316,7 +318,7 @@ namespace FilmAholic.Tests
                 context.Comments.Add(comentarioExistente);
                 await context.SaveChangesAsync();
 
-                var controller = new CommentsController(context);
+                var controller = new CommentsController(context, NullLogger<CommentsController>.Instance);
                 var user = new ClaimsPrincipal(new ClaimsIdentity(new Claim[] {
                     new Claim(ClaimTypes.NameIdentifier, userId)
                 }, "mock"));
@@ -362,7 +364,7 @@ namespace FilmAholic.Tests
                 context.Comments.Add(comentarioExistente);
                 await context.SaveChangesAsync();
 
-                var controller = new CommentsController(context);
+                var controller = new CommentsController(context, NullLogger<CommentsController>.Instance);
                 var user = new ClaimsPrincipal(new ClaimsIdentity(new Claim[] {
                     new Claim(ClaimTypes.NameIdentifier, userId)
                 }, "mock"));
