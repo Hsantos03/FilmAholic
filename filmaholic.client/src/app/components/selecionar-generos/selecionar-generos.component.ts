@@ -61,7 +61,7 @@ export class SelecionarGenerosComponent implements OnInit {
 
   salvarGeneros() {
     if (this.generosSelecionados.length === 0) {
-      alert('Por favor, selecione pelo menos um género favorito.');
+      this.error = 'Por favor, selecione pelo menos um género favorito.';
       return;
     }
 

@@ -14,6 +14,8 @@ export class LoginComponent implements OnInit {
   emailParaVerificar = '';
 
   isLoading = false;
+  errorMessage = '';
+  successMessage = '';
 
   externalSuccess = false;
   externalNome = '';
@@ -71,13 +73,15 @@ export class LoginComponent implements OnInit {
       }
       
       if (params['error']) {
-        alert('Erro: ' + params['error']);
+        this.errorMessage = params['error'];
       }
     });
   }
 
   onLogin() {
     this.isLoading = true;
+    this.errorMessage = '';
+    this.successMessage = '';
     this.showEmailVerificationMessage = false;
     
     this.authService.login(this.loginData).subscribe({
@@ -93,18 +97,15 @@ export class LoginComponent implements OnInit {
           next: (generos) => {
             if (generos && generos.length > 0) {
               // Se já tem géneros, vai para o dashboard
-              alert('Bem-vindo, ' + res.nome);
               this.router.navigate(['/dashboard']);
             } else {
               // Se não tem géneros, redireciona para selecionar
-              alert('Bem-vindo, ' + res.nome + '! Por favor, selecione os seus géneros favoritos.');
               this.router.navigate(['/selecionar-generos']);
             }
           },
           error: (err) => {
             // Se houver erro (pode ser porque ainda não tem géneros), redireciona para selecionar
             console.error('Erro ao verificar géneros:', err);
-            alert('Bem-vindo, ' + res.nome + '! Por favor, selecione os seus géneros favoritos.');
             this.router.navigate(['/selecionar-generos']);
           }
         });
@@ -117,7 +118,7 @@ export class LoginComponent implements OnInit {
           this.emailParaVerificar = this.loginData.email;
           this.showEmailVerificationMessage = true;
         } else {
-          alert('Erro: ' + errorMessage);
+          this.errorMessage = errorMessage;
         }
       }
     });
@@ -127,15 +128,17 @@ export class LoginComponent implements OnInit {
     if (!this.emailParaVerificar) return;
     
     this.isLoading = true;
+    this.errorMessage = '';
+    this.successMessage = '';
     this.authService.reenviarEmailVerificacao(this.emailParaVerificar).subscribe({
       next: (res) => {
         this.isLoading = false;
-        alert(res.message || 'Email de verificação reenviado com sucesso!');
+        this.successMessage = res.message || 'Email de verificação reenviado com sucesso!';
       },
       error: (err) => {
         this.isLoading = false;
         console.error(err);
-        alert('Erro ao reenviar email. Tente novamente mais tarde.');
+        this.errorMessage = err?.error?.message || 'Erro ao reenviar email. Tente novamente mais tarde.';
       }
     });
   }
