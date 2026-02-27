@@ -141,7 +141,7 @@
 
             <div class="our-rating-me">
               <span *ngIf="myScore !== null">A tua nota: <strong>{{ myScore }}/10</strong></span>
-              <span *ngIf="myScore === null" class="muted">Ainda não avaliaste</span>
+              <span *ngIf="myScore === null" class="muted">Ainda não deste o teu veredito.</span>
             </div>
           </div>
 
@@ -288,7 +288,7 @@
           </div>
 
           <ng-template #noComments>
-            <div class="comments-empty">Ainda não existem comentários.</div>
+            <div class="comments-empty">Ainda não existem comentários — sê o primeiro a deixar a tua review.</div>
           </ng-template>
         </div>
 

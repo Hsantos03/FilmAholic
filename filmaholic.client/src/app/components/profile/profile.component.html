@@ -85,9 +85,9 @@
       <div class="profile-info">
         <h2>{{ userName }}</h2>
         <div class="meta-row">
-          <span class="joined">Membro desde &middot; {{ joined }}</span>
+          <span class="joined">Despertou a Força em &middot; {{ joined }}</span>
         </div>
-        <p class="bio">{{ bio || 'Sem informação ainda' }}</p>
+        <p class="bio">{{ bio || 'Ainda não escreveste a sinopse da tua vida de cinéfilo.' }}</p>
       </div>
 
       <div class="lists-top">
@@ -180,8 +180,8 @@
 
             <ng-template #noFavMovies>
               <div class="fav-empty">
-                Ainda não escolheu filmes favoritos.<br />
-                <span class="fav-empty-hint">Usa "★ Favorito" nas páginas dos filmes (até {{ MAX_FAVORITES }}).</span>
+                A tua galáxia de favoritos ainda está vazia.<br />
+                <span class="fav-empty-hint">Usa "★ Favorito" nas páginas dos filmes (até {{ MAX_FAVORITES }}) para montar a tua própria saga.</span>
               </div>
             </ng-template>
           </div>
@@ -233,8 +233,8 @@
 
             <ng-template #noFavActors>
               <div class="fav-empty">
-                Ainda não tens atores favoritos.<br />
-                <span class="fav-empty-hint">Adiciona até {{ MAX_FAVORITES }}.</span>
+                Ainda não escolheste o teu elenco de sonho.<br />
+                <span class="fav-empty-hint">Adiciona até {{ MAX_FAVORITES }} atores para o casting perfeito.</span>
               </div>
             </ng-template>
           </div>
@@ -590,7 +590,7 @@
               </div>
             </div>
             <ng-template #noDuracao>
-              <p class="chart-empty">Ainda não há dados por duração.</p>
+              <p class="chart-empty">Ainda não há dados por duração — vê mais filmes e desbloqueia o gráfico das tuas maratonas.</p>
             </ng-template>
           </div>
 
@@ -612,7 +612,7 @@
               </div>
             </div>
             <ng-template #noPieDuracao>
-              <p class="chart-empty">Ainda não há dados por duração.</p>
+              <p class="chart-empty">Ainda não há dados por duração — quando começares a fazer binge‑watch, mostramos aqui.</p>
             </ng-template>
           </div>
 
@@ -636,7 +636,7 @@
               </div>
             </div>
             <ng-template #noIntervaloAnos>
-              <p class="chart-empty">Ainda não há dados por ano.</p>
+              <p class="chart-empty">Ainda não há dados por ano — assim que vires mais estreias, desenhamos a tua linha temporal de cinema.</p>
             </ng-template>
           </div>
 
@@ -663,7 +663,7 @@
               </div>
             </div>
             <ng-template #noPieIntervaloAnos>
-              <p class="chart-empty">Ainda não há dados por período.</p>
+              <p class="chart-empty">Ainda não há dados por período — continua a viajar entre clássicos e novidades para preencher este mapa.</p>
             </ng-template>
           </div>
 
@@ -705,7 +705,7 @@
             </div>
 
             <ng-template #noLine>
-              <p class="chart-empty">Ainda não há dados por mês.</p>
+              <p class="chart-empty">Ainda não há dados por mês — quando o calendário de sessões encher, mostramos aqui o teu ritmo de visualizações.</p>
             </ng-template>
           </div>
         </div>

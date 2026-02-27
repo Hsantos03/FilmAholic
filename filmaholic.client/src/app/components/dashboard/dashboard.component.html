@@ -27,10 +27,10 @@
         <div *ngIf="isSuggestionsMode" class="search-menu-title">Sugestões para si</div>
         <div *ngIf="isSuggestionsMode && isLoadingSuggestions" class="search-empty">A carregar sugestões…</div>
         <div *ngIf="isSuggestionsMode && !isLoadingSuggestions && searchResults.length === 0 && hasGenrePreferences" class="search-empty">
-          Nenhum filme dos seus géneros na lista.
+          Nenhum filme dos teus géneros apareceu agora — tenta outro título ou mistura de géneros.
         </div>
         <div *ngIf="isSuggestionsMode && !isLoadingSuggestions && searchResults.length === 0 && !hasGenrePreferences" class="search-empty">
-          Selecione géneros no perfil para ver sugestões.
+          Escolhe os teus géneros favoritos no perfil para desbloquear sugestões só para ti.
         </div>
         <div *ngIf="searchResultsLoading" class="search-empty">
           A pesquisar…
@@ -155,7 +155,7 @@
 
         <div class="nextup-content">
           <div *ngIf="!isLoadingMovies && movies.length === 0" class="empty-list-message">
-            Nenhum filme disponível.
+            A lista está em branco como um ecrã antes da sessão. Procura ou escolhe géneros para começar o espetáculo.
           </div>
 
           <div class="nextup-card" *ngIf="nextToWatch">
