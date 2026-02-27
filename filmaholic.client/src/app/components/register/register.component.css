@@ -147,14 +147,17 @@ input {
 
 .password-toggle-btn {
   position: absolute;
-  right: 10px;
+  top: 42%;
+  bottom: auto;
+  right: 15px;
   background: transparent;
   border: none;
   cursor: pointer;
-  padding: 5px;
+  padding: 0;
   display: flex;
   align-items: center;
   justify-content: center;
+  transform: translateY(-50%);
   color: #aaa;
   font-size: 18px;
   transition: color 0.2s ease;
