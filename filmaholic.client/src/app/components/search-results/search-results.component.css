@@ -17,6 +17,49 @@
   flex: 1 1 auto;
 }
 
+.header-actions-left {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.header-actions-right {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-shrink: 0;
+  margin-left: auto;
+}
+
+.filter-wrap {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.filter-btn {
+  padding: 8px 14px;
+  border-radius: 10px;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.1);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s;
+}
+
+.filter-btn:hover {
+  background: rgba(255,255,255,0.1);
+  border-color: rgba(255,255,255,0.15);
+}
+
+.filter-btn.active {
+  background: #AE8191;
+  border-color: rgba(255,255,255,0.15);
+  color: #fff;
+}
+
 .sort-wrap {
   position: relative;
   flex-shrink: 0;
@@ -175,24 +218,25 @@
   z-index: 1800;
 }
 
-/* Filter menu styles (positioned directly under the left button) */
+/* Filter menu styles (positioned under filter button in header) */
 .filter-menu {
   position: absolute;
-  top: calc(100% + 8px);
-  left: 8px; /* aligns with left button inside the pill */
-  transform: none;
-  width: min(300px, 100%);
-  max-width: 320px;
+  top: calc(100% + 6px);
+  left: 0;
+  width: 320px;
+  max-width: 90vw;
   background: rgba(6, 12, 17, 0.98);
   border: 1px solid rgba(255,255,255,0.06);
   box-shadow: 0 14px 40px rgba(0,0,0,0.6);
   border-radius: 10px;
-  z-index: 2500; /* ensure it sits above other UI */
-  padding: 8px;
+  z-index: 2500;
+  padding: 12px;
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 8px;
   pointer-events: auto;
+  max-height: 70vh;
+  overflow-y: auto;
 }
 
 /* filter buttons */
@@ -200,13 +244,95 @@
   background: transparent;
   border: 1px solid rgba(255, 255, 255, 0.1);
   color: #fff;
-  padding: 8px 10px;
+  padding: 10px 12px;
   text-align: left;
   width: 100%;
   cursor: pointer;
   border-radius: 8px;
   font-weight: 600;
+  font-size: 14px;
   transition: background 0.15s, border-color 0.15s;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* filter sections */
+.filter-section {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.filter-section:first-of-type {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+}
+
+.filter-title {
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 4px 8px;
+  margin-bottom: 2px;
+  grid-column: 1 / -1;
+}
+
+/* date filter row */
+.date-filter-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 8px;
+}
+
+.date-input {
+  flex: 1;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 6px;
+  color: #fff;
+  padding: 6px 8px;
+  font-size: 13px;
+  outline: none;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.date-input:focus {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.25);
+}
+
+.date-input::placeholder {
+  color: rgba(255, 255, 255, 0.4);
+}
+
+.year-input {
+  flex-grow: 1;
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.06);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 600;
+  transition: background 0.2s, border-color 0.2s;
+  width: 100px;
+}
+
+.year-input:focus {
+  outline: none;
+  border-color: rgba(255, 255, 255, 0.3);
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.date-separator {
+  color: rgba(255, 255, 255, 0.6);
+  font-weight: 600;
+  margin: 0 4px;
 }
 
 /* hover state */

@@ -5,10 +5,6 @@
 
   <div class="search" #searchContainer>
     <div class="search-pill" role="search">
-      <button class="pill-icon left" type="button" aria-label="Filtros" (click)="toggleFilterMenu()">
-        &#9776;
-      </button>
-
       <input
         type="text"
         [(ngModel)]="searchTerm"
@@ -19,12 +15,6 @@
       <button class="pill-icon right" type="button" aria-label="Pesquisar" (click)="doSearch()">
         &#128269;
       </button>
-
-      <!-- Filter menu moved inside .search-pill so it appears right under the left button -->
-      <div class="filter-menu" *ngIf="showFilterMenu" role="menu" aria-label="Filtrar por género">
-        <button class="filter-item" (click)="applyGenre(null)" [class.selected]="!selectedGenre">All</button>
-        <button class="filter-item" *ngFor="let g of genres" (click)="applyGenre(g)" [class.selected]="selectedGenre === g">{{ g }}</button>
-      </div>
     </div>
   </div>
 
@@ -38,21 +28,47 @@
 <main class="content" style="padding-top:22px;">
   <div class="search-results-page">
     <div class="search-header-row">
-      <h2 class="search-header">Resultados para "{{ query }}" <span *ngIf="selectedGenre">· {{ selectedGenre }}</span></h2>
-      <div class="sort-wrap" #sortWrapper *ngIf="results.length">
-        <button type="button" class="sort-btn" (click)="toggleSortMenu()" [class.active]="showSortMenu" aria-label="Ordenar resultados" aria-haspopup="true" [attr.aria-expanded]="showSortMenu">
-          Ordenar {{ sortBy ? '· ' + sortLabel : '' }}
-        </button>
-        <div class="sort-menu" *ngIf="showSortMenu" role="menu" aria-label="Opções de ordenação">
-          <button type="button" class="sort-item" (click)="applySort('date-desc')" [class.selected]="sortBy === 'date-desc'" role="menuitem">Data (mais recente)</button>
-          <button type="button" class="sort-item" (click)="applySort('date-asc')" [class.selected]="sortBy === 'date-asc'" role="menuitem">Data (mais antigo)</button>
-          <button type="button" class="sort-item" (click)="applySort('rating-desc')" [class.selected]="sortBy === 'rating-desc'" role="menuitem">Classificação (maior)</button>
-          <button type="button" class="sort-item" (click)="applySort('rating-asc')" [class.selected]="sortBy === 'rating-asc'" role="menuitem">Classificação (menor)</button>
-          <button type="button" class="sort-item" (click)="applySort('duration-desc')" [class.selected]="sortBy === 'duration-desc'" role="menuitem">Duração (mais longo)</button>
-          <button type="button" class="sort-item" (click)="applySort('duration-asc')" [class.selected]="sortBy === 'duration-asc'" role="menuitem">Duração (mais curto)</button>
-          <button type="button" class="sort-item" (click)="applySort('name-asc')" [class.selected]="sortBy === 'name-asc'" role="menuitem">Nome (A–Z)</button>
-          <button type="button" class="sort-item" (click)="applySort('name-desc')" [class.selected]="sortBy === 'name-desc'" role="menuitem">Nome (Z–A)</button>
-          <button type="button" class="sort-item" (click)="applySort(null)" [class.selected]="sortBy === null" role="menuitem">Ordenação original</button>
+      <div class="header-actions-left">
+        <div class="filter-wrap" #filterWrapper>
+          <button type="button" class="filter-btn" (click)="toggleFilterMenu()" [class.active]="showFilterMenu" aria-label="Filtrar resultados" aria-haspopup="true" [attr.aria-expanded]="showFilterMenu">
+            Filtrar {{ (selectedGenres.length > 0 || selectedDateFrom || selectedDateTo) ? '· ' + getActiveFiltersCount() : '' }}
+          </button>
+          <!-- Filter menu positioned here instead of in search bar -->
+          <div class="filter-menu" *ngIf="showFilterMenu" role="menu" aria-label="Filtrar por género e data">
+            <div class="filter-section">
+              <div class="filter-title">Género</div>
+              <button class="filter-item" (click)="clearGenreFilters()" [class.selected]="selectedGenres.length === 0">Todos</button>
+              <button class="filter-item" *ngFor="let g of genres" (click)="toggleGenre(g)" [class.selected]="selectedGenres.includes(g)">{{ g }}</button>
+            </div>
+            <div class="filter-section">
+              <div class="filter-title">Ano de Lançamento</div>
+              <div class="date-filter-row">
+                <input type="number" class="year-input" [(ngModel)]="selectedDateFrom" (ngModelChange)="onDateFromChange($event)" placeholder="De" min="1900" max="2030">
+                <span class="date-separator">-</span>
+                <input type="number" class="year-input" [(ngModel)]="selectedDateTo" (ngModelChange)="onDateToChange($event)" placeholder="Até" min="1900" max="2030">
+              </div>
+              <button class="filter-item" (click)="clearDateFilters()" [class.selected]="!selectedDateFrom && !selectedDateTo">Limpar Anos</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <h2 class="search-header">{{ results.length }} Resultados para "{{ query }}" <span *ngIf="selectedDateFrom || selectedDateTo">· {{ getDateFilterLabel() }}</span></h2>
+      <div class="header-actions-right">
+        <div class="sort-wrap" #sortWrapper>
+          <button type="button" class="sort-btn" (click)="toggleSortMenu()" [class.active]="showSortMenu" aria-label="Ordenar resultados" aria-haspopup="true" [attr.aria-expanded]="showSortMenu">
+            Ordenar {{ sortBy ? '· ' + sortLabel : '' }}
+          </button>
+          <div class="sort-menu" *ngIf="showSortMenu" role="menu" aria-label="Opções de ordenação">
+            <button type="button" class="sort-item" (click)="applySort('date-desc')" [class.selected]="sortBy === 'date-desc'" role="menuitem">Data (mais recente)</button>
+            <button type="button" class="sort-item" (click)="applySort('date-asc')" [class.selected]="sortBy === 'date-asc'" role="menuitem">Data (mais antigo)</button>
+            <button type="button" class="sort-item" (click)="applySort('rating-desc')" [class.selected]="sortBy === 'rating-desc'" role="menuitem">Classificação (maior)</button>
+            <button type="button" class="sort-item" (click)="applySort('rating-asc')" [class.selected]="sortBy === 'rating-asc'" role="menuitem">Classificação (menor)</button>
+            <button type="button" class="sort-item" (click)="applySort('duration-desc')" [class.selected]="sortBy === 'duration-desc'" role="menuitem">Duração (mais longo)</button>
+            <button type="button" class="sort-item" (click)="applySort('duration-asc')" [class.selected]="sortBy === 'duration-asc'" role="menuitem">Duração (mais curto)</button>
+            <button type="button" class="sort-item" (click)="applySort('name-asc')" [class.selected]="sortBy === 'name-asc'" role="menuitem">Nome (A–Z)</button>
+            <button type="button" class="sort-item" (click)="applySort('name-desc')" [class.selected]="sortBy === 'name-desc'" role="menuitem">Nome (Z–A)</button>
+            <button type="button" class="sort-item" (click)="applySort(null)" [class.selected]="sortBy === null" role="menuitem">Ordenação original</button>
+          </div>
         </div>
       </div>
     </div>
