@@ -75,6 +75,19 @@
   transition: background 0.2s ease, transform 0.15s ease, box-shadow 0.2s ease;
 }
 
+.btn.ghost {
+  /* estado inicial "claro" */
+  background: rgba(99, 179, 237, 0.16); /* azul claro */
+  border: 1px solid rgba(135, 206, 250, 0.35);
+}
+
+.btn.primary {
+  /* estado inicial "claro" */
+  background: rgba(255, 47, 109, 0.22);
+  border: 1px solid rgba(255, 47, 109, 0.35);
+  box-shadow: none;
+}
+
 .btn:hover {
   background: rgba(255,255,255,0.22);
   transform: translateY(-2px);
@@ -92,27 +105,31 @@
 }
 
   .btn.ghost.active {
-    background: rgba(255,255,255,0.22);
-    border: 2px solid rgba(255,255,255,0.4);
-  }
-
-  .btn.primary {
-    background: #ff2f6d;
+    background: linear-gradient(135deg, rgba(99, 179, 237, 0.5), rgba(0, 99, 177, 0.8));
+    border: 2px solid rgba(135, 206, 250, 0.9);
+    box-shadow: 0 0 12px rgba(135, 206, 250, 0.6);
   }
 
   .btn.primary.active {
+    /* ao clicar: fica "brilhante" e bem visível */
     background: #ff2f6d;
-    border: 2px solid rgba(255,255,255,0.5);
-    box-shadow: 0 0 0 2px rgba(255, 47, 109, 0.4);
+    border: 2px solid rgba(255, 255, 255, 0.55);
+    box-shadow: 0 0 0 2px rgba(255, 47, 109, 0.35), 0 10px 24px rgba(255, 47, 109, 0.35);
+  }
+
+  .btn.primary.active:hover {
+    /* manter a mesma cor quando está ativo (não "desbota" no hover) */
+    background: #ff2f6d;
+    box-shadow: 0 0 0 2px rgba(255, 47, 109, 0.35), 0 10px 24px rgba(255, 47, 109, 0.35);
   }
 
   .btn.primary:hover {
-    background: #ff4d85;
+    background: rgba(255, 47, 109, 0.32);
     box-shadow: 0 4px 16px rgba(255, 47, 109, 0.4);
   }
 
   .btn.primary:active {
-    background: #e91e5c;
+    background: rgba(255, 47, 109, 0.40);
   }
 
   .btn.danger {

@@ -516,6 +516,10 @@ export class MoviePageComponent implements OnInit, OnDestroy {
 
   addQueroVer(): void {
     if (!this.filme) return;
+    if (this.inWatchLater) {
+      this.remove();
+      return;
+    }
     this.userMoviesService.addMovie(this.filme.id, false).subscribe({
       next: () => {
         this.loadTotalHours();
@@ -528,6 +532,10 @@ export class MoviePageComponent implements OnInit, OnDestroy {
 
   addJaVi(): void {
     if (!this.filme) return;
+    if (this.inWatched) {
+      this.remove();
+      return;
+    }
     this.userMoviesService.addMovie(this.filme.id, true).subscribe({
       next: () => {
         this.loadTotalHours();

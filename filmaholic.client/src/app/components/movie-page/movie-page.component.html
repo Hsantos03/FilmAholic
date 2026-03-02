@@ -32,30 +32,29 @@
         <div class="actions-row">
           <button class="btn ghost"
                   [class.active]="inWatchLater"
+                  [attr.aria-pressed]="inWatchLater"
                   (click)="addQueroVer()"
-                  title="Adicionar à lista Quero Ver">
-            Quero Ver
+                  [title]="inWatchLater ? 'Este filme já está na tua lista Quero Ver' : 'Adicionar à lista Quero Ver'">
+            <span *ngIf="!inWatchLater">+ Quero Ver</span>
+            <span *ngIf="inWatchLater">✔ Quero Ver</span>
           </button>
 
           <button class="btn primary"
                   [class.active]="inWatched"
+                  [attr.aria-pressed]="inWatched"
                   (click)="addJaVi()"
-                  title="Marcar como já visto">
-            Já Vi
-          </button>
-
-          <button class="btn danger"
-                  *ngIf="inWatchLater || inWatched"
-                  (click)="remove()"
-                  title="Remover das minhas listas (Quero Ver / Já Vi)">
-            Remover
+                  [title]="inWatched ? 'Visto' : 'Já visto'">
+            <span *ngIf="!inWatched">Já Vi</span>
+            <span *ngIf="inWatched">✔ Já Vi</span>
           </button>
 
           <button class="btn favorite"
                   [class.active]="isFavorite"
+                  [attr.aria-pressed]="isFavorite"
                   (click)="toggleFavorite()"
-                  title="Adicionar ou remover dos favoritos">
-            &#9733; Favorito
+                  [title]="isFavorite ? 'Remover dos favoritos' : 'Adicionar aos favoritos'">
+            <span *ngIf="!isFavorite">&#9734; Favorito</span>
+            <span *ngIf="isFavorite">&#9733; Favoritos</span>
           </button>
         </div>
 
@@ -199,7 +198,7 @@
           </div>
 
           <!-- LISTA DE COMENTÁRIOS -->
-          <div class="comments-list" *ngIf="comments?.length; else noComments">
+          <div class="comments-list" *ngIf="comments.length; else noComments">
             <div class="comment-item" *ngFor="let c of comments">
 
               <div class="avatar avatar-md">
