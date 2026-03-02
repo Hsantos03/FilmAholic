@@ -10,6 +10,8 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
 using Xunit;
 
@@ -146,7 +148,7 @@ namespace FilmAholic.Tests
 
             using (var context = new FilmAholicDbContext(options))
             {
-                var controller = new CommentsController(context);
+                var controller = new CommentsController(context, NullLogger<CommentsController>.Instance);
                 var user = new ClaimsPrincipal(new ClaimsIdentity(new Claim[] {
                     new Claim(ClaimTypes.NameIdentifier, userId)
                 }, "mock"));
@@ -176,7 +178,7 @@ namespace FilmAholic.Tests
                 context.Filmes.Add(new Filme { Id = filmeId, Titulo = "Test Movie", Genero = "Action" });
                 await context.SaveChangesAsync();
 
-                var controller = new CommentsController(context);
+                var controller = new CommentsController(context, NullLogger<CommentsController>.Instance);
                 
                 var user = new ClaimsPrincipal(new ClaimsIdentity()); 
                 controller.ControllerContext = new ControllerContext() { HttpContext = new DefaultHttpContext() { User = user } };
@@ -206,7 +208,7 @@ namespace FilmAholic.Tests
                 context.Filmes.Add(new Filme { Id = filmeId, Titulo = "Test Movie", Genero = "Action" });
                 await context.SaveChangesAsync();
 
-                var controller = new CommentsController(context);
+                var controller = new CommentsController(context, NullLogger<CommentsController>.Instance);
                 var user = new ClaimsPrincipal(new ClaimsIdentity(new Claim[] {
                     new Claim(ClaimTypes.NameIdentifier, userId)
                 }, "mock"));
@@ -248,7 +250,7 @@ namespace FilmAholic.Tests
                 context.Filmes.Add(new Filme { Id = filmeId, Titulo = "Test Movie", Genero = "Action" });
                 await context.SaveChangesAsync();
 
-                var controller = new CommentsController(context);
+                var controller = new CommentsController(context, NullLogger<CommentsController>.Instance);
                 var user = new ClaimsPrincipal(new ClaimsIdentity(new Claim[] {
                     new Claim(ClaimTypes.NameIdentifier, userId)
                 }, "mock"));
@@ -290,7 +292,7 @@ namespace FilmAholic.Tests
                 context.Comments.Add(comment);
                 await context.SaveChangesAsync();
 
-                var controller = new CommentsController(context);
+                var controller = new CommentsController(context, NullLogger<CommentsController>.Instance);
                 var user = new ClaimsPrincipal(new ClaimsIdentity(new Claim[] {
                     new Claim(ClaimTypes.NameIdentifier, userId)
                 }, "mock"));
@@ -318,7 +320,7 @@ namespace FilmAholic.Tests
 
             using (var context = new FilmAholicDbContext(options))
             {
-                var controller = new CommentsController(context);
+                var controller = new CommentsController(context, NullLogger<CommentsController>.Instance);
                 var user = new ClaimsPrincipal(new ClaimsIdentity(new Claim[] {
                     new Claim(ClaimTypes.NameIdentifier, userId)
                 }, "mock"));
@@ -359,7 +361,7 @@ namespace FilmAholic.Tests
                 context.Comments.Add(comment);
                 await context.SaveChangesAsync();
 
-                var controller = new CommentsController(context);
+                var controller = new CommentsController(context, NullLogger<CommentsController>.Instance);
                 var user = new ClaimsPrincipal(new ClaimsIdentity(new Claim[] {
                     new Claim(ClaimTypes.NameIdentifier, userId)
                 }, "mock"));

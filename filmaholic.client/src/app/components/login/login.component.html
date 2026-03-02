@@ -22,6 +22,14 @@
       </div>
     </div>
 
+    <!-- Mensagens globais -->
+    <div *ngIf="errorMessage" style="background-color:#3b1319;border:1px solid #ff4d6a;border-radius:8px;padding:12px 16px;margin-bottom:16px;color:#ffd5dd;font-size:14px;">
+      {{ errorMessage }}
+    </div>
+    <div *ngIf="successMessage" style="background-color:#133b24;border:1px solid #28a745;border-radius:8px;padding:12px 16px;margin-bottom:16px;color:#c9f7d0;font-size:14px;">
+      {{ successMessage }}
+    </div>
+
     <!-- Mensagem de sucesso de login externo -->
     <div *ngIf="externalSuccess" style="background-color: #d4edda; border: 1px solid #c3e6cb; border-radius: 10px; padding: 20px; margin-bottom: 20px;">
       <h3 style="color: #155724; margin-top: 0;">✅ Login bem-sucedido!</h3>

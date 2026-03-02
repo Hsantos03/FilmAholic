@@ -2,7 +2,9 @@
   <div class="selecionar-generos-card">
     <div class="header">
       <h1>Escolha os seus géneros favoritos</h1>
-      <p style="color: #6c757d;">Selecione os géneros cinematográficos que mais gosta para personalizarmos a sua experiência</p>
+      <p style="color: #6c757d;">
+        Diz-nos se és mais aventura, terror ou romance e vamos transformar o teu feed numa maratona à tua medida.
+      </p>
     </div>
 
     <div *ngIf="error" class="error-message">
@@ -51,7 +53,7 @@
     </div>
 
     <p *ngIf="generosSelecionados.length > 0" style="text-align: center; margin-top: 15px; color: #6c757d; font-size: 14px;">
-      {{ generosSelecionados.length }} género(s) selecionado(s)
+      {{ generosSelecionados.length }} género(s) selecionado(s) — o algoritmo já está a preparar recomendações 🔍🎬
     </p>
   </div>
 </div>

@@ -375,6 +375,7 @@ export class MoviePageComponent implements OnInit, OnDestroy {
       },
       error: (err) => {
         console.error('Create comment failed', err);
+        if (err?.error?.detail) console.error('Server detail:', err.error.detail);
         this.commentError = err?.status === 401
           ? 'A tua sessão expirou. Faz login novamente.'
           : 'Não foi possível enviar o comentário.';
@@ -386,10 +387,11 @@ export class MoviePageComponent implements OnInit, OnDestroy {
   saveEdit(): void {
     if (this.editingCommentId == null) return;
 
-    if (!this.editText.trim()) {
-      this.commentError = 'Escreve um comentário.';
-      return;
-    }
+      const newText = (this.editText || '').trim();
+  if (!newText) {
+    this.commentError = 'Escreve um comentário.';
+    return;
+  }
 
     this.isSavingEdit = true;
     this.commentError = '';
@@ -397,7 +399,14 @@ export class MoviePageComponent implements OnInit, OnDestroy {
     this.commentsService.update(this.editingCommentId, this.editText.trim()).subscribe({
       next: (updated) => {
         const idx = this.comments.findIndex(x => x.id === updated.id);
-        if (idx >= 0) this.comments[idx] = { ...this.comments[idx], ...updated };
+        if (idx >= 0) {
+          this.comments[idx] = {
+            ...this.comments[idx],
+            ...updated,
+            texto: updated?.texto ?? newText,
+            dataEdicao: updated?.dataEdicao ?? new Date().toISOString()
+          };
+          }
         this.cancelEdit();
         this.isSavingEdit = false;
       },
@@ -507,6 +516,10 @@ export class MoviePageComponent implements OnInit, OnDestroy {
 
   addQueroVer(): void {
     if (!this.filme) return;
+    if (this.inWatchLater) {
+      this.remove();
+      return;
+    }
     this.userMoviesService.addMovie(this.filme.id, false).subscribe({
       next: () => {
         this.loadTotalHours();
@@ -519,6 +532,10 @@ export class MoviePageComponent implements OnInit, OnDestroy {
 
   addJaVi(): void {
     if (!this.filme) return;
+    if (this.inWatched) {
+      this.remove();
+      return;
+    }
     this.userMoviesService.addMovie(this.filme.id, true).subscribe({
       next: () => {
         this.loadTotalHours();

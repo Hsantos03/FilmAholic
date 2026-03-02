@@ -32,36 +32,36 @@ namespace FilmAholic.Server.Controllers
             
             if (dbFilme == null)
             {
-                var seedFilme = FilmSeed.Filmes.FirstOrDefault(f => f.Id == filmeId);
-                if (seedFilme == null)
+            var seedFilme = FilmSeed.Filmes.FirstOrDefault(f => f.Id == filmeId);
+            if (seedFilme == null)
                     return BadRequest("Filme inválido (não existe no catálogo).");
 
-                if (!string.IsNullOrEmpty(seedFilme.TmdbId))
+            if (!string.IsNullOrEmpty(seedFilme.TmdbId))
+            {
+                dbFilme = await _context.Set<Filme>()
+                    .FirstOrDefaultAsync(f => f.TmdbId == seedFilme.TmdbId);
+            }
+            
+            if (dbFilme == null)
+            {
+                dbFilme = await _context.Set<Filme>()
+                    .FirstOrDefaultAsync(f => f.Titulo == seedFilme.Titulo);
+            }
+            
+            if (dbFilme == null)
+            {
+                dbFilme = new Filme
                 {
-                    dbFilme = await _context.Set<Filme>()
-                        .FirstOrDefaultAsync(f => f.TmdbId == seedFilme.TmdbId);
-                }
-                
-                if (dbFilme == null)
-                {
-                    dbFilme = await _context.Set<Filme>()
-                        .FirstOrDefaultAsync(f => f.Titulo == seedFilme.Titulo);
-                }
-                
-                if (dbFilme == null)
-                {
-                    dbFilme = new Filme
-                    {
-                        Titulo = seedFilme.Titulo,
-                        Duracao = seedFilme.Duracao,
-                        Genero = seedFilme.Genero,
-                        PosterUrl = seedFilme.PosterUrl ?? "",
+                    Titulo = seedFilme.Titulo,
+                    Duracao = seedFilme.Duracao,
+                    Genero = seedFilme.Genero,
+                    PosterUrl = seedFilme.PosterUrl ?? "",
                         TmdbId = seedFilme.TmdbId ?? "",
                         Ano = seedFilme.Ano
-                    };
+                };
 
-                    _context.Set<Filme>().Add(dbFilme);
-                    await _context.SaveChangesAsync();
+                _context.Set<Filme>().Add(dbFilme);
+                await _context.SaveChangesAsync();
                 }
             }
 

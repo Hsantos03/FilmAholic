@@ -13,6 +13,8 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
 using Xunit;
 
@@ -569,7 +571,7 @@ namespace FilmAholic.Tests
             // Act
             using (var context = new FilmAholicDbContext(options))
             {
-                var controller = new CommentsController(context);
+                var controller = new CommentsController(context, NullLogger<CommentsController>.Instance);
                 var user = new ClaimsPrincipal(new ClaimsIdentity(new Claim[] {
                     new Claim(ClaimTypes.NameIdentifier, userId)
                 }, "mock"));
@@ -583,7 +585,7 @@ namespace FilmAholic.Tests
         }
 
 
-        // Decidir se a nossa aplicação mantém o nome da pessoa que fez um comentário mesmo que mude o nome mais tarde OU se a pessoa mudar o nome o nome de quem fez o comentário também muda
+        // Decidir se a nossa aplica??o mant?m o nome da pessoa que fez um coment?rio mesmo que mude o nome mais tarde OU se a pessoa mudar o nome o nome de quem fez o coment?rio tamb?m muda
         [Fact]
         public async Task UserName_Update_DeveManterIntegridadeNosComentarios()
         {
@@ -644,11 +646,11 @@ namespace FilmAholic.Tests
                 Assert.NotNull(commentAtualizado);
 
                 // NOTA DO SPRINT MASTER:
-                // Se a tua aplicação NÃO tem um trigger ou lógica automática para atualizar 
-                // o nome nos comentários antigos, o esperado é que mantenha o ORIGINAL.
-                // Se tiveres lógica de sincronização, muda para 'nomeAtualizado'.
+                // Se a tua aplica??o N?O tem um trigger ou l?gica autom?tica para atualizar 
+                // o nome nos coment?rios antigos, o esperado ? que mantenha o ORIGINAL.
+                // Se tiveres l?gica de sincroniza??o, muda para 'nomeAtualizado'.
 
-                // Cenário Comum: Histórico preservado (O comentário fica com o nome que tinha na altura)
+                // Cen?rio Comum: Hist?rico preservado (O coment?rio fica com o nome que tinha na altura)
                 Assert.Equal(nomeOriginal, commentAtualizado.UserName);
             }
         }

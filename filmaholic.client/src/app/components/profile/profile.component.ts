@@ -5,6 +5,7 @@ import { AuthService } from '../../services/auth.service';
 import { UserMoviesService, StatsComparison, StatsCharts, ChartDataPoint } from '../../services/user-movies.service';
 import { Filme, FilmesService } from '../../services/filmes.service';
 import { FavoritesService, FavoritosDTO } from '../../services/favorites.service';
+import { environment } from '../../../environments/environment';
 
 type StatsPeriod = 'all' | '7d' | '30d' | '3m' | '12m';
 
@@ -41,7 +42,7 @@ export class ProfileComponent implements OnInit {
   xp = 0;
   level = 0;
 
-  private apiBase = 'https://localhost:7277/api/Profile';
+  private readonly apiBase = environment.apiBaseUrl ? `${environment.apiBaseUrl}/api/Profile` : '/api/Profile';
 
   catalogo: Filme[] = [];
   watchLater: any[] = [];
@@ -55,6 +56,8 @@ export class ProfileComponent implements OnInit {
 
   chartData: StatsCharts | null = null;
   isLoadingCharts = false;
+
+  periodWaffleCells: { i: number; label: string }[] = [];
 
   readonly MAX_FAVORITES = 50;
   readonly TOP_10 = 10;
@@ -153,7 +156,6 @@ export class ProfileComponent implements OnInit {
   ngOnInit(): void {
     const userId = localStorage.getItem('user_id');
 
-    // Load graph settings from localStorage
     this.loadGraphSettings();
 
     this.loadCatalogo();
@@ -187,10 +189,9 @@ export class ProfileComponent implements OnInit {
           this.capaUrl = res?.capaUrl ?? null;
 
           if (res?.dataCriacao) {
-            this.joined = new Date(res.dataCriacao).toLocaleString();
+            this.joined = new Date(res.dataCriacao).toLocaleString('pt-PT');
           }
 
-          // XP / Level
           this.xp = res?.xp ?? 0;
           this.level = Math.floor(this.xp / 10);
         },
@@ -198,7 +199,6 @@ export class ProfileComponent implements OnInit {
       });
   }
 
-  // Graph Customization Methods
   toggleGraphCustomize(): void {
     this.showGraphCustomizeMenu = !this.showGraphCustomizeMenu;
   }
@@ -265,20 +265,17 @@ export class ProfileComponent implements OnInit {
   }
 
   private adjustColorBrightness(hex: string, percent: number): string {
-    // Remove # if present
+
     hex = hex.replace('#', '');
 
-    // Convert to RGB
     const r = parseInt(hex.substring(0, 2), 16);
     const g = parseInt(hex.substring(2, 4), 16);
     const b = parseInt(hex.substring(4, 6), 16);
 
-    // Adjust brightness
     const adjustedR = Math.min(255, Math.max(0, r + percent));
     const adjustedG = Math.min(255, Math.max(0, g + percent));
     const adjustedB = Math.min(255, Math.max(0, b + percent));
 
-    // Convert back to hex
     const toHex = (n: number) => {
       const hex = Math.round(n).toString(16);
       return hex.length === 1 ? '0' + hex : hex;
@@ -419,15 +416,59 @@ export class ProfileComponent implements OnInit {
     this.userMoviesService.getStatsCharts(params).subscribe({
       next: (res) => {
         this.chartData = res;
+        this.periodWaffleCells = this.buildPeriodWaffleCells();
         this.isLoadingCharts = false;
       },
       error: (err) => {
         console.error('Error loading chart data:', err);
         this.chartData = null;
+        this.periodWaffleCells = [];
         this.isLoadingCharts = false;
       }
     });
   }
+
+  lollipopPosIntervaloAnos(total: number): number {
+    const p = this.chartBarWidthIntervaloAnos(total);
+    if (total <= 0) return 0;
+    return Math.max(p, 4);
+  }
+
+  private buildPeriodWaffleCells(): { i: number; label: string }[] {
+    const data = this.chartData?.porIntervaloAnos ?? [];
+    const total = this.totalIntervaloAnosVistos;
+
+    if (!data.length || !total) return [];
+
+    const raw = data.map((d, i) => {
+      const t = d.total || 0;
+      const exact = (t / total) * 100;
+      const base = Math.floor(exact);
+      const frac = exact - base;
+      return { i, label: d.label, base, frac };
+    });
+
+    let used = raw.reduce((s, r) => s + r.base, 0);
+    let remaining = 100 - used;
+
+    const order = raw
+      .map((r, idx) => ({ idx, frac: r.frac }))
+      .sort((a, b) => b.frac - a.frac);
+
+    let k = 0;
+    while (remaining > 0 && order.length) {
+      raw[order[k].idx].base += 1;
+      remaining--;
+      k = (k + 1) % order.length;
+    }
+
+    const cells: { i: number; label: string }[] = [];
+    raw.sort((a, b) => a.i - b.i).forEach(r => {
+      for (let c = 0; c < r.base; c++) cells.push({ i: r.i, label: r.label });
+    });
+    return cells.slice(0, 100);
+  }
+
 
   getComparisonBarWidth(userValue: number, globalValue: number): number {
     const max = Math.max(userValue, globalValue, 1);
@@ -603,7 +644,7 @@ export class ProfileComponent implements OnInit {
     if (allValues.length === 0) return 1;
     return Math.max(...allValues, 1);
   }
-  
+
   getBarHeight(value: number): number {
     const max = this.lineChartMax;
     if (max === 0 || value === 0) return 0;
@@ -1082,9 +1123,9 @@ export class ProfileComponent implements OnInit {
 
   get currentListTitle(): string {
     if (this.currentListType === 'watchLater') {
-      return 'Watch Later';
+      return 'Quero ver';
     } else if (this.currentListType === 'watched') {
-      return 'Watched';
+      return 'Já vi';
     }
     return '';
   }

@@ -11,6 +11,8 @@ export class ResetPasswordComponent implements OnInit {
   model = { email: '', token: '', newPassword: '' };
   confirmarPassword = '';
   isLoading = false;
+  errorMessage = '';
+  successMessage = '';
 
   constructor(private route: ActivatedRoute, private authService: AuthService, private router: Router) { }
 
@@ -22,18 +24,20 @@ export class ResetPasswordComponent implements OnInit {
 
   onResetPassword() {
     if (this.model.newPassword !== this.confirmarPassword) {
-      alert('As passwords não coincidem!');
+      this.errorMessage = 'As passwords não coincidem!';
       return;
     }
 
     this.isLoading = true;
+    this.errorMessage = '';
+    this.successMessage = '';
     this.authService.resetPassword(this.model).subscribe({
       next: () => {
-        alert('Password alterada com sucesso!');
+        this.successMessage = 'Password alterada com sucesso!';
         this.router.navigate(['/login']);
       },
-      error: () => {
-        alert('O link expirou ou é inválido.');
+      error: (err) => {
+        this.errorMessage = err?.error?.message || 'O link expirou ou é inválido.';
         this.isLoading = false;
       }
     });

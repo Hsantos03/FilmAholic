@@ -1,4 +1,4 @@
-﻿using FilmAholic.Server.Models;
+using FilmAholic.Server.Models;
 using FilmAholic.Server.Services;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -44,17 +44,15 @@ namespace FilmAholic.Server.Controllers
                 Sobrenome = model.Sobrenome,
                 DataNascimento = model.DataNascimento,
                 DataCriacao = DateTime.UtcNow,
-                EmailConfirmed = false // Email não confirmado inicialmente
+                EmailConfirmed = false
             };
 
             var result = await _userManager.CreateAsync(user, model.Password);
 
             if (result.Succeeded)
             {
-                // Gerar token de confirmação de email
                 var token = await _userManager.GenerateEmailConfirmationTokenAsync(user);
                 
-                // Enviar email de verificação
                 try
                 {
                     await _emailService.SendVerificationEmailAsync(user.Email, token, user.Id);
@@ -68,19 +66,15 @@ namespace FilmAholic.Server.Controllers
                 catch (Exception ex)
                 {
                     _logger.LogError(ex, "Erro ao enviar email de verificação");
-                    // Mesmo que o email falhe, o utilizador foi criado
-                    // Em desenvolvimento, podemos retornar o token
                     return Ok(new 
                     { 
                         message = "Utilizador registado. Erro ao enviar email. Verifique os logs para o token de verificação.",
                         requiresEmailVerification = true,
-                        // Em desenvolvimento, podemos expor o token (remover em produção)
                         developmentToken = token
                     });
                 }
             }
 
-            // Formatar erros para uma mensagem mais clara
             var errorMessages = result.Errors.Select(e => e.Description).ToList();
             return BadRequest(new 
             { 
@@ -96,7 +90,6 @@ namespace FilmAholic.Server.Controllers
             var user = await _userManager.FindByEmailAsync(model.Email);
             if (user == null) return Unauthorized(new { message = "Utilizador não encontrado." });
 
-            // Verificar se o email está confirmado
             if (!await _userManager.IsEmailConfirmedAsync(user))
             {
                 return Unauthorized(new 
@@ -110,7 +103,6 @@ namespace FilmAholic.Server.Controllers
 
             if (result.Succeeded)
             {
-                // Devolvemos o nome e o sobrenome para o Angular usar na UI
                 return Ok(new
                 {
                     message = "Login ok",
@@ -140,27 +132,23 @@ namespace FilmAholic.Server.Controllers
                 return BadRequest(new { message = "Utilizador não encontrado." });
             }
 
-            // Decodificar o token se necessário (porque vem via URL)
             token = Uri.UnescapeDataString(token);
 
             var result = await _userManager.ConfirmEmailAsync(user, token);
 
             if (result.Succeeded)
             {
-                // Se for GET request, redirecionar para uma página de sucesso no frontend
                 if (Request.Method == "GET")
                 {
-                    // Redirecionar para página de confirmação no Angular (porta do cliente)
-                    var angularUrl = _configuration["EmailSettings:AngularUrl"] ?? "https://localhost:50905";
+                    var angularUrl = GetFrontendBaseUrl();
                     return Redirect($"{angularUrl}/email-confirmado?success=true");
                 }
-                
                 return Ok(new { message = "Email confirmado com sucesso! Agora pode fazer login." });
             }
 
             if (Request.Method == "GET")
             {
-                var angularUrl = _configuration["EmailSettings:AngularUrl"] ?? "https://localhost:50905";
+                var angularUrl = GetFrontendBaseUrl();
                 return Redirect($"{angularUrl}/email-confirmado?success=false&error=Token inválido ou expirado");
             }
 
@@ -173,7 +161,6 @@ namespace FilmAholic.Server.Controllers
             var user = await _userManager.FindByEmailAsync(model.Email);
             if (user == null)
             {
-                // Por segurança, não revelamos se o email existe ou não
                 return Ok(new { message = "Se o email existir e não estiver confirmado, um novo email de verificação foi enviado." });
             }
 
@@ -186,13 +173,12 @@ namespace FilmAholic.Server.Controllers
             {
                 var token = await _userManager.GenerateEmailConfirmationTokenAsync(user);
                 await _emailService.SendVerificationEmailAsync(user.Email, token, user.Id);
-                
                 return Ok(new { message = "Email de verificação reenviado com sucesso!" });
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Erro ao reenviar email de verificação");
-                return StatusCode(500, new { message = "Erro ao enviar email de verificação." });
+                _logger.LogError(ex, "Erro ao reenviar email de verificação para {Email}", user.Email);
+                return Ok(new { message = "Se o email existir e não estiver confirmado, tentámos reenviar. Verifique a pasta de spam ou tente mais tarde." });
             }
         }
 
@@ -203,21 +189,15 @@ namespace FilmAholic.Server.Controllers
 
             var user = await _userManager.FindByEmailAsync(model.Email);
 
-            // Por segurança, retornamos Ok mesmo que o email não exista para evitar "data mining"
             if (user == null) return Ok(new { message = "Se o email existir, enviámos as instruções." });
 
-            // Gera o token de recuperação
             var token = await _userManager.GeneratePasswordResetTokenAsync(user);
 
-            // Constrói o URL para o Angular
-            var angularUrl = _configuration["EmailSettings:AngularUrl"] ?? "https://localhost:4200";
+            var angularUrl = GetFrontendBaseUrl();
             var callbackUrl = $"{angularUrl}/reset-password?email={user.Email}&token={Uri.EscapeDataString(token)}";
 
-            // MUDANÇA: Usar o _emailService injetado (substituí _emailSender)
             try
             {
-                // Aqui deves usar um método do teu EmailService. 
-                // Se ele só tiver o de verificação, podes criar um similar para Password.
                 await _emailService.SendPasswordResetEmailAsync(user.Email, callbackUrl);
                 return Ok(new { message = "Se o email existir, enviámos as instruções." });
             }
@@ -236,7 +216,6 @@ namespace FilmAholic.Server.Controllers
             var user = await _userManager.FindByEmailAsync(model.Email);
             if (user == null) return BadRequest(new { message = "Erro ao processar o pedido." });
 
-            // O token já deve vir decodificado do Angular ou decodificas aqui
             var result = await _userManager.ResetPasswordAsync(user, model.Token, model.NewPassword);
 
             if (result.Succeeded)
@@ -265,12 +244,17 @@ namespace FilmAholic.Server.Controllers
         [HttpGet("google-login")]
         public IActionResult GoogleLogin()
         {
-            // Garantir que usa HTTPS
-            var scheme = Request.Scheme;
-            if (!Request.IsHttps && Request.Headers["X-Forwarded-Proto"].ToString().ToLower() != "https")
+            var clientId = _configuration["Authentication:Google:ClientId"];
+            var clientSecret = _configuration["Authentication:Google:ClientSecret"];
+            if (string.IsNullOrWhiteSpace(clientId) || string.IsNullOrWhiteSpace(clientSecret))
             {
-                scheme = "https";
+                _logger.LogWarning("Google login chamado mas OAuth não configurado (ClientId/ClientSecret em falta). Defina no Azure: Authentication__Google__ClientId e Authentication__Google__ClientSecret.");
+                return StatusCode(503, new { message = "Login com Google não está configurado no servidor. Defina Authentication__Google__ClientId e Authentication__Google__ClientSecret nas Definições de aplicação no Azure." });
             }
+
+            var scheme = Request.Scheme;
+            if (!Request.IsHttps && (Request.Headers["X-Forwarded-Proto"].ToString()?.ToLower() ?? "") != "https")
+                scheme = "https";
             var redirectUrl = Url.Action(nameof(GoogleCallback), "Autenticacao", null, scheme, Request.Host.Value);
             var properties = _signInManager.ConfigureExternalAuthenticationProperties("Google", redirectUrl);
             return Challenge(properties, "Google");
@@ -279,12 +263,17 @@ namespace FilmAholic.Server.Controllers
         [HttpGet("facebook-login")]
         public IActionResult FacebookLogin()
         {
-            // Garantir que usa HTTPS
-            var scheme = Request.Scheme;
-            if (!Request.IsHttps && Request.Headers["X-Forwarded-Proto"].ToString().ToLower() != "https")
+            var appId = _configuration["Authentication:Facebook:AppId"];
+            var appSecret = _configuration["Authentication:Facebook:AppSecret"];
+            if (string.IsNullOrWhiteSpace(appId) || string.IsNullOrWhiteSpace(appSecret))
             {
-                scheme = "https";
+                _logger.LogWarning("Facebook login chamado mas OAuth não configurado (AppId/AppSecret em falta). Defina no Azure: Authentication__Facebook__AppId e Authentication__Facebook__AppSecret.");
+                return StatusCode(503, new { message = "Login com Facebook não está configurado no servidor. Defina Authentication__Facebook__AppId e Authentication__Facebook__AppSecret nas Definições de aplicação no Azure." });
             }
+
+            var scheme = Request.Scheme;
+            if (!Request.IsHttps && (Request.Headers["X-Forwarded-Proto"].ToString()?.ToLower() ?? "") != "https")
+                scheme = "https";
             var redirectUrl = Url.Action(nameof(FacebookCallback), "Autenticacao", null, scheme, Request.Host.Value);
             var properties = _signInManager.ConfigureExternalAuthenticationProperties("Facebook", redirectUrl);
             return Challenge(properties, "Facebook");
@@ -304,69 +293,60 @@ namespace FilmAholic.Server.Controllers
 
         private async Task<IActionResult> HandleExternalLoginCallback(string provider)
         {
-            // Verificar se há erros de autenticação
             var error = Request.Query["error"].ToString();
             if (!string.IsNullOrEmpty(error))
             {
-                var angularUrl = _configuration["EmailSettings:AngularUrl"] ?? "https://localhost:50905";
+                var angularUrl = GetFrontendBaseUrl();
                 return Redirect($"{angularUrl}/login?error={Uri.EscapeDataString($"Erro ao autenticar com {provider}: {error}")}");
             }
 
             var info = await _signInManager.GetExternalLoginInfoAsync();
             if (info == null)
             {
-                // Log adicional para debug
                 var errorDescription = Request.Query["error_description"].ToString();
-                var angularUrl = _configuration["EmailSettings:AngularUrl"] ?? "https://localhost:50905";
+                var angularUrl = GetFrontendBaseUrl();
                 var errorMessage = string.IsNullOrEmpty(errorDescription) 
                     ? $"Erro ao autenticar com {provider}. O estado OAuth pode ter expirado. Tenta novamente." 
                     : $"Erro ao autenticar com {provider}: {errorDescription}";
                 return Redirect($"{angularUrl}/login?error={Uri.EscapeDataString(errorMessage)}");
             }
 
-            // Tenta fazer login com o provider externo
             var signInResult = await _signInManager.ExternalLoginSignInAsync(info.LoginProvider, info.ProviderKey, isPersistent: false, bypassTwoFactor: true);
 
             if (signInResult.Succeeded)
             {
-                // Login bem-sucedido - utilizador já existe
                 var user = await _userManager.FindByLoginAsync(info.LoginProvider, info.ProviderKey);
-                var angularUrl = _configuration["EmailSettings:AngularUrl"] ?? "https://localhost:50905";
+                var angularUrl = GetFrontendBaseUrl();
                 return Redirect($"{angularUrl}/login?externalSuccess=true&nome={Uri.EscapeDataString(user?.Nome ?? "")}&email={Uri.EscapeDataString(user?.Email ?? "")}&userId={Uri.EscapeDataString(user?.Id ?? "")}");
             }
 
-            // Se o utilizador não existe, cria uma conta nova
             if (signInResult.IsLockedOut)
             {
-                var angularUrl = _configuration["EmailSettings:AngularUrl"] ?? "https://localhost:50905";
+                var angularUrl = GetFrontendBaseUrl();
                 return Redirect($"{angularUrl}/login?error=Conta bloqueada");
             }
 
-            // Criar novo utilizador
             var email = info.Principal.FindFirstValue(ClaimTypes.Email) ?? info.Principal.FindFirstValue("email");
             var name = info.Principal.FindFirstValue(ClaimTypes.Name) ?? info.Principal.FindFirstValue("name");
             
             if (string.IsNullOrEmpty(email))
             {
-                var angularUrl = _configuration["EmailSettings:AngularUrl"] ?? "https://localhost:50905";
+                var angularUrl = GetFrontendBaseUrl();
                 return Redirect($"{angularUrl}/login?error=Não foi possível obter o email do {provider}");
             }
 
-            // Verificar se já existe utilizador com este email
             var existingUser = await _userManager.FindByEmailAsync(email);
             if (existingUser != null)
             {
-                // Adicionar o login externo ao utilizador existente
                 var addLoginResult = await _userManager.AddLoginAsync(existingUser, info);
                 if (addLoginResult.Succeeded)
                 {
                     await _signInManager.SignInAsync(existingUser, isPersistent: false);
-                    var angularUrl = _configuration["EmailSettings:AngularUrl"] ?? "https://localhost:50905";
+                    var angularUrl = GetFrontendBaseUrl();
                     return Redirect($"{angularUrl}/login?externalSuccess=true&nome={Uri.EscapeDataString(existingUser.Nome)}&email={Uri.EscapeDataString(existingUser.Email)}&userId={Uri.EscapeDataString(existingUser.Id)}");
                 }
             }
 
-            // Criar novo utilizador
             var names = name?.Split(' ') ?? new[] { "Utilizador", "" };
             var firstName = names[0];
             var lastName = names.Length > 1 ? string.Join(" ", names.Skip(1)) : "";
@@ -375,36 +355,61 @@ namespace FilmAholic.Server.Controllers
             {
                 UserName = email,
                 Email = email,
-                EmailConfirmed = true, // Login externo já confirma o email
+                EmailConfirmed = true, 
                 Nome = firstName,
                 Sobrenome = lastName,
-                DataNascimento = DateTime.UtcNow.AddYears(-18), // Data padrão
+                DataNascimento = DateTime.UtcNow.AddYears(-18), 
                 DataCriacao = DateTime.UtcNow
             };
 
             var createResult = await _userManager.CreateAsync(newUser);
             if (!createResult.Succeeded)
             {
-                var angularUrl = _configuration["EmailSettings:AngularUrl"] ?? "https://localhost:50905";
+                var angularUrl = GetFrontendBaseUrl();
                 return Redirect($"{angularUrl}/login?error=Erro ao criar conta: {string.Join(", ", createResult.Errors.Select(e => e.Description))}");
             }
 
-            // Adicionar o login externo
             var addLoginResult2 = await _userManager.AddLoginAsync(newUser, info);
             if (!addLoginResult2.Succeeded)
             {
-                var angularUrl = _configuration["EmailSettings:AngularUrl"] ?? "https://localhost:50905";
+                var angularUrl = GetFrontendBaseUrl();
                 return Redirect($"{angularUrl}/login?error=Erro ao associar conta externa");
             }
 
-            // Fazer login
             await _signInManager.SignInAsync(newUser, isPersistent: false);
-            var angularUrlFinal = _configuration["EmailSettings:AngularUrl"] ?? "https://localhost:50905";
+            var angularUrlFinal = GetFrontendBaseUrl();
             return Redirect($"{angularUrlFinal}/login?externalSuccess=true&nome={Uri.EscapeDataString(newUser.Nome)}&email={Uri.EscapeDataString(newUser.Email)}&userId={Uri.EscapeDataString(newUser.Id)}");
+        }
+
+        private string GetFrontendBaseUrl()
+        {
+            var host = Request.Host.Value ?? "";
+            var isBackendLocalhost = host.Contains("localhost", StringComparison.OrdinalIgnoreCase);
+
+            // Em produção (Azure) definir FrontendBaseUrl ou EmailSettings:AngularUrl com o URL do site Angular
+            var configured = _configuration["FrontendBaseUrl"]
+                ?? _configuration["EmailSettings:AngularUrl"];
+            if (!string.IsNullOrWhiteSpace(configured))
+            {
+                var url = configured.TrimEnd('/');
+                // Se o backend está no Azure e a config tem localhost, ignorar (evitar redirect para localhost)
+                if (!isBackendLocalhost && url.Contains("localhost", StringComparison.OrdinalIgnoreCase))
+                    configured = null;
+                else if (!string.IsNullOrEmpty(url))
+                    return url;
+            }
+
+            if (isBackendLocalhost)
+                return "https://localhost:50905";
+
+            var scheme = Request.Scheme;
+            if (!Request.IsHttps && (Request.Headers["X-Forwarded-Proto"].ToString()?.ToLower() ?? "") != "https")
+                scheme = "https";
+            // Mesmo origem: frontend e API no mesmo host (ex.: Azure App Service)
+            return $"{scheme}://{host}";
         }
     }
 
-    // DTOs (Objetos de transferência de dados) para o Controller receber do Angular
     public class RegistoRequest
     {
         public string UserName { get; set; } = "";

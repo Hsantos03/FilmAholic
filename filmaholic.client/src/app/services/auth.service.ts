@@ -3,13 +3,15 @@ import { Injectable } from '@angular/core';
 import { Observable, of } from 'rxjs';
 import { Router } from '@angular/router';
 import { catchError, finalize } from 'rxjs/operators';
+import { environment } from '../../environments/environment';
 
 @Injectable({
   providedIn: 'root'
 })
 
 export class AuthService {
-  private apiUrl = 'https://localhost:7277/api/autenticacao';
+  private readonly apiBase = environment.apiBaseUrl || '';
+  private apiUrl = this.apiBase ? `${this.apiBase}/api/autenticacao` : '/api/autenticacao';
 
   constructor(private http: HttpClient, private router: Router) { }
 
