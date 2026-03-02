@@ -1750,7 +1750,7 @@
 .chart-bar-track {
   flex: 1;
   height: 20px;
-  background: rgba(255, 255, 255, 0.08);
+  background: transparent;
   border-radius: 999px;
   overflow: hidden;
 }
