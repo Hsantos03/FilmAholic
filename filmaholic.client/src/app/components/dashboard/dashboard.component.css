@@ -89,6 +89,8 @@
     outline: none;
     color: #fff;
     font-size: 14px;
+    line-height: 46px;
+    vertical-align: middle;
   }
 
     .search-pill input::placeholder {
