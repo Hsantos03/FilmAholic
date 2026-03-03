@@ -54,7 +54,7 @@ public class MovieService : IMovieService
         {
             var httpClient = _httpClientFactory.CreateClient();
             var encodedQuery = Uri.EscapeDataString(query);
-            var url = $"{_tmdbBaseUrl}/search/movie?api_key={_tmdbApiKey}&query={encodedQuery}&page={page}&language=pt-PT";
+            var url = $"{_tmdbBaseUrl}/search/movie?api_key={_tmdbApiKey}&query={encodedQuery}&page={page}&language=en-US&include_image_language=en,null";
 
             var response = await httpClient.GetAsync(url);
             response.EnsureSuccessStatusCode();
@@ -100,7 +100,7 @@ public class MovieService : IMovieService
         }
     }
 
-    public async Task<TmdbMovieDto?> GetMovieDetailsFromTmdbAsync(int tmdbId, string language = "pt-PT")
+    public async Task<TmdbMovieDto?> GetMovieDetailsFromTmdbAsync(int tmdbId, string language = "en-US")
     {
         if (string.IsNullOrEmpty(_tmdbApiKey))
         {
@@ -110,7 +110,7 @@ public class MovieService : IMovieService
         try
         {
             var httpClient = _httpClientFactory.CreateClient();
-            var url = $"{_tmdbBaseUrl}/movie/{tmdbId}?api_key={_tmdbApiKey}&language=pt-PT";
+            var url = $"{_tmdbBaseUrl}/movie/{tmdbId}?api_key={_tmdbApiKey}&language={language}&include_image_language=en,null";
 
             var response = await httpClient.GetAsync(url);
             if (!response.IsSuccessStatusCode)
@@ -182,38 +182,20 @@ public class MovieService : IMovieService
 
     public async Task<Filme?> GetMovieInfoAsync(int tmdbId)
     {
-        // Get Portuguese version for synopsis and genres
-        var tmdbMoviePt = await GetMovieDetailsFromTmdbAsync(tmdbId);
-        if (tmdbMoviePt == null)
-        {
-            return null;
-        }
-
-        // Get English version for title only
-        var httpClient = _httpClientFactory.CreateClient();
-        var urlEn = $"{_tmdbBaseUrl}/movie/{tmdbId}?api_key={_tmdbApiKey}&language=en-US";
-        var responseEn = await httpClient.GetAsync(urlEn);
-        if (!responseEn.IsSuccessStatusCode)
-        {
-            _logger.LogWarning("TMDb API returned status {StatusCode} for movie {TmdbId}", responseEn.StatusCode, tmdbId);
-            return null;
-        }
-
-        var jsonEn = await responseEn.Content.ReadAsStringAsync();
-        var tmdbMovieEn = JsonSerializer.Deserialize<TmdbMovieDto>(jsonEn, new JsonSerializerOptions
-        {
-            PropertyNameCaseInsensitive = false
-        });
-
+        // Get English version for titles
+        var tmdbMovieEn = await GetMovieDetailsFromTmdbAsync(tmdbId, "en-US");
         if (tmdbMovieEn == null)
         {
             return null;
         }
 
+        // Get Portuguese version for synopsis and genres
+        var tmdbMoviePt = await GetMovieDetailsFromTmdbAsync(tmdbId, "pt-PT");
+
         OmdbMovieDto? omdbMovie = null;
-        if (!string.IsNullOrEmpty(tmdbMoviePt.ImdbId))
+        if (!string.IsNullOrEmpty(tmdbMovieEn.ImdbId))
         {
-            omdbMovie = await GetMovieDetailsFromOmdbAsync(tmdbMoviePt.ImdbId);
+            omdbMovie = await GetMovieDetailsFromOmdbAsync(tmdbMovieEn.ImdbId);
         }
 
         return MapToFilme(tmdbMovieEn, tmdbMoviePt, omdbMovie);
@@ -276,7 +258,7 @@ public class MovieService : IMovieService
         return filme;
     }
 
-    private Filme MapToFilme(TmdbMovieDto tmdbMovieEn, TmdbMovieDto tmdbMoviePt, OmdbMovieDto? omdbMovie)
+    private Filme MapToFilme(TmdbMovieDto tmdbMovieEn, TmdbMovieDto? tmdbMoviePt, OmdbMovieDto? omdbMovie)
     {
         var filme = new Filme
         {
@@ -288,10 +270,14 @@ public class MovieService : IMovieService
             Duracao = tmdbMovieEn.Runtime ?? 0
         };
 
-        // Use Portuguese genres
-        if (tmdbMoviePt.Genres != null && tmdbMoviePt.Genres.Any())
+        // Use Portuguese genres if available, otherwise English
+        if (tmdbMoviePt?.Genres != null && tmdbMoviePt.Genres.Any())
         {
             filme.Genero = string.Join(", ", tmdbMoviePt.Genres.Select(g => g.Name));
+        }
+        else if (tmdbMovieEn.Genres != null && tmdbMovieEn.Genres.Any())
+        {
+            filme.Genero = string.Join(", ", tmdbMovieEn.Genres.Select(g => g.Name));
         }
         else if (omdbMovie != null && !string.IsNullOrEmpty(omdbMovie.Genre))
         {
@@ -316,7 +302,7 @@ public class MovieService : IMovieService
             filme.PosterUrl = omdbMovie.Poster;
         }
 
-        if (!string.IsNullOrEmpty(tmdbMoviePt.ReleaseDate) && tmdbMoviePt.ReleaseDate.Length >= 4 && int.TryParse(tmdbMoviePt.ReleaseDate.Substring(0, 4), out var ano))
+        if (!string.IsNullOrEmpty(tmdbMovieEn.ReleaseDate) && tmdbMovieEn.ReleaseDate.Length >= 4 && int.TryParse(tmdbMovieEn.ReleaseDate.Substring(0, 4), out var ano))
         {
             filme.Ano = ano;
         }
@@ -339,7 +325,7 @@ public class MovieService : IMovieService
         try
         {
             var httpClient = _httpClientFactory.CreateClient();
-            var url = $"{_tmdbBaseUrl}/movie/popular?api_key={_tmdbApiKey}&page={page}&language=pt-PT";
+            var url = $"{_tmdbBaseUrl}/movie/popular?api_key={_tmdbApiKey}&page={page}&language=en-US&include_image_language=en,null";
 
             var response = await httpClient.GetAsync(url);
             response.EnsureSuccessStatusCode();
@@ -368,7 +354,7 @@ public class MovieService : IMovieService
                         var basicMovie = new Filme
                         {
                             TmdbId = tmdbMovie.Id.ToString(),
-                            Titulo = tmdbMovie.Title,
+                            Titulo = !string.IsNullOrEmpty(tmdbMovie.OriginalTitle) ? tmdbMovie.OriginalTitle : tmdbMovie.Title,
                             PosterUrl = tmdbMovie.PosterPath != null
                                 ? $"https://image.tmdb.org/t/p/w500{tmdbMovie.PosterPath}"
                                 : "",
@@ -385,7 +371,8 @@ public class MovieService : IMovieService
                         omdbMovie = await GetMovieDetailsFromOmdbAsync(fullDetails.ImdbId);
                     }
 
-                    var filme = MapToFilme(tmdbMovie, fullDetails, omdbMovie);
+                    var fullDetailsPt = await GetMovieDetailsFromTmdbAsync(tmdbMovie.Id, "pt-PT");
+                    var filme = MapToFilme(fullDetails, fullDetailsPt, omdbMovie);
                     movies.Add(filme);
                 }
                 catch (Exception ex)
@@ -529,7 +516,7 @@ public class MovieService : IMovieService
         {
             var httpClient = _httpClientFactory.CreateClient();
             
-            var url = $"{_tmdbBaseUrl}/movie/{tmdbId}/recommendations?api_key={_tmdbApiKey}&language=pt-PT&page=1";
+            var url = $"{_tmdbBaseUrl}/movie/{tmdbId}/recommendations?api_key={_tmdbApiKey}&language=en-US&include_image_language=en,null&page=1";
 
             var response = await httpClient.GetAsync(url);
             
@@ -547,7 +534,7 @@ public class MovieService : IMovieService
 
             if (result?.Results == null || result.Results.Count == 0)
             {
-                url = $"{_tmdbBaseUrl}/movie/{tmdbId}/similar?api_key={_tmdbApiKey}&language=pt-PT&page=1";
+                url = $"{_tmdbBaseUrl}/movie/{tmdbId}/similar?api_key={_tmdbApiKey}&language=en-US&include_image_language=en,null&page=1";
                 response = await httpClient.GetAsync(url);
                 
                 if (response.IsSuccessStatusCode)
