@@ -183,31 +183,9 @@
     <section class="strip strip-full" *ngIf="!isLoadingActors && atores.length">
       <div class="strip-inner">
         <div class="section-head">
-          <h2>Top 10 atores</h2>
+          <h2>Top 10 Atores</h2>
         </div>
-
-        <div class="carousel top10">
-          <button class="chevron left"
-                  (click)="prevAtores()"
-                  [disabled]="atoresIndex === 0"
-                  aria-label="Anterior">
-            &lsaquo;
-          </button>
-
-          <div class="carousel-track">
-            <div class="actor-card" *ngFor="let a of atoresVisible">
-              <img class="actor-photo" [src]="fotoAtor(a)" [alt]="a.nome" />
-              <div class="actor-name">{{ a.nome }}</div>
-            </div>
-          </div>
-
-          <button class="chevron right"
-                  (click)="nextAtores()"
-                  [disabled]="atoresIndex >= (atores.length - atoresVisibleCount)"
-                  aria-label="Seguinte">
-            &rsaquo;
-          </button>
-        </div>
+        <app-actors-carousel [actors]="atores" [visibleCount]="atoresVisibleCount"></app-actors-carousel>
       </div>
     </section>
   </main>

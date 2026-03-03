@@ -391,7 +391,7 @@ public class MovieService : IMovieService
         try
         {
             var httpClient = _httpClientFactory.CreateClient();
-            var url = $"{_tmdbBaseUrl}/person/popular?api_key={_tmdbApiKey}&page={page}&language=pt-PT";
+            var url = $"{_tmdbBaseUrl}/person/popular?api_key={_tmdbApiKey}&page={page}&language=en-US";
 
             var response = await httpClient.GetAsync(url);
             response.EnsureSuccessStatusCode();
@@ -407,7 +407,7 @@ public class MovieService : IMovieService
                 return new List<PopularActorDto>();
             }
 
-            return result.Results
+            var actors = result.Results
                 .Take(count)
                 .Select(p => new PopularActorDto
                 {
@@ -419,6 +419,14 @@ public class MovieService : IMovieService
                         : ""
                 })
                 .ToList();
+
+            // Ensure we return exactly the requested count
+            if (actors.Count > count)
+            {
+                actors = actors.Take(count).ToList();
+            }
+
+            return actors;
         }
         catch (Exception ex)
         {
