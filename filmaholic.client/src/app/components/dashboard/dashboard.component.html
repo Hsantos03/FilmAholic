@@ -52,6 +52,31 @@
     <div class="top-actions">
       <button class="icon-btn" aria-label="Favoritos">&#128278;</button>
 
+      <!-- Notifications bell button -->
+      <div class="notifications-wrap" style="position: relative;">
+        <button
+          class="icon-btn"
+          type="button"
+          (click)="toggleNotifications($event)"
+          aria-haspopup="true"
+          [attr.aria-expanded]="isNotificationsOpen"
+          aria-label="Notificações">
+          &#128276;
+        </button>
+
+        <div
+          class="notifications-menu"
+          #notificationsContainer
+          *ngIf="isNotificationsOpen"
+          role="menu"
+          aria-label="Notificações"
+          style="position: absolute; top: calc(100% + 8px); right: 0; min-width:220px; background: var(--bg-card, #0a0a0a); border: 1px solid rgba(255,255,255,0.06); border-radius:8px; box-shadow: 0 8px 24px rgba(0,0,0,0.45); padding:8px; z-index:1500;">
+          <div class="notifications-empty" style="padding:12px; color:var(--text-muted, #aaa);">
+            Ainda sem notificações.
+          </div>
+        </div>
+      </div>
+
       <button class="icon-btn" routerLink="/profile" aria-label="Perfil">&#128100;</button>
     </div>
   </header>

@@ -21,6 +21,7 @@ export interface SearchResultItem {
 })
 export class DashboardComponent implements OnInit, OnDestroy {
   @ViewChild('searchContainer', { static: false }) searchContainerRef?: ElementRef;
+  @ViewChild('notificationsContainer', { static: false }) notificationsContainerRef?: ElementRef;
 
   userName: string = '';
 
@@ -59,6 +60,9 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
   nextToWatch: Filme | null = null;
   isDiscovering = false;
+
+  // Notifications menu state
+  isNotificationsOpen = false;
 
   private onResizeBound = () => this.updateVisibleCount();
   private onDocumentClickBound = (e: MouseEvent) => this.onDocumentClick(e);
@@ -341,16 +345,28 @@ export class DashboardComponent implements OnInit, OnDestroy {
   }
 
   private onDocumentClick(e: MouseEvent): void {
-    const container = this.searchContainerRef?.nativeElement as HTMLElement | undefined;
     const target = e.target as Node | null;
 
-    if (!container) {
-      return;
-    }
+    const container = this.searchContainerRef?.nativeElement as HTMLElement | undefined;
+    const notificationsContainer = this.notificationsContainerRef?.nativeElement as HTMLElement | undefined;
 
-    if (!container.contains(target)) {
+    if (container && !container.contains(target)) {
       this.showSearchMenu = false;
     }
+
+    if (notificationsContainer && !notificationsContainer.contains(target)) {
+      this.isNotificationsOpen = false;
+    }
+  }
+
+  // Toggle notifications menu (stopPropagation so document click handler doesn't immediately close it)
+  public toggleNotifications(e: MouseEvent): void {
+    e.stopPropagation();
+    this.isNotificationsOpen = !this.isNotificationsOpen;
+  }
+
+  public closeNotifications(): void {
+    this.isNotificationsOpen = false;
   }
 
   public discoverNext(): void {
