@@ -12,7 +12,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace FilmAholic.Server.Migrations
 {
     [DbContext(typeof(FilmAholicDbContext))]
-    [Migration("20260303111724_FilmaholicMigration")]
+    [Migration("20260303130512_FilmaholicMigration")]
     partial class FilmaholicMigration
     {
         /// <inheritdoc />
@@ -152,6 +152,9 @@ namespace FilmAholic.Server.Migrations
                     b.Property<string>("PosterUrl")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("ReleaseDate")
+                        .HasColumnType("datetime2");
 
                     b.Property<string>("Titulo")
                         .IsRequired()
