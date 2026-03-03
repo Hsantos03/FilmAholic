@@ -10,7 +10,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Xunit;
 
-namespace FilmAholic.Tests
+namespace FilmAholic.Tests.UnitTests
 {
     public class MovieRatingsTests
     {
