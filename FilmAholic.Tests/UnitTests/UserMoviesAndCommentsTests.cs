@@ -14,7 +14,7 @@ using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
 using Xunit;
 
-namespace FilmAholic.Tests
+namespace FilmAholic.Tests.UnitTests
 {
     public class UserMoviesAndCommentsTests
     {

@@ -19,6 +19,7 @@ import { SelecionarGenerosComponent } from './components/selecionar-generos/sele
 import { SearchResultsComponent } from './components/search-results/search-results.component';
 import { MoviePageComponent } from './components/movie-page/movie-page.component';
 import { FormatDurationPipe } from './pipes/format-duration.pipe';
+import { ActorsCarouselComponent } from './components/actors-carousel/actors-carousel.component';
 
 
 registerLocaleData(localePt);
@@ -36,7 +37,8 @@ registerLocaleData(localePt);
     ProfileComponent,
     SelecionarGenerosComponent,
     SearchResultsComponent,
-    MoviePageComponent
+    MoviePageComponent,
+    ActorsCarouselComponent
   ],
   imports: [
     BrowserModule,

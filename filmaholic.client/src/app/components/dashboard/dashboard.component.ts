@@ -6,6 +6,7 @@ import { DesafiosService } from '../../services/desafios.service';
 import { Filme, FilmesService } from '../../services/filmes.service';
 import { AtoresService, PopularActor } from '../../services/atores.service';
 import { ProfileService } from '../../services/profile.service';
+import { ActorsCarouselComponent } from '../actors-carousel/actors-carousel.component';
 
 export interface SearchResultItem {
   id?: number;
@@ -55,7 +56,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
   atores: PopularActor[] = [];
   atoresIndex = 0;
-  atoresVisibleCount = 4;
+  atoresVisibleCount = 5;
 
   nextToWatch: Filme | null = null;
   isDiscovering = false;
@@ -223,7 +224,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
     if (w < 520) this.atoresVisibleCount = 1;
     else if (w < 860) this.atoresVisibleCount = 2;
     else if (w < 1180) this.atoresVisibleCount = 3;
-    else this.atoresVisibleCount = 4;
+    else this.atoresVisibleCount = 5;
 
     const maxAtoresIndex = Math.max(0, this.atores.length - this.atoresVisibleCount);
     this.atoresIndex = Math.min(this.atoresIndex, maxAtoresIndex);
@@ -405,15 +406,6 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
   get atoresVisible(): PopularActor[] {
     return this.atores.slice(this.atoresIndex, this.atoresIndex + this.atoresVisibleCount);
-  }
-
-  prevAtores(): void {
-    this.atoresIndex = Math.max(0, this.atoresIndex - this.atoresVisibleCount);
-  }
-
-  nextAtores(): void {
-    const maxIndex = Math.max(0, this.atores.length - this.atoresVisibleCount);
-    this.atoresIndex = Math.min(maxIndex, this.atoresIndex + this.atoresVisibleCount);
   }
 
   fotoAtor(a: PopularActor): string {

@@ -7,7 +7,7 @@ public interface IMovieService
 {
     Task<TmdbSearchResponse> SearchMoviesAsync(string query, int page = 1);
 
-    Task<TmdbMovieDto?> GetMovieDetailsFromTmdbAsync(int tmdbId);
+    Task<TmdbMovieDto?> GetMovieDetailsFromTmdbAsync(int tmdbId, string language = "en-US");
 
     Task<OmdbMovieDto?> GetMovieDetailsFromOmdbAsync(string imdbId);
 

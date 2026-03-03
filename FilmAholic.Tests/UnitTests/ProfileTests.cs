@@ -15,7 +15,7 @@ using Microsoft.EntityFrameworkCore;
 using Moq;
 using Xunit;
 
-namespace FilmAholic.Tests
+namespace FilmAholic.Tests.UnitTests
 {
     public class ProfileTests
     {

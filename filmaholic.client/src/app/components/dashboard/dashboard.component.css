@@ -89,6 +89,8 @@
     outline: none;
     color: #fff;
     font-size: 14px;
+    line-height: 46px;
+    vertical-align: middle;
   }
 
     .search-pill input::placeholder {
@@ -270,6 +272,13 @@
   border-radius: 14px;
   border: 1px solid rgba(255,255,255,0.10);
   background: rgba(255,255,255,0.04);
+  transition: transform 120ms ease, box-shadow 120ms ease;
+  flex: 0 0 auto;
+}
+
+.actor-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 22px 55px rgba(0,0,0,0.55);
 }
 
 .actor-photo {
@@ -622,7 +631,14 @@
 
   .actor-card {
     width: 150px;
-    }
+    transition: transform 120ms ease, box-shadow 120ms ease;
+    flex: 0 0 auto;
+  }
+
+  .actor-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 22px 55px rgba(0,0,0,0.55);
+  }
   
   .actor-photo {
     width: 110px;
@@ -690,6 +706,13 @@
 
   .actor-card {
     width: 140px;
+    transition: transform 120ms ease, box-shadow 120ms ease;
+    flex: 0 0 auto;
+  }
+
+  .actor-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 22px 55px rgba(0,0,0,0.55);
   }
 
   .actor-photo {

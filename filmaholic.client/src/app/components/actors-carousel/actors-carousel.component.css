@@ -1,0 +1,204 @@
+.actors-carousel-container {
+  width: 100%;
+}
+
+
+.actors-carousel-container .carousel {
+  position: relative;
+  width: 100%;
+  border-radius: 14px;
+  padding: 18px 70px;
+  background: rgba(1, 11, 21, 0.55);
+  border: 1px solid rgba(255,255,255,0.10);
+  overflow: hidden;
+}
+
+  .actors-carousel-container .carousel-track {
+  display: flex;
+  transition: transform 0.8s ease-in-out;
+  gap: 20px;
+  justify-content: center;
+}
+
+.actors-carousel-container .actor-card {
+  flex: 0 0 calc(100% / var(--visible-count, 5));
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 10px;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.04);
+  transition: all 0.3s ease;
+  cursor: pointer;
+  max-width: 200px;
+  min-width: 0;
+  position: relative;
+}
+
+.actors-carousel-container .actor-number-badge {
+  position: absolute;
+  top: -8px;
+  left: -8px;
+  background: linear-gradient(135deg, #e91e63, #d81b60);
+  color: white;
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.9em;
+  font-weight: bold;
+  z-index: 10;
+  border: 2px solid #1a1a1a;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+}
+
+.actors-carousel-container .actor-card:hover {
+  transform: translateY(-5px);
+  background: rgba(255, 255, 255, 0.08);
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.4);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.actors-carousel-container .actor-photo {
+  width: 140px;
+  height: 140px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+  transition: all 0.3s ease;
+}
+
+.actors-carousel-container .actor-card:hover .actor-photo {
+  border-color: rgba(255, 255, 255, 0.3);
+  transform: scale(1.05);
+}
+
+.actors-carousel-container .actor-name {
+  text-align: center;
+  font-weight: 600;
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.92);
+  line-height: 1.2;
+  max-width: 140px;
+  transition: color 0.3s ease;
+}
+
+.actors-carousel-container .actor-card:hover .actor-name {
+  color: #fff;
+}
+
+/* Use the same chevron styling as other carousels */
+.actors-carousel-container .chevron {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  height: 72px;
+  width: 72px;
+  border-radius: 18px;
+  background: transparent;
+  border: none;
+  color: #fff;
+  font-size: 74px;
+  line-height: 1;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  transition: 0.2s ease;
+  opacity: 0.95;
+  text-shadow: 0 10px 30px rgba(0,0,0,0.65);
+}
+
+.actors-carousel-container .chevron:hover:not(:disabled) {
+  transform: translateY(-50%) scale(1.02);
+  opacity: 1;
+}
+
+.actors-carousel-container .chevron:disabled {
+  opacity: 0.25;
+  cursor: not-allowed;
+}
+
+.actors-carousel-container .chevron.left {
+  left: 6px;
+}
+
+.actors-carousel-container .chevron.right {
+  right: 6px;
+}
+
+/* Responsive Design */
+@media (max-width: 1200px) {
+  .actors-carousel-container {
+    --visible-count: 4;
+  }
+  
+  .actors-carousel-container .actor-card {
+    flex: 0 0 calc(100% / 4);
+    max-width: 180px;
+  }
+  
+  .actors-carousel-container .actor-photo {
+    width: 120px;
+    height: 120px;
+  }
+}
+
+@media (max-width: 900px) {
+  .actors-carousel-container {
+    --visible-count: 3;
+  }
+  
+  .actors-carousel-container .actor-card {
+    flex: 0 0 calc(100% / 3);
+    max-width: 160px;
+  }
+  
+  .actors-carousel-container .actor-photo {
+    width: 100px;
+    height: 100px;
+  }
+  
+  .actors-carousel-container .chevron {
+    width: 56px;
+    height: 56px;
+    font-size: 60px;
+  }
+}
+
+@media (max-width: 600px) {
+  .actors-carousel-container {
+    --visible-count: 2;
+  }
+  
+  .actors-carousel-container .actor-card {
+    flex: 0 0 calc(100% / 2);
+    padding: 12px;
+    max-width: 140px;
+  }
+  
+  .actors-carousel-container .actor-photo {
+    width: 80px;
+    height: 80px;
+  }
+  
+  .actors-carousel-container .actor-name {
+    font-size: 11px;
+    max-width: 120px;
+  }
+}
+
+@media (max-width: 400px) {
+  .actors-carousel-container {
+    --visible-count: 1;
+  }
+  
+  .actors-carousel-container .actor-card {
+    flex: 0 0 100%;
+    max-width: 120px;
+  }
+}
