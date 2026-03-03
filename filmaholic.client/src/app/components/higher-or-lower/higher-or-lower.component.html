@@ -1,0 +1,27 @@
+<header class="topbar">
+  <button class="icon-btn" (click)="goBack()" aria-label="Back">&larr;</button>
+  <a class="brand" routerLink="/dashboard">FilmAholic</a>
+</header>
+
+<main class="hol-page">
+  <div class="hol-card" role="main" aria-labelledby="hol-title">
+    <h1 id="hol-title">Higher or lower</h1>
+
+    <p class="hol-desc">Choose which movie you think has the higher rating.</p>
+
+    <div class="hol-menu">
+      <button class="primary-btn" (click)="startGame()" aria-haspopup="true">Start game</button>
+      <button class="ghost-btn" (click)="openHistory()">History</button>
+    </div>
+
+    <div class="hol-state" *ngIf="isPlaying">
+      <h3>Game (placeholder)</h3>
+      <p>The game UI will appear here. Implementation in next step.</p>
+    </div>
+
+    <div class="hol-state" *ngIf="showHistory">
+      <h3>History</h3>
+      <p>No history yet — when you play, results will be shown here.</p>
+    </div>
+  </div>
+</main>
