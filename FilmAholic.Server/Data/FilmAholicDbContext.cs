@@ -58,6 +58,8 @@ public class FilmAholicDbContext : IdentityDbContext<Utilizador>
         builder.Entity<Comments>(e =>
         {
             e.Ignore(c => c.DataEdicao);
+            // Allow UserId to be nullable for deleted accounts
+            e.Property(c => c.UserId).IsRequired(false);
         });
 
         builder.Entity<CommentVote>()

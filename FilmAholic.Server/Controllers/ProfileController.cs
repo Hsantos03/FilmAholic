@@ -124,12 +124,30 @@ namespace FilmAholic.Server.Controllers
 
             try
             {
+                // Delete user-related data
                 var userMovies = _context.UserMovies.Where(um => um.UtilizadorId == id);
                 _context.UserMovies.RemoveRange(userMovies);
 
                 var utilGen = _context.UtilizadorGeneros.Where(ug => ug.UtilizadorId == id);
                 _context.UtilizadorGeneros.RemoveRange(utilGen);
 
+                // Delete movie ratings made by the user
+                var movieRatings = _context.MovieRatings.Where(r => r.UserId == id);
+                _context.MovieRatings.RemoveRange(movieRatings);
+
+                // Delete comment votes made by the user
+                var commentVotes = _context.CommentVotes.Where(v => v.UserId == id);
+                _context.CommentVotes.RemoveRange(commentVotes);
+
+                // Update user's comments to show "Conta Eliminada" instead of username
+                var userComments = _context.Comments.Where(c => c.UserId == id);
+                foreach (var comment in userComments)
+                {
+                    comment.UserName = "Conta Eliminada";
+                    comment.UserId = null; // Remove the user ID reference
+                }
+
+                // Delete the user account
                 var result = await _userManager.DeleteAsync(user);
                 if (!result.Succeeded)
                     return StatusCode(500, new { message = "Failed to delete user.", errors = result.Errors });
