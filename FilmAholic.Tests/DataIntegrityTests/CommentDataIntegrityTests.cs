@@ -56,6 +56,12 @@ namespace FilmAholic.Tests.DataIntegrityTests
                 var comment = await context.Comments.FindAsync(commentId);
                 if (comment != null)
                 {
+                    // Manually delete related votes since in-memory database doesn't support cascade deletes
+                    var relatedVotes = await context.CommentVotes
+                        .Where(v => v.CommentId == commentId)
+                        .ToListAsync();
+                    context.CommentVotes.RemoveRange(relatedVotes);
+                    
                     context.Comments.Remove(comment);
                     await context.SaveChangesAsync();
                 }

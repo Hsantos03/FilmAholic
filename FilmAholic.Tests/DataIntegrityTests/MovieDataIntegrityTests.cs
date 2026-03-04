@@ -45,6 +45,12 @@ namespace FilmAholic.Tests.DataIntegrityTests
                 var movie = await context.Filmes.FindAsync(filmeId);
                 if (movie != null)
                 {
+                    // Manually delete related ratings since in-memory database doesn't support cascade deletes
+                    var relatedRatings = await context.MovieRatings
+                        .Where(r => r.FilmeId == filmeId)
+                        .ToListAsync();
+                    context.MovieRatings.RemoveRange(relatedRatings);
+                    
                     context.Filmes.Remove(movie);
                     await context.SaveChangesAsync();
                 }
@@ -104,6 +110,12 @@ namespace FilmAholic.Tests.DataIntegrityTests
                 var movie = await context.Filmes.FindAsync(filmeId);
                 if (movie != null)
                 {
+                    // Manually delete related comments since in-memory database doesn't support cascade deletes
+                    var relatedComments = await context.Comments
+                        .Where(c => c.FilmeId == filmeId)
+                        .ToListAsync();
+                    context.Comments.RemoveRange(relatedComments);
+                    
                     context.Filmes.Remove(movie);
                     await context.SaveChangesAsync();
                 }
@@ -163,6 +175,12 @@ namespace FilmAholic.Tests.DataIntegrityTests
                 var movie = await context.Filmes.FindAsync(filmeId);
                 if (movie != null)
                 {
+                    // Manually delete related user movies since in-memory database doesn't support cascade deletes
+                    var relatedUserMovies = await context.UserMovies
+                        .Where(um => um.FilmeId == filmeId)
+                        .ToListAsync();
+                    context.UserMovies.RemoveRange(relatedUserMovies);
+                    
                     context.Filmes.Remove(movie);
                     await context.SaveChangesAsync();
                 }

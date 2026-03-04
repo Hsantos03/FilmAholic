@@ -37,7 +37,7 @@ namespace FilmAholic.Server.Controllers
 
                 var commentIds = comments.Select(c => c.Id).ToList();
 
-                var userIds = comments.Select(c => c.UserId).Distinct().ToList();
+                var userIds = comments.Select(c => c.UserId).Where(uid => uid != null).Distinct().ToList();
                 Dictionary<string, string?> fotoByUserId = new();
                 if (userIds.Count > 0)
                 {
@@ -74,7 +74,7 @@ namespace FilmAholic.Server.Controllers
                 {
                     Id = c.Id,
                     UserName = c.UserName,
-                    FotoPerfilUrl = fotoByUserId.TryGetValue(c.UserId, out var url) ? url : null,
+                    FotoPerfilUrl = c.UserId != null && fotoByUserId.TryGetValue(c.UserId, out var url) ? url : null,
                     Texto = c.Texto,
                     DataCriacao = c.DataCriacao,
                     DataEdicao = c.DataEdicao,

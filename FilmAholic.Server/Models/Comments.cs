@@ -9,8 +9,7 @@ namespace FilmAholic.Server.Models
         public int FilmeId { get; set; }
         public Filme? Filme { get; set; }
 
-        [Required]
-        public string UserId { get; set; } = string.Empty;
+        public string? UserId { get; set; } = string.Empty;
 
         [Required]
         public string UserName { get; set; } = string.Empty;

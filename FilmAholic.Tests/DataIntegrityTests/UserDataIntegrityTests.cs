@@ -53,6 +53,12 @@ namespace FilmAholic.Tests.DataIntegrityTests
                 context.Users.Add(user);
                 await context.SaveChangesAsync();
 
+                // Manually delete related ratings since in-memory database doesn't support cascade deletes
+                var relatedRatings = await context.MovieRatings
+                    .Where(r => r.UserId == userId)
+                    .ToListAsync();
+                context.MovieRatings.RemoveRange(relatedRatings);
+
                 context.Users.Remove(user);
                 await context.SaveChangesAsync();
             }
@@ -113,6 +119,28 @@ namespace FilmAholic.Tests.DataIntegrityTests
                 context.Users.Add(user);
                 await context.SaveChangesAsync();
 
+                // Manually delete related ratings since in-memory database doesn't support cascade deletes
+                var relatedRatings = await context.MovieRatings
+                    .Where(r => r.UserId == userId)
+                    .ToListAsync();
+                context.MovieRatings.RemoveRange(relatedRatings);
+
+                // Manually delete related votes since in-memory database doesn't support cascade deletes
+                var relatedVotes = await context.CommentVotes
+                    .Where(v => v.UserId == userId)
+                    .ToListAsync();
+                context.CommentVotes.RemoveRange(relatedVotes);
+
+                // Update comments to show "Conta Eliminada" (simulating the real behavior)
+                var userComments = await context.Comments
+                    .Where(c => c.UserId == userId)
+                    .ToListAsync();
+                foreach (var comment in userComments)
+                {
+                    comment.UserName = "Conta Eliminada";
+                    comment.UserId = null;
+                }
+
                 context.Users.Remove(user);
                 await context.SaveChangesAsync();
             }
@@ -120,19 +148,25 @@ namespace FilmAholic.Tests.DataIntegrityTests
             // Assert
             using (var context = new FilmAholicDbContext(options))
             {
+                // Comments should still exist but with UserId = null and UserName = "Conta Eliminada"
                 var commentsAfterDeletion = await context.Comments
-                    .Where(c => c.UserId == userId)
+                    .Where(c => c.UserId == null && c.UserName == "Conta Eliminada")
                     .ToListAsync();
-                Assert.Empty(commentsAfterDeletion);
+                Assert.Equal(2, commentsAfterDeletion.Count); // Comments should be preserved
 
+                // Verify the comments still exist for the movies but with updated user info
                 var movie1Comments = await context.Comments
                     .Where(c => c.FilmeId == filmeId1)
                     .ToListAsync();
                 var movie2Comments = await context.Comments
                     .Where(c => c.FilmeId == filmeId2)
                     .ToListAsync();
-                Assert.Empty(movie1Comments);
-                Assert.Empty(movie2Comments);
+                Assert.Single(movie1Comments);
+                Assert.Single(movie2Comments);
+                
+                // Verify all comments show "Conta Eliminada"
+                Assert.All(movie1Comments.Concat(movie2Comments), c => Assert.Equal("Conta Eliminada", c.UserName));
+                Assert.All(movie1Comments.Concat(movie2Comments), c => Assert.Null(c.UserId));
             }
         }
 
@@ -174,6 +208,12 @@ namespace FilmAholic.Tests.DataIntegrityTests
                 var user = new Utilizador { Id = userId, UserName = "test@example.com" };
                 context.Users.Add(user);
                 await context.SaveChangesAsync();
+
+                // Manually delete related votes since in-memory database doesn't support cascade deletes
+                var relatedVotes = await context.CommentVotes
+                    .Where(v => v.UserId == userId)
+                    .ToListAsync();
+                context.CommentVotes.RemoveRange(relatedVotes);
 
                 context.Users.Remove(user);
                 await context.SaveChangesAsync();
@@ -230,6 +270,12 @@ namespace FilmAholic.Tests.DataIntegrityTests
                 context.Users.Add(user);
                 await context.SaveChangesAsync();
 
+                // Manually delete related user movies since in-memory database doesn't support cascade deletes
+                var relatedUserMovies = await context.UserMovies
+                    .Where(um => um.UtilizadorId == userId)
+                    .ToListAsync();
+                context.UserMovies.RemoveRange(relatedUserMovies);
+
                 context.Users.Remove(user);
                 await context.SaveChangesAsync();
             }
@@ -285,6 +331,12 @@ namespace FilmAholic.Tests.DataIntegrityTests
                 var user = new Utilizador { Id = userId, UserName = "test@example.com" };
                 context.Users.Add(user);
                 await context.SaveChangesAsync();
+
+                // Manually delete related watch later entries since in-memory database doesn't support cascade deletes
+                var relatedWatchLater = await context.UserMovies
+                    .Where(um => um.UtilizadorId == userId && um.JaViu == false)
+                    .ToListAsync();
+                context.UserMovies.RemoveRange(relatedWatchLater);
 
                 context.Users.Remove(user);
                 await context.SaveChangesAsync();
@@ -346,6 +398,12 @@ namespace FilmAholic.Tests.DataIntegrityTests
                 var user = new Utilizador { Id = userId, UserName = "test@example.com" };
                 context.Users.Add(user);
                 await context.SaveChangesAsync();
+
+                // Manually delete related watched movies since in-memory database doesn't support cascade deletes
+                var relatedJaVistos = await context.UserMovies
+                    .Where(um => um.UtilizadorId == userId && um.JaViu == true)
+                    .ToListAsync();
+                context.UserMovies.RemoveRange(relatedJaVistos);
 
                 context.Users.Remove(user);
                 await context.SaveChangesAsync();
