@@ -11,6 +11,7 @@ export interface Filme {
   posterUrl: string;
   tmdbId?: string;
   ano?: number | null;
+  releaseDate?: string | null; // ISO date string, e.g. "2026-05-15"
 }
 
 export interface TmdbSearchResponse {

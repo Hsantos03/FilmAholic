@@ -270,6 +270,7 @@ public class MovieService : IMovieService
         filme.Duracao = updatedInfo.Duracao;
         filme.TmdbId = updatedInfo.TmdbId;
         filme.Ano = updatedInfo.Ano;
+        filme.ReleaseDate = updatedInfo.ReleaseDate;
 
         await _context.SaveChangesAsync();
 
@@ -316,6 +317,7 @@ public class MovieService : IMovieService
             filme.PosterUrl = omdbMovie.Poster;
         }
 
+        // set Ano from TMDb release date (year)
         if (!string.IsNullOrEmpty(tmdbMoviePt.ReleaseDate) && tmdbMoviePt.ReleaseDate.Length >= 4 && int.TryParse(tmdbMoviePt.ReleaseDate.Substring(0, 4), out var ano))
         {
             filme.Ano = ano;
@@ -323,6 +325,24 @@ public class MovieService : IMovieService
         if (filme.Ano == null && omdbMovie != null && !string.IsNullOrEmpty(omdbMovie.Year) && int.TryParse(omdbMovie.Year.Trim(), out var anoOmdb))
         {
             filme.Ano = anoOmdb;
+        }
+
+        // New: parse and store full release date when available (TMDb format is "yyyy-MM-dd")
+        if (!string.IsNullOrEmpty(tmdbMoviePt.ReleaseDate))
+        {
+            if (DateTime.TryParseExact(tmdbMoviePt.ReleaseDate, "yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.AssumeUniversal | System.Globalization.DateTimeStyles.AdjustToUniversal, out var parsedDate))
+            {
+                // store as UTC (DB will persist DateTime)
+                filme.ReleaseDate = parsedDate;
+            }
+            else if (DateTime.TryParse(tmdbMoviePt.ReleaseDate, out var fallbackDate))
+            {
+                filme.ReleaseDate = fallbackDate;
+            }
+        }
+        else if (omdbMovie != null && !string.IsNullOrEmpty(omdbMovie.Released) && DateTime.TryParse(omdbMovie.Released, out var omdbDate))
+        {
+            filme.ReleaseDate = omdbDate;
         }
 
         return filme;

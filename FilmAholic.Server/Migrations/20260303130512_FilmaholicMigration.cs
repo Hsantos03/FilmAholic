@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace FilmAholic.Server.Migrations
 {
     /// <inheritdoc />
-    public partial class InitialCreate : Migration
+    public partial class FilmaholicMigration : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -91,7 +91,8 @@ namespace FilmAholic.Server.Migrations
                     Genero = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     PosterUrl = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     Duracao = table.Column<int>(type: "int", nullable: false),
-                    Ano = table.Column<int>(type: "int", nullable: true)
+                    Ano = table.Column<int>(type: "int", nullable: true),
+                    ReleaseDate = table.Column<DateTime>(type: "datetime2", nullable: true)
                 },
                 constraints: table =>
                 {

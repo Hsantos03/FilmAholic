@@ -149,6 +149,9 @@ namespace FilmAholic.Server.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<DateTime?>("ReleaseDate")
+                        .HasColumnType("datetime2");
+
                     b.Property<string>("Titulo")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");

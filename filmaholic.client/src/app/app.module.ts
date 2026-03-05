@@ -20,6 +20,7 @@ import { SearchResultsComponent } from './components/search-results/search-resul
 import { MoviePageComponent } from './components/movie-page/movie-page.component';
 import { FormatDurationPipe } from './pipes/format-duration.pipe';
 import { ActorsCarouselComponent } from './components/actors-carousel/actors-carousel.component';
+import { HigherOrLowerComponent } from './components/higher-or-lower/higher-or-lower.component';
 
 
 registerLocaleData(localePt);
@@ -38,7 +39,8 @@ registerLocaleData(localePt);
     SelecionarGenerosComponent,
     SearchResultsComponent,
     MoviePageComponent,
-    ActorsCarouselComponent
+    ActorsCarouselComponent,
+    HigherOrLowerComponent
   ],
   imports: [
     BrowserModule,
