@@ -1,264 +1,538 @@
 <div class="page">
+
   <header class="topbar">
+
     <button class="icon-btn" (click)="openDesafios()" aria-label="Desafios">
+
       <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+
         <path d="M12 2L14.09 8.26L21 9.27L16.5 13.14L17.82 20L12 16.77L6.18 20L7.5 13.14L3 9.27L9.91 8.26L12 2Z"/>
+
       </svg>
+
     </button>
+
+
 
     <a class="brand" routerLink="/dashboard" aria-label="Go to dashboard">FilmAholic</a>
 
+
+
     <div class="search" #searchContainer>
+
       <div class="search-pill" role="search">
+
         <button class="pill-icon left" type="button" aria-label="Opcoes">
+
           <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+
             <path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"/>
+
           </svg>
+
         </button>
+
+
 
         <input type="text"
+
                [(ngModel)]="searchTerm"
+
                (ngModelChange)="onSearchChange($event)"
+
                (focus)="onSearchFocus()"
+
                (keyup.enter)="doSearch()"
+
                placeholder="Pesquisar filmes..."
+
                aria-label="Pesquisar" />
 
+
+
         <button class="pill-icon right" type="button" aria-label="Pesquisar" (click)="doSearch()">
+
           <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+
             <path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
+
           </svg>
+
         </button>
+
       </div>
+
+
 
       <div class="search-menu" *ngIf="showSearchMenu" role="listbox" aria-label="Sugestões de filmes">
+
         <div *ngIf="isSuggestionsMode" class="search-menu-title">Sugestões para si</div>
+
         <div *ngIf="isSuggestionsMode && isLoadingSuggestions" class="search-empty">A carregar sugestões…</div>
+
         <div *ngIf="isSuggestionsMode && !isLoadingSuggestions && searchResults.length === 0 && hasGenrePreferences" class="search-empty">
+
           Nenhum filme dos teus géneros apareceu agora — tenta outro título ou mistura de géneros.
+
         </div>
+
         <div *ngIf="isSuggestionsMode && !isLoadingSuggestions && searchResults.length === 0 && !hasGenrePreferences" class="search-empty">
+
           Escolhe os teus géneros favoritos no perfil para desbloquear sugestões só para ti.
+
         </div>
+
         <div *ngIf="searchResultsLoading" class="search-empty">
+
           A pesquisar…
+
         </div>
+
         <a class="search-item"
+
            *ngFor="let m of searchResults"
+
            href="javascript:void(0)"
+
            (click)="openSearchResult(m)"
+
            role="option">
+
           <img class="search-thumb" [src]="posterOf(m)" [alt]="m.titulo" />
+
           <div class="search-title">{{ m.titulo }}</div>
+
         </a>
+
         <div *ngIf="!isSuggestionsMode && !searchResultsLoading && searchResults.length === 0" class="search-empty">
+
           Nao foram encontrados resultados para "{{ searchTerm }}"
+
         </div>
+
       </div>
+
     </div>
+
+
 
     <div class="top-actions">
-      <button class="icon-btn" aria-label="Favoritos">
+
+      <button class="icon-btn" routerLink="/cinema-movies" aria-label="Filmes em Cartaz">
+
         <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-          <path d="M17 3H7c-1.1 0-1.99.9-1.99 2L5 21l7-3 7 3V5c0-1.1-.9-2-2-2z"/>
+
+          <path d="M18 4l2 4h-3l-2-4h-2l2 4h-3l-2-4H8l2 4H7L5 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V4h-4z"/>
+
         </svg>
+
       </button>
+
+      <button class="icon-btn" aria-label="Favoritos">
+
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+
+          <path d="M17 3H7c-1.1 0-1.99.9-1.99 2L5 21l7-3 7 3V5c0-1.1-.9-2-2-2z"/>
+
+        </svg>
+
+      </button>
+
+
 
       <button class="icon-btn" routerLink="/profile" aria-label="Perfil">
+
         <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+
           <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+
         </svg>
+
       </button>
+
     </div>
+
   </header>
 
+
+
   <main class="content">
+
     <div class="state" *ngIf="isLoadingMovies">A carregar filmes&hellip;</div>
+
     <div class="state error" *ngIf="!isLoadingMovies && errorMovies">
+
       {{ errorMovies }}
+
     </div>
+
+
 
     <section class="strip strip-full" *ngIf="!isLoadingMovies && featured.length">
+
       <div class="strip-inner">
+
         <div class="section-head">
+
           <h2>Em Destaque</h2>
+
         </div>
+
+
 
         <div class="carousel hero">
+
           <button class="chevron left"
+
                   (click)="prevFeatured()"
+
                   [disabled]="featuredIndex === 0"
+
                   aria-label="Anterior">
+
             &lsaquo;
+
           </button>
+
+
 
           <div class="carousel-track">
+
             <a class="poster-card hero"
+
                *ngFor="let f of featuredVisible"
+
                [routerLink]="['/movie-detail', f.id]">
+
               <img [src]="posterOf(f)" [alt]="f.titulo" />
+
             </a>
+
           </div>
 
+
+
           <button class="chevron right"
+
                   (click)="nextFeatured()"
+
                   [disabled]="featuredIndex >= (featured.length - featuredVisibleCount)"
+
                   aria-label="Seguinte">
+
             &rsaquo;
+
           </button>
+
         </div>
+
       </div>
+
     </section>
+
+
 
     <section class="strip strip-full top10-strip" *ngIf="!isLoadingMovies && top10.length">
+
       <div class="strip-inner">
+
         <div class="section-head">
+
           <h2>Top 10 filmes</h2>
+
         </div>
+
+
 
         <div class="carousel top10">
+
           <button class="chevron left"
+
                   (click)="prevTop10()"
+
                   [disabled]="top10Index === 0"
+
                   aria-label="Anterior">
+
             &lsaquo;
+
           </button>
+
+
 
           <div class="carousel-track">
+
             <a class="poster-card small"
+
                *ngFor="let f of top10Visible"
+
                [routerLink]="['/movie-detail', f.id]">
+
               <img [src]="posterOf(f)" [alt]="f.titulo" />
+
             </a>
+
           </div>
+
+
 
           <button class="chevron right"
+
                   (click)="nextTop10()"
+
                   [disabled]="top10Index >= (top10.length - top10VisibleCount)"
+
                   aria-label="Seguinte">
+
             &rsaquo;
+
           </button>
+
         </div>
+
       </div>
+
     </section>
+
+
 
     <section class="strip strip-full desafios-strip">
+
       <div class="strip-inner">
+
         <div class="section-head">
+
           <h2>Desafios Semanais</h2>
+
         </div>
+
         <div class="desafios-dashboard-cards">
+
           <button class="desafio-card-btn" (click)="openDesafios()" type="button">
+
             <span class="desafio-card-icon">
+
               <svg width="42" height="42" viewBox="0 0 24 24" fill="currentColor">
+
                 <path d="M12 2L14.09 8.26L21 9.27L16.5 13.14L17.82 20L12 16.77L6.18 20L7.5 13.14L3 9.27L9.91 8.26L12 2Z"/>
+
               </svg>
+
             </span>
+
             <span class="desafio-card-label">Ver desafios</span>
+
             <span class="desafio-card-desc">Completa desafios e ganha XP</span>
+
           </button>
+
         </div>
+
       </div>
+
     </section>
+
+
 
     <section class="strip strip-full nextup-strip">
+
       <div class="strip-inner">
+
         <div class="section-head">
+
           <h2>O que vou ver a seguir</h2>
+
         </div>
+
+
 
         <div class="discover-wrap">
+
           <button class="discover-btn" (click)="discoverNext()" [disabled]="isDiscovering || isLoadingMovies">
+
             {{ isDiscovering ? 'A descobrir…' : 'Descobrir' }}
+
           </button>
+
         </div>
+
+
 
         <div class="nextup-content">
+
           <div *ngIf="!isLoadingMovies && movies.length === 0" class="empty-list-message">
+
             A lista está em branco como um ecrã antes da sessão. Procura ou escolhe géneros para começar o espetáculo.
+
           </div>
+
+
 
           <div class="nextup-card" *ngIf="nextToWatch">
+
             <a [routerLink]="['/movie-detail', nextToWatch.id]">
+
               <img class="nextup-poster" [src]="posterOf(nextToWatch)" [alt]="nextToWatch.titulo" />
+
             </a>
 
+
+
             <div class="nextup-meta">
+
               <h3 class="nextup-title">{{ nextToWatch.titulo }}</h3>
+
               <div class="nextup-sub">{{ nextToWatch.genero }} &middot; {{ nextToWatch.duracao | formatDuration }}</div>
+
               <div class="nextup-actions">
+
                 <button class="action-btn" (click)="goToMovieDetail(nextToWatch.id)">Ver detalhes</button>
+
               </div>
+
             </div>
+
           </div>
+
         </div>
+
       </div>
+
     </section>
+
+
 
     <div class="state" *ngIf="isLoadingActors">A carregar atores&hellip;</div>
+
     <div class="state error" *ngIf="!isLoadingActors && errorActors">
+
       {{ errorActors }}
+
     </div>
 
+
+
     <section class="strip strip-full" *ngIf="!isLoadingActors && atores.length">
+
       <div class="strip-inner">
+
         <div class="section-head">
+
           <h2>Top 10 Atores</h2>
+
         </div>
+
         <app-actors-carousel [actors]="atores" [visibleCount]="atoresVisibleCount"></app-actors-carousel>
+
       </div>
+
     </section>
+
   </main>
+
 </div>
 
+
+
 <div class="modal-overlay" *ngIf="isDesafiosOpen" (click)="closeDesafios()">
+
   <div class="modal-box" (click)="$event.stopPropagation()">
+
     <button class="modal-close" (click)="closeDesafios()">&times;</button>
+
+
 
     <h3>Desafios Semanais</h3>
 
+
+
     <div *ngIf="isLoadingDesafios" class="modal-loading">Loading desafios...</div>
 
+
+
     <div class="desafios-list" *ngIf="!isLoadingDesafios">
+
       <div class="desafio-row" *ngFor="let d of desafios" [class.completed]="isCompleted(d)">
+
         <div class="desafio-meta">
+
           <h4 class="desafio-title">{{ d.descricao }}</h4>
 
+
+
           <div class="desafio-sub">
+
             {{ d.genero }} &middot; {{ d.dataInicio | date:'shortDate' }} - {{ d.dataFim | date:'shortDate' }}
+
           </div>
+
         </div>
+
+
 
         <div class="desafio-progress">
+
           <div class="progress-text">
+
             <span *ngIf="!isCompleted(d)">
+
               {{ d.progresso }} / {{ d.quantidadeNecessaria }}
+
             </span>
+
+
 
             <span *ngIf="isCompleted(d)" aria-live="polite">
+
               <svg width="16" height="16" viewBox="0 0 24 24" fill="#28a745">
+
                 <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
+
               </svg>
+
               Completed
+
             </span>
+
           </div>
+
+
 
           <div class="progress-bar" aria-hidden="true">
+
             <div class="progress-fill"
+
                  [style.width.%]="computeProgressPercent(d.progresso, d.quantidadeNecessaria)"></div>
+
           </div>
 
+
+
           <div class="xp-badge">+{{ d.xp }} XP</div>
+
         </div>
+
       </div>
+
+
 
       <div *ngIf="desafios.length === 0" class="empty-list-message">
+
         Nenhum desafio disponivel.
+
       </div>
+
     </div>
 
+
+
     <div class="modal-actions">
+
       <button class="save-btn" (click)="closeDesafios()">Close</button>
+
     </div>
+
   </div>
+
 </div>
+
