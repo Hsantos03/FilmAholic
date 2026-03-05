@@ -281,14 +281,15 @@ public class MovieService : IMovieService
         var filme = new Filme
         {
             TmdbId = tmdbMovieEn.Id.ToString(),
-            Titulo = !string.IsNullOrEmpty(tmdbMovieEn.OriginalTitle) ? tmdbMovieEn.OriginalTitle : tmdbMovieEn.Title,
-            PosterUrl = tmdbMovieEn.PosterPath != null
+            Titulo = !string.IsNullOrEmpty(tmdbMoviePt.Title) ? tmdbMoviePt.Title : tmdbMovieEn.Title,
+            PosterUrl = tmdbMoviePt.PosterPath != null
+            ? $"https://image.tmdb.org/t/p/w500{tmdbMoviePt.PosterPath}"
+            : tmdbMovieEn.PosterPath != null
                 ? $"https://image.tmdb.org/t/p/w500{tmdbMovieEn.PosterPath}"
                 : "",
             Duracao = tmdbMovieEn.Runtime ?? 0
         };
 
-        // Use Portuguese genres
         if (tmdbMoviePt.Genres != null && tmdbMoviePt.Genres.Any())
         {
             filme.Genero = string.Join(", ", tmdbMoviePt.Genres.Select(g => g.Name));
@@ -443,7 +444,6 @@ public class MovieService : IMovieService
                 })
                 .ToList();
 
-            // Ensure we return exactly the requested count
             if (actors.Count > count)
             {
                 actors = actors.Take(count).ToList();

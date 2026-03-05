@@ -93,13 +93,33 @@ namespace FilmAholic.Server.Controllers
         [HttpGet("{id:int}")]
         public async Task<IActionResult> GetById(int id)
         {
+            // Procura na BD local pelo ID
             var filme = await _context.Set<Models.Filme>().FindAsync(id);
-            
+
+            // Procura na BD pelo TmdbId
+            if (filme == null)
+                filme = await _context.Set<Models.Filme>()
+                    .FirstOrDefaultAsync(f => f.TmdbId == id.ToString());
+
+            // Procura no seed
+            if (filme == null)
+                filme = FilmSeed.Filmes.FirstOrDefault(f => f.Id == id);
+
+            // Se ainda não encontrou, vai buscar ao TMDB
             if (filme == null)
             {
-                filme = FilmSeed.Filmes.FirstOrDefault(f => f.Id == id);
-                if (filme == null) return NotFound();
+                try
+                {
+                    filme = await _movieService.GetOrCreateMovieFromTmdbAsync(id);
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Erro ao buscar filme do TMDB: {ex.Message}");
+                    return NotFound();
+                }
             }
+
+            if (filme == null) return NotFound();
 
             return Ok(filme);
         }

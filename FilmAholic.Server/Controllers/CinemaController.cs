@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Playwright;
+using System.Text.Json;
 
 namespace FilmAholic.Server.Controllers
 {
@@ -7,6 +8,79 @@ namespace FilmAholic.Server.Controllers
     [Route("api/[controller]")]
     public class CinemaController : ControllerBase
     {
+        private readonly IConfiguration _configuration;
+        private readonly HttpClient _httpClient;
+
+        public CinemaController(IConfiguration configuration, IHttpClientFactory httpClientFactory)
+        {
+            _configuration = configuration;
+            _httpClient = httpClientFactory.CreateClient();
+        }
+
+        [HttpGet("em-cartaz")]
+        public async Task<IActionResult> GetFilmesEmCartaz()
+        {
+            try
+            {
+                var movies = await ScrapeCinemaNos();
+                if (movies == null || movies.Count == 0)
+                    movies = GetMockCinemaMovies();
+                return Ok(movies);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Scraping failed, using mock data: {ex.Message}");
+                return Ok(GetMockCinemaMovies());
+            }
+        }
+
+        [HttpGet("search-tmdb")]
+        public async Task<IActionResult> SearchTmdb([FromQuery] string titulo)
+        {
+            var apiKey = _configuration["ExternalApis:TmdbApiKey"];
+            var anoAtual = DateTime.Now.Year;
+
+            foreach (var ano in new[] { anoAtual, anoAtual - 1, 0 })
+            {
+                var urlQuery = ano > 0
+                    ? $"https://api.themoviedb.org/3/search/movie?api_key={apiKey}&query={Uri.EscapeDataString(titulo)}&language=pt-PT&year={ano}"
+                    : $"https://api.themoviedb.org/3/search/movie?api_key={apiKey}&query={Uri.EscapeDataString(titulo)}&language=pt-PT";
+
+                var response = await _httpClient.GetAsync(urlQuery);
+                if (!response.IsSuccessStatusCode) continue;
+
+                var json = await response.Content.ReadAsStringAsync();
+                var data = JsonSerializer.Deserialize<JsonElement>(json);
+                var results = data.GetProperty("results");
+
+                if (results.GetArrayLength() == 0) continue;
+
+                var tituloNorm = titulo.ToLower().Trim();
+                int? bestId = null;
+
+                for (int i = 0; i < results.GetArrayLength(); i++)
+                {
+                    var r = results[i];
+                    var ptTitle = r.TryGetProperty("title", out var t) ? t.GetString()?.ToLower().Trim() : "";
+                    var origTitle = r.TryGetProperty("original_title", out var ot) ? ot.GetString()?.ToLower().Trim() : "";
+
+                    if (ptTitle == tituloNorm || origTitle == tituloNorm)
+                    {
+                        bestId = r.GetProperty("id").GetInt32();
+                        break;
+                    }
+                }
+
+                if (bestId == null && ano > 0)
+                    bestId = results[0].GetProperty("id").GetInt32();
+
+                if (bestId != null)
+                    return Ok(new { id = bestId });
+            }
+
+            return NotFound();
+        }
+
         private async Task<List<CinemaMovieDto>> ScrapeCinemaNos()
         {
             using var playwright = await Playwright.CreateAsync();
@@ -64,65 +138,6 @@ namespace FilmAholic.Server.Controllers
             }
 
             return movies;
-        }
-
-        [HttpGet("em-cartaz")]
-        public async Task<IActionResult> GetFilmesEmCartaz()
-        {
-            try
-            {
-                var movies = await ScrapeCinemaNos();
-                
-                // If scraping returns no movies, use mock data
-                if (movies == null || movies.Count == 0)
-                {
-                    movies = GetMockCinemaMovies();
-                }
-                
-                return Ok(movies);
-            }
-            catch (Exception ex)
-            {
-                // If scraping fails, return mock data
-                Console.WriteLine($"Scraping failed, using mock data: {ex.Message}");
-                var mockMovies = GetMockCinemaMovies();
-                return Ok(mockMovies);
-            }
-        }
-
-        [HttpGet("debug")]
-        public async Task<IActionResult> Debug()
-        {
-            try
-            {
-                using var playwright = await Playwright.CreateAsync();
-                await using var browser = await playwright.Chromium.LaunchAsync(new() { Headless = true });
-                var page = await browser.NewPageAsync();
-
-                await page.GotoAsync("https://www.cinemas.nos.pt/filmes/em-exibicao", new()
-                {
-                    WaitUntil = WaitUntilState.NetworkIdle,
-                    Timeout = 30000
-                });
-                await page.WaitForTimeoutAsync(5000);
-
-                // Ver quantos cards encontra
-                var cardCount = await page.EvaluateAsync<int>("() => document.querySelectorAll('.movie-card').length");
-
-                // Ver o HTML da página
-                var html = await page.ContentAsync();
-
-                return Ok(new
-                {
-                    cardCount,
-                    htmlLength = html.Length,
-                    htmlPreview = html.Substring(0, Math.Min(2000, html.Length))
-                });
-            }
-            catch (Exception ex)
-            {
-                return Ok(new { error = ex.Message, stackTrace = ex.StackTrace });
-            }
         }
 
         private List<CinemaMovieDto> GetMockCinemaMovies()

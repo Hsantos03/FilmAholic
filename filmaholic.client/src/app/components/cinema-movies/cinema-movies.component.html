@@ -8,6 +8,11 @@
     <a class="brand" routerLink="/dashboard" aria-label="Go to dashboard">FilmAholic</a>
   </header>
 
+  <div class="movie-not-found" *ngIf="movieNotFound">
+    <span>🎬</span>
+    <p>O filme <strong>{{ movieNotFound }}</strong> ainda não está disponível na base de dados.</p>
+  </div>
+
   <main class="content">
     <div class="page-header">
       <h1>Filmes em Cartaz</h1>
@@ -49,7 +54,7 @@
                     <a class="btn primary" [href]="movie.link" target="_blank" rel="noopener">
                       Ver Sessões no NOS
                     </a>
-                    <button class="btn secondary">
+                    <button class="btn secondary" (click)="viewMovieDetails(movie)">
                       Ver Detalhes
                     </button>
                   </div>
@@ -75,7 +80,7 @@
                     <a class="btn primary" [href]="movie.link" target="_blank" rel="noopener">
                       Ver Sessões
                     </a>
-                    <button class="btn secondary">
+                    <button class="btn secondary" (click)="viewMovieDetails(movie)">
                       Ver Detalhes
                     </button>
                   </div>

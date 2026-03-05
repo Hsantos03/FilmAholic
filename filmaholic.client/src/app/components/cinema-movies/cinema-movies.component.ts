@@ -11,6 +11,7 @@ export class CinemaMoviesComponent implements OnInit, OnDestroy, AfterViewInit {
   isLoading = true;
   cinemaMovies: CinemaMovie[] = [];
   error: string | null = null;
+  movieNotFound: string | null = null;
   lastUpdated: Date = new Date();
 
   @ViewChild('carousel') carouselRef!: ElementRef;
@@ -101,5 +102,35 @@ export class CinemaMoviesComponent implements OnInit, OnDestroy, AfterViewInit {
     setTimeout(() => el.style.transition = '', 500);
 
     this.resumeTimeout = setTimeout(() => this.startAutoScroll(), 1000);
+  }
+
+  viewMovieDetails(movie: CinemaMovie): void {
+    this.movieNotFound = null;
+    this.cinemaService.searchMovieByTitle(movie.titulo).subscribe({
+      next: (tmdbId) => {
+        if (tmdbId) {
+          this.router.navigate(['/movie-detail', tmdbId]);
+        } else {
+          this.movieNotFound = movie.titulo;
+          setTimeout(() => this.movieNotFound = null, 4000);
+        }
+      },
+      error: () => {
+        this.movieNotFound = movie.titulo;
+        setTimeout(() => this.movieNotFound = null, 4000);
+      }
+    });
+  }
+
+  parseDuration(duration: string): number {
+    if (!duration) return 0;
+    
+    const hoursMatch = duration.match(/(\d+)h/);
+    const minutesMatch = duration.match(/(\d+)min/);
+    
+    const hours = hoursMatch ? parseInt(hoursMatch[1]) : 0;
+    const minutes = minutesMatch ? parseInt(minutesMatch[1]) : 0;
+    
+    return (hours * 60) + minutes;
   }
 }

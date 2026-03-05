@@ -1,3 +1,36 @@
+.movie-not-found {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin: 1rem auto;
+  padding: 1rem 1.5rem;
+  background: rgba(229, 9, 20, 0.1);
+  border: 1px solid rgba(229, 9, 20, 0.3);
+  border-radius: 0.75rem;
+  max-width: 500px;
+  text-align: center;
+  animation: fadeIn 0.3s ease;
+}
+
+.movie-not-found span {
+  font-size: 1.5rem;
+}
+
+.movie-not-found p {
+  color: #ccc;
+  font-size: 0.9rem;
+  margin: 0;
+}
+
+.movie-not-found strong {
+  color: #fff;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
 .page {
   min-height: 100vh;
   width: 100%;

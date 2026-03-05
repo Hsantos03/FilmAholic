@@ -31,7 +31,6 @@ export class CinemaService {
   }
 
   private getMockCinemaMovies(): CinemaMovie[] {
-    // Updated mock data with more recent films
     return [
       {
         id: 'cinema-nos-1',
@@ -99,5 +98,12 @@ export class CinemaService {
         link: 'https://www.cinemas.nos.pt/filmes/velozes-e-furiosos-10'
       }
     ];
+  }
+
+  searchMovieByTitle(titulo: string): Observable<number | null> {
+    return this.http.get<any>(`http://localhost:5185/api/cinema/search-tmdb?titulo=${encodeURIComponent(titulo)}`).pipe(
+      map(res => res.id ?? null),
+      catchError(() => of(null))
+    );
   }
 }

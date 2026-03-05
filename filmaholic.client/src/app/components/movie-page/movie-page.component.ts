@@ -78,11 +78,36 @@ export class MoviePageComponent implements OnInit, OnDestroy {
       const idParam = params.get('id');
       const id = idParam ? Number(idParam) : NaN;
 
+      // Check for cinema movie data in query parameters
+      const cinemaTitle = params.get('cinemaTitle');
+      const cinemaPoster = params.get('cinemaPoster');
+      const cinemaGenre = params.get('cinemaGenre');
+      const cinemaDuration = params.get('cinemaDuration');
+
       if (!id || isNaN(id)) {
         this.error = 'Filme invalido.';
         return;
       }
 
+      // If we have cinema movie data, use it directly
+      if (cinemaTitle || cinemaPoster || cinemaGenre || cinemaDuration) {
+        this.resetState();
+        this.filme = {
+          id: id,
+          titulo: cinemaTitle || 'Cinema Movie',
+          duracao: cinemaDuration ? this.parseDuration(cinemaDuration) : 120,
+          genero: cinemaGenre || 'Ação',
+          posterUrl: cinemaPoster || 'assets/placeholder-poster.jpg'
+        };
+        this.isLoading = false;
+        
+        // Load related data
+        this.loadRatings(id);
+        // this.loadOverviewFromTmdb(this.filme); // Skip for now since we have basic data
+        return;
+      }
+
+      // Original logic for TMDB movies
       this.resetState();
       this.loadFilm(id);
       this.loadTotalHours();
@@ -125,16 +150,71 @@ export class MoviePageComponent implements OnInit, OnDestroy {
     return this.canComment;
   }
 
+  private handleCinemaMovie(id: number): void {
+    // For cinema movies, fetch Portuguese TMDB data directly
+    this.isLoading = true;
+    
+    // Use the filmes service to get TMDB data with Portuguese language
+    this.filmesService.getMovieFromTmdb(id).subscribe({
+      next: (f) => {
+        this.filme = f;
+        this.isLoading = false;
+        
+        if (this.filme) {
+          this.loadRatings(id);
+          // Skip additional TMDB lookup since we already have Portuguese data
+          // this.loadOverviewFromTmdb(this.filme);
+          this.loadComments(id);
+          this.loadRecommendations(id);
+          this.syncFavoriteState();
+          this.syncListState();
+          this.loadMovieRating(id);
+        }
+      },
+      error: (err) => {
+        console.error('Failed to load cinema movie from TMDB', err);
+        // Create fallback movie data
+        this.filme = {
+          id: id,
+          titulo: 'Cinema Movie',
+          duracao: 120,
+          genero: 'Ação',
+          posterUrl: 'assets/placeholder-poster.jpg'
+        };
+        this.isLoading = false;
+        
+        // Still load related data
+        this.loadRatings(id);
+      }
+    });
+  }
+
+  parseDuration(duration: string): number {
+    // Parse duration like "2h 30min" to minutes
+    if (!duration) return 0;
+    
+    const hoursMatch = duration.match(/(\d+)h/);
+    const minutesMatch = duration.match(/(\d+)min/);
+    
+    const hours = hoursMatch ? parseInt(hoursMatch[1]) : 0;
+    const minutes = minutesMatch ? parseInt(minutesMatch[1]) : 0;
+    
+    return (hours * 60) + minutes;
+  }
+
   private loadFilm(id: number): void {
     this.isLoading = true;
     this.error = '';
 
+    // Check if this is a cinema movie by checking if it exists in our database
+    // Cinema movies come from TMDB search but aren't stored in our database
     this.filmesService.getById(id).subscribe({
       next: (f) => {
-        this.filme = f || null;
-        this.isLoading = false;
-
-        if (this.filme) {
+        if (f) {
+          // This is a regular TMDB movie from our database
+          this.filme = f;
+          this.isLoading = false;
+          
           this.loadRatings(this.filme.id);
           this.loadOverviewFromTmdb(this.filme);
           this.loadComments(this.filme.id);
@@ -142,12 +222,20 @@ export class MoviePageComponent implements OnInit, OnDestroy {
           this.syncFavoriteState();
           this.syncListState();
           this.loadMovieRating(this.filme.id);
+        } else {
+          // This is likely a cinema movie - fetch Portuguese TMDB data directly
+          this.handleCinemaMovie(id);
         }
       },
       error: (err) => {
-        console.error('Failed to load film', err);
-        this.error = 'Não foi possível carregar o filme.';
-        this.isLoading = false;
+        // If getById fails, it might be a cinema movie - try to handle it
+        if (err.status === 404) {
+          this.handleCinemaMovie(id);
+        } else {
+          console.error('Failed to load film', err);
+          this.error = 'Não foi possível carregar o filme.';
+          this.isLoading = false;
+        }
       }
     });
   }
