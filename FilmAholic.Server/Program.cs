@@ -95,7 +95,7 @@ builder.Services.AddScoped<IMovieService, MovieService>();
 
 builder.Services.AddCors(options => {
     options.AddPolicy("AllowAngular",
-        policy => policy.WithOrigins("http://localhost:4200", "https://localhost:50905")
+        policy => policy.WithOrigins("http://localhost:4200", "https://localhost:50905", "http://localhost:50905", "https://localhost:7277", "http://localhost:7277")
                         .AllowAnyMethod()
                         .AllowAnyHeader()
                         .AllowCredentials());
@@ -112,7 +112,7 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-app.UseHttpsRedirection();
+// app.UseHttpsRedirection();
 
 app.UseCors("AllowAngular");
 

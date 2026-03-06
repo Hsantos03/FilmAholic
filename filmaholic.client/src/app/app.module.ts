@@ -18,9 +18,9 @@ import { ProfileComponent } from './components/profile/profile.component';
 import { SelecionarGenerosComponent } from './components/selecionar-generos/selecionar-generos.component';
 import { SearchResultsComponent } from './components/search-results/search-results.component';
 import { MoviePageComponent } from './components/movie-page/movie-page.component';
+import { CinemaMoviesComponent } from './components/cinema-movies/cinema-movies.component';
 import { FormatDurationPipe } from './pipes/format-duration.pipe';
 import { ActorsCarouselComponent } from './components/actors-carousel/actors-carousel.component';
-import { HigherOrLowerComponent } from './components/higher-or-lower/higher-or-lower.component';
 
 
 registerLocaleData(localePt);
@@ -39,8 +39,8 @@ registerLocaleData(localePt);
     SelecionarGenerosComponent,
     SearchResultsComponent,
     MoviePageComponent,
-    ActorsCarouselComponent,
-    HigherOrLowerComponent
+    CinemaMoviesComponent,
+    ActorsCarouselComponent
   ],
   imports: [
     BrowserModule,
