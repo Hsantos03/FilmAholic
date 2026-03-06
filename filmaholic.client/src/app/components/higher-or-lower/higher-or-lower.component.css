@@ -1,0 +1,84 @@
+:host { display: block; color: #fff; }
+
+.topbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 18px;
+  background: transparent;
+}
+
+.hol-page {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 40px 20px;
+}
+
+.hol-card {
+  width: 720px;
+  max-width: 96%;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 16px;
+  padding: 36px;
+  text-align: center;
+  box-shadow: 0 18px 50px rgba(0,0,0,0.55);
+}
+
+.hol-card h1 {
+  margin: 0 0 8px 0;
+  font-size: 28px;
+  font-weight: 900;
+}
+
+.hol-desc {
+  margin: 0 0 20px 0;
+  opacity: 0.85;
+}
+
+.hol-menu {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  align-items: center;
+  margin-bottom: 18px;
+}
+
+/* Buttons: match app feel */
+.primary-btn {
+  width: 220px;
+  padding: 12px 18px;
+  border-radius: 12px;
+  background: #ff2f6d;
+  border: none;
+  color: #fff;
+  font-weight: 800;
+  cursor: pointer;
+  box-shadow: 0 8px 20px rgba(255,47,109,0.18);
+}
+
+.ghost-btn {
+  width: 220px;
+  padding: 10px 16px;
+  border-radius: 12px;
+  background: transparent;
+  border: 1px solid rgba(255,255,255,0.08);
+  color: #fff;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.primary-btn:hover, .ghost-btn:hover {
+  transform: translateY(-2px);
+  transition: all 120ms ease;
+}
+
+.hol-state {
+  margin-top: 18px;
+  padding: 14px;
+  border-radius: 10px;
+  background: rgba(0,0,0,0.25);
+  border: 1px solid rgba(255,255,255,0.04);
+  opacity: 0.95;
+}
