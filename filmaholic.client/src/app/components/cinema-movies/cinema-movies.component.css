@@ -38,6 +38,15 @@
   overflow-x: hidden;
 }
 
+.cinema-section {
+  margin-bottom: 3rem;
+}
+
+.section-header {
+  margin-bottom: 1rem;
+  padding-left: 0.5rem;
+}
+
 .topbar {
   position: sticky;
   top: 0;

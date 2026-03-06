@@ -10,14 +10,21 @@ import { CinemaService, CinemaMovie } from '../../services/cinema.service';
 export class CinemaMoviesComponent implements OnInit, OnDestroy, AfterViewInit {
   isLoading = true;
   cinemaMovies: CinemaMovie[] = [];
+  nosMovies: CinemaMovie[] = [];
+  cineplaceMovies: CinemaMovie[] = [];
   error: string | null = null;
   movieNotFound: string | null = null;
   lastUpdated: Date = new Date();
 
-  @ViewChild('carousel') carouselRef!: ElementRef;
-  private currentX = 0;
-  private intervalId: any;
-  private resumeTimeout: any;
+  @ViewChild('carouselNos') carouselNosRef!: ElementRef;
+  @ViewChild('carouselCineplace') carouselCineplaceRef!: ElementRef;
+
+  private currentXNos = 0;
+  private currentXCineplace = 0;
+  private intervalNos: any;
+  private intervalCineplace: any;
+  private resumeTimeoutNos: any;
+  private resumeTimeoutCineplace: any;
 
   constructor(
     private router: Router,
@@ -29,79 +36,104 @@ export class CinemaMoviesComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   ngAfterViewInit(): void {
-    setTimeout(() => this.startAutoScroll(), 500);
+    setTimeout(() => {
+      this.startAutoScroll('nos');
+      this.startAutoScroll('cineplace');
+    }, 500);
   }
 
   ngOnDestroy(): void {
-    this.stopAutoScroll();
-    if (this.resumeTimeout) clearTimeout(this.resumeTimeout);
+    this.stopAutoScroll('nos');
+    this.stopAutoScroll('cineplace');
+    if (this.resumeTimeoutNos) clearTimeout(this.resumeTimeoutNos);
+    if (this.resumeTimeoutCineplace) clearTimeout(this.resumeTimeoutCineplace);
   }
 
   loadCinemaMovies(): void {
     this.cinemaService.getCinemaMovies().subscribe({
       next: (movies) => {
+        this.nosMovies = movies.filter(m => m.cinema === 'Cinema NOS');
+        this.cineplaceMovies = movies.filter(m => m.cinema === 'Cineplace');
         this.cinemaMovies = movies;
         this.isLoading = false;
         this.lastUpdated = new Date();
       },
       error: (err) => {
         console.error('Error loading cinema movies:', err);
-        this.error = 'Não foi possível carregar os filmes em cartaz. Tente novamente mais tarde.';
+        this.error = 'Não foi possível carregar os filmes em cartaz.';
         this.isLoading = false;
       }
     });
   }
 
   posterOf(movie: CinemaMovie): string {
-    return movie.poster || 'assets/placeholder-poster.jpg';
+    if (!movie.poster) {
+      return 'data:image/svg+xml;charset=UTF-8,%3Csvg xmlns%3D"http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg" width%3D"260" height%3D"390"%3E%3Crect fill%3D"%23222" width%3D"260" height%3D"390"%2F%3E%3Ctext fill%3D"%23666" font-size%3D"16" x%3D"50%25" y%3D"50%25" text-anchor%3D"middle"%3ESem Poster%3C%2Ftext%3E%3C%2Fsvg%3E';
+    }
+    return movie.poster;
   }
 
   goBack(): void {
     this.router.navigate(['/dashboard']);
   }
 
-  startAutoScroll(): void {
-    this.stopAutoScroll(); 
-    this.intervalId = setInterval(() => {
-      const el = this.carouselRef?.nativeElement;
+  startAutoScroll(carousel: 'nos' | 'cineplace'): void {
+    this.stopAutoScroll(carousel);
+    const ref = carousel === 'nos' ? this.carouselNosRef : this.carouselCineplaceRef;
+    const interval = setInterval(() => {
+      const el = ref?.nativeElement;
       if (!el) return;
-
-      this.currentX -= 1;
-
-      const halfWidth = el.scrollWidth / 2;
-      if (Math.abs(this.currentX) >= halfWidth) {
-        this.currentX = 0;
+      if (carousel === 'nos') {
+        this.currentXNos -= 1;
+        const halfWidth = el.scrollWidth / 2;
+        if (Math.abs(this.currentXNos) >= halfWidth) this.currentXNos = 0;
+        el.style.transform = `translateX(${this.currentXNos}px)`;
+      } else {
+        this.currentXCineplace -= 1;
+        const halfWidth = el.scrollWidth / 2;
+        if (Math.abs(this.currentXCineplace) >= halfWidth) this.currentXCineplace = 0;
+        el.style.transform = `translateX(${this.currentXCineplace}px)`;
       }
-
-      el.style.transform = `translateX(${this.currentX}px)`;
-    }, 16); 
+    }, 16);
+    if (carousel === 'nos') this.intervalNos = interval;
+    else this.intervalCineplace = interval;
   }
 
-  stopAutoScroll(): void {
-    if (this.intervalId) {
-      clearInterval(this.intervalId);
-      this.intervalId = null;
+  stopAutoScroll(carousel: 'nos' | 'cineplace'): void {
+    if (carousel === 'nos' && this.intervalNos) {
+      clearInterval(this.intervalNos);
+      this.intervalNos = null;
+    } else if (carousel === 'cineplace' && this.intervalCineplace) {
+      clearInterval(this.intervalCineplace);
+      this.intervalCineplace = null;
     }
   }
 
-  scrollCarousel(direction: number): void {
-    this.stopAutoScroll();
-    if (this.resumeTimeout) clearTimeout(this.resumeTimeout);
-
-    const el = this.carouselRef.nativeElement;
+  scrollCarousel(direction: number, carousel: 'nos' | 'cineplace'): void {
+    this.stopAutoScroll(carousel);
+    const ref = carousel === 'nos' ? this.carouselNosRef : this.carouselCineplaceRef;
+    const el = ref.nativeElement;
     const halfWidth = el.scrollWidth / 2;
 
-    this.currentX += direction * -500;
-
-    if (Math.abs(this.currentX) >= halfWidth) this.currentX = 0;
-    if (this.currentX > 0) this.currentX = -halfWidth + 10;
-
-    el.style.transition = 'transform 0.5s ease';
-    el.style.transform = `translateX(${this.currentX}px)`;
+    if (carousel === 'nos') {
+      this.currentXNos += direction * -500;
+      if (Math.abs(this.currentXNos) >= halfWidth) this.currentXNos = 0;
+      if (this.currentXNos > 0) this.currentXNos = -halfWidth + 10;
+      el.style.transition = 'transform 0.5s ease';
+      el.style.transform = `translateX(${this.currentXNos}px)`;
+    } else {
+      this.currentXCineplace += direction * -500;
+      if (Math.abs(this.currentXCineplace) >= halfWidth) this.currentXCineplace = 0;
+      if (this.currentXCineplace > 0) this.currentXCineplace = -halfWidth + 10;
+      el.style.transition = 'transform 0.5s ease';
+      el.style.transform = `translateX(${this.currentXCineplace}px)`;
+    }
 
     setTimeout(() => el.style.transition = '', 500);
 
-    this.resumeTimeout = setTimeout(() => this.startAutoScroll(), 1000);
+    const timeout = setTimeout(() => this.startAutoScroll(carousel), 1000);
+    if (carousel === 'nos') this.resumeTimeoutNos = timeout;
+    else this.resumeTimeoutCineplace = timeout;
   }
 
   viewMovieDetails(movie: CinemaMovie): void {
