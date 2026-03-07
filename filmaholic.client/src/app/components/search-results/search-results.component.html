@@ -104,12 +104,18 @@
       <div class="result-card"
            *ngFor="let r of sortedResults"
            (click)="openResult(r)"
-           [class.loading]="isLoading"
-           style="cursor: pointer;">
-        <img class="result-thumb"
-             [src]="r.posterUrl || 'https://via.placeholder.com/140x210?text=No+Image'"
+           [class.loading]="isLoading">
+
+        <img *ngIf="r.posterUrl"
+             class="result-thumb"
+             [src]="r.posterUrl"
              [alt]="r.titulo" />
-        <div class="result-meta">
+
+        <div *ngIf="!r.posterUrl" class="result-no-poster">
+          {{ r.titulo }}
+        </div>
+
+        <div class="result-overlay">
           <div class="result-title">{{ r.titulo }}</div>
         </div>
       </div>
