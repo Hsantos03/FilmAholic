@@ -48,7 +48,7 @@ namespace FilmAholic.Server.Controllers
                         await _context.SaveChangesAsync();
                     }
                 }
-                catch (Exception ex)
+                catch (Exception)
                 {
                     if (!dbMovies.Any())
                     {

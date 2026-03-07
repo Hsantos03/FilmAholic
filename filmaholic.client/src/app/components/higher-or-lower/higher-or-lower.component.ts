@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
-import { FilmesService, Filme, RatingsDto } from '../../services/filmes.service';
+import { FilmesService, Filme, RatingsDto, ActorDto } from '../../services/filmes.service';
 import { GameService, GameHistoryEntry } from '../../services/game.service';
 import { forkJoin, firstValueFrom } from 'rxjs';
 
@@ -21,6 +21,15 @@ export class HigherOrLowerComponent implements OnInit {
   leftRating: number = 0;
   rightRating: number = 0;
 
+  actors: ActorDto[] = [];
+  leftActor?: ActorDto;
+  rightActor?: ActorDto;
+  leftActorPopularity: number = 0;
+  rightActorPopularity: number = 0;
+
+  gameCategory: 'films' | 'actors' | null = null;
+  private readonly sessionCategoryKey = 'hol_category';
+
   isLoadingPair = false;
   notifier: 'correct' | 'wrong' | null = null;
 
@@ -28,7 +37,7 @@ export class HigherOrLowerComponent implements OnInit {
   rounds: any[] = [];
 
   // history entries will include roundsCount computed client-side
-  history: Array<GameHistoryEntry & { roundsCount?: number }> = [];
+  history: Array<GameHistoryEntry & { roundsCount?: number; category?: string }> = [];
   localHistoryKey = 'hol_local_history';
 
   // Min rating threshold (strictly greater than)
@@ -53,14 +62,30 @@ export class HigherOrLowerComponent implements OnInit {
   ) { }
 
   ngOnInit(): void {
-    // preload film list so first start is snappy
     this.filmesService.getAll().subscribe({
       next: (f) => this.films = f || [],
       error: () => this.films = []
     });
+
+    this.filmesService.getPopularActors(100).subscribe({
+      next: (a) => this.actors = a || [],
+      error: () => this.actors = []
+    });
+
+    const saved = sessionStorage.getItem(this.sessionCategoryKey) as 'films' | 'actors' | null;
+    if (saved) this.gameCategory = saved;
   }
 
-  startGame(): void {
+  startGame(category?: 'films' | 'actors'): void {
+    if (category) {
+      this.gameCategory = category;
+      sessionStorage.setItem(this.sessionCategoryKey, category);
+    } else {
+      const saved = sessionStorage.getItem(this.sessionCategoryKey) as 'films' | 'actors' | null;
+      this.gameCategory = saved ?? 'films';
+    }
+
+    // reset
     this.isPlaying = true;
     this.showHistory = false;
     this.showEndStats = false;
@@ -73,12 +98,15 @@ export class HigherOrLowerComponent implements OnInit {
     this.chosenSide = null;
     this.nextPair = undefined;
 
-    // ensure films available
+    if (this.gameCategory === 'actors') {
+      this.startRound();
+      return;
+    }
+
     if (!this.films || this.films.length === 0) {
       this.filmesService.getAll().subscribe({
         next: (f) => {
           this.films = f || [];
-          // startRound can be async; no need to await here
           this.startRound();
         },
         error: () => {
@@ -87,11 +115,14 @@ export class HigherOrLowerComponent implements OnInit {
       });
       return;
     }
-    // startRound can be async; no need to await here
     this.startRound();
   }
 
   private async startRound(): Promise<void> {
+    if (this.gameCategory === 'actors') {
+      await this.startRoundActors();
+      return;
+    }
     this.notifier = null;
     this.leftFilm = undefined;
     this.rightFilm = undefined;
@@ -257,6 +288,54 @@ export class HigherOrLowerComponent implements OnInit {
     return undefined;
   }
 
+  private async startRoundActors(): Promise<void> {
+    this.notifier = null;
+    this.leftActor = undefined;
+    this.rightActor = undefined;
+    this.leftActorPopularity = 0;
+    this.rightActorPopularity = 0;
+    this.showResults = false;
+    this.resultWinner = null;
+    this.chosenSide = null;
+    this.isLoadingPair = true;
+
+    if (!this.actors || this.actors.length < 2) {
+      try {
+        const loaded = await firstValueFrom(this.filmesService.getPopularActors(50));
+        this.actors = loaded || [];
+      } catch { this.actors = []; }
+    }
+
+    if (this.actors.length < 2) {
+      this.isPlaying = false;
+      this.isLoadingPair = false;
+      return;
+    }
+
+    await new Promise(resolve => setTimeout(resolve, 50));
+
+    const prevLeftId = (this.leftActor as ActorDto | undefined)?.id;
+    const prevRightId = (this.rightActor as ActorDto | undefined)?.id;
+
+    let i: number, j: number, attempts = 0;
+    do {
+      i = Math.floor(Math.random() * this.actors.length);
+      j = Math.floor(Math.random() * this.actors.length);
+      attempts++;
+    } while (
+      attempts < 20 && (
+        i === j ||
+        (this.actors[i].id === prevLeftId && this.actors[j].id === prevRightId)
+      )
+    );
+
+    this.leftActor = this.actors[i];
+    this.rightActor = this.actors[j];
+    this.leftActorPopularity = this.leftActor.popularidade;
+    this.rightActorPopularity = this.rightActor.popularidade;
+    this.isLoadingPair = false;
+  }
+
   // Try to find two distinct local films with rating > minRating and having covers. Tries up to maxAttempts.
   private async getTwoLocalFilmsWithMinRating(minRating: number = 3, maxAttempts: number = 20): Promise<{ left: Filme; right: Filme } | undefined> {
     if (!this.films || this.films.length < 2) return undefined;
@@ -380,10 +459,19 @@ export class HigherOrLowerComponent implements OnInit {
 
   choose(side: 'left' | 'right'): void {
     if (this.isLoadingPair || this.notifier) return;
-    if (!this.leftFilm || !this.rightFilm) return;
 
-    const left = this.leftRating ?? 0;
-    const right = this.rightRating ?? 0;
+    let left: number;
+    let right: number;
+
+    if (this.gameCategory === 'actors') {
+      if (!this.leftActor || !this.rightActor) return;
+      left = this.leftActorPopularity;
+      right = this.rightActorPopularity;
+    } else {
+      if (!this.leftFilm || !this.rightFilm) return;
+      left = this.leftRating ?? 0;
+      right = this.rightRating ?? 0;
+    }
 
     // determine correct side (if equal both count as correct)
     const correctSide = left === right ? 'either' : (left > right ? 'left' : 'right');
@@ -395,13 +483,13 @@ export class HigherOrLowerComponent implements OnInit {
     this.showResults = true;
 
     const round = {
-      leftId: this.leftFilm.id,
-      rightId: this.rightFilm.id,
+      leftId: this.gameCategory === 'actors' ? (this.leftActor?.id ?? 0) : (this.leftFilm?.id ?? 0),
+      rightId: this.gameCategory === 'actors' ? (this.rightActor?.id ?? 0) : (this.rightFilm?.id ?? 0),
       chosen: side,
-      // when ratings are equal record 'either' so both are recognized as correct
       correct: correctSide === 'either' ? 'either' : correctSide,
       leftRating: left,
       rightRating: right,
+      category: this.gameCategory ?? 'films',
       timestamp: new Date().toISOString()
     };
     this.rounds.push(round);
@@ -424,8 +512,15 @@ export class HigherOrLowerComponent implements OnInit {
     // Show results for 4s (4000ms), during which next pair is being loaded.
     setTimeout(() => {
       if (isCorrect) {
-        // If we preloaded a pair, swap to it; otherwise fallback to startRound which will load normally.
-        if (this.nextPair) {
+        if (this.gameCategory === 'actors') {
+          // atores: sempre carrega novo par
+          this.notifier = null;
+          this.showResults = false;
+          this.resultWinner = null;
+          this.chosenSide = null;
+          this.startRound();
+        } else if (this.nextPair) {
+          // filmes com par pré-carregado
           const np = this.nextPair;
           this.leftFilm = np.left;
           this.rightFilm = np.right;
@@ -433,13 +528,12 @@ export class HigherOrLowerComponent implements OnInit {
           this.rightRating = np.rightRating;
           this.nextPair = undefined;
 
-          // reset UI result state to allow new selection
           this.notifier = null;
           this.showResults = false;
           this.resultWinner = null;
           this.chosenSide = null;
         } else {
-          // fallback: load next round as before
+          // filmes sem par pré-carregado: carrega normalmente
           this.notifier = null;
           this.showResults = false;
           this.resultWinner = null;
@@ -514,7 +608,11 @@ export class HigherOrLowerComponent implements OnInit {
     if (userId) {
       this.gameService.getMyHistory().subscribe({
         next: (res) => {
-          this.history = (res || []).map(h => ({ ...h, roundsCount: this.computeRoundsCount(h.roundsJson) }));
+          this.history = (res || []).map(h => ({
+            ...h,
+            roundsCount: this.computeRoundsCount(h.roundsJson),
+            category: this.computeCategory(h.roundsJson)
+          }));
           // include local fallback entries also (non-auth)
           this.appendLocalHistory();
         },
@@ -536,7 +634,8 @@ export class HigherOrLowerComponent implements OnInit {
         dataCriacao: l.dataCriacao ?? new Date().toISOString(),
         score: l.score ?? 0,
         roundsJson: l.roundsJson ?? '[]',
-        roundsCount: this.computeRoundsCount(l.roundsJson)
+        roundsCount: this.computeRoundsCount(l.roundsJson),
+        category: this.computeCategory(l.roundsJson)
       }));
       // Merge (server first already in this.history), then local
       this.history = [...(this.history || []), ...mapped];
@@ -555,6 +654,18 @@ export class HigherOrLowerComponent implements OnInit {
       // invalid JSON -> not countable
       return 0;
     }
+  }
+
+  public computeCategory(roundsJson?: string | null): string {
+    if (!roundsJson) return 'Filmes';
+    try {
+      const parsed = JSON.parse(roundsJson);
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        const cat = parsed[0]?.category;
+        if (cat === 'actors') return 'Atores';
+      }
+    } catch { }
+    return 'Filmes';
   }
 
   // Close the end-of-game stats card (returns to main menu)

@@ -11,7 +11,7 @@ export interface Filme {
   posterUrl: string;
   tmdbId?: string;
   ano?: number | null;
-  releaseDate?: string | null; // ISO date string, e.g. "2026-05-15"
+  releaseDate?: string | null;
 }
 
 export interface TmdbSearchResponse {
@@ -50,6 +50,13 @@ export interface CastMemberDto {
   nome: string;
   personagem: string;
   fotoUrl: string | null;
+}
+
+export interface ActorDto {
+  id: number;
+  nome: string;
+  fotoUrl: string;
+  popularidade: number;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -97,5 +104,11 @@ export class FilmesService {
 
   getCast(id: number): Observable<CastMemberDto[]> {
     return this.http.get<CastMemberDto[]>(`${this.apiUrl}/${id}/cast`);
+  }
+
+  getPopularActors(count: number = 100): Observable<ActorDto[]> {
+    const params = new HttpParams().set('count', count.toString());
+    const atoresUrl = this.apiBase ? `${this.apiBase}/api/atores` : '/api/atores';
+    return this.http.get<ActorDto[]>(`${atoresUrl}/popular`, { params });
   }
 }

@@ -444,7 +444,7 @@ public class MovieService : IMovieService
         } 
     }
 
-    public async Task<List<PopularActorDto>> GetPopularActorsAsync(int page = 1, int count = 10)
+    public async Task<List<PopularActorDto>> GetPopularActorsAsync(int page = 1, int count = 20)
     {
         if (string.IsNullOrEmpty(_tmdbApiKey))
         {
@@ -454,33 +454,46 @@ public class MovieService : IMovieService
 
         try
         {
-            var httpClient = _httpClientFactory.CreateClient();
-            var url = $"{_tmdbBaseUrl}/person/popular?api_key={_tmdbApiKey}&page={page}&language=en-US";
+            var allPeople = new List<TmdbPersonDto>();
+            var pagesToFetch = Math.Min(5, (int)Math.Ceiling(count / 20.0) + 2);
 
-            var response = await httpClient.GetAsync(url);
-            response.EnsureSuccessStatusCode();
-
-            var json = await response.Content.ReadAsStringAsync();
-            var result = JsonSerializer.Deserialize<TmdbPopularPeopleResponse>(json, new JsonSerializerOptions
+            for (int p = 1; p <= pagesToFetch; p++)
             {
-                PropertyNameCaseInsensitive = false
-            });
+                var httpClient = _httpClientFactory.CreateClient();
+                var url = $"{_tmdbBaseUrl}/person/popular?api_key={_tmdbApiKey}&page={p}&language=en-US";
+                var response = await httpClient.GetAsync(url);
+                if (!response.IsSuccessStatusCode) break;
 
-            if (result?.Results == null || result.Results.Count == 0)
+                var json = await response.Content.ReadAsStringAsync();
+                var result = JsonSerializer.Deserialize<TmdbPopularPeopleResponse>(json, new JsonSerializerOptions
+                {
+                    PropertyNameCaseInsensitive = false
+                });
+
+                if (result?.Results == null || result.Results.Count == 0) break;
+                allPeople.AddRange(result.Results);
+            }
+
+            if (allPeople.Count == 0)
             {
                 return new List<PopularActorDto>();
             }
 
-            var actors = result.Results
+            // embaralha para não dar sempre os mesmos pares
+            var rng = new Random();
+            var shuffled = allPeople
+                .Where(p => !string.IsNullOrEmpty(p.ProfilePath))
+                .OrderBy(_ => rng.Next())
+                .ToList();
+
+            var actors = shuffled
                 .Take(count)
                 .Select(p => new PopularActorDto
                 {
                     Id = p.Id,
                     Nome = p.Name,
                     Popularidade = p.Popularity,
-                    FotoUrl = p.ProfilePath != null
-                        ? $"https://image.tmdb.org/t/p/w500{p.ProfilePath}"
-                        : ""
+                    FotoUrl = $"https://image.tmdb.org/t/p/w500{p.ProfilePath}"
                 })
                 .ToList();
 
