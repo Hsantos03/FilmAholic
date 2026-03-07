@@ -9,19 +9,65 @@
 
     <p class="hol-desc">Choose which movie you think has the higher rating.</p>
 
-    <div class="hol-menu">
+    <div class="hol-menu" *ngIf="!isPlaying && !showHistory">
       <button class="primary-btn" (click)="startGame()" aria-haspopup="true">Start game</button>
       <button class="ghost-btn" (click)="openHistory()">History</button>
     </div>
 
     <div class="hol-state" *ngIf="isPlaying">
-      <h3>Game (placeholder)</h3>
-      <p>The game UI will appear here. Implementation in next step.</p>
+      <div class="game-row" style="display:flex; gap:18px; justify-content:center; align-items:flex-start;">
+        <div class="card" style="width: 280px; cursor:pointer;"
+             (click)="choose('left')" [class.disabled]="isLoadingPair || notifier">
+          <img [src]="posterOf(leftFilm)" [alt]="leftFilm?.titulo" style="width:100%; border-radius:8px; object-fit:cover; height:420px;" />
+          <div style="margin-top:8px; font-weight:800;">{{ leftFilm?.titulo }}</div>
+          <div style="opacity:0.85; font-size:13px;">Rating: {{ leftRating ? (leftRating | number:'1.1-1') + '/10' : '—' }}</div>
+        </div>
+
+        <div style="display:flex; flex-direction:column; align-items:center; justify-content:center;">
+          <div style="font-size:13px; opacity:0.8; margin-bottom:8px">Which is higher?</div>
+          <div style="font-weight:900; font-size:22px;">VS</div>
+          <div style="margin-top:16px; font-size:14px; color:var(--text-muted,#aaa)">Score: {{ score }}</div>
+        </div>
+
+        <div class="card" style="width: 280px; cursor:pointer;"
+             (click)="choose('right')" [class.disabled]="isLoadingPair || notifier">
+          <img [src]="posterOf(rightFilm)" [alt]="rightFilm?.titulo" style="width:100%; border-radius:8px; object-fit:cover; height:420px;" />
+          <div style="margin-top:8px; font-weight:800;">{{ rightFilm?.titulo }}</div>
+          <div style="opacity:0.85; font-size:13px;">Rating: {{ rightRating ? (rightRating | number:'1.1-1') + '/10' : '—' }}</div>
+        </div>
+      </div>
+
+      <div *ngIf="isLoadingPair" class="hol-state" style="margin-top:14px;">Loading round…</div>
+
+      <div *ngIf="notifier === 'correct'" class="hol-state" style="margin-top:14px; background: rgba(34,197,94,0.12); border: 1px solid rgba(34,197,94,0.18); color:#b7f3c8;">
+        Correct! Advancing…
+      </div>
+
+      <div *ngIf="notifier === 'wrong'" class="hol-state" style="margin-top:14px; background: rgba(239,68,68,0.08); border: 1px solid rgba(239,68,68,0.18); color:#ffb3b3;">
+        Wrong — Game over.
+      </div>
     </div>
 
-    <div class="hol-state" *ngIf="showHistory">
+    <div class="hol-state" *ngIf="showHistory" style="text-align:left;">
       <h3>History</h3>
-      <p>No history yet — when you play, results will be shown here.</p>
+
+      <div *ngIf="history.length === 0" class="hol-state">No history yet — when you play, results will be shown here.</div>
+
+      <div *ngIf="history.length > 0" style="display:flex; flex-direction:column; gap:12px;">
+        <div *ngFor="let h of history" style="display:flex; gap:12px; align-items:center; padding:8px; border-radius:8px; background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.03);">
+          <div style="width:48px; text-align:center; font-weight:900; font-size:18px;">{{ h.score }}</div>
+          <div style="flex:1;">
+            <div style="font-weight:700;">Score: {{ h.score }}</div>
+            <div style="font-size:12px; color:var(--text-muted,#aaa);">{{ h.dataCriacao | date:'dd/MM/yyyy HH:mm':'':'pt-PT' }}</div>
+            <div style="font-size:12px; color:var(--text-muted,#aaa); margin-top:6px;">Rounds: {{ h.roundsCount || 0 }}</div>
+          </div>
+        </div>
+      </div>
+
+      <div style="margin-top:12px;">
+        <button class="primary-btn" (click)="startGame()">Play again</button>
+        <button class="ghost-btn" (click)="showHistory = false">Close</button>
+      </div>
     </div>
   </div>
 </main>
