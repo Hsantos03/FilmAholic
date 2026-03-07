@@ -79,16 +79,16 @@ export class HigherOrLowerComponent implements OnInit {
     this.leftRating = 0;
     this.rightRating = 0;
 
-    if ((!this.films || this.films.length < 1) && !this.films) {
-      // cannot play
+    if (!this.films || this.films.length < 1) {
+      // cannot play (we can still try fetching random movies, but keep previous behavior)
       this.isPlaying = false;
       return;
     }
 
     this.isLoadingPair = true;
 
-    // Try to fetch two random TMDb movies (server will GetOrCreate them) with rating > minRatingThreshold
-    // If that fails, fallback to picking from the local list using same rating constraint
+    // Try to fetch two random TMDb movies (server will GetOrCreate them) with rating > minRatingThreshold and having a cover
+    // If that fails, fallback to picking from the local list using same constraints
     let leftCandidate = await this.fetchRandomTmdbMovieWithMinRating(12, this.minRatingThreshold);
     let rightCandidate = await this.fetchRandomTmdbMovieWithMinRating(12, this.minRatingThreshold);
 
@@ -133,30 +133,46 @@ export class HigherOrLowerComponent implements OnInit {
       return;
     }
 
-    // Fallback: try to pick from local list ensuring rating > threshold
+    // Fallback: try to pick from local list ensuring rating > threshold and having a cover
     const localPair = await this.getTwoLocalFilmsWithMinRating(this.minRatingThreshold, 20);
     if (localPair) {
       this.leftFilm = localPair.left;
       this.rightFilm = localPair.right;
     } else {
-      // if still cannot find, fallback to any local pair (original behavior)
-      if (!this.films || this.films.length < 2) {
-        this.isPlaying = false;
-        this.isLoadingPair = false;
-        return;
-      }
+      // if still cannot find, fallback to any local pair that has covers (original behavior without ratings)
+      const candidates = this.films.filter(f => this.hasCover(f));
+      if (!candidates || candidates.length < 2) {
+        // last resort: allow any local pair
+        if (!this.films || this.films.length < 2) {
+          this.isPlaying = false;
+          this.isLoadingPair = false;
+          return;
+        }
 
-      let i = Math.floor(Math.random() * this.films.length);
-      let j = Math.floor(Math.random() * this.films.length);
-      const maxTries = 10;
-      let tries2 = 0;
-      while (j === i && tries2 < maxTries) {
-        j = Math.floor(Math.random() * this.films.length);
-        tries2++;
-      }
+        let i = Math.floor(Math.random() * this.films.length);
+        let j = Math.floor(Math.random() * this.films.length);
+        const maxTries = 10;
+        let tries2 = 0;
+        while (j === i && tries2 < maxTries) {
+          j = Math.floor(Math.random() * this.films.length);
+          tries2++;
+        }
 
-      this.leftFilm = this.films[i];
-      this.rightFilm = this.films[j];
+        this.leftFilm = this.films[i];
+        this.rightFilm = this.films[j];
+      } else {
+        let i = Math.floor(Math.random() * candidates.length);
+        let j = Math.floor(Math.random() * candidates.length);
+        const maxTries = 10;
+        let tries3 = 0;
+        while (j === i && tries3 < maxTries) {
+          j = Math.floor(Math.random() * candidates.length);
+          tries3++;
+        }
+
+        this.leftFilm = candidates[i];
+        this.rightFilm = candidates[j];
+      }
     }
 
     // fetch ratings for both (normal flow)
@@ -184,7 +200,7 @@ export class HigherOrLowerComponent implements OnInit {
     });
   }
 
-  // Try to fetch a random TMDb movie by calling GET /api/filmes/{id} and verify its rating is above threshold.
+  // Try to fetch a random TMDb movie by calling GET /api/filmes/{id} and verify its rating is above threshold and it has a cover.
   // Returns { movie, rating } when successful.
   private async fetchRandomTmdbMovieWithMinRating(maxAttempts: number = 8, minRating: number = 3): Promise<{ movie: Filme; rating: number } | undefined> {
     const minId = 1;
@@ -194,6 +210,9 @@ export class HigherOrLowerComponent implements OnInit {
       try {
         const movie = await firstValueFrom(this.filmesService.getById(randomTmdbId));
         if (!movie) continue;
+
+        // skip movies without cover
+        if (!this.hasCover(movie)) continue;
 
         try {
           const ratings = await firstValueFrom(this.filmesService.getRatings(movie.id));
@@ -215,34 +234,38 @@ export class HigherOrLowerComponent implements OnInit {
     return undefined;
   }
 
-  // Try to find two distinct local films with rating > minRating. Tries up to maxAttempts.
+  // Try to find two distinct local films with rating > minRating and having covers. Tries up to maxAttempts.
   private async getTwoLocalFilmsWithMinRating(minRating: number = 3, maxAttempts: number = 20): Promise<{ left: Filme; right: Filme } | undefined> {
     if (!this.films || this.films.length < 2) return undefined;
+
+    // work on candidates that have covers
+    const candidates = this.films.filter(f => this.hasCover(f));
+    if (!candidates || candidates.length < 2) return undefined;
 
     const triedIndexes = new Set<number>();
     for (let attempt = 0; attempt < maxAttempts; attempt++) {
       // pick left
-      let i = Math.floor(Math.random() * this.films.length);
-      while (triedIndexes.has(i) && triedIndexes.size < this.films.length) {
-        i = Math.floor(Math.random() * this.films.length);
+      let i = Math.floor(Math.random() * candidates.length);
+      while (triedIndexes.has(i) && triedIndexes.size < candidates.length) {
+        i = Math.floor(Math.random() * candidates.length);
       }
 
       triedIndexes.add(i);
-      const leftCandidate = this.films[i];
+      const leftCandidate = candidates[i];
       try {
         const leftRatings = await firstValueFrom(this.filmesService.getRatings(leftCandidate.id));
         const leftVote = leftRatings?.tmdbVoteAverage ?? 0;
         if (leftVote <= minRating) continue;
 
         // pick right different from left
-        let j = Math.floor(Math.random() * this.films.length);
+        let j = Math.floor(Math.random() * candidates.length);
         let innerTries = 0;
         while (j === i && innerTries < 6) {
-          j = Math.floor(Math.random() * this.films.length);
+          j = Math.floor(Math.random() * candidates.length);
           innerTries++;
         }
 
-        const rightCandidate = this.films[j];
+        const rightCandidate = candidates[j];
         try {
           const rightRatings = await firstValueFrom(this.filmesService.getRatings(rightCandidate.id));
           const rightVote = rightRatings?.tmdbVoteAverage ?? 0;
@@ -260,6 +283,16 @@ export class HigherOrLowerComponent implements OnInit {
     return undefined;
   }
 
+  // returns true when film has a usable poster (not empty, not placeholder)
+  private hasCover(f?: Filme): boolean {
+    if (!f) return false;
+    const p = (f.posterUrl ?? '').trim();
+    if (!p) return false;
+    if (p === 'N/A') return false;
+    if (p.includes('placeholder.com')) return false;
+    return true;
+  }
+
   choose(side: 'left' | 'right'): void {
     if (this.isLoadingPair || this.notifier) return;
     if (!this.leftFilm || !this.rightFilm) return;
@@ -275,7 +308,8 @@ export class HigherOrLowerComponent implements OnInit {
       leftId: this.leftFilm.id,
       rightId: this.rightFilm.id,
       chosen: side,
-      correct: correctSide === 'either' ? side : correctSide,
+      // when ratings are equal record 'either' so both are recognized as correct
+      correct: correctSide === 'either' ? 'either' : correctSide,
       leftRating: left,
       rightRating: right,
       timestamp: new Date().toISOString()
