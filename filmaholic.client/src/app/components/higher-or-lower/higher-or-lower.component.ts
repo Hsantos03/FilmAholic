@@ -34,6 +34,18 @@ export class HigherOrLowerComponent implements OnInit {
   // Min rating threshold (strictly greater than)
   private readonly minRatingThreshold = 3;
 
+  // New: UI/result state for selected round
+  showResults = false;
+  resultWinner: 'left' | 'right' | 'either' | null = null;
+  chosenSide: 'left' | 'right' | null = null;
+
+  // Preloaded next pair stored while showing current results
+  private nextPair?: { left: Filme; right: Filme; leftRating: number; rightRating: number } | undefined;
+
+  // New: end-of-game stats view
+  showEndStats = false;
+  endStats: { score: number; roundsCount: number; rounds: any[]; date: string } | null = null;
+
   constructor(
     private router: Router,
     private filmesService: FilmesService,
@@ -51,9 +63,16 @@ export class HigherOrLowerComponent implements OnInit {
   startGame(): void {
     this.isPlaying = true;
     this.showHistory = false;
+    this.showEndStats = false;
+    this.endStats = null;
     this.score = 0;
     this.rounds = [];
     this.notifier = null;
+    this.showResults = false;
+    this.resultWinner = null;
+    this.chosenSide = null;
+    this.nextPair = undefined;
+
     // ensure films available
     if (!this.films || this.films.length === 0) {
       this.filmesService.getAll().subscribe({
@@ -78,6 +97,10 @@ export class HigherOrLowerComponent implements OnInit {
     this.rightFilm = undefined;
     this.leftRating = 0;
     this.rightRating = 0;
+    this.showResults = false;
+    this.resultWinner = null;
+    this.chosenSide = null;
+    this.nextPair = undefined;
 
     if (!this.films || this.films.length < 1) {
       // cannot play (we can still try fetching random movies, but keep previous behavior)
@@ -293,6 +316,68 @@ export class HigherOrLowerComponent implements OnInit {
     return true;
   }
 
+  // Preload the next pair and ratings in background without changing current UI.
+  private async preloadNextPair(): Promise<{ left: Filme; right: Filme; leftRating: number; rightRating: number } | undefined> {
+    // Try same strategy as startRound but return the result
+    try {
+      let leftCandidate = await this.fetchRandomTmdbMovieWithMinRating(8, this.minRatingThreshold);
+      let rightCandidate = await this.fetchRandomTmdbMovieWithMinRating(8, this.minRatingThreshold);
+
+      // ensure distinct
+      let tries = 0;
+      while (leftCandidate && rightCandidate && leftCandidate.movie.id === rightCandidate.movie.id && tries < 6) {
+        rightCandidate = await this.fetchRandomTmdbMovieWithMinRating(6, this.minRatingThreshold);
+        tries++;
+      }
+
+      if (leftCandidate && rightCandidate) {
+        return {
+          left: leftCandidate.movie,
+          right: rightCandidate.movie,
+          leftRating: leftCandidate.rating ?? 0,
+          rightRating: rightCandidate.rating ?? 0
+        };
+      }
+
+      const localPair = await this.getTwoLocalFilmsWithMinRating(this.minRatingThreshold, 12);
+      if (localPair) {
+        // fetch ratings
+        const leftRatings = await firstValueFrom(this.filmesService.getRatings(localPair.left.id));
+        const rightRatings = await firstValueFrom(this.filmesService.getRatings(localPair.right.id));
+        const l = leftRatings?.tmdbVoteAverage ?? 0;
+        const r = rightRatings?.tmdbVoteAverage ?? 0;
+        return { left: localPair.left, right: localPair.right, leftRating: l, rightRating: r };
+      }
+
+      // fallback: pick any two local films that have covers
+      const candidates = (this.films || []).filter(f => this.hasCover(f));
+      if (candidates.length >= 2) {
+        let i = Math.floor(Math.random() * candidates.length);
+        let j = Math.floor(Math.random() * candidates.length);
+        let tries2 = 0;
+        while (j === i && tries2 < 8) {
+          j = Math.floor(Math.random() * candidates.length);
+          tries2++;
+        }
+
+        const left = candidates[i];
+        const right = candidates[j];
+        const leftRatings = await firstValueFrom(this.filmesService.getRatings(left.id));
+        const rightRatings = await firstValueFrom(this.filmesService.getRatings(right.id));
+        return {
+          left,
+          right,
+          leftRating: leftRatings?.tmdbVoteAverage ?? 0,
+          rightRating: rightRatings?.tmdbVoteAverage ?? 0
+        };
+      }
+
+      return undefined;
+    } catch {
+      return undefined;
+    }
+  }
+
   choose(side: 'left' | 'right'): void {
     if (this.isLoadingPair || this.notifier) return;
     if (!this.leftFilm || !this.rightFilm) return;
@@ -303,6 +388,11 @@ export class HigherOrLowerComponent implements OnInit {
     // determine correct side (if equal both count as correct)
     const correctSide = left === right ? 'either' : (left > right ? 'left' : 'right');
     const isCorrect = (correctSide === 'either') || (side === correctSide);
+
+    // set UI result state immediately
+    this.chosenSide = side;
+    this.resultWinner = correctSide === 'either' ? 'either' : correctSide as ('left' | 'right');
+    this.showResults = true;
 
     const round = {
       leftId: this.leftFilm.id,
@@ -319,21 +409,66 @@ export class HigherOrLowerComponent implements OnInit {
     if (isCorrect) {
       this.score++;
       this.notifier = 'correct';
-      // short delay then next round
-      setTimeout(() => {
-        this.notifier = null;
-        this.startRound();
-      }, 900);
     } else {
       this.notifier = 'wrong';
-      // game over: persist history (server if logged, else localStorage)
-      setTimeout(() => {
-        this.isPlaying = false;
-        this.persistHistory();
-        this.notifier = null;
-        this.openHistory();
-      }, 900);
     }
+
+    // Start preloading next pair immediately in background
+    this.nextPair = undefined;
+    this.preloadNextPair().then(p => {
+      this.nextPair = p;
+    }).catch(() => {
+      this.nextPair = undefined;
+    });
+
+    // Show results for 4s (4000ms), during which next pair is being loaded.
+    setTimeout(() => {
+      if (isCorrect) {
+        // If we preloaded a pair, swap to it; otherwise fallback to startRound which will load normally.
+        if (this.nextPair) {
+          const np = this.nextPair;
+          this.leftFilm = np.left;
+          this.rightFilm = np.right;
+          this.leftRating = np.leftRating;
+          this.rightRating = np.rightRating;
+          this.nextPair = undefined;
+
+          // reset UI result state to allow new selection
+          this.notifier = null;
+          this.showResults = false;
+          this.resultWinner = null;
+          this.chosenSide = null;
+        } else {
+          // fallback: load next round as before
+          this.notifier = null;
+          this.showResults = false;
+          this.resultWinner = null;
+          this.chosenSide = null;
+          this.startRound();
+        }
+      } else {
+        // wrong answer: end game after showing results
+        this.isPlaying = false;
+
+        // persist history (server if logged, else localStorage)
+        this.persistHistory();
+
+        // Prepare and show end-of-game stats card instead of history
+        this.endStats = {
+          score: this.score,
+          roundsCount: this.rounds.length,
+          rounds: [...this.rounds],
+          date: new Date().toISOString()
+        };
+        this.showEndStats = true;
+
+        // reset transient UI flags
+        this.notifier = null;
+        this.showResults = false;
+        this.resultWinner = null;
+        this.chosenSide = null;
+      }
+    }, 4000);
   }
 
   private persistHistory(): void {
@@ -420,6 +555,13 @@ export class HigherOrLowerComponent implements OnInit {
       // invalid JSON -> not countable
       return 0;
     }
+  }
+
+  // Close the end-of-game stats card (returns to main menu)
+  closeEndStats(): void {
+    this.showEndStats = false;
+    this.endStats = null;
+    this.isPlaying = false;
   }
 
   goBack(): void {
