@@ -152,6 +152,7 @@
   grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
   gap: 14px;
   margin-top: 12px;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
 }
 
 .result-card {
@@ -163,6 +164,17 @@
   border-radius: 8px;
   border: 1px solid rgba(255,255,255,0.04);
 }
+
+  .result-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+    border-color: rgba(255,255,255,0.12);
+  }
+
+  .result-card.loading {
+    pointer-events: none;
+    opacity: 0.7;
+  }
 
 .result-thumb {
   width: 88px;

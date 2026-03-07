@@ -101,13 +101,16 @@
     </div>
 
     <div class="results-grid" *ngIf="results.length">
-      <div class="result-card" *ngFor="let r of sortedResults">
-        <img class="result-thumb" [src]="r.posterUrl || 'https://via.placeholder.com/140x210?text=No+Image'" [alt]="r.titulo" />
+      <div class="result-card"
+           *ngFor="let r of sortedResults"
+           (click)="openResult(r)"
+           [class.loading]="isLoading"
+           style="cursor: pointer;">
+        <img class="result-thumb"
+             [src]="r.posterUrl || 'https://via.placeholder.com/140x210?text=No+Image'"
+             [alt]="r.titulo" />
         <div class="result-meta">
           <div class="result-title">{{ r.titulo }}</div>
-          <div class="result-actions">
-            <button (click)="openResult(r)" [disabled]="isLoading">Abrir</button>
-          </div>
         </div>
       </div>
     </div>
