@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { FilmesService, Filme, RatingsDto } from '../../services/filmes.service';
 import { GameService, GameHistoryEntry } from '../../services/game.service';
-import { forkJoin } from 'rxjs';
+import { forkJoin, firstValueFrom } from 'rxjs';
 
 @Component({
   selector: 'app-higher-or-lower',
@@ -31,6 +31,9 @@ export class HigherOrLowerComponent implements OnInit {
   history: Array<GameHistoryEntry & { roundsCount?: number }> = [];
   localHistoryKey = 'hol_local_history';
 
+  // Min rating threshold (strictly greater than)
+  private readonly minRatingThreshold = 3;
+
   constructor(
     private router: Router,
     private filmesService: FilmesService,
@@ -56,6 +59,7 @@ export class HigherOrLowerComponent implements OnInit {
       this.filmesService.getAll().subscribe({
         next: (f) => {
           this.films = f || [];
+          // startRound can be async; no need to await here
           this.startRound();
         },
         error: () => {
@@ -64,17 +68,18 @@ export class HigherOrLowerComponent implements OnInit {
       });
       return;
     }
+    // startRound can be async; no need to await here
     this.startRound();
   }
 
-  private startRound(): void {
+  private async startRound(): Promise<void> {
     this.notifier = null;
     this.leftFilm = undefined;
     this.rightFilm = undefined;
     this.leftRating = 0;
     this.rightRating = 0;
 
-    if (!this.films || this.films.length < 2) {
+    if ((!this.films || this.films.length < 1) && !this.films) {
       // cannot play
       this.isPlaying = false;
       return;
@@ -82,20 +87,79 @@ export class HigherOrLowerComponent implements OnInit {
 
     this.isLoadingPair = true;
 
-    // pick two distinct random films
-    let i = Math.floor(Math.random() * this.films.length);
-    let j = Math.floor(Math.random() * this.films.length);
-    const maxTries = 10;
+    // Try to fetch two random TMDb movies (server will GetOrCreate them) with rating > minRatingThreshold
+    // If that fails, fallback to picking from the local list using same rating constraint
+    let leftCandidate = await this.fetchRandomTmdbMovieWithMinRating(12, this.minRatingThreshold);
+    let rightCandidate = await this.fetchRandomTmdbMovieWithMinRating(12, this.minRatingThreshold);
+
+    // ensure distinct; if same try a few times
     let tries = 0;
-    while (j === i && tries < maxTries) {
-      j = Math.floor(Math.random() * this.films.length);
+    while (leftCandidate && rightCandidate && leftCandidate.movie.id === rightCandidate.movie.id && tries < 6) {
+      rightCandidate = await this.fetchRandomTmdbMovieWithMinRating(8, this.minRatingThreshold);
       tries++;
     }
 
-    this.leftFilm = this.films[i];
-    this.rightFilm = this.films[j];
+    if (leftCandidate && rightCandidate) {
+      this.leftFilm = leftCandidate.movie;
+      this.rightFilm = rightCandidate.movie;
+      // use pre-fetched ratings directly to avoid immediate duplicate requests
+      this.leftRating = leftCandidate.rating ?? 0;
+      this.rightRating = rightCandidate.rating ?? 0;
 
-    // fetch ratings for both
+      // still run the forkJoin to keep same UI flow; but if ratings are already set we will keep them
+      const leftObs = this.filmesService.getRatings(this.leftFilm?.id ?? 0);
+      const rightObs = this.filmesService.getRatings(this.rightFilm?.id ?? 0);
+
+      forkJoin([leftObs, rightObs]).subscribe({
+        next: (vals: [RatingsDto, RatingsDto]) => {
+          const l = vals[0];
+          const r = vals[1];
+          this.leftRating = (l?.tmdbVoteAverage ?? this.leftRating ?? 0) as number;
+          this.rightRating = (r?.tmdbVoteAverage ?? this.rightRating ?? 0) as number;
+
+          if (this.leftRating == null) this.leftRating = 0;
+          if (this.rightRating == null) this.rightRating = 0;
+        },
+        error: () => {
+          // keep pre-fetched or zero
+          this.leftRating = this.leftRating ?? 0;
+          this.rightRating = this.rightRating ?? 0;
+        },
+        complete: () => {
+          this.isLoadingPair = false;
+        }
+      });
+
+      return;
+    }
+
+    // Fallback: try to pick from local list ensuring rating > threshold
+    const localPair = await this.getTwoLocalFilmsWithMinRating(this.minRatingThreshold, 20);
+    if (localPair) {
+      this.leftFilm = localPair.left;
+      this.rightFilm = localPair.right;
+    } else {
+      // if still cannot find, fallback to any local pair (original behavior)
+      if (!this.films || this.films.length < 2) {
+        this.isPlaying = false;
+        this.isLoadingPair = false;
+        return;
+      }
+
+      let i = Math.floor(Math.random() * this.films.length);
+      let j = Math.floor(Math.random() * this.films.length);
+      const maxTries = 10;
+      let tries2 = 0;
+      while (j === i && tries2 < maxTries) {
+        j = Math.floor(Math.random() * this.films.length);
+        tries2++;
+      }
+
+      this.leftFilm = this.films[i];
+      this.rightFilm = this.films[j];
+    }
+
+    // fetch ratings for both (normal flow)
     const leftObs = this.filmesService.getRatings(this.leftFilm?.id ?? 0);
     const rightObs = this.filmesService.getRatings(this.rightFilm?.id ?? 0);
 
@@ -118,6 +182,82 @@ export class HigherOrLowerComponent implements OnInit {
         this.isLoadingPair = false;
       }
     });
+  }
+
+  // Try to fetch a random TMDb movie by calling GET /api/filmes/{id} and verify its rating is above threshold.
+  // Returns { movie, rating } when successful.
+  private async fetchRandomTmdbMovieWithMinRating(maxAttempts: number = 8, minRating: number = 3): Promise<{ movie: Filme; rating: number } | undefined> {
+    const minId = 1;
+    const maxIdRange = 1000000;
+    for (let attempt = 0; attempt < maxAttempts; attempt++) {
+      const randomTmdbId = Math.floor(Math.random() * maxIdRange) + minId;
+      try {
+        const movie = await firstValueFrom(this.filmesService.getById(randomTmdbId));
+        if (!movie) continue;
+
+        try {
+          const ratings = await firstValueFrom(this.filmesService.getRatings(movie.id));
+          const vote = ratings?.tmdbVoteAverage ?? 0;
+          if (vote > minRating) {
+            return { movie, rating: vote };
+          }
+          // otherwise try another id
+        } catch {
+          // rating fetch failed - skip this movie
+          continue;
+        }
+      } catch {
+        // not found or error, try another id
+        continue;
+      }
+    }
+
+    return undefined;
+  }
+
+  // Try to find two distinct local films with rating > minRating. Tries up to maxAttempts.
+  private async getTwoLocalFilmsWithMinRating(minRating: number = 3, maxAttempts: number = 20): Promise<{ left: Filme; right: Filme } | undefined> {
+    if (!this.films || this.films.length < 2) return undefined;
+
+    const triedIndexes = new Set<number>();
+    for (let attempt = 0; attempt < maxAttempts; attempt++) {
+      // pick left
+      let i = Math.floor(Math.random() * this.films.length);
+      while (triedIndexes.has(i) && triedIndexes.size < this.films.length) {
+        i = Math.floor(Math.random() * this.films.length);
+      }
+
+      triedIndexes.add(i);
+      const leftCandidate = this.films[i];
+      try {
+        const leftRatings = await firstValueFrom(this.filmesService.getRatings(leftCandidate.id));
+        const leftVote = leftRatings?.tmdbVoteAverage ?? 0;
+        if (leftVote <= minRating) continue;
+
+        // pick right different from left
+        let j = Math.floor(Math.random() * this.films.length);
+        let innerTries = 0;
+        while (j === i && innerTries < 6) {
+          j = Math.floor(Math.random() * this.films.length);
+          innerTries++;
+        }
+
+        const rightCandidate = this.films[j];
+        try {
+          const rightRatings = await firstValueFrom(this.filmesService.getRatings(rightCandidate.id));
+          const rightVote = rightRatings?.tmdbVoteAverage ?? 0;
+          if (rightVote <= minRating) continue;
+
+          return { left: leftCandidate, right: rightCandidate };
+        } catch {
+          continue;
+        }
+      } catch {
+        continue;
+      }
+    }
+
+    return undefined;
   }
 
   choose(side: 'left' | 'right'): void {
