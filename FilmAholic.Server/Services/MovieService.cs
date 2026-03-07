@@ -68,6 +68,9 @@ public class MovieService : IMovieService
             if (result?.Results == null || result.Results.Count == 0)
                 return result ?? new TmdbSearchResponse();
 
+            // Filter out adult movies right away
+            result.Results = result.Results.Where(r => !r.Adult).ToList();
+
             // TMDb search does not return runtime; fetch details for each movie to get duration (with limited concurrency)
             var semaphore = new SemaphoreSlim(5);
             var tasks = result.Results.Select(async (movie) =>
@@ -189,6 +192,13 @@ public class MovieService : IMovieService
             return null;
         }
 
+        // Exclude adult movies
+        if (tmdbMoviePt.Adult)
+        {
+            _logger.LogInformation("Skipping TMDb movie {TmdbId} because it is flagged as adult.", tmdbId);
+            return null;
+        }
+
         // Get English version for title only
         var httpClient = _httpClientFactory.CreateClient();
         var urlEn = $"{_tmdbBaseUrl}/movie/{tmdbId}?api_key={_tmdbApiKey}&language=en-US";
@@ -207,6 +217,13 @@ public class MovieService : IMovieService
 
         if (tmdbMovieEn == null)
         {
+            return null;
+        }
+
+        // Additional guard: english record flagged adult
+        if (tmdbMovieEn.Adult)
+        {
+            _logger.LogInformation("Skipping TMDb movie {TmdbId} because English entry is flagged as adult.", tmdbId);
             return null;
         }
 
@@ -376,8 +393,10 @@ public class MovieService : IMovieService
                 return new List<Filme>();
             }
 
+            // Filter out adult movies
+            var moviesToProcess = result.Results.Where(m => !m.Adult).Take(count).ToList();
+
             var movies = new List<Filme>();
-            var moviesToProcess = result.Results.Take(count).ToList();
 
             foreach (var tmdbMovie in moviesToProcess)
             {
@@ -585,8 +604,9 @@ public class MovieService : IMovieService
                 return new List<Filme>();
             }
 
+            // Filter out adult movies
             var recommendations = new List<Filme>();
-            var moviesToProcess = result.Results.Take(count).ToList();
+            var moviesToProcess = result.Results.Where(m => !m.Adult).Take(count).ToList();
 
             foreach (var tmdbMovie in moviesToProcess)
             {
