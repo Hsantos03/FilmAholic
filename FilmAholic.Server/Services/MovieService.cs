@@ -1,8 +1,9 @@
-using System.Text.Json;
 using FilmAholic.Server.Data;
 using FilmAholic.Server.DTOs;
 using FilmAholic.Server.Models;
 using Microsoft.EntityFrameworkCore;
+using System.Net.Http;
+using System.Text.Json;
 
 namespace FilmAholic.Server.Services;
 
@@ -607,6 +608,35 @@ public class MovieService : IMovieService
         {
             _logger.LogError(ex, "Error fetching recommendations from TMDb for movie {TmdbId}", tmdbId);
             return new List<Filme>();
+        }
+    }
+
+    public async Task<List<CastMemberDto>> GetCastAsync(int tmdbId)
+    {
+        try
+        {
+            var httpClient = _httpClientFactory.CreateClient();
+            var url = $"https://api.themoviedb.org/3/movie/{tmdbId}/credits?api_key={_tmdbApiKey}&language=pt-PT";
+            var response = await httpClient.GetFromJsonAsync<TmdbPopularPeopleResponse>(url);
+
+            return (response?.Cast ?? new())
+                .OrderBy(c => c.Order)
+                .Take(15)
+                .Select(c => new CastMemberDto
+                {
+                    Id = c.Id,
+                    Nome = c.Name,
+                    Personagem = c.Character,
+                    FotoUrl = string.IsNullOrEmpty(c.ProfilePath)
+                                    ? null
+                                    : $"https://image.tmdb.org/t/p/w185{c.ProfilePath}"
+                })
+                .ToList();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"GetCastAsync error: {ex.Message}");
+            return new List<CastMemberDto>();
         }
     }
 }

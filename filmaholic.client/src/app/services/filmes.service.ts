@@ -45,6 +45,13 @@ export interface RatingsDto {
   imdbId?: string | null;
 }
 
+export interface CastMemberDto {
+  id: number;
+  nome: string;
+  personagem: string;
+  fotoUrl: string | null;
+}
+
 @Injectable({ providedIn: 'root' })
 export class FilmesService {
   private readonly apiBase = environment.apiBaseUrl || '';
@@ -86,5 +93,9 @@ export class FilmesService {
   getRecommendations(id: number, count: number = 10): Observable<Filme[]> {
     const params = new HttpParams().set('count', count.toString());
     return this.http.get<Filme[]>(`${this.apiUrl}/${id}/recomendacoes`, { params });
+  }
+
+  getCast(id: number): Observable<CastMemberDto[]> {
+    return this.http.get<CastMemberDto[]>(`${this.apiUrl}/${id}/cast`);
   }
 }

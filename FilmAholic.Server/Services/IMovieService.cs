@@ -23,4 +23,5 @@ public interface IMovieService
 
     Task<RatingsDto> GetRatingsAsync(string? tmdbId, string? title);
     Task<List<Filme>> GetRecommendationsAsync(int tmdbId, int count = 10);
+    Task<List<CastMemberDto>> GetCastAsync(int tmdbId);
 }
