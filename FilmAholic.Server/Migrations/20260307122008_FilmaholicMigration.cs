@@ -100,6 +100,22 @@ namespace FilmAholic.Server.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "GameHistories",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    UtilizadorId = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    DataCriacao = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    Score = table.Column<int>(type: "int", nullable: false),
+                    RoundsJson = table.Column<string>(type: "nvarchar(max)", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_GameHistories", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "Generos",
                 columns: table => new
                 {
@@ -253,7 +269,7 @@ namespace FilmAholic.Server.Migrations
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
                     FilmeId = table.Column<int>(type: "int", nullable: false),
-                    UserId = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    UserId = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     UserName = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     Texto = table.Column<string>(type: "nvarchar(2000)", maxLength: 2000, nullable: false),
                     DataCriacao = table.Column<DateTime>(type: "datetime2", nullable: false)
@@ -423,6 +439,11 @@ namespace FilmAholic.Server.Migrations
                 column: "Ativo");
 
             migrationBuilder.CreateIndex(
+                name: "IX_GameHistories_UtilizadorId",
+                table: "GameHistories",
+                column: "UtilizadorId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_MovieRatings_FilmeId_UserId",
                 table: "MovieRatings",
                 columns: new[] { "FilmeId", "UserId" },
@@ -476,6 +497,9 @@ namespace FilmAholic.Server.Migrations
 
             migrationBuilder.DropTable(
                 name: "CommentVotes");
+
+            migrationBuilder.DropTable(
+                name: "GameHistories");
 
             migrationBuilder.DropTable(
                 name: "MovieRatings");

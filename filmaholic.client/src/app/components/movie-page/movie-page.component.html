@@ -55,13 +55,13 @@
                   [title]="isFavorite ? 'Remover dos favoritos' : 'Adicionar aos favoritos'">
             <span *ngIf="!isFavorite">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="vertical-align: middle; margin-right: 4px;">
-                <path d="M22 9.24l-7.19-.62L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21 12 17.27 18.18 21l-1.63-7.03L22 9.24zM12 15.4l-3.76 2.27 1-4.28-3.32-2.88 4.38-.38L12 6.1l1.71 4.04 4.38.38-3.32 2.88 1 4.28L12 15.4z"/>
+                <path d="M22 9.24l-7.19-.62L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21 12 17.27 18.18 21l-1.63-7.03L22 9.24zM12 15.4l-3.76 2.27 1-4.28-3.32-2.88 4.38-.38L12 6.1l1.71 4.04 4.38.38-3.32 2.88 1 4.28L12 15.4z" />
               </svg>
               Favorito
             </span>
             <span *ngIf="isFavorite">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="vertical-align: middle; margin-right: 4px;">
-                <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/>
+                <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" />
               </svg>
               Favoritos
             </span>
@@ -175,6 +175,27 @@
           <p>{{ overview }}</p>
         </div>
 
+        <!-- ELENCO -->
+        <div class="cast-section" *ngIf="isLoadingCast || cast.length">
+          <h3>Elenco Principal</h3>
+
+          <div *ngIf="isLoadingCast" class="ratings-loading">A carregar elenco…</div>
+
+          <div *ngIf="!isLoadingCast && cast.length" class="cast-scroll">
+            <div class="cast-card" *ngFor="let a of cast">
+              <img *ngIf="a.fotoUrl"
+                   class="cast-photo"
+                   [src]="a.fotoUrl"
+                   [alt]="a.nome" />
+              <div *ngIf="!a.fotoUrl" class="cast-photo cast-no-photo">
+                {{ a.nome.charAt(0) }}
+              </div>
+              <div class="cast-name">{{ a.nome }}</div>
+              <div class="cast-char">{{ a.personagem }}</div>
+            </div>
+          </div>
+        </div>
+
         <!-- COMMENTS -->
         <div class="comments">
           <h3>Comentários</h3>
@@ -182,9 +203,9 @@
           <!-- WRITE COMMENT -->
           <div class="comment-row">
             <div class="comment-box">
-              <div class="avatar avatar-sm" 
-                 [attr.data-deletedd]="userFotoPerfilUrl ? 'false' : (userName === 'Conta Eliminada' ? 'true' : 'false')"
-                 title="Tu">
+              <div class="avatar avatar-sm"
+                   [attr.data-deletedd]="userFotoPerfilUrl ? 'false' : (userName === 'Conta Eliminada' ? 'true' : 'false')"
+                   title="Tu">
                 <img *ngIf="userFotoPerfilUrl" class="avatar-img" [src]="userFotoPerfilUrl" [alt]="userName" />
                 <span *ngIf="!userFotoPerfilUrl">{{ userName.charAt(0) }}</span>
               </div>
@@ -213,7 +234,7 @@
           <div class="comments-list" *ngIf="comments.length; else noComments">
             <div class="comment-item" *ngFor="let c of comments">
 
-              <div class="avatar avatar-md" 
+              <div class="avatar avatar-md"
                    [attr.data-deletedd]="c.userName === 'Conta Eliminada'"
                    [title]="c.userName">
                 <img *ngIf="c.fotoPerfilUrl" class="avatar-img" [src]="c.fotoPerfilUrl" [alt]="c.userName" />

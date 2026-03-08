@@ -73,6 +73,7 @@ export class SearchResultsComponent implements OnInit, OnDestroy {
       this.selectedDateTo = savedDateTo;
     }
 
+
     this.route.queryParamMap.subscribe(params => {
       const q = params.get('q') || '';
       this.query = q.trim();
@@ -191,9 +192,10 @@ export class SearchResultsComponent implements OnInit, OnDestroy {
     this.error = '';
     this.results = [];
 
+    const q = query.trim().toLowerCase();
+
     this.filmesService.searchMovies(query, page).subscribe({
       next: (tmdbResponse: TmdbSearchResponse) => {
-        // Get TMDb results
         const tmdbResults = (tmdbResponse?.results || []).map((r: TmdbMovieResult) => ({
           tmdbId: r.id,
           titulo: r.title || r.original_title || 'Untitled',
@@ -203,37 +205,33 @@ export class SearchResultsComponent implements OnInit, OnDestroy {
           runtime: r.runtime ?? undefined
         }));
 
-        // Get local DB results
+        // Só inclui filmes locais que correspondam à pesquisa
         this.filmesService.getAll().subscribe({
           next: (localMovies) => {
-            const localResults = (localMovies || []).map(m => ({
-              id: m.id,
-              tmdbId: m.tmdbId ? parseInt(m.tmdbId) : undefined,
-              titulo: m.titulo,
-              posterUrl: m.posterUrl || null,
-              release_date: m.ano ? m.ano.toString() : null,
-              vote_average: undefined,
-              runtime: m.duracao ?? undefined
-            }));
+            const localResults = (localMovies || [])
+              .filter(m => (m.titulo || '').toLowerCase().includes(q))
+              .map(m => ({
+                id: m.id,
+                tmdbId: m.tmdbId ? parseInt(m.tmdbId) : undefined,
+                titulo: m.titulo,
+                posterUrl: m.posterUrl || null,
+                release_date: m.ano ? m.ano.toString() : null,
+                vote_average: undefined,
+                runtime: m.duracao ?? undefined
+              }));
 
-            // Combine and deduplicate results
             const allResults = [...localResults, ...tmdbResults];
             const uniqueResults = this.deduplicateResults(allResults);
-            
-            // Limit to 30 results
-            const limitedResults = uniqueResults.slice(0, 30);
-            
-            this.results = limitedResults;
+            this.results = uniqueResults.slice(0, 30);
             this.isLoading = false;
           },
-          error: (err: any) => {
-            // Fallback to TMDb only
-            this.results = tmdbResults;
+          error: () => {
+            this.results = tmdbResults.slice(0, 30);
             this.isLoading = false;
           }
         });
       },
-      error: (err: any) => {
+      error: () => {
         this.error = 'Erro ao pesquisar filmes. Tente novamente.';
         this.isLoading = false;
       }

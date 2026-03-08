@@ -165,6 +165,35 @@ namespace FilmAholic.Server.Migrations
                     b.ToTable("Filmes");
                 });
 
+            modelBuilder.Entity("FilmAholic.Server.Models.GameHistory", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("DataCriacao")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("RoundsJson")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("Score")
+                        .HasColumnType("int");
+
+                    b.Property<string>("UtilizadorId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UtilizadorId");
+
+                    b.ToTable("GameHistories", (string)null);
+                });
+
             modelBuilder.Entity("FilmAholic.Server.Models.Genero", b =>
                 {
                     b.Property<int>("Id")

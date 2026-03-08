@@ -2,12 +2,11 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 import { Location } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Subscription } from 'rxjs';
-import { Filme, FilmesService, RatingsDto, TmdbSearchResponse, TmdbMovieResult } from '../../services/filmes.service';
+import { Filme, FilmesService, RatingsDto, TmdbSearchResponse, TmdbMovieResult, CastMemberDto } from '../../services/filmes.service';
 import { UserMoviesService } from '../../services/user-movies.service';
 import { FavoritesService } from '../../services/favorites.service';
 import { CommentsService, CommentDTO } from '../../services/comments.service';
 import { MovieRatingService, MovieRatingSummaryDTO } from '../../services/movie-rating.service';
-
 @Component({
   selector: 'app-movie-page',
   templateUrl: './movie-page.component.html',
@@ -59,6 +58,9 @@ export class MoviePageComponent implements OnInit, OnDestroy {
   isSavingMovieRating = false;
   ratingError = '';
   isLoadingMovieRating = false;
+
+  cast: CastMemberDto[] = [];
+  isLoadingCast = false;
 
   private routeSub!: Subscription;
 
@@ -140,6 +142,9 @@ export class MoviePageComponent implements OnInit, OnDestroy {
     this.ratingError = '';
     this.isSavingMovieRating = false;
     this.isLoadingMovieRating = false;
+
+    this.cast = [];
+    this.isLoadingCast = false;
   }
 
   get canComment(): boolean {
@@ -166,6 +171,7 @@ export class MoviePageComponent implements OnInit, OnDestroy {
           // this.loadOverviewFromTmdb(this.filme);
           this.loadComments(id);
           this.loadRecommendations(id);
+          this.loadCast(this.filme.id);
           this.syncFavoriteState();
           this.syncListState();
           this.loadMovieRating(id);
@@ -219,6 +225,7 @@ export class MoviePageComponent implements OnInit, OnDestroy {
           this.loadOverviewFromTmdb(this.filme);
           this.loadComments(this.filme.id);
           this.loadRecommendations(this.filme.id);
+          this.loadCast(this.filme.id);
           this.syncFavoriteState();
           this.syncListState();
           this.loadMovieRating(this.filme.id);
@@ -656,5 +663,14 @@ export class MoviePageComponent implements OnInit, OnDestroy {
     } else {
       this.router.navigate(['/dashboard']);
     }
+  }
+
+  private loadCast(id: number): void {
+    this.isLoadingCast = true;
+    this.filmesService.getCast(id).subscribe({
+      next: (res) => { this.cast = res || []; },
+      error: (err) => { console.warn('Failed to load cast', err); this.cast = []; },
+      complete: () => { this.isLoadingCast = false; }
+    });
   }
 }

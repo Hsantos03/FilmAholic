@@ -20,6 +20,9 @@ public class FilmAholicDbContext : IdentityDbContext<Utilizador>
     // NEW: UserDesafios table to track user progress on desafios
     public DbSet<UserDesafio> UserDesafios => Set<UserDesafio>();
 
+    // NEW: Game history
+    public DbSet<GameHistory> GameHistories => Set<GameHistory>();
+
     protected override void OnModelCreating(ModelBuilder builder)
     {
         builder.Entity<UserMovie>()
@@ -97,6 +100,16 @@ public class FilmAholicDbContext : IdentityDbContext<Utilizador>
 
             ud.Property(x => x.QuantidadeProgresso).HasDefaultValue(0);
             ud.Property(x => x.DataAtualizacao).HasDefaultValueSql("CURRENT_TIMESTAMP");
+        });
+
+        // Configure GameHistory basic mapping
+        builder.Entity<GameHistory>(gh =>
+        {
+            gh.HasKey(x => x.Id);
+            gh.Property(x => x.UtilizadorId).IsRequired();
+            gh.Property(x => x.RoundsJson).IsRequired();
+            gh.HasIndex(x => x.UtilizadorId);
+            gh.ToTable("GameHistories");
         });
     }
 }
