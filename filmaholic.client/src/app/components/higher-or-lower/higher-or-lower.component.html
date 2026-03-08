@@ -1,27 +1,297 @@
+<!-- TOPBAR -->
 <header class="topbar">
-  <button class="icon-btn" (click)="goBack()" aria-label="Back">&larr;</button>
-  <a class="brand" routerLink="/dashboard">FilmAholic</a>
+  <button class="back-btn" (click)="goBack()" aria-label="Back">
+    <span class="back-arrow">←</span>
+    <span class="back-label">Dashboard</span>
+  </button>
+  <span class="brand-pill">🎬 FilmAholic</span>
 </header>
 
 <main class="hol-page">
-  <div class="hol-card" role="main" aria-labelledby="hol-title">
-    <h1 id="hol-title">Higher or lower</h1>
 
-    <p class="hol-desc">Choose which movie you think has the higher rating.</p>
+  <!-- PARTÍCULAS DE FUNDO -->
+  <div class="bg-orb orb1"></div>
+  <div class="bg-orb orb2"></div>
+  <div class="bg-orb orb3"></div>
 
-    <div class="hol-menu">
-      <button class="primary-btn" (click)="startGame()" aria-haspopup="true">Start game</button>
-      <button class="ghost-btn" (click)="openHistory()">History</button>
+  <!-- ============ MENU INICIAL ============ -->
+  <div class="menu-screen" *ngIf="!isPlaying && !showHistory && !showEndStats">
+    <div class="menu-badge">MINI-GAME</div>
+    <h1 class="menu-title">Higher<br><span class="title-accent">or Lower</span></h1>
+
+    <p class="menu-desc">
+      {{
+ gameCategory === 'actors'
+         ? 'Escolhe o ator mais popular neste Momento!!!'
+         : 'Escolhe o filme que achas ter o melhor Rating!!!'
+      }}
+    </p>
+
+    <div class="category-row">
+      <button class="cat-btn"
+              [class.cat-active]="gameCategory === 'films' || gameCategory === null"
+              (click)="gameCategory = 'films'">
+        <span class="cat-icon">🎬</span>
+        <span class="cat-label">Filmes</span>
+      </button>
+      <button class="cat-btn"
+              [class.cat-active]="gameCategory === 'actors'"
+              (click)="gameCategory = 'actors'">
+        <span class="cat-icon">🎭</span>
+        <span class="cat-label">Atores</span>
+      </button>
     </div>
 
-    <div class="hol-state" *ngIf="isPlaying">
-      <h3>Game (placeholder)</h3>
-      <p>The game UI will appear here. Implementation in next step.</p>
+    <button class="start-btn" (click)="startGame(gameCategory ?? 'films')">
+      <span>Iniciar Jogo</span>
+      <span class="btn-arrow">→</span>
+    </button>
+
+    <button class="history-btn" (click)="openHistory()">
+      <span>📜</span> Histórico
+    </button>
+  </div>
+
+  <!-- ============ JOGO EM CURSO ============ -->
+  <div class="game-screen" *ngIf="isPlaying">
+
+    <!-- Barra de topo do jogo -->
+    <div class="game-topbar">
+      <button class="quit-btn" (click)="isPlaying = false; showEndStats = false; showHistory = false;">
+        ← Voltar
+      </button>
+      <div class="score-chip">
+        <span class="score-label">Score</span>
+        <span class="score-value">{{ score }}</span>
+      </div>
+      <div class="round-chip">
+        Ronda <strong>{{ rounds.length + 1 }}</strong>
+      </div>
     </div>
 
-    <div class="hol-state" *ngIf="showHistory">
-      <h3>History</h3>
-      <p>No history yet — when you play, results will be shown here.</p>
+    <!-- Loading -->
+    <div class="loading-state" *ngIf="isLoadingPair">
+      <div class="loading-spinner"></div>
+      <p>{{ gameCategory === 'actors' ? 'A carregar atores…' : 'A carregar filmes…' }}</p>
+    </div>
+
+    <!-- FILMES -->
+    <div class="duel-area" *ngIf="!isLoadingPair && gameCategory !== 'actors'">
+      <div class="duel-question">
+        <span>Qual tem o rating mais alto?</span>
+      </div>
+
+      <div class="duel-row">
+        <!-- FILME ESQUERDO -->
+        <div class="duel-card"
+             [class.card-correct]="showResults && (resultWinner === 'left' || resultWinner === 'either')"
+             [class.card-wrong]="showResults && resultWinner !== 'left' && resultWinner !== 'either'"
+             [class.card-chosen]="chosenSide === 'left'"
+             (click)="choose('left')"
+             [class.disabled]="isLoadingPair || !!notifier">
+
+          <div class="card-img-wrap">
+            <img [src]="posterOf(leftFilm)" [alt]="leftFilm?.titulo" class="card-img" />
+            <div class="card-shimmer"></div>
+
+            <div class="card-overlay" *ngIf="showResults"
+                 [class.overlay-win]="resultWinner === 'left' || resultWinner === 'either'"
+                 [class.overlay-lose]="resultWinner !== 'left' && resultWinner !== 'either'">
+            </div>
+
+            <div class="result-badge" *ngIf="showResults">
+              {{ leftRating ? (leftRating | number:'1.1-1') + ' / 10' : '—' }}
+            </div>
+
+            <div class="chosen-tag" *ngIf="chosenSide === 'left' && showResults">
+              Escolhido ✓
+            </div>
+          </div>
+
+          <div class="card-footer">
+            <span class="card-title">{{ leftFilm?.titulo }}</span>
+          </div>
+        </div>
+
+        <!-- VS CENTRAL -->
+        <div class="vs-col">
+          <div class="vs-ring">VS</div>
+        </div>
+
+        <!-- FILME DIREITO -->
+        <div class="duel-card"
+             [class.card-correct]="showResults && (resultWinner === 'right' || resultWinner === 'either')"
+             [class.card-wrong]="showResults && resultWinner !== 'right' && resultWinner !== 'either'"
+             [class.card-chosen]="chosenSide === 'right'"
+             (click)="choose('right')"
+             [class.disabled]="isLoadingPair || !!notifier">
+
+          <div class="card-img-wrap">
+            <img [src]="posterOf(rightFilm)" [alt]="rightFilm?.titulo" class="card-img" />
+            <div class="card-shimmer"></div>
+
+            <div class="card-overlay" *ngIf="showResults"
+                 [class.overlay-win]="resultWinner === 'right' || resultWinner === 'either'"
+                 [class.overlay-lose]="resultWinner !== 'right' && resultWinner !== 'either'">
+            </div>
+
+            <div class="result-badge" *ngIf="showResults">
+              {{ rightRating ? (rightRating | number:'1.1-1') + ' / 10' : '—' }}
+            </div>
+
+            <div class="chosen-tag" *ngIf="chosenSide === 'right' && showResults">
+              Escolhido ✓
+            </div>
+          </div>
+
+          <div class="card-footer">
+            <span class="card-title">{{ rightFilm?.titulo }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ATORES -->
+    <div class="duel-area" *ngIf="!isLoadingPair && gameCategory === 'actors'">
+      <div class="duel-question">
+        <span>Quem é mais popular?</span>
+      </div>
+
+      <div class="duel-row">
+        <!-- ATOR ESQUERDO -->
+        <div class="duel-card actor-card"
+             [class.card-correct]="showResults && (resultWinner === 'left' || resultWinner === 'either')"
+             [class.card-wrong]="showResults && resultWinner !== 'left' && resultWinner !== 'either'"
+             [class.card-chosen]="chosenSide === 'left'"
+             (click)="choose('left')"
+             [class.disabled]="isLoadingPair || !!notifier">
+
+          <div class="card-img-wrap actor-img-wrap">
+            <img [src]="leftActor?.fotoUrl || 'https://via.placeholder.com/280x380?text=?'"
+                 [alt]="leftActor?.nome" class="card-img actor-img" />
+            <div class="card-shimmer"></div>
+
+            <div class="card-overlay" *ngIf="showResults"
+                 [class.overlay-win]="resultWinner === 'left' || resultWinner === 'either'"
+                 [class.overlay-lose]="resultWinner !== 'left' && resultWinner !== 'either'">
+            </div>
+
+            <div class="result-badge pop-badge" *ngIf="showResults">
+              ⭐ {{ leftActorPopularity | number:'1.1-1' }}
+            </div>
+
+            <div class="chosen-tag" *ngIf="chosenSide === 'left' && showResults">
+              Escolhido ✓
+            </div>
+          </div>
+
+          <div class="card-footer actor-footer">
+            <span class="card-title">{{ leftActor?.nome }}</span>
+            <span class="pop-label" *ngIf="!showResults">Popularidade: ?</span>
+          </div>
+        </div>
+
+        <!-- VS CENTRAL -->
+        <div class="vs-col">
+          <div class="vs-ring">VS</div>
+        </div>
+
+        <!-- ATOR DIREITO -->
+        <div class="duel-card actor-card"
+             [class.card-correct]="showResults && (resultWinner === 'right' || resultWinner === 'either')"
+             [class.card-wrong]="showResults && resultWinner !== 'right' && resultWinner !== 'either'"
+             [class.card-chosen]="chosenSide === 'right'"
+             (click)="choose('right')"
+             [class.disabled]="isLoadingPair || !!notifier">
+
+          <div class="card-img-wrap actor-img-wrap">
+            <img [src]="rightActor?.fotoUrl || 'https://via.placeholder.com/280x380?text=?'"
+                 [alt]="rightActor?.nome" class="card-img actor-img" />
+            <div class="card-shimmer"></div>
+
+            <div class="card-overlay" *ngIf="showResults"
+                 [class.overlay-win]="resultWinner === 'right' || resultWinner === 'either'"
+                 [class.overlay-lose]="resultWinner !== 'right' && resultWinner !== 'either'">
+            </div>
+
+            <div class="result-badge pop-badge" *ngIf="showResults">
+              ⭐ {{ rightActorPopularity | number:'1.1-1' }}
+            </div>
+
+            <div class="chosen-tag" *ngIf="chosenSide === 'right' && showResults">
+              Escolhido ✓
+            </div>
+          </div>
+
+          <div class="card-footer actor-footer">
+            <span class="card-title">{{ rightActor?.nome }}</span>
+            <span class="pop-label" *ngIf="!showResults">Popularidade: ?</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Notificações -->
+    <div class="notif notif-correct" *ngIf="notifier === 'correct'">
+      <span class="notif-icon">✓</span> Correto! A avançar…
+    </div>
+    <div class="notif notif-wrong" *ngIf="notifier === 'wrong'">
+      <span class="notif-icon">✗</span> Errado — Game over.
     </div>
   </div>
+
+  <!-- ============ FIM DO JOGO ============ -->
+  <div class="endgame-screen" *ngIf="showEndStats">
+    <div class="endgame-card">
+      <div class="endgame-emoji">🏆</div>
+      <h2 class="endgame-title">Fim de Jogo!</h2>
+      <div class="endgame-score">{{ endStats?.score }}</div>
+      <div class="endgame-sub">pontos</div>
+      <div class="endgame-meta">{{ endStats?.roundsCount }} rondas jogadas</div>
+
+      <div class="endgame-actions">
+        <button class="start-btn" (click)="startGame(gameCategory ?? 'films')">
+          <span>Jogar de Novo</span>
+          <span class="btn-arrow">→</span>
+        </button>
+        <button class="history-btn" (click)="closeEndStats()">Fechar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ HISTÓRICO ============ -->
+  <div class="history-screen" *ngIf="showHistory">
+    <div class="history-panel">
+      <div class="history-header">
+        <h2 class="history-title">📜 Histórico</h2>
+        <div class="history-actions">
+          <button class="start-btn small-btn" (click)="startGame(gameCategory ?? 'films')">
+            Jogar
+          </button>
+          <button class="history-btn small-btn" (click)="showHistory = false">Fechar</button>
+        </div>
+      </div>
+
+      <div class="history-empty" *ngIf="history.length === 0">
+        Ainda não tens jogos guardados. Joga e aparece aqui!
+      </div>
+
+      <div class="history-list" *ngIf="history.length > 0">
+        <div class="history-item" *ngFor="let h of history">
+          <div class="hi-score">{{ h.score }}</div>
+          <div class="hi-info">
+            <div class="hi-score-label">Score: {{ h.score }}</div>
+            <div class="hi-date">{{ h.dataCriacao | date:'dd/MM/yyyy HH:mm':'':'pt-PT' }}</div>
+            <div class="hi-rounds">{{ h.roundsCount || 0 }} rondas</div>
+          </div>
+          <div class="hi-badge"
+               [class.badge-actors]="h.category === 'Atores'"
+               [class.badge-films]="h.category !== 'Atores'">
+            {{ h.category === 'Atores' ? '🎭 Atores' : '🎬 Filmes' }}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
 </main>

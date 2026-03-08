@@ -48,7 +48,7 @@ namespace FilmAholic.Server.Controllers
                         await _context.SaveChangesAsync();
                     }
                 }
-                catch (Exception ex)
+                catch (Exception)
                 {
                     if (!dbMovies.Any())
                     {
@@ -238,6 +238,27 @@ namespace FilmAholic.Server.Controllers
 
             var recommendations = await _movieService.GetRecommendationsAsync(tmdbId, count);
             return Ok(recommendations);
+        }
+
+        [HttpGet("{id}/cast")]
+        public async Task<IActionResult> GetCast(int id)
+        {
+            var filme = await _context.Set<Models.Filme>().FindAsync(id);
+            if (filme == null)
+                filme = FilmSeed.Filmes.FirstOrDefault(f => f.Id == id);
+
+            int tmdbId;
+            if (filme != null && !string.IsNullOrEmpty(filme.TmdbId) && int.TryParse(filme.TmdbId, out var parsed))
+            {
+                tmdbId = parsed;
+            }
+            else
+            {
+                tmdbId = id;
+            }
+
+            var cast = await _movieService.GetCastAsync(tmdbId);
+            return Ok(cast);
         }
     }
 }

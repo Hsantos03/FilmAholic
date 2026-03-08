@@ -58,6 +58,10 @@ public class TmdbMovieDto
 
     [JsonPropertyName("imdb_id")]
     public string? ImdbId { get; set; }
+
+    // Indicates whether the TMDb movie is flagged as adult (pornographic)
+    [JsonPropertyName("adult")]
+    public bool Adult { get; set; } = false;
 }
 
 public class TmdbGenreDto
