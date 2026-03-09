@@ -30,6 +30,9 @@ export class HigherOrLowerComponent implements OnInit {
   gameCategory: 'films' | 'actors' | null = null;
   private readonly sessionCategoryKey = 'hol_category';
 
+  private audioCtx: AudioContext | null = null;
+  flashClass: string = '';
+
   isLoadingPair = false;
   notifier: 'correct' | 'wrong' | null = null;
 
@@ -385,6 +388,39 @@ export class HigherOrLowerComponent implements OnInit {
     return undefined;
   }
 
+  private playSound(type: 'correct' | 'wrong'): void {
+    try {
+      if (!this.audioCtx) {
+        this.audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
+      }
+      const ctx = this.audioCtx;
+      const oscillator = ctx.createOscillator();
+      const gainNode = ctx.createGain();
+
+      oscillator.connect(gainNode);
+      gainNode.connect(ctx.destination);
+
+      if (type === 'correct') {
+        oscillator.frequency.setValueAtTime(440, ctx.currentTime);
+        oscillator.frequency.setValueAtTime(554, ctx.currentTime + 0.1);
+        oscillator.frequency.setValueAtTime(659, ctx.currentTime + 0.2);
+        gainNode.gain.setValueAtTime(0.3, ctx.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.5);
+        oscillator.start(ctx.currentTime);
+        oscillator.stop(ctx.currentTime + 0.5);
+      } else {
+        oscillator.frequency.setValueAtTime(300, ctx.currentTime);
+        oscillator.frequency.setValueAtTime(200, ctx.currentTime + 0.15);
+        oscillator.frequency.setValueAtTime(150, ctx.currentTime + 0.3);
+        gainNode.gain.setValueAtTime(0.3, ctx.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.5);
+        oscillator.start(ctx.currentTime);
+        oscillator.stop(ctx.currentTime + 0.5);
+      }
+    } catch {
+    }
+  }
+
   // returns true when film has a usable poster (not empty, not placeholder)
   private hasCover(f?: Filme): boolean {
     if (!f) return false;
@@ -497,8 +533,14 @@ export class HigherOrLowerComponent implements OnInit {
     if (isCorrect) {
       this.score++;
       this.notifier = 'correct';
+      this.playSound('correct');
+      this.flashClass = isCorrect ? 'flash-correct' : 'flash-wrong';
+      setTimeout(() => this.flashClass = '', 600);
     } else {
       this.notifier = 'wrong';
+      this.playSound('wrong');
+      this.flashClass = isCorrect ? 'flash-correct' : 'flash-wrong';
+      setTimeout(() => this.flashClass = '', 600);
     }
 
     // Start preloading next pair immediately in background

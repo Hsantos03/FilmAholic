@@ -53,7 +53,7 @@
   </div>
 
   <!-- ============ JOGO EM CURSO ============ -->
-  <div class="game-screen" *ngIf="isPlaying">
+  <div class="game-screen" [class]="flashClass" *ngIf="isPlaying">
 
     <!-- Barra de topo do jogo -->
     <div class="game-topbar">
@@ -241,7 +241,7 @@
   </div>
 
   <!-- ============ FIM DO JOGO ============ -->
-  <div class="endgame-screen" *ngIf="showEndStats">
+  <div class="endgame-screen" [class]="flashClass" *ngIf="showEndStats">
     <div class="endgame-card">
       <div class="endgame-emoji">🏆</div>
       <h2 class="endgame-title">Fim de Jogo!</h2>
