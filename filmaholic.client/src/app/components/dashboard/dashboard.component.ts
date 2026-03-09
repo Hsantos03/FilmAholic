@@ -6,7 +6,6 @@ import { DesafiosService } from '../../services/desafios.service';
 import { Filme, FilmesService } from '../../services/filmes.service';
 import { AtoresService, PopularActor } from '../../services/atores.service';
 import { ProfileService } from '../../services/profile.service';
-import { ActorsCarouselComponent } from '../actors-carousel/actors-carousel.component';
 
 export interface SearchResultItem {
   id?: number;
@@ -38,8 +37,8 @@ export class DashboardComponent implements OnInit, OnDestroy {
   searchResultsLoading = false;
   showSearchMenu: boolean = false;
   isLoadingSuggestions = false;
-  isSuggestionsMode = false; // true when menu is open with empty search (suggestions by genre)
-  hasGenrePreferences = false; // true when user has favorite genres (for empty-state message)
+  isSuggestionsMode = false; 
+  hasGenrePreferences = false; 
 
   private searchTerm$ = new Subject<string>();
   private searchSub?: Subscription;
@@ -58,11 +57,13 @@ export class DashboardComponent implements OnInit, OnDestroy {
   atores: PopularActor[] = [];
   atoresIndex = 0;
   atoresVisibleCount = 5;
+  isAtoresAnimating = false;
+  atoresSlideDir: 'fade-out' | 'left' | 'right' | null = null;
+
 
   nextToWatch: Filme | null = null;
   isDiscovering = false;
 
-  // Notifications menu state
   isNotificationsOpen = false;
   private isLoadingUpcomingDetails = false;
 
@@ -195,7 +196,9 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
     this.atoresService.getPopular(1, 10).subscribe({
       next: (res) => {
-        this.atores = res || [];
+        this.atores = (res || [])
+          .sort((a, b) => b.popularidade - a.popularidade)
+          .slice(0, 10);
         this.atoresIndex = 0;
         this.isLoadingActors = false;
       },
@@ -426,7 +429,6 @@ export class DashboardComponent implements OnInit, OnDestroy {
     return upcoming.slice(0, 5);
   }
 
-  // Try to load missing releaseDate values by requesting tmdb endpoint for each movie that has a tmdbId and no releaseDate.
   private loadUpcomingDetails(): void {
     if (this.isLoadingUpcomingDetails) return;
     const missing = this.upcomingMovies.filter(m => !m.releaseDate && m.tmdbId);
@@ -472,7 +474,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
             if (!isNaN(parsed.getTime())) {
               const local = this.movies.find(x => x.id === missing[idx].id);
               if (local) {
-                // store ISO string to avoid timezone issues
+                
                 local.releaseDate = parsed.toISOString();
               }
             }
@@ -497,7 +499,6 @@ export class DashboardComponent implements OnInit, OnDestroy {
     });
   }
 
-  // Human-readable full release date (day month year). If only ano exists show "YEAR (TBA)".
   public releaseLabel(f: Filme): string {
     if (!f) return '';
     if (f.releaseDate) {
@@ -512,7 +513,6 @@ export class DashboardComponent implements OnInit, OnDestroy {
     return 'TBA';
   }
 
-  // Called when clicking an upcoming movie in the notifications menu
   public openNotificationMovie(m: Filme): void {
     this.closeNotifications();
     if (m && m.id) {
@@ -571,7 +571,40 @@ export class DashboardComponent implements OnInit, OnDestroy {
   }
 
   get atoresVisible(): PopularActor[] {
-    return this.atores.slice(this.atoresIndex, this.atoresIndex + this.atoresVisibleCount);
+    if (!this.atores.length) return [];
+    const result = [];
+    for (let i = 0; i < this.atoresVisibleCount; i++) {
+      result.push(this.atores[(this.atoresIndex + i) % this.atores.length]);
+    }
+    return result;
+  }
+
+  prevAtores(): void {
+    if (this.isAtoresAnimating) return;
+    this.isAtoresAnimating = true;
+    this.atoresSlideDir = 'fade-out';
+    setTimeout(() => {
+      this.atoresIndex = (this.atoresIndex - 1 + this.atores.length) % this.atores.length;
+      this.atoresSlideDir = 'right';
+      setTimeout(() => {
+        this.isAtoresAnimating = false;
+        this.atoresSlideDir = null;
+      }, 500);
+    }, 200);
+  }
+
+  nextAtores(): void {
+    if (this.isAtoresAnimating) return;
+    this.isAtoresAnimating = true;
+    this.atoresSlideDir = 'fade-out';
+    setTimeout(() => {
+      this.atoresIndex = (this.atoresIndex + 1) % this.atores.length;
+      this.atoresSlideDir = 'left';
+      setTimeout(() => {
+        this.isAtoresAnimating = false;
+        this.atoresSlideDir = null;
+      }, 500);
+    }, 200);
   }
 
   fotoAtor(a: PopularActor): string {

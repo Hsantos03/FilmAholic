@@ -261,7 +261,32 @@
         <div class="section-head">
           <h2>Top 10 Atores</h2>
         </div>
-        <app-actors-carousel [actors]="atores" [visibleCount]="atoresVisibleCount"></app-actors-carousel>
+
+        <div class="carousel" id="atores-carousel">
+          <button class="chevron left"
+                  (click)="prevAtores()"
+                  aria-label="Anterior">
+            &lsaquo;
+          </button>
+
+          <div class="carousel-track"
+               [class.fade-out]="atoresSlideDir === 'fade-out'"
+               [class.slide-left]="atoresSlideDir === 'left'"
+               [class.slide-right]="atoresSlideDir === 'right'">
+            <div class="actor-card"
+                 *ngFor="let a of atoresVisible; let i = index">
+              <div class="actor-rank">{{ (atoresIndex + i) % atores.length + 1 }}</div>
+              <img class="actor-photo" [src]="fotoAtor(a)" [alt]="a.nome" />
+              <div class="actor-name">{{ a.nome }}</div>
+            </div>
+          </div>
+
+          <button class="chevron right"
+                  (click)="nextAtores()"
+                  aria-label="Seguinte">
+            &rsaquo;
+          </button>
+        </div>
       </div>
     </section>
   </main>

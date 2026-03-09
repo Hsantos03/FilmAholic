@@ -9,6 +9,7 @@ using FilmAholic.Server.Models;
 using FilmAholic.Server.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Moq;
 using Xunit;
 
@@ -26,7 +27,9 @@ namespace FilmAholic.Tests.ErrorHandlingTests
             using (var context = new FilmAholicDbContext(options))
             {
                 var mockMovieService = new Mock<IMovieService>();
-                var controller = new FilmesController(mockMovieService.Object, context);
+                var mockConfiguration = new Mock<IConfiguration>();
+                var mockHttpClientFactory = new Mock<IHttpClientFactory>();
+                var controller = new FilmesController(mockMovieService.Object, context, mockConfiguration.Object, mockHttpClientFactory.Object);
 
                 var result = await controller.SearchMovies("");
                 var badRequestResult = Assert.IsType<BadRequestObjectResult>(result);
