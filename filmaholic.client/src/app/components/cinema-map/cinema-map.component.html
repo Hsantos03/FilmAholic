@@ -1,0 +1,32 @@
+<div class="cinema-map-page">
+  <header class="cinema-map-header">
+    <h1>Cinemas próximos</h1>
+    <p class="subtitle">Veja os cinemas no mapa e a distância a si (com localização ativada).</p>
+  </header>
+
+  <div *ngIf="loading" class="state loading">
+    <span class="spinner"></span>
+    A obter a sua localização e a carregar cinemas…
+  </div>
+
+  <div *ngIf="!loading && geoError" class="state geo-error" role="alert">
+    {{ geoError }}
+  </div>
+
+  <div *ngIf="!loading && cinemasError" class="state cinemas-error" role="alert">
+    Não foi possível carregar a lista de cinemas. Tente mais tarde.
+  </div>
+
+  <div #mapContainer class="map-container" [class.hidden]="loading"></div>
+
+  <section *ngIf="!loading && cinemas.length > 0" class="cinema-list" aria-label="Lista de cinemas por distância">
+    <h2>Cinemas por distância</h2>
+    <ul>
+      <li *ngFor="let c of sortedCinemas" class="cinema-item">
+        <strong>{{ c.nome }}</strong>
+        <span class="morada">{{ c.morada }}</span>
+        <span *ngIf="c.distanceKm != null" class="distance">{{ c.distanceKm }} km</span>
+      </li>
+    </ul>
+  </section>
+</div>

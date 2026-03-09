@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, of } from 'rxjs';
 import { map, catchError } from 'rxjs/operators';
+import { environment } from '../../environments/environment';
 
 export interface CinemaMovie {
   id: string;
@@ -17,12 +18,30 @@ export interface CinemaMovie {
   link: string;
 }
 
+export interface CinemaVenue {
+  id: string;
+  nome: string;
+  morada: string;
+  latitude: number;
+  longitude: number;
+  distanceKm?: number;
+}
+
 @Injectable({
   providedIn: 'root'
 })
 export class CinemaService {
+  private readonly apiBase = environment.apiBaseUrl || '';
+  private readonly cinemaApi = this.apiBase ? `${this.apiBase}/api/cinema` : '/api/cinema';
 
-  constructor(private http: HttpClient) { }
+  constructor(private http: HttpClient) {}
+
+  /** Lista de cinemas com coordenadas para o mapa (nome, morada, lat, lng). */
+  getNearbyCinemas(): Observable<CinemaVenue[]> {
+    return this.http.get<CinemaVenue[]>(`${this.cinemaApi}/proximos`).pipe(
+      catchError(() => of([]))
+    );
+  }
 
   getCinemaMovies(): Observable<CinemaMovie[]> {
     return this.http.get<CinemaMovie[]>('https://localhost:7277/api/cinema/em-cartaz').pipe(

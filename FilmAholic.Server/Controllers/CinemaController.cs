@@ -40,6 +40,26 @@ namespace FilmAholic.Server.Controllers
             }
         }
 
+        /// <summary>Lista de cinemas com nome, morada e coordenadas para o mapa de cinemas próximos.</summary>
+        [HttpGet("proximos")]
+        public IActionResult GetCinemasProximos()
+        {
+            var cinemas = new List<CinemaVenueDto>
+            {
+                new() { Id = "nos-colombo", Nome = "Cinema NOS - Centro Colombo", Morada = "Centro Colombo, Av. Lusíada, 1500-392 Lisboa", Latitude = 38.7671, Longitude = -9.0935 },
+                new() { Id = "nos-vascogama", Nome = "Cinema NOS - Centro Vasco da Gama", Morada = "Centro Comercial Vasco da Gama, Av. D. João II 44, 1990-094 Lisboa", Latitude = 38.7622, Longitude = -9.0936 },
+                new() { Id = "nos-amoreiras", Nome = "Cinema NOS - Amoreiras", Morada = "Centro Comercial das Amoreiras, Av. Eng. Duarte Pacheco, 1070-103 Lisboa", Latitude = 38.7244, Longitude = -9.1653 },
+                new() { Id = "nos-cascais", Nome = "Cinema NOS - CascaiShopping", Morada = "CascaiShopping, Av. dos Combatentes da Grande Guerra, 2750-321 Cascais", Latitude = 38.6974, Longitude = -9.4403 },
+                new() { Id = "nos-odivelas", Nome = "Cinema NOS - Odivelas Strada", Morada = "Strada Outlet, R. da Pontinha 1, 2675-411 Odivelas", Latitude = 38.7922, Longitude = -9.1834 },
+                new() { Id = "nos-alameda", Nome = "Cinema NOS - Alameda Shop&Spot", Morada = "R. dos Campeões Europeus de Viena 28-198, 4350-171 Porto", Latitude = 41.1619, Longitude = -8.5847 },
+                new() { Id = "nos-nascente", Nome = "Cinema NOS - Parque Nascente", Morada = "Parque Nascente, Rua de Gondomar 691, 4420-520 Gondomar", Latitude = 41.1333, Longitude = -8.5333 },
+                new() { Id = "nos-maia", Nome = "Cinema NOS - Maia Shopping", Morada = "Maia Shopping, Av. Eng. Duarte Pacheco 383, 4470-154 Maia", Latitude = 41.2281, Longitude = -8.6224 },
+                new() { Id = "nos-alvalaxia", Nome = "Cinema NOS - Alvaláxia", Morada = "Centro Comercial Alvaláxia, Av. dos Cavaleiros 2, 2675-657 Odivelas", Latitude = 38.7834, Longitude = -9.1421 },
+                new() { Id = "cineplace-coimbra", Nome = "Cineplace - Coimbra", Morada = "Dolce Vita Coimbra, Av. Fernão de Magalhães 1082, 3000-175 Coimbra", Latitude = 40.2033, Longitude = -8.4102 }
+            };
+            return Ok(cinemas);
+        }
+
         [HttpGet("search-tmdb")]
         public async Task<IActionResult> SearchTmdb([FromQuery] string titulo)
         {
@@ -352,6 +372,15 @@ namespace FilmAholic.Server.Controllers
             public string Idioma { get; set; } = "";
             public string Sala { get; set; } = "";
             public string Link { get; set; } = "";
+        }
+
+        public class CinemaVenueDto
+        {
+            public string Id { get; set; } = "";
+            public string Nome { get; set; } = "";
+            public string Morada { get; set; } = "";
+            public double Latitude { get; set; }
+            public double Longitude { get; set; }
         }
     }
 }
