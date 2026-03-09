@@ -60,6 +60,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
   isAtoresAnimating = false;
   atoresSlideDir: 'fade-out' | 'left' | 'right' | null = null;
 
+  isMenuOpen = false;
 
   nextToWatch: Filme | null = null;
   isDiscovering = false;
@@ -555,6 +556,10 @@ export class DashboardComponent implements OnInit, OnDestroy {
   nextFeatured(): void {
     const maxIndex = Math.max(0, this.featured.length - this.featuredVisibleCount);
     this.featuredIndex = Math.min(maxIndex, this.featuredIndex + this.featuredVisibleCount);
+  }
+
+  toggleMenu(): void {
+    this.isMenuOpen = !this.isMenuOpen;
   }
 
   get top10Visible(): Filme[] {
