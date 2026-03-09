@@ -249,6 +249,27 @@
       <div class="endgame-sub">pontos</div>
       <div class="endgame-meta">{{ endStats?.roundsCount }} rondas jogadas</div>
 
+      <div class="xp-result" *ngIf="endStats?.xpGanho !== undefined">
+        <div class="xp-gained" *ngIf="endStats!.xpGanho! > 0">
+          <span class="xp-icon">⚡</span>
+          +{{ endStats!.xpGanho }} XP
+        </div>
+        <div class="xp-gained xp-zero" *ngIf="endStats!.xpGanho === 0">
+          Limite diário de XP atingido
+        </div>
+        <div class="xp-info">
+          Total: {{ endStats?.xpTotal }} XP · Nível {{ endStats?.nivel }}
+        </div>
+        <div class="xp-bar-wrap">
+          <div class="xp-bar"
+               [style.width.%]="((endStats?.xpTotal ?? 0) % 100)">
+          </div>
+        </div>
+        <div class="xp-daily">
+          Restam {{ endStats?.xpDiarioRestante }} XP hoje
+        </div>
+      </div>
+
       <div class="endgame-actions">
         <button class="start-btn" (click)="startGame(gameCategory ?? 'films')">
           <span>Jogar de Novo</span>

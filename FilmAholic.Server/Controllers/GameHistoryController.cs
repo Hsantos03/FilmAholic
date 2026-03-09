@@ -38,7 +38,7 @@ namespace FilmAholic.Server.Controllers
         // POST: api/game/history
         [Authorize]
         [HttpPost]
-        public async Task<IActionResult> SaveResult([FromBody] GameHistoryCreateDto dto)
+        public async Task<IActionResult> saveResult([FromBody] GameHistoryCreateDto dto)
         {
             if (dto == null) return BadRequest();
 
@@ -52,11 +52,67 @@ namespace FilmAholic.Server.Controllers
                 RoundsJson = dto.RoundsJson ?? string.Empty,
                 DataCriacao = DateTime.UtcNow
             };
-
             _context.Set<GameHistory>().Add(entity);
-            await _context.SaveChangesAsync();
 
-            return Ok(entity);
+            // --- Lógica do XP ---
+            var user = await _context.Users.FindAsync(userId);
+            int xpGanho = 0;
+
+            if (user != null && dto.Score > 0)
+            {
+                var hoje = DateTime.UtcNow.Date;
+                if (user.UltimoResetDiario == null || user.UltimoResetDiario.Value.Date < hoje)
+                {
+                    user.XPDiario = 0;
+                    user.UltimoResetDiario = DateTime.UtcNow;
+                }
+
+                const int limiteDiario = 100;
+                const int xpPorAcerto = 10;
+
+                if (user.XPDiario < limiteDiario)
+                {
+                    int xpBase = dto.Score * xpPorAcerto;
+
+                    double multiplicador = dto.Score >= 10 ? 2.0 : dto.Score >= 5 ? 1.5 : 1.0;
+                    int xpCalculado = (int)(xpBase * multiplicador);
+
+                    int xpDisponivel = limiteDiario - user.XPDiario;
+                    xpGanho = Math.Min(xpCalculado, xpDisponivel);
+
+                    user.XP += xpGanho;
+                    user.XPDiario += xpGanho;
+
+                    user.Nivel = CalcularNivel(user.XP);
+                }
+
+                await _context.SaveChangesAsync();
+            }
+            else
+            {
+                await _context.SaveChangesAsync();
+            }
+
+            return Ok(new
+            {
+                history = entity,
+                xpGanho,
+                xpTotal = user?.XP ?? 0,
+                nivel = user?.Nivel ?? 1,
+                xpDiarioRestante = Math.Max(0, 100 - (user?.XPDiario ?? 0))
+            });
+        }
+
+        private static int CalcularNivel(int xpTotal)
+        {
+            int nivel = 1;
+            while (true)
+            {
+                int xpParaProximo = 100 * nivel * (nivel + 1) / 2;
+                if (xpTotal < xpParaProximo) break;
+                nivel++;
+            }
+            return nivel;
         }
     }
 
