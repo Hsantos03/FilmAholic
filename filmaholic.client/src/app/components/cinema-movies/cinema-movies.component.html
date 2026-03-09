@@ -39,7 +39,7 @@
                   <span class="rating">{{ movie.classificacao }}</span>
                 </div>
                 <div class="overlay-bottom">
-                  <span class="duration">{{ movie.duracao }}</span>
+                  <span class="duration">{{ formatDuration(movie.duracao) }}</span>
                   <div class="movie-actions">
                     <a class="btn primary" [href]="movie.link" target="_blank" rel="noopener">Ver Sessões no Cinema NOS</a>
                     <button class="btn secondary" (click)="viewMovieDetails(movie)">Ver Detalhes</button>
