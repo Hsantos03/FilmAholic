@@ -532,4 +532,126 @@ public class MovieService : IMovieService
             return new List<Filme>();
         }
     }
+
+    public async Task<List<ActorSearchResultDto>> SearchActorsAsync(string query)
+    {
+        if (string.IsNullOrEmpty(_tmdbApiKey))
+        {
+            _logger.LogWarning("TMDb API key is not configured. Cannot search actors.");
+            return new List<ActorSearchResultDto>();
+        }
+
+        if (string.IsNullOrWhiteSpace(query))
+            return new List<ActorSearchResultDto>();
+
+        try
+        {
+            var httpClient = _httpClientFactory.CreateClient();
+            var encodedQuery = Uri.EscapeDataString(query.Trim());
+            var url = $"{_tmdbBaseUrl}/search/person?api_key={_tmdbApiKey}&query={encodedQuery}&language=pt-PT";
+
+            var response = await httpClient.GetAsync(url);
+            response.EnsureSuccessStatusCode();
+
+            var json = await response.Content.ReadAsStringAsync();
+            var result = JsonSerializer.Deserialize<TmdbSearchPersonResponse>(json, new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = false
+            });
+
+            if (result?.Results == null || result.Results.Count == 0)
+                return new List<ActorSearchResultDto>();
+
+            return result.Results
+                .Select(p => new ActorSearchResultDto
+                {
+                    Id = p.Id,
+                    Nome = p.Name,
+                    FotoUrl = string.IsNullOrEmpty(p.ProfilePath)
+                        ? ""
+                        : $"https://image.tmdb.org/t/p/w185{p.ProfilePath}"
+                })
+                .ToList();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error searching actors for query {Query}", query);
+            return new List<ActorSearchResultDto>();
+        }
+    }
+
+    public async Task<List<ActorMovieDto>> GetMoviesByActorAsync(int personId)
+    {
+        if (string.IsNullOrEmpty(_tmdbApiKey))
+        {
+            _logger.LogWarning("TMDb API key is not configured. Cannot fetch movies by actor.");
+            return new List<ActorMovieDto>();
+        }
+
+        try
+        {
+            var httpClient = _httpClientFactory.CreateClient();
+            var url = $"{_tmdbBaseUrl}/person/{personId}/movie_credits?api_key={_tmdbApiKey}&language=pt-PT";
+
+            var response = await httpClient.GetAsync(url);
+            response.EnsureSuccessStatusCode();
+
+            var json = await response.Content.ReadAsStringAsync();
+            var result = JsonSerializer.Deserialize<TmdbPersonMovieCreditsResponse>(json, new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = false
+            });
+
+            if (result?.Cast == null || result.Cast.Count == 0)
+                return new List<ActorMovieDto>();
+
+            return result.Cast
+                .OrderByDescending(m => m.ReleaseDate)
+                .Select(m => new ActorMovieDto
+                {
+                    Id = m.Id,
+                    Titulo = m.Title,
+                    PosterUrl = string.IsNullOrEmpty(m.PosterPath)
+                        ? null
+                        : $"https://image.tmdb.org/t/p/w500{m.PosterPath}",
+                    Personagem = m.Character,
+                    DataLancamento = m.ReleaseDate
+                })
+                .ToList();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error fetching movies for person {PersonId}", personId);
+            return new List<ActorMovieDto>();
+        }
+    }
+
+    public async Task<List<CastMemberDto>> GetCastAsync(int tmdbId)
+    {
+        try
+        {
+            var httpClient = _httpClientFactory.CreateClient();
+            var url = $"https://api.themoviedb.org/3/movie/{tmdbId}/credits?api_key={_tmdbApiKey}&language=pt-PT";
+            var response = await httpClient.GetFromJsonAsync<TmdbPopularPeopleResponse>(url);
+
+            return (response?.Cast ?? new())
+                .OrderBy(c => c.Order)
+                .Take(15)
+                .Select(c => new CastMemberDto
+                {
+                    Id = c.Id,
+                    Nome = c.Name,
+                    Personagem = c.Character,
+                    FotoUrl = string.IsNullOrEmpty(c.ProfilePath)
+                                    ? null
+                                    : $"https://image.tmdb.org/t/p/w185{c.ProfilePath}"
+                })
+                .ToList();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"GetCastAsync error: {ex.Message}");
+            return new List<CastMemberDto>();
+        }
+    }
 }

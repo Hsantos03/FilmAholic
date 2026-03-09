@@ -1,6 +1,24 @@
 import { Component, OnInit, OnDestroy, ElementRef, ViewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { FilmesService, TmdbSearchResponse, TmdbMovieResult } from '../../services/filmes.service';
+import { AtoresService, ActorSearchResult, ActorMovie } from '../../services/atores.service';
+
+export type SearchResultItem = {
+  id?: number;
+  tmdbId?: number;
+  titulo: string;
+  posterUrl: string | null;
+  release_date?: string | null;
+  vote_average?: number;
+  runtime?: number;
+};
+
+export type SortOption =
+  | 'date-desc' | 'date-asc'
+  | 'rating-desc' | 'rating-asc'
+  | 'duration-desc' | 'duration-asc'
+  | 'name-asc' | 'name-desc'
+  | null;
 
 @Component({
   selector: 'app-search-results',
@@ -9,10 +27,15 @@ import { FilmesService, TmdbSearchResponse, TmdbMovieResult } from '../../servic
 })
 export class SearchResultsComponent implements OnInit, OnDestroy {
   @ViewChild('searchContainer', { static: false }) searchContainerRef?: ElementRef;
+  @ViewChild('sortWrapper', { static: false }) sortWrapperRef?: ElementRef;
+  @ViewChild('filterWrapper', { static: false }) filterWrapperRef?: ElementRef;
 
   query: string = '';
-  // allow either TMDb-only results (tmdbId) or DB results (id)
-  results: Array<{ id?: number; tmdbId?: number; titulo: string; posterUrl: string | null }> = [];
+  results: SearchResultItem[] = [];
+  actorResults: ActorSearchResult[] = [];
+  selectedActor: ActorSearchResult | null = null;
+  actorMovies: ActorMovie[] = [];
+  loadingActorMovies = false;
   isLoading = false;
   error = '';
 
@@ -22,37 +45,52 @@ export class SearchResultsComponent implements OnInit, OnDestroy {
   // filter menu state
   showFilterMenu = false;
   genres: string[] = [];
-  selectedGenre: string | null = null;
+  selectedGenres: string[] = [];
+  selectedDateFrom: string | null = null;
+  selectedDateTo: string | null = null;
+
+  // sort
+  sortBy: SortOption = null;
+  showSortMenu = false;
 
   private onDocumentClickBound = (e: MouseEvent) => this.onDocumentClick(e);
 
   constructor(
     private route: ActivatedRoute,
     private router: Router,
-    private filmesService: FilmesService
+    private filmesService: FilmesService,
+    private atoresService: AtoresService
   ) { }
 
   ngOnInit(): void {
+    const savedGenres = sessionStorage.getItem('selectedGenres');
+    const savedDateFrom = sessionStorage.getItem('selectedDateFrom');
+    const savedDateTo = sessionStorage.getItem('selectedDateTo');
+    if (savedGenres) this.selectedGenres = JSON.parse(savedGenres);
+    if (savedDateFrom) this.selectedDateFrom = savedDateFrom;
+    if (savedDateTo) this.selectedDateTo = savedDateTo;
+
     this.route.queryParamMap.subscribe(params => {
       const q = params.get('q') || '';
       this.query = q.trim();
       this.searchTerm = this.query;
+      this.selectedActor = null;
+      this.actorMovies = [];
+      this.actorResults = [];
+
       if (this.query) {
-        // if a genre is selected use DB filter, otherwise TMDb search
-        if (this.selectedGenre) {
-          this.filterDbMovies(this.query, this.selectedGenre);
+        this.loadActorResults(this.query);
+        if (this.selectedGenres.length > 0 || this.selectedDateFrom || this.selectedDateTo) {
+          this.filterDbMovies(this.query, this.selectedGenres, this.selectedDateFrom, this.selectedDateTo);
         } else {
-          this.loadResults(this.query, 1);
+          this.loadCombinedResults(this.query, 1);
         }
       } else {
         this.results = [];
       }
     });
 
-    // load local genres for filter menu
     this.loadGenresFromDb();
-
-    // click outside -> close menus
     document.addEventListener('click', this.onDocumentClickBound);
   }
 
@@ -61,12 +99,130 @@ export class SearchResultsComponent implements OnInit, OnDestroy {
   }
 
   private onDocumentClick(e: MouseEvent): void {
-    const container = this.searchContainerRef?.nativeElement as HTMLElement | undefined;
     const target = e.target as Node | null;
-    if (!container) return;
-    if (!container.contains(target)) {
-      this.showFilterMenu = false;
+    const inFilter = this.filterWrapperRef?.nativeElement?.contains(target);
+    const inSort = this.sortWrapperRef?.nativeElement?.contains(target);
+    if (!inFilter) this.showFilterMenu = false;
+    if (!inSort) this.showSortMenu = false;
+  }
+
+  get sortedResults(): SearchResultItem[] {
+    if (!this.sortBy || this.results.length === 0) return this.results;
+    const list = [...this.results];
+    switch (this.sortBy) {
+      case 'date-desc':
+        list.sort((a, b) => (b.release_date || '').localeCompare(a.release_date || ''));
+        break;
+      case 'date-asc':
+        list.sort((a, b) => (a.release_date || '').localeCompare(b.release_date || ''));
+        break;
+      case 'rating-desc':
+        list.sort((a, b) => (b.vote_average ?? 0) - (a.vote_average ?? 0));
+        break;
+      case 'rating-asc':
+        list.sort((a, b) => (a.vote_average ?? 0) - (b.vote_average ?? 0));
+        break;
+      case 'duration-desc':
+        list.sort((a, b) => (b.runtime ?? -1) - (a.runtime ?? -1));
+        break;
+      case 'duration-asc':
+        list.sort((a, b) => (a.runtime ?? 999999) - (b.runtime ?? 999999));
+        break;
+      case 'name-asc':
+        list.sort((a, b) => (a.titulo || '').localeCompare(b.titulo || '', 'pt'));
+        break;
+      case 'name-desc':
+        list.sort((a, b) => (b.titulo || '').localeCompare(a.titulo || '', 'pt'));
+        break;
+      default:
+        break;
     }
+    return list;
+  }
+
+  get sortLabel(): string {
+    if (!this.sortBy) return '';
+    const labels: Record<NonNullable<SortOption>, string> = {
+      'date-desc': 'Data (mais recente)',
+      'date-asc': 'Data (mais antigo)',
+      'rating-desc': 'Classificação (maior)',
+      'rating-asc': 'Classificação (menor)',
+      'duration-desc': 'Duração (mais longo)',
+      'duration-asc': 'Duração (mais curto)',
+      'name-asc': 'Nome (A–Z)',
+      'name-desc': 'Nome (Z–A)'
+    };
+    return labels[this.sortBy] ?? '';
+  }
+
+  toggleSortMenu(): void {
+    this.showSortMenu = !this.showSortMenu;
+  }
+
+  applySort(option: SortOption): void {
+    this.sortBy = option;
+    this.showSortMenu = false;
+  }
+
+  private loadCombinedResults(query: string, page: number): void {
+    this.isLoading = true;
+    this.error = '';
+    this.results = [];
+    const q = query.trim().toLowerCase();
+
+    this.filmesService.searchMovies(query, page).subscribe({
+      next: (tmdbResponse: TmdbSearchResponse) => {
+        const tmdbResults = (tmdbResponse?.results || []).map((r: TmdbMovieResult) => ({
+          tmdbId: r.id,
+          titulo: r.title || r.original_title || 'Untitled',
+          posterUrl: r.poster_path ? `https://image.tmdb.org/t/p/w300${r.poster_path}` : null,
+          release_date: r.release_date ?? null,
+          vote_average: r.vote_average ?? undefined,
+          runtime: r.runtime ?? undefined
+        }));
+
+        this.filmesService.getAll().subscribe({
+          next: (localMovies) => {
+            const localResults = (localMovies || [])
+              .filter(m => (m.titulo || '').toLowerCase().includes(q))
+              .map(m => ({
+                id: m.id,
+                tmdbId: m.tmdbId ? parseInt(m.tmdbId) : undefined,
+                titulo: m.titulo,
+                posterUrl: m.posterUrl || null,
+                release_date: m.ano ? m.ano.toString() : null,
+                vote_average: undefined,
+                runtime: m.duracao ?? undefined
+              }));
+            const allResults = [...localResults, ...tmdbResults];
+            const uniqueResults = this.deduplicateResults(allResults);
+            this.results = uniqueResults.slice(0, 30);
+            this.isLoading = false;
+          },
+          error: () => {
+            this.results = tmdbResults.slice(0, 30);
+            this.isLoading = false;
+          }
+        });
+      },
+      error: () => {
+        this.error = 'Erro ao pesquisar filmes. Tente novamente.';
+        this.isLoading = false;
+      }
+    });
+  }
+
+  private deduplicateResults(results: SearchResultItem[]): SearchResultItem[] {
+    const seen = new Map<string, SearchResultItem>();
+    const unique: SearchResultItem[] = [];
+    for (const result of results) {
+      const key = result.tmdbId ? `tmdb_${result.tmdbId}` : `title_${result.titulo.toLowerCase()}`;
+      if (!seen.has(key)) {
+        seen.set(key, result);
+        unique.push(result);
+      }
+    }
+    return unique;
   }
 
   loadResults(query: string, page: number): void {
@@ -78,15 +234,16 @@ export class SearchResultsComponent implements OnInit, OnDestroy {
       next: (res: TmdbSearchResponse) => {
         const list = res?.results || [];
         this.results = list.map((r: TmdbMovieResult) => ({
-          // no DB id here (undefined) — only TMDb id
           tmdbId: r.id,
           titulo: r.title || r.original_title || 'Untitled',
-          posterUrl: r.poster_path ? `https://image.tmdb.org/t/p/w300${r.poster_path}` : null
+          posterUrl: r.poster_path ? `https://image.tmdb.org/t/p/w300${r.poster_path}` : null,
+          release_date: r.release_date ?? null,
+          vote_average: r.vote_average ?? undefined,
+          runtime: r.runtime ?? undefined
         }));
         this.isLoading = false;
       },
-      error: (err: any) => {
-        console.error('Search failed', err);
+      error: () => {
         this.error = 'Erro ao pesquisar filmes. Tente novamente.';
         this.isLoading = false;
       }
@@ -111,81 +268,126 @@ export class SearchResultsComponent implements OnInit, OnDestroy {
     });
   }
 
-  // Filter using local DB movies (preferred for category filtering)
-  private filterDbMovies(query: string, genre: string): void {
+  private filterDbMovies(query: string, genres: string[] | null, dateFrom: string | null, dateTo: string | null): void {
     this.isLoading = true;
     this.error = '';
     this.results = [];
-
     const q = (query || '').trim().toLowerCase();
 
     this.filmesService.getAll().subscribe({
       next: (movies) => {
         const filtered = (movies || []).filter(m => {
           const titleMatches = !q || (m?.titulo || '').toLowerCase().includes(q);
-          const genres = (m?.genero || '').toLowerCase();
-          const genreMatches = !genre || genres.split(',').map(s => s.trim()).some(g => g === genre.toLowerCase());
-          return titleMatches && genreMatches;
+          const movieGenres = (m?.genero || '').toLowerCase();
+          const genreMatches = !genres || genres.length === 0 ||
+            genres.some(selected => movieGenres.split(',').some((g: string) => g.trim().toLowerCase() === selected.toLowerCase()));
+          let dateMatches = true;
+          const releaseDate = m?.ano ? m.ano.toString() : '';
+          if (dateFrom && releaseDate) dateMatches = dateMatches && releaseDate >= dateFrom;
+          if (dateTo && releaseDate) dateMatches = dateMatches && releaseDate <= dateTo;
+          return titleMatches && genreMatches && dateMatches;
         });
 
-        this.results = filtered.map(m => ({
+        this.results = filtered.slice(0, 30).map(m => ({
           id: m.id,
+          tmdbId: m.tmdbId ? parseInt(m.tmdbId) : undefined,
           titulo: m.titulo,
-          posterUrl: m.posterUrl || null
+          posterUrl: m.posterUrl || null,
+          release_date: m.ano ? m.ano.toString() : null,
+          vote_average: undefined,
+          runtime: m.duracao ?? undefined
         }));
 
-        // if DB returned nothing, fall back to TMDb search (no genre filtering possible)
-        if (this.results.length === 0 && q) {
+        if (this.results.length === 0 && q && (!genres || genres.length === 0) && !dateFrom && !dateTo) {
           this.loadResults(query, 1);
         } else {
           this.isLoading = false;
         }
       },
-      error: (err: any) => {
-        console.warn('Failed to load local movies for filtering', err);
+      error: () => {
         this.isLoading = false;
-        // fallback
-        this.loadResults(query, 1);
+        if (!genres?.length && !dateFrom && !dateTo) this.loadResults(query, 1);
       }
     });
   }
 
-  // Toggle filter menu visibility
   public toggleFilterMenu(): void {
     this.showFilterMenu = !this.showFilterMenu;
   }
 
-  // Apply genre selection
-  public applyGenre(genre: string | null): void {
-    this.selectedGenre = genre;
-    this.showFilterMenu = false;
+  public toggleGenre(genre: string): void {
+    const idx = this.selectedGenres.indexOf(genre);
+    if (idx > -1) this.selectedGenres.splice(idx, 1);
+    else this.selectedGenres.push(genre);
+    sessionStorage.setItem('selectedGenres', JSON.stringify(this.selectedGenres));
+    this.applyFilters();
+  }
 
+  public applyFilters(): void {
+    sessionStorage.setItem('selectedDateFrom', this.selectedDateFrom || '');
+    sessionStorage.setItem('selectedDateTo', this.selectedDateTo || '');
     if (!this.query) {
-      // if no query, just filter DB by genre and show results
-      if (!genre) {
+      if (this.selectedGenres.length === 0 && !this.selectedDateFrom && !this.selectedDateTo) {
         this.results = [];
       } else {
-        this.filterDbMovies('', genre);
+        this.filterDbMovies('', this.selectedGenres, this.selectedDateFrom, this.selectedDateTo);
       }
       return;
     }
-
-    if (!genre) {
-      // clear filter -> TMDb search
-      this.loadResults(this.query, 1);
+    if (this.selectedGenres.length === 0 && !this.selectedDateFrom && !this.selectedDateTo) {
+      this.loadCombinedResults(this.query, 1);
       return;
     }
-
-    // filter DB using query + genre
-    this.filterDbMovies(this.query, genre);
+    this.filterDbMovies(this.query, this.selectedGenres, this.selectedDateFrom, this.selectedDateTo);
   }
 
-  /**
-   * Open a movie page. Accepts either:
-   * - an item with a DB `id` -> navigate directly to /movie-detail/:id
-   * - an item with a `tmdbId` -> call API to get-or-create DB record then navigate
-   */
-  openResult(item: { id?: number; tmdbId?: number; titulo?: string }): void {
+  public onDateFromChange(date: string): void {
+    this.selectedDateFrom = date;
+    sessionStorage.setItem('selectedDateFrom', date || '');
+    this.applyFilters();
+  }
+
+  public onDateToChange(date: string): void {
+    this.selectedDateTo = date;
+    sessionStorage.setItem('selectedDateTo', date || '');
+    this.applyFilters();
+  }
+
+  public clearGenreFilters(): void {
+    this.selectedGenres = [];
+    sessionStorage.setItem('selectedGenres', JSON.stringify(this.selectedGenres));
+    this.applyFilters();
+  }
+
+  public clearDateFilters(): void {
+    this.selectedDateFrom = null;
+    this.selectedDateTo = null;
+    sessionStorage.setItem('selectedDateFrom', '');
+    sessionStorage.setItem('selectedDateTo', '');
+    this.applyFilters();
+  }
+
+  public getDateFilterLabel(): string {
+    if (this.selectedDateFrom && this.selectedDateTo) return `Data: ${this.selectedDateFrom} - ${this.selectedDateTo}`;
+    if (this.selectedDateFrom) return `Data: a partir de ${this.selectedDateFrom}`;
+    if (this.selectedDateTo) return `Data: até ${this.selectedDateTo}`;
+    return '';
+  }
+
+  public getActiveFiltersCount(): number {
+    let count = this.selectedGenres.length;
+    if (this.selectedDateFrom) count++;
+    if (this.selectedDateTo) count++;
+    return count;
+  }
+
+  public getSelectedGenresLabel(): string {
+    if (this.selectedGenres.length === 0) return '';
+    if (this.selectedGenres.length === 1) return this.selectedGenres[0];
+    return `${this.selectedGenres.length} géneros`;
+  }
+
+  openResult(item: SearchResultItem): void {
     if (!item) return;
 
     // If we already have a DB id, navigate immediately
@@ -215,6 +417,60 @@ export class SearchResultsComponent implements OnInit, OnDestroy {
       },
       error: (err: any) => {
         console.error('Failed to add/get movie', err);
+        this.error = 'Erro ao abrir o filme. Por favor tente novamente.';
+        this.isLoading = false;
+      }
+    });
+  }
+
+  private loadActorResults(query: string): void {
+    const q = query.trim();
+    if (!q) return;
+    this.atoresService.searchActors(q).subscribe({
+      next: (actors) => {
+        this.actorResults = actors || [];
+      },
+      error: () => {
+        this.actorResults = [];
+      }
+    });
+  }
+
+  selectActor(actor: ActorSearchResult): void {
+    this.selectedActor = actor;
+    this.actorMovies = [];
+    this.loadingActorMovies = true;
+    this.atoresService.getMoviesByActor(actor.id).subscribe({
+      next: (movies) => {
+        this.actorMovies = movies || [];
+        this.loadingActorMovies = false;
+      },
+      error: () => {
+        this.actorMovies = [];
+        this.loadingActorMovies = false;
+      }
+    });
+  }
+
+  clearActorSelection(): void {
+    this.selectedActor = null;
+    this.actorMovies = [];
+  }
+
+  openActorMovie(movie: ActorMovie): void {
+    if (!movie?.id) return;
+    this.isLoading = true;
+    this.error = '';
+    this.filmesService.addMovieFromTmdb(movie.id).subscribe({
+      next: (m: any) => {
+        this.isLoading = false;
+        if (m?.id != null) {
+          this.router.navigate(['/movie-detail', m.id]);
+        } else {
+          this.error = 'Não foi possível abrir o filme.';
+        }
+      },
+      error: () => {
         this.error = 'Erro ao abrir o filme. Por favor tente novamente.';
         this.isLoading = false;
       }
