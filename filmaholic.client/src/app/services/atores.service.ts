@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { environment } from '../../environments/environment';
 
 export interface PopularActor {
   id: number;
@@ -25,7 +26,8 @@ export interface ActorMovie {
 
 @Injectable({ providedIn: 'root' })
 export class AtoresService {
-  private apiUrl = 'https://localhost:7277/api/atores';
+  private readonly apiBase = environment.apiBaseUrl || '';
+  private apiUrl = this.apiBase ? `${this.apiBase}/api/atores` : '/api/atores';
 
   constructor(private http: HttpClient) { }
 

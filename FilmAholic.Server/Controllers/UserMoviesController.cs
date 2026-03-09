@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using FilmAholic.Server.Data;
 using FilmAholic.Server.Models;
+using FilmAholic.Server.Services;
 using System.Security.Claims;
 
 namespace FilmAholic.Server.Controllers
@@ -13,10 +14,12 @@ namespace FilmAholic.Server.Controllers
     public class UserMoviesController : ControllerBase
     {
         private readonly FilmAholicDbContext _context;
+        private readonly IMovieService _movieService;
 
-        public UserMoviesController(FilmAholicDbContext context)
+        public UserMoviesController(FilmAholicDbContext context, IMovieService movieService)
         {
             _context = context;
+            _movieService = movieService;
         }
 
         [HttpPost("add")]
@@ -29,35 +32,36 @@ namespace FilmAholic.Server.Controllers
             
             if (dbFilme == null)
             {
-                var seedFilme = FilmSeed.Filmes.FirstOrDefault(f => f.Id == filmeId);
-                if (seedFilme == null)
+            var seedFilme = FilmSeed.Filmes.FirstOrDefault(f => f.Id == filmeId);
+            if (seedFilme == null)
                     return BadRequest("Filme inválido (não existe no catálogo).");
 
-                if (!string.IsNullOrEmpty(seedFilme.TmdbId))
+            if (!string.IsNullOrEmpty(seedFilme.TmdbId))
+            {
+                dbFilme = await _context.Set<Filme>()
+                    .FirstOrDefaultAsync(f => f.TmdbId == seedFilme.TmdbId);
+            }
+            
+            if (dbFilme == null)
+            {
+                dbFilme = await _context.Set<Filme>()
+                    .FirstOrDefaultAsync(f => f.Titulo == seedFilme.Titulo);
+            }
+            
+            if (dbFilme == null)
+            {
+                dbFilme = new Filme
                 {
-                    dbFilme = await _context.Set<Filme>()
-                        .FirstOrDefaultAsync(f => f.TmdbId == seedFilme.TmdbId);
-                }
-                
-                if (dbFilme == null)
-                {
-                    dbFilme = await _context.Set<Filme>()
-                        .FirstOrDefaultAsync(f => f.Titulo == seedFilme.Titulo);
-                }
-                
-                if (dbFilme == null)
-                {
-                    dbFilme = new Filme
-                    {
-                        Titulo = seedFilme.Titulo,
-                        Duracao = seedFilme.Duracao,
-                        Genero = seedFilme.Genero,
-                        PosterUrl = seedFilme.PosterUrl ?? "",
-                        TmdbId = seedFilme.TmdbId ?? ""
-                    };
+                    Titulo = seedFilme.Titulo,
+                    Duracao = seedFilme.Duracao,
+                    Genero = seedFilme.Genero,
+                    PosterUrl = seedFilme.PosterUrl ?? "",
+                        TmdbId = seedFilme.TmdbId ?? "",
+                        Ano = seedFilme.Ano
+                };
 
-                    _context.Set<Filme>().Add(dbFilme);
-                    await _context.SaveChangesAsync();
+                _context.Set<Filme>().Add(dbFilme);
+                await _context.SaveChangesAsync();
                 }
             }
 
@@ -146,15 +150,17 @@ namespace FilmAholic.Server.Controllers
         }
 
         [HttpGet("stats")]
-        public async Task<IActionResult> GetStats()
+        public async Task<IActionResult> GetStats([FromQuery] DateTime? from, [FromQuery] DateTime? to)
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
             if (userId == null) return Unauthorized();
 
-            var movies = await _context.UserMovies
+            var query = _context.UserMovies
                 .Include(um => um.Filme)
-                .Where(um => um.UtilizadorId == userId && um.JaViu)
-                .ToListAsync();
+                .Where(um => um.UtilizadorId == userId && um.JaViu);
+
+            query = ApplyPeriodFilter(query, from, to);
+            var movies = await query.ToListAsync();
 
             var generosPorNome = CountByIndividualGenreTyped(movies)
                 .Select(g => new { genero = g.genero, total = g.total }).ToList();
@@ -169,15 +175,16 @@ namespace FilmAholic.Server.Controllers
         }
 
         [HttpGet("stats/comparison")]
-        public async Task<IActionResult> GetStatsComparison()
+        public async Task<IActionResult> GetStatsComparison([FromQuery] DateTime? from, [FromQuery] DateTime? to)
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
             if (userId == null) return Unauthorized();
 
-            var userMovies = await _context.UserMovies
+            var userQuery = _context.UserMovies
                 .Include(um => um.Filme)
-                .Where(um => um.UtilizadorId == userId && um.JaViu)
-                .ToListAsync();
+                .Where(um => um.UtilizadorId == userId && um.JaViu);
+            userQuery = ApplyPeriodFilter(userQuery, from, to);
+            var userMovies = await userQuery.ToListAsync();
 
             var userTotalFilmes = userMovies.Count;
             var userTotalMinutos = userMovies.Sum(m => m.Filme?.Duracao ?? 0);
@@ -194,10 +201,11 @@ namespace FilmAholic.Server.Controllers
             var totalUsers = allUserIds.Count;
             if (totalUsers == 0) totalUsers = 1;
 
-            var allWatchedMovies = await _context.UserMovies
+            var globalQuery = _context.UserMovies
                 .Include(um => um.Filme)
-                .Where(um => um.JaViu)
-                .ToListAsync();
+                .Where(um => um.JaViu);
+            globalQuery = ApplyPeriodFilter(globalQuery, from, to);
+            var allWatchedMovies = await globalQuery.ToListAsync();
 
             var globalTotalFilmes = allWatchedMovies.Count;
             var globalTotalMinutos = allWatchedMovies.Sum(m => m.Filme?.Duracao ?? 0);
@@ -250,6 +258,15 @@ namespace FilmAholic.Server.Controllers
             });
         }
 
+        private static IQueryable<UserMovie> ApplyPeriodFilter(IQueryable<UserMovie> query, DateTime? from, DateTime? to)
+        {
+            if (from.HasValue)
+                query = query.Where(um => um.Data >= from.Value);
+            if (to.HasValue)
+                query = query.Where(um => um.Data < to.Value.AddDays(1));
+            return query;
+        }
+
         private static List<(string genero, int total)> CountByIndividualGenreTyped(IEnumerable<UserMovie> movies)
         {
             return movies
@@ -281,41 +298,264 @@ namespace FilmAholic.Server.Controllers
         }
 
         [HttpGet("stats/charts")]
-        public async Task<IActionResult> GetStatsCharts()
+        public async Task<IActionResult> GetStatsCharts([FromQuery] DateTime? from, [FromQuery] DateTime? to)
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
             if (userId == null) return Unauthorized();
 
-            var movies = await _context.UserMovies
+            var query = _context.UserMovies
                 .Include(um => um.Filme)
-                .Where(um => um.UtilizadorId == userId && um.JaViu)
-                .ToListAsync();
+                .Where(um => um.UtilizadorId == userId && um.JaViu);
+            query = ApplyPeriodFilter(query, from, to);
+            var movies = await query.ToListAsync();
+
+            var filmIdsSemAno = movies
+                .Where(m => m.Filme != null && (m.Filme.Ano == null || m.Filme.Ano == 0) && !string.IsNullOrEmpty(m.Filme.TmdbId))
+                .Select(m => m.Filme!.Id)
+                .Distinct()
+                .Take(10)
+                .ToList();
+            foreach (var fid in filmIdsSemAno)
+            {
+                try
+                {
+                    await _movieService.UpdateMovieFromApisAsync(fid);
+                }
+                catch { }
+            }
+            if (filmIdsSemAno.Count > 0)
+                movies = await query.ToListAsync();
 
             var generos = CountByIndividualGenreTyped(movies).Take(12)
                 .Select(g => new { genero = g.genero, total = g.total }).ToList();
 
-            var now = DateTime.Now;
-            var twelveMonthsAgo = now.AddMonths(-12);
-            var porMes = movies
-                .Where(m => m.Data >= twelveMonthsAgo)
-                .GroupBy(m => new { m.Data.Year, m.Data.Month })
-                .Select(g => new
+            var buckets = new[] {
+                (min: 0, max: 60, label: "Até 1h"),
+                (min: 61, max: 90, label: "1h – 1h30"),
+                (min: 91, max: 120, label: "1h30 – 2h"),
+                (min: 121, max: 150, label: "2h – 2h30"),
+                (min: 151, max: 180, label: "2h30 – 3h"),
+                (min: 181, max: int.MaxValue, label: "Mais de 3h")
+            };
+            var porDuracao = buckets.Select(b => new
+            {
+                label = b.label,
+                total = movies.Count(m => (m.Filme?.Duracao ?? 0) >= b.min && (m.Filme?.Duracao ?? 0) <= b.max)
+            }).Where(x => x.total > 0).ToList();
+            if (porDuracao.Count == 0)
+                porDuracao = buckets.Select(b => new { label = b.label, total = 0 }).ToList();
+
+            var filmesComAno = movies.Where(m => m.Filme?.Ano != null && m.Filme.Ano > 0).ToList();
+            var porIntervaloAnos = new List<object>();
+            if (filmesComAno.Count > 0)
+            {
+                var minYear = filmesComAno.Min(m => m.Filme!.Ano!.Value);
+                var maxYear = filmesComAno.Max(m => m.Filme!.Ano!.Value);
+                var span = maxYear - minYear + 1;
+                var anosComDados = filmesComAno.Select(m => m.Filme!.Ano!.Value).Distinct().Count();
+
+                int intervalSize = anosComDados >= 12 ? 5 : anosComDados >= 6 ? 10 : Math.Max(10, (int)Math.Ceiling(span / 4.0));
+                intervalSize = Math.Min(20, Math.Max(5, intervalSize));
+
+                var start = minYear;
+                while (start <= maxYear)
                 {
-                    ano = g.Key.Year,
-                    mes = g.Key.Month,
-                    label = new DateTime(g.Key.Year, g.Key.Month, 1).ToString("MMM yyyy", System.Globalization.CultureInfo.GetCultureInfo("pt-PT")),
-                    total = g.Count()
-                })
-                .OrderBy(x => x.ano).ThenBy(x => x.mes)
-                .ToList();
+                    var end = Math.Min(start + intervalSize - 1, maxYear);
+                    var count = filmesComAno.Count(m => m.Filme!.Ano >= start && m.Filme.Ano <= end);
+                    if (count > 0)
+                    {
+                        var label = start == end ? start.ToString() : $"{start}–{end}";
+                        porIntervaloAnos.Add(new { label, total = count });
+                    }
+                    start += intervalSize;
+                }
+            }
+
+            DateTime startDate;
+            DateTime endDate = to ?? DateTime.Now;
+            
+            if (from.HasValue)
+            {
+                startDate = from.Value;
+            }
+            else
+            {
+                startDate = DateTime.Now.AddMonths(-11);
+            }
+
+            if (from == null && to == null)
+            {
+                startDate = new DateTime(2026, 1, 1);
+                endDate = DateTime.Now;
+            }
+
+            var totalDays = (endDate - startDate).Days;
+            bool isAllTime = (from == null && to == null);
+            bool is30DayPeriod = !isAllTime && totalDays >= 28 && totalDays <= 32;
+            bool groupByDay = !isAllTime && !is30DayPeriod && totalDays <= 31;
+            bool groupByWeek = !isAllTime && !is30DayPeriod && totalDays <= 90;
+            var combinedPorPeriodo = new List<object>();
+
+            if (groupByDay)
+            {
+                var userDailyData = movies
+                    .Where(m => m.Data.Date >= startDate.Date && m.Data.Date <= endDate.Date)
+                    .GroupBy(m => m.Data.Date)
+                    .ToDictionary(g => g.Key, g => g.Count());
+
+                var globalQuery = _context.UserMovies
+                    .Include(um => um.Filme)
+                    .Where(um => um.JaViu && um.Data.Date >= startDate.Date && um.Data.Date <= endDate.Date);
+                var allMoviesForChart = await globalQuery.ToListAsync();
+
+                var allUserIds = await _context.UserMovies
+                    .Select(um => um.UtilizadorId)
+                    .Distinct()
+                    .ToListAsync();
+
+                var totalUsers = allUserIds.Count;
+                if (totalUsers == 0) totalUsers = 1;
+
+                var globalDailyData = allMoviesForChart
+                    .GroupBy(m => m.Data.Date)
+                    .ToDictionary(g => g.Key, g => (double)g.Count() / totalUsers);
+
+                var daysToGenerate = Math.Max(7, (int)(endDate - startDate).Days + 1);
+                for (int i = 0; i < daysToGenerate; i++)
+                {
+                    var date = startDate.Date.AddDays(i);
+                    if (date > endDate.Date) break;
+                    
+                    userDailyData.TryGetValue(date, out int userTotal);
+                    globalDailyData.TryGetValue(date, out double globalAvg);
+                    
+                    combinedPorPeriodo.Add(new
+                    {
+                        data = date,
+                        label = date.ToString("dd MMM", System.Globalization.CultureInfo.GetCultureInfo("pt-PT")),
+                        total = userTotal,
+                        globalAverage = Math.Round(globalAvg, 1)
+                    });
+                }
+            }
+            else if (groupByWeek)
+            {
+                var userWeeklyData = movies
+                    .Where(m => m.Data.Date >= startDate.Date && m.Data.Date <= endDate.Date)
+                    .GroupBy(m => new { 
+                        Year = m.Data.Year, 
+                        Week = System.Globalization.CultureInfo.CurrentCulture.Calendar.GetWeekOfYear(m.Data, System.Globalization.CalendarWeekRule.FirstDay, DayOfWeek.Sunday)
+                    })
+                    .ToDictionary(g => g.Key, g => g.Count());
+
+                var globalQuery = _context.UserMovies
+                    .Include(um => um.Filme)
+                    .Where(um => um.JaViu && um.Data.Date >= startDate.Date && um.Data.Date <= endDate.Date);
+                var allMoviesForChart = await globalQuery.ToListAsync();
+
+                var allUserIds = await _context.UserMovies
+                    .Select(um => um.UtilizadorId)
+                    .Distinct()
+                    .ToListAsync();
+
+                var totalUsers = allUserIds.Count;
+                if (totalUsers == 0) totalUsers = 1;
+
+                var globalWeeklyData = allMoviesForChart
+                    .GroupBy(m => new { 
+                        Year = m.Data.Year, 
+                        Week = System.Globalization.CultureInfo.CurrentCulture.Calendar.GetWeekOfYear(m.Data, System.Globalization.CalendarWeekRule.FirstDay, DayOfWeek.Sunday)
+                    })
+                    .ToDictionary(g => g.Key, g => (double)g.Count() / totalUsers);
+
+                var currentWeek = startDate;
+                while (currentWeek <= endDate)
+                {
+                    var weekKey = new { 
+                        Year = currentWeek.Year, 
+                        Week = System.Globalization.CultureInfo.CurrentCulture.Calendar.GetWeekOfYear(currentWeek, System.Globalization.CalendarWeekRule.FirstDay, DayOfWeek.Sunday)
+                    };
+                    
+                    userWeeklyData.TryGetValue(weekKey, out int userTotal);
+                    globalWeeklyData.TryGetValue(weekKey, out double globalAvg);
+                    
+                    combinedPorPeriodo.Add(new
+                    {
+                        ano = weekKey.Year,
+                        semana = weekKey.Week,
+                        label = $"Sem {weekKey.Week}",
+                        total = userTotal,
+                        globalAverage = Math.Round(globalAvg, 1)
+                    });
+                    
+                    currentWeek = currentWeek.AddDays(7);
+                }
+            }
+            else
+            {
+                var userMonthlyData = movies
+                    .Where(m => m.Data.Date >= startDate.Date && m.Data.Date <= endDate.Date)
+                    .GroupBy(m => new { m.Data.Year, m.Data.Month })
+                    .ToDictionary(g => g.Key, g => g.Count());
+
+                var globalQuery = _context.UserMovies
+                    .Include(um => um.Filme)
+                    .Where(um => um.JaViu && um.Data.Date >= startDate.Date && um.Data.Date <= endDate.Date);
+                var allMoviesForChart = await globalQuery.ToListAsync();
+
+                var allUserIds = await _context.UserMovies
+                    .Select(um => um.UtilizadorId)
+                    .Distinct()
+                    .ToListAsync();
+
+                var totalUsers = allUserIds.Count;
+                if (totalUsers == 0) totalUsers = 1;
+
+                var globalMonthlyData = allMoviesForChart
+                    .GroupBy(m => new { m.Data.Year, m.Data.Month })
+                    .ToDictionary(g => g.Key, g => (double)g.Count() / totalUsers);
+
+                var currentMonth = new DateTime(startDate.Year, startDate.Month, 1);
+                while (currentMonth <= endDate)
+                {
+                    var monthKey = new { currentMonth.Year, currentMonth.Month };
+                    userMonthlyData.TryGetValue(monthKey, out int userTotal);
+                    globalMonthlyData.TryGetValue(monthKey, out double globalAvg);
+                    
+                    combinedPorPeriodo.Add(new
+                    {
+                        ano = currentMonth.Year,
+                        mes = currentMonth.Month,
+                        label = currentMonth.ToString("MMM yy", System.Globalization.CultureInfo.GetCultureInfo("pt-PT")),
+                        total = userTotal,
+                        globalAverage = Math.Round(globalAvg, 1)
+                    });
+                    
+                    currentMonth = currentMonth.AddMonths(1);
+                }
+            }
 
             var totalFilmes = movies.Count;
             var totalMinutos = movies.Sum(m => m.Filme?.Duracao ?? 0);
 
+            if (combinedPorPeriodo.Count == 0)
+            {
+                combinedPorPeriodo.Add(new
+                {
+                    ano = startDate.Year,
+                    mes = startDate.Month,
+                    label = startDate.ToString("MMM yy", System.Globalization.CultureInfo.GetCultureInfo("pt-PT")),
+                    total = 0,
+                    globalAverage = 0.0
+                });
+            }
+
             return Ok(new
             {
                 generos,
-                porMes,
+                porDuracao,
+                porIntervaloAnos,
+                porMes = combinedPorPeriodo,
                 resumo = new { totalFilmes, totalHoras = Math.Round(totalMinutos / 60.0, 1), totalMinutos }
             });
         }

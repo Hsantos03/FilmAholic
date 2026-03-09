@@ -1,11 +1,19 @@
 <header class="topbar">
-  <button class="icon-btn" (click)="openMenu()" aria-label="Menu">&#9776;</button>
+  <button class="icon-btn" (click)="openMenu()" aria-label="Menu">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+      <path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"/>
+    </svg>
+  </button>
 
   <a class="brand" routerLink="/dashboard" aria-label="Go to dashboard">FilmAholic</a>
 
   <div class="search" #searchContainer>
     <div class="search-pill" role="search">
-      <button class="pill-icon left" type="button" aria-label="Opcoes">&#9776;</button>
+      <button class="pill-icon left" type="button" aria-label="Opcoes">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"/>
+        </svg>
+      </button>
 
       <input
         type="text"
@@ -14,13 +22,26 @@
         placeholder="Pesquisar filmes..."
         aria-label="Pesquisar" />
 
-      <button class="pill-icon right" type="button" aria-label="Pesquisar" (click)="doSearch()">&#128269;</button>
+      <button class="pill-icon right" type="button" aria-label="Pesquisar" (click)="doSearch()">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
+        </svg>
+      </button>
     </div>
   </div>
 
   <div class="top-actions">
-    <button class="icon-btn" aria-label="Favoritos">&#128278;</button>
-    <button class="icon-btn" routerLink="/profile" aria-label="Perfil">&#128100;</button>
+    <button class="icon-btn" aria-label="Favoritos">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+        <path d="M17 3H7c-1.1 0-1.99.9-1.99 2L5 21l7-3 7 3V5c0-1.1-.9-2-2-2z"/>
+      </svg>
+    </button>
+
+    <button class="icon-btn" routerLink="/profile" aria-label="Perfil">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+        <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+      </svg>
+    </button>
   </div>
 </header>
 
@@ -29,7 +50,7 @@
     <div class="search-header-row">
       <div class="header-actions-left">
         <div class="filter-wrap" #filterWrapper>
-          <button type="button" class="filter-btn" (click)="toggleFilterMenu()" [class.active]="showFilterMenu" aria-label="Filtrar resultados">
+          <button type="button" class="filter-btn" (click)="toggleFilterMenu()" [class.active]="showFilterMenu" aria-label="Filtrar resultados" aria-haspopup="true" [attr.aria-expanded]="showFilterMenu">
             Filtrar {{ (selectedGenres.length > 0 || selectedDateFrom || selectedDateTo) ? '· ' + getActiveFiltersCount() : '' }}
           </button>
           <div class="filter-menu" *ngIf="showFilterMenu" role="menu" aria-label="Filtrar por género e data">
@@ -53,19 +74,19 @@
       <h2 class="search-header">{{ results.length }} Resultados para "{{ query }}" <span *ngIf="selectedDateFrom || selectedDateTo">· {{ getDateFilterLabel() }}</span></h2>
       <div class="header-actions-right">
         <div class="sort-wrap" #sortWrapper>
-          <button type="button" class="sort-btn" (click)="toggleSortMenu()" [class.active]="showSortMenu" aria-label="Ordenar resultados">
+          <button type="button" class="sort-btn" (click)="toggleSortMenu()" [class.active]="showSortMenu" aria-label="Ordenar resultados" aria-haspopup="true" [attr.aria-expanded]="showSortMenu">
             Ordenar {{ sortBy ? '· ' + sortLabel : '' }}
           </button>
           <div class="sort-menu" *ngIf="showSortMenu" role="menu" aria-label="Opções de ordenação">
-            <button type="button" class="sort-item" (click)="applySort('date-desc')" [class.selected]="sortBy === 'date-desc'">Data (mais recente)</button>
-            <button type="button" class="sort-item" (click)="applySort('date-asc')" [class.selected]="sortBy === 'date-asc'">Data (mais antigo)</button>
-            <button type="button" class="sort-item" (click)="applySort('rating-desc')" [class.selected]="sortBy === 'rating-desc'">Classificação (maior)</button>
-            <button type="button" class="sort-item" (click)="applySort('rating-asc')" [class.selected]="sortBy === 'rating-asc'">Classificação (menor)</button>
-            <button type="button" class="sort-item" (click)="applySort('duration-desc')" [class.selected]="sortBy === 'duration-desc'">Duração (mais longo)</button>
-            <button type="button" class="sort-item" (click)="applySort('duration-asc')" [class.selected]="sortBy === 'duration-asc'">Duração (mais curto)</button>
-            <button type="button" class="sort-item" (click)="applySort('name-asc')" [class.selected]="sortBy === 'name-asc'">Nome (A–Z)</button>
-            <button type="button" class="sort-item" (click)="applySort('name-desc')" [class.selected]="sortBy === 'name-desc'">Nome (Z–A)</button>
-            <button type="button" class="sort-item" (click)="applySort(null)" [class.selected]="sortBy === null">Ordenação original</button>
+            <button type="button" class="sort-item" (click)="applySort('date-desc')" [class.selected]="sortBy === 'date-desc'" role="menuitem">Data (mais recente)</button>
+            <button type="button" class="sort-item" (click)="applySort('date-asc')" [class.selected]="sortBy === 'date-asc'" role="menuitem">Data (mais antigo)</button>
+            <button type="button" class="sort-item" (click)="applySort('rating-desc')" [class.selected]="sortBy === 'rating-desc'" role="menuitem">Classificação (maior)</button>
+            <button type="button" class="sort-item" (click)="applySort('rating-asc')" [class.selected]="sortBy === 'rating-asc'" role="menuitem">Classificação (menor)</button>
+            <button type="button" class="sort-item" (click)="applySort('duration-desc')" [class.selected]="sortBy === 'duration-desc'" role="menuitem">Duração (mais longo)</button>
+            <button type="button" class="sort-item" (click)="applySort('duration-asc')" [class.selected]="sortBy === 'duration-asc'" role="menuitem">Duração (mais curto)</button>
+            <button type="button" class="sort-item" (click)="applySort('name-asc')" [class.selected]="sortBy === 'name-asc'" role="menuitem">Nome (A–Z)</button>
+            <button type="button" class="sort-item" (click)="applySort('name-desc')" [class.selected]="sortBy === 'name-desc'" role="menuitem">Nome (Z–A)</button>
+            <button type="button" class="sort-item" (click)="applySort(null)" [class.selected]="sortBy === null" role="menuitem">Ordenação original</button>
           </div>
         </div>
       </div>

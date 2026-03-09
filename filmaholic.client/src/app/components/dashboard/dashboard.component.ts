@@ -1,10 +1,12 @@
 import { Component, OnInit, OnDestroy, ElementRef, ViewChild } from '@angular/core';
 import { Router } from '@angular/router';
-import { Subject, Subscription } from 'rxjs';
-import { debounceTime, filter, switchMap } from 'rxjs/operators';
+import { Subject, Subscription, forkJoin, of } from 'rxjs';
+import { debounceTime, filter, switchMap, catchError } from 'rxjs/operators';
 import { DesafiosService } from '../../services/desafios.service';
 import { Filme, FilmesService } from '../../services/filmes.service';
 import { AtoresService, PopularActor } from '../../services/atores.service';
+import { ProfileService } from '../../services/profile.service';
+import { ActorsCarouselComponent } from '../actors-carousel/actors-carousel.component';
 
 export interface SearchResultItem {
   id?: number;
@@ -20,6 +22,7 @@ export interface SearchResultItem {
 })
 export class DashboardComponent implements OnInit, OnDestroy {
   @ViewChild('searchContainer', { static: false }) searchContainerRef?: ElementRef;
+  @ViewChild('notificationsContainer', { static: false }) notificationsContainerRef?: ElementRef;
 
   userName: string = '';
 
@@ -34,6 +37,9 @@ export class DashboardComponent implements OnInit, OnDestroy {
   searchResults: SearchResultItem[] = [];
   searchResultsLoading = false;
   showSearchMenu: boolean = false;
+  isLoadingSuggestions = false;
+  isSuggestionsMode = false; // true when menu is open with empty search (suggestions by genre)
+  hasGenrePreferences = false; // true when user has favorite genres (for empty-state message)
 
   private searchTerm$ = new Subject<string>();
   private searchSub?: Subscription;
@@ -51,10 +57,14 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
   atores: PopularActor[] = [];
   atoresIndex = 0;
-  atoresVisibleCount = 4;
+  atoresVisibleCount = 5;
 
   nextToWatch: Filme | null = null;
   isDiscovering = false;
+
+  // Notifications menu state
+  isNotificationsOpen = false;
+  private isLoadingUpcomingDetails = false;
 
   private onResizeBound = () => this.updateVisibleCount();
   private onDocumentClickBound = (e: MouseEvent) => this.onDocumentClick(e);
@@ -63,6 +73,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
     private desafiosService: DesafiosService,
     private filmesService: FilmesService,
     private atoresService: AtoresService,
+    private profileService: ProfileService,
     private router: Router
   ) { }
 
@@ -218,7 +229,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
     if (w < 520) this.atoresVisibleCount = 1;
     else if (w < 860) this.atoresVisibleCount = 2;
     else if (w < 1180) this.atoresVisibleCount = 3;
-    else this.atoresVisibleCount = 4;
+    else this.atoresVisibleCount = 5;
 
     const maxAtoresIndex = Math.max(0, this.atores.length - this.atoresVisibleCount);
     this.atoresIndex = Math.min(this.atoresIndex, maxAtoresIndex);
@@ -230,12 +241,14 @@ export class DashboardComponent implements OnInit, OnDestroy {
     const qLower = q.toLowerCase();
 
     if (q.length === 0) {
+      this.isSuggestionsMode = false;
       this.searchResults = [];
       this.searchResultsLoading = false;
       this.showSearchMenu = false;
       return;
     }
 
+    this.isSuggestionsMode = false;
     this.showSearchMenu = true;
 
     if (q.length >= 2) {
@@ -256,9 +269,54 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
   public onSearchFocus(): void {
     const qlen = (this.searchTerm || '').trim().length;
-    if ((this.searchResults || []).length > 0 || qlen > 0) {
+    if (qlen > 0) {
+      this.isSuggestionsMode = false;
       this.showSearchMenu = true;
+      return;
     }
+    // Empty search: show suggestions based on user's favorite genres
+    this.isSuggestionsMode = true;
+    this.showSearchMenu = true;
+    this.loadGenreSuggestions();
+  }
+
+  private static readonly SUGGESTIONS_LIMIT = 5;
+
+  private loadGenreSuggestions(): void {
+    this.searchResults = [];
+    this.hasGenrePreferences = false;
+    const userId = localStorage.getItem('user_id');
+    if (!userId) {
+      return;
+    }
+    this.isLoadingSuggestions = true;
+    this.profileService.obterGenerosFavoritos(userId).subscribe({
+      next: (generos) => {
+        this.isLoadingSuggestions = false;
+        const genreNames = (generos || []).map((g: { nome: string }) => (g.nome || '').trim().toLowerCase()).filter(Boolean);
+        this.hasGenrePreferences = genreNames.length > 0;
+        if (genreNames.length === 0) {
+          this.searchResults = [];
+          return;
+        }
+        // Only include movies that have at least one genre matching exactly (case-insensitive)
+        const matches = (this.movies || []).filter(m => {
+          const movieGenres = (m?.genero || '').split(',').map(s => s.trim().toLowerCase()).filter(Boolean);
+          return movieGenres.some(mg => genreNames.includes(mg));
+        });
+        this.searchResults = matches.slice(0, DashboardComponent.SUGGESTIONS_LIMIT).map(m => ({
+          id: m.id,
+          titulo: m.titulo,
+          posterUrl: m.posterUrl || '',
+          tmdbId: m.tmdbId && !isNaN(parseInt(m.tmdbId, 10)) ? parseInt(m.tmdbId, 10) : undefined
+        }));
+      },
+      error: () => {
+        this.isLoadingSuggestions = false;
+        this.hasGenrePreferences = false;
+        this.searchResults = [];
+      }
+    });
   }
 
   public closeSearchMenu(): void {
@@ -276,7 +334,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
     if (tmdbId == null) return;
     this.searchResultsLoading = true;
     this.filmesService.addMovieFromTmdb(tmdbId).subscribe({
-      next: (movie) => {
+      next: (movie: Filme | null) => {
         this.searchResultsLoading = false;
         if (movie?.id != null) {
           this.router.navigate(['/movie-detail', movie.id]);
@@ -289,15 +347,176 @@ export class DashboardComponent implements OnInit, OnDestroy {
   }
 
   private onDocumentClick(e: MouseEvent): void {
-    const container = this.searchContainerRef?.nativeElement as HTMLElement | undefined;
     const target = e.target as Node | null;
 
-    if (!container) {
-      return;
+    const container = this.searchContainerRef?.nativeElement as HTMLElement | undefined;
+    const notificationsContainer = this.notificationsContainerRef?.nativeElement as HTMLElement | undefined;
+
+    if (container && !container.contains(target)) {
+      this.showSearchMenu = false;
     }
 
-    if (!container.contains(target)) {
-      this.showSearchMenu = false;
+    if (notificationsContainer && !notificationsContainer.contains(target)) {
+      this.isNotificationsOpen = false;
+    }
+  }
+
+  // helper: returns midnight-local time in ms for a Date
+  private dateOnlyMs(d: Date): number {
+    return new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
+  }
+
+  // Toggle notifications menu; when opening, try to fetch missing releaseDate values.
+  public toggleNotifications(e: MouseEvent): void {
+    e.stopPropagation();
+    const newState = !this.isNotificationsOpen;
+    this.isNotificationsOpen = newState;
+    if (newState) {
+      this.loadUpcomingDetails();
+    }
+  }
+
+  public closeNotifications(): void {
+    this.isNotificationsOpen = false;
+  }
+
+  /**
+   * Return a short list of upcoming movies:
+   * - Only include movies that have a future releaseDate (strictly after today).
+   * - If releaseDate missing but `ano` exists, include only when ano > current year.
+   */
+  public get upcomingMovies(): Filme[] {
+    const today = new Date();
+    const todayMs = this.dateOnlyMs(today);
+    const currentYear = today.getFullYear();
+
+    const upcoming = (this.movies || []).filter(m => {
+      if (m.releaseDate) {
+        const parsed = new Date(m.releaseDate);
+        if (isNaN(parsed.getTime())) return false;
+        const releaseMs = this.dateOnlyMs(parsed);
+        return releaseMs > todayMs; // strictly in the future
+      }
+
+      if (m.ano != null) {
+        const anoNum = Number(m.ano);
+        if (!isNaN(anoNum)) {
+          return anoNum > currentYear; // only years strictly greater than current
+        }
+      }
+
+      return false;
+    });
+
+    upcoming.sort((a, b) => {
+      const dateOf = (m: Filme) => {
+        if (m.releaseDate) {
+          const d = new Date(m.releaseDate);
+          if (!isNaN(d.getTime())) return this.dateOnlyMs(d);
+        }
+        if (m.ano != null) {
+          const anoNum = Number(m.ano);
+          if (!isNaN(anoNum)) return new Date(anoNum, 0, 1).getTime();
+        }
+        return Number.MAX_SAFE_INTEGER;
+      };
+      return dateOf(a) - dateOf(b);
+    });
+
+    return upcoming.slice(0, 5);
+  }
+
+  // Try to load missing releaseDate values by requesting tmdb endpoint for each movie that has a tmdbId and no releaseDate.
+  private loadUpcomingDetails(): void {
+    if (this.isLoadingUpcomingDetails) return;
+    const missing = this.upcomingMovies.filter(m => !m.releaseDate && m.tmdbId);
+    if (!missing.length) return;
+
+    this.isLoadingUpcomingDetails = true;
+
+    const requests = missing.map(m => {
+      const idNum = Number(m.tmdbId);
+      if (!idNum || isNaN(idNum)) return of(null);
+      return this.filmesService.getMovieFromTmdb(idNum).pipe(
+        catchError(() => of(null))
+      );
+    });
+
+    forkJoin(requests).subscribe({
+      next: (results: (Filme | null)[]) => {
+        results.forEach((res, idx) => {
+          if (!res || !missing[idx]) return;
+
+          const anyRes: any = res as any;
+          let remoteDate: string | undefined = undefined;
+          if (anyRes.releaseDate) remoteDate = anyRes.releaseDate;
+          else if (anyRes.release_date) remoteDate = anyRes.release_date;
+          else if (anyRes.ReleaseDate) remoteDate = anyRes.ReleaseDate;
+
+          if (!remoteDate && anyRes.release_dates && Array.isArray(anyRes.release_dates)) {
+            try {
+              for (const rdGroup of anyRes.release_dates) {
+                if (rdGroup && rdGroup.release_dates && rdGroup.release_dates.length) {
+                  const found = rdGroup.release_dates.find((x: any) => x.iso_3166_1 === 'PT' || x.iso_3166_1 === 'US') || rdGroup.release_dates[0];
+                  if (found && (found.iso_3166_1 || found.release_date || found.date)) {
+                    remoteDate = found.release_date ?? found.date ?? undefined;
+                    if (remoteDate) break;
+                  }
+                }
+              }
+            } catch { }
+          }
+
+          if (remoteDate) {
+            const parsed = new Date(remoteDate);
+            if (!isNaN(parsed.getTime())) {
+              const local = this.movies.find(x => x.id === missing[idx].id);
+              if (local) {
+                // store ISO string to avoid timezone issues
+                local.releaseDate = parsed.toISOString();
+              }
+            }
+          } else {
+            const anyResYear = anyRes.ano ?? anyRes.year ?? anyRes.Ano ?? undefined;
+            if (anyResYear) {
+              const local = this.movies.find(x => x.id === missing[idx].id);
+              if (local && !local.ano) {
+                const y = Number(anyResYear);
+                if (!isNaN(y)) local.ano = y;
+              }
+            }
+          }
+        });
+      },
+      complete: () => {
+        this.isLoadingUpcomingDetails = false;
+      },
+      error: () => {
+        this.isLoadingUpcomingDetails = false;
+      }
+    });
+  }
+
+  // Human-readable full release date (day month year). If only ano exists show "YEAR (TBA)".
+  public releaseLabel(f: Filme): string {
+    if (!f) return '';
+    if (f.releaseDate) {
+      const d = new Date(f.releaseDate);
+      if (!isNaN(d.getTime())) {
+        return d.toLocaleDateString('pt-PT', { day: '2-digit', month: 'long', year: 'numeric' });
+      }
+    }
+    if (f.ano != null) {
+      return `${f.ano} (TBA)`;
+    }
+    return 'TBA';
+  }
+
+  // Called when clicking an upcoming movie in the notifications menu
+  public openNotificationMovie(m: Filme): void {
+    this.closeNotifications();
+    if (m && m.id) {
+      this.goToMovieDetail(m.id);
     }
   }
 
@@ -353,15 +572,6 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
   get atoresVisible(): PopularActor[] {
     return this.atores.slice(this.atoresIndex, this.atoresIndex + this.atoresVisibleCount);
-  }
-
-  prevAtores(): void {
-    this.atoresIndex = Math.max(0, this.atoresIndex - this.atoresVisibleCount);
-  }
-
-  nextAtores(): void {
-    const maxIndex = Math.max(0, this.atores.length - this.atoresVisibleCount);
-    this.atoresIndex = Math.min(maxIndex, this.atoresIndex + this.atoresVisibleCount);
   }
 
   fotoAtor(a: PopularActor): string {

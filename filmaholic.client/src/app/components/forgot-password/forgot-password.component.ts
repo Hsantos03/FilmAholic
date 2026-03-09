@@ -10,18 +10,22 @@ import { Router } from '@angular/router';
 export class ForgotPasswordComponent {
   email: string = '';
   isLoading = false;
+  errorMessage = '';
+  successMessage = '';
 
   constructor(private authService: AuthService, private router: Router) { }
 
   onSendEmail() {
     this.isLoading = true;
+    this.errorMessage = '';
+    this.successMessage = '';
     this.authService.forgotPassword(this.email).subscribe({
       next: () => {
-        alert('Se o email existir, enviámos as instruções.');
+        this.successMessage = 'Se o email existir, enviámos as instruções.';
         this.router.navigate(['/login']);
       },
-      error: () => {
-        alert('Erro ao processar o pedido.');
+      error: (err) => {
+        this.errorMessage = err?.error?.message || 'Erro ao processar o pedido.';
         this.isLoading = false;
       }
     });

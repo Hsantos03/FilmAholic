@@ -12,5 +12,8 @@
 
         public string? Metascore { get; set; }
         public string? RottenTomatoes { get; set; }
+
+        // User rating
+        public int Score { get; set; }
     }
 }

@@ -7,7 +7,7 @@ public interface IMovieService
 {
     Task<TmdbSearchResponse> SearchMoviesAsync(string query, int page = 1);
 
-    Task<TmdbMovieDto?> GetMovieDetailsFromTmdbAsync(int tmdbId);
+    Task<TmdbMovieDto?> GetMovieDetailsFromTmdbAsync(int tmdbId, string language = "en-US");
 
     Task<OmdbMovieDto?> GetMovieDetailsFromOmdbAsync(string imdbId);
 
@@ -19,7 +19,7 @@ public interface IMovieService
 
     Task<List<Filme>> GetPopularMoviesAsync(int page = 1, int count = 20);
 
-    Task<List<PopularActorDto>> GetPopularActorsAsync(int page = 1, int count = 10);
+    Task<List<PopularActorDto>> GetPopularActorsAsync(int page = 1, int count = 20);
 
     Task<List<ActorSearchResultDto>> SearchActorsAsync(string query);
 
@@ -27,4 +27,5 @@ public interface IMovieService
 
     Task<RatingsDto> GetRatingsAsync(string? tmdbId, string? title);
     Task<List<Filme>> GetRecommendationsAsync(int tmdbId, int count = 10);
+    Task<List<CastMemberDto>> GetCastAsync(int tmdbId);
 }

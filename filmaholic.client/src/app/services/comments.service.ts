@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { environment } from '../../environments/environment';
 
 export interface CommentDTO {
   id: number;
@@ -9,12 +10,18 @@ export interface CommentDTO {
   texto: string;
   rating: number;
   dataCriacao: string;
+  dataEdicao?: string | null;
   canEdit?: boolean;
+
+  likeCount: number;
+  dislikeCount: number;
+  myVote: number;
 }
 
 @Injectable({ providedIn: 'root' })
 export class CommentsService {
-  private apiUrl = 'https://localhost:7277/api/comments';
+  private readonly apiBase = environment.apiBaseUrl || '';
+  private apiUrl = this.apiBase ? `${this.apiBase}/api/comments` : '/api/comments';
 
   constructor(private http: HttpClient) { }
 
@@ -25,10 +32,10 @@ export class CommentsService {
     );
   }
 
-  update(commentId: number, texto: string, rating: number): Observable<CommentDTO> {
+  update(commentId: number, texto: string): Observable<CommentDTO> {
     return this.http.put<CommentDTO>(
       `${this.apiUrl}/${commentId}`,
-      { texto, rating },
+      { texto},
       { withCredentials: true }
     );
   }
@@ -37,10 +44,18 @@ export class CommentsService {
     return this.http.delete<void>(`${this.apiUrl}/${commentId}`, { withCredentials: true });
   }
 
-  create(movieId: number, texto: string, rating: number): Observable<CommentDTO> {
+  create(movieId: number, texto: string): Observable<CommentDTO> {
     return this.http.post<CommentDTO>(
       this.apiUrl,
-      { filmeId: movieId, texto, rating },
+      { filmeId: movieId, texto },
+      { withCredentials: true }
+    );
+  }
+
+  vote(commentId: number, value: 1 | -1 | 0): Observable<CommentDTO> {
+    return this.http.post<CommentDTO>(
+      `${this.apiUrl}/${commentId}/vote`,
+      { value },
       { withCredentials: true }
     );
   }

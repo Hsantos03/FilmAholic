@@ -34,7 +34,6 @@ public class EmailService : IEmailService
             var fromName = _configuration["EmailSettings:FromName"] ?? "FilmAholic";
             var baseUrl = _configuration["EmailSettings:BaseUrl"] ?? "https://localhost:7277";
 
-            // Em desenvolvimento, se não houver configuração SMTP, apenas logamos
             if (string.IsNullOrEmpty(smtpUser) || string.IsNullOrEmpty(smtpPassword))
             {
                 _logger.LogWarning($"Email não configurado. Token de verificação para {email}: {verificationToken}");
@@ -82,7 +81,6 @@ public class EmailService : IEmailService
         catch (Exception ex)
         {
             _logger.LogError(ex, $"Erro ao enviar email de verificação para {email}");
-            // Em desenvolvimento, continuamos mesmo se o email falhar
             throw;
         }
     }
@@ -98,7 +96,6 @@ public class EmailService : IEmailService
             var fromEmail = _configuration["EmailSettings:FromEmail"] ?? smtpUser;
             var fromName = _configuration["EmailSettings:FromName"] ?? "FilmAholic";
 
-            // Caso o SMTP não esteja configurado, logamos o link no console (útil para testes)
             if (string.IsNullOrEmpty(smtpUser) || string.IsNullOrEmpty(smtpPassword))
             {
                 _logger.LogWarning($"Email não configurado. Link de recuperação para {email}: {callbackUrl}");

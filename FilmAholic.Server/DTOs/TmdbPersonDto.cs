@@ -43,9 +43,16 @@ public class TmdbPersonDto
 
 public class PopularActorDto
 {
+    [JsonPropertyName("id")]
     public int Id { get; set; }
+
+    [JsonPropertyName("nome")]
     public string Nome { get; set; } = "";
+
+    [JsonPropertyName("fotoUrl")]
     public string FotoUrl { get; set; } = "";
+
+    [JsonPropertyName("popularidade")]
     public double Popularidade { get; set; }
 }
 

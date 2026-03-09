@@ -1,4 +1,4 @@
-﻿using FilmAholic.Server.Data;
+using FilmAholic.Server.Data;
 using FilmAholic.Server.DTOs;
 using FilmAholic.Server.Models;
 using FilmAholic.Server.Services;
@@ -124,12 +124,30 @@ namespace FilmAholic.Server.Controllers
 
             try
             {
+                // Delete user-related data
                 var userMovies = _context.UserMovies.Where(um => um.UtilizadorId == id);
                 _context.UserMovies.RemoveRange(userMovies);
 
                 var utilGen = _context.UtilizadorGeneros.Where(ug => ug.UtilizadorId == id);
                 _context.UtilizadorGeneros.RemoveRange(utilGen);
 
+                // Delete movie ratings made by the user
+                var movieRatings = _context.MovieRatings.Where(r => r.UserId == id);
+                _context.MovieRatings.RemoveRange(movieRatings);
+
+                // Delete comment votes made by the user
+                var commentVotes = _context.CommentVotes.Where(v => v.UserId == id);
+                _context.CommentVotes.RemoveRange(commentVotes);
+
+                // Update user's comments to show "Conta Eliminada" instead of username
+                var userComments = _context.Comments.Where(c => c.UserId == id);
+                foreach (var comment in userComments)
+                {
+                    comment.UserName = "Conta Eliminada";
+                    comment.UserId = null; // Remove the user ID reference
+                }
+
+                // Delete the user account
                 var result = await _userManager.DeleteAsync(user);
                 if (!result.Succeeded)
                     return StatusCode(500, new { message = "Failed to delete user.", errors = result.Errors });
@@ -193,10 +211,6 @@ namespace FilmAholic.Server.Controllers
             }
         }
 
-        // ---------------------------
-        // ✅ FR06 - Favorites (Top 10)
-        // ---------------------------
-
         [Authorize]
         [HttpGet("favorites")]
         public async Task<IActionResult> GetFavorites()
@@ -224,10 +238,12 @@ namespace FilmAholic.Server.Controllers
 
             return Ok(new FavoritosDTO
             {
-                Filmes = filmes.Take(10).ToList(),
-                Atores = atores.Take(10).ToList()
+                Filmes = filmes,
+                Atores = atores
             });
         }
+
+        private const int MaxFavoritesStored = 50;
 
         [Authorize]
         [HttpPut("favorites")]
@@ -237,8 +253,8 @@ namespace FilmAholic.Server.Controllers
             var user = await _context.Users.FindAsync(userId);
             if (user == null) return NotFound();
 
-            user.TopFilmes = JsonSerializer.Serialize(dto.Filmes.Take(10).ToList());
-            user.TopAtores = JsonSerializer.Serialize(dto.Atores.Take(10).ToList());
+            user.TopFilmes = JsonSerializer.Serialize((dto.Filmes ?? new List<int>()).Take(MaxFavoritesStored).ToList());
+            user.TopAtores = JsonSerializer.Serialize((dto.Atores ?? new List<string>()).Take(MaxFavoritesStored).ToList());
 
             await _context.SaveChangesAsync();
             return Ok();

@@ -1,8 +1,10 @@
 import { CommonModule } from '@angular/common';
 import { HttpClientModule } from '@angular/common/http';
-import { NgModule } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
 import { FormsModule } from '@angular/forms';
+import { LOCALE_ID, NgModule } from '@angular/core';
+import { registerLocaleData } from '@angular/common';
+import localePt from '@angular/common/locales/pt';
 
 import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
@@ -16,10 +18,18 @@ import { ProfileComponent } from './components/profile/profile.component';
 import { SelecionarGenerosComponent } from './components/selecionar-generos/selecionar-generos.component';
 import { SearchResultsComponent } from './components/search-results/search-results.component';
 import { MoviePageComponent } from './components/movie-page/movie-page.component';
+import { CinemaMoviesComponent } from './components/cinema-movies/cinema-movies.component';
+import { FormatDurationPipe } from './pipes/format-duration.pipe';
+import { ActorsCarouselComponent } from './components/actors-carousel/actors-carousel.component';
+import { HigherOrLowerComponent } from './components/higher-or-lower/higher-or-lower.component';
+
+
+registerLocaleData(localePt);
 
 @NgModule({
   declarations: [
     AppComponent,
+    FormatDurationPipe,
     RegisterComponent,
     LoginComponent,
     EmailConfirmadoComponent,
@@ -29,7 +39,10 @@ import { MoviePageComponent } from './components/movie-page/movie-page.component
     ProfileComponent,
     SelecionarGenerosComponent,
     SearchResultsComponent,
-    MoviePageComponent
+    MoviePageComponent,
+    CinemaMoviesComponent,
+    ActorsCarouselComponent,
+    HigherOrLowerComponent
   ],
   imports: [
     BrowserModule,
@@ -38,7 +51,7 @@ import { MoviePageComponent } from './components/movie-page/movie-page.component
     FormsModule,
     AppRoutingModule
   ],
-  providers: [],
+  providers: [{provide: LOCALE_ID, useValue: 'pt-PT'}],
   bootstrap: [AppComponent]
 })
 export class AppModule { }

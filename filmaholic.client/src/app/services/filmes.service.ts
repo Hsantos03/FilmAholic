@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { environment } from '../../environments/environment';
 
 export interface Filme {
   id: number;
@@ -10,6 +11,7 @@ export interface Filme {
   posterUrl: string;
   tmdbId?: string;
   ano?: number | null;
+  releaseDate?: string | null;
 }
 
 export interface TmdbSearchResponse {
@@ -43,9 +45,24 @@ export interface RatingsDto {
   imdbId?: string | null;
 }
 
+export interface CastMemberDto {
+  id: number;
+  nome: string;
+  personagem: string;
+  fotoUrl: string | null;
+}
+
+export interface ActorDto {
+  id: number;
+  nome: string;
+  fotoUrl: string;
+  popularidade: number;
+}
+
 @Injectable({ providedIn: 'root' })
 export class FilmesService {
-  private apiUrl = 'https://localhost:7277/api/filmes';
+  private readonly apiBase = environment.apiBaseUrl || '';
+  private apiUrl = this.apiBase ? `${this.apiBase}/api/filmes` : '/api/filmes';
 
   constructor(private http: HttpClient) { }
 
@@ -83,5 +100,15 @@ export class FilmesService {
   getRecommendations(id: number, count: number = 10): Observable<Filme[]> {
     const params = new HttpParams().set('count', count.toString());
     return this.http.get<Filme[]>(`${this.apiUrl}/${id}/recomendacoes`, { params });
+  }
+
+  getCast(id: number): Observable<CastMemberDto[]> {
+    return this.http.get<CastMemberDto[]>(`${this.apiUrl}/${id}/cast`);
+  }
+
+  getPopularActors(count: number = 100): Observable<ActorDto[]> {
+    const params = new HttpParams().set('count', count.toString());
+    const atoresUrl = this.apiBase ? `${this.apiBase}/api/atores` : '/api/atores';
+    return this.http.get<ActorDto[]>(`${atoresUrl}/popular`, { params });
   }
 }

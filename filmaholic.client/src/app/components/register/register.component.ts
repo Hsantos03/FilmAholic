@@ -36,6 +36,8 @@ export class RegisterComponent {
   showPasswordMismatch = false;
   showPassword = false;
   showConfirmPassword = false;
+  errorMessage = '';
+  successMessage = '';
 
   constructor(private authService: AuthService, private router: Router) { }
 
@@ -81,16 +83,18 @@ export class RegisterComponent {
   }
 
   onRegister() {
+    this.errorMessage = '';
+    this.successMessage = '';
     // Validar username
     const userNameTrim = (this.user.userName || '').trim();
     if (!userNameTrim) {
-      alert('Por favor preencha o username.');
+      this.errorMessage = 'Por favor preencha o username.';
       return;
     }
     // Username deve ter pelo menos 3 caracteres e sÃ³ letras, nÃºmeros e underscore
     const userNameRegex = /^[a-zA-Z0-9_]{3,}$/;
     if (!userNameRegex.test(userNameTrim)) {
-      alert('O username deve ter pelo menos 3 caracteres e sÃ³ pode conter letras, nÃºmeros e underscore (_).');
+      this.errorMessage = 'O username deve ter pelo menos 3 caracteres e só pode conter letras, números e underscore (_).';
       return;
     }
     this.user.userName = userNameTrim;
@@ -100,12 +104,12 @@ export class RegisterComponent {
     const sobrenomeTrim = (this.user.sobrenome || '').trim();
 
     if (!nomeTrim || !sobrenomeTrim) {
-      alert('Por favor preencha o nome e o sobrenome.');
+      this.errorMessage = 'Por favor preencha o nome e o sobrenome.';
       return;
     }
 
     if (!nameRegex.test(nomeTrim) || !nameRegex.test(sobrenomeTrim)) {
-      alert('O nome e o sobrenome sÃƒÂ³ podem conter letras e espaÃƒÂ§os (ex: JoÃƒÂ£o Almeida, Moussa DembÃƒÂ©lÃƒÂ©).');
+      this.errorMessage = 'O nome e o sobrenome só podem conter letras e espaços (ex: João Almeida, Moussa Dembélé).';
       return;
     }
 
@@ -116,7 +120,7 @@ export class RegisterComponent {
     const emailTrim = (this.user.email || '').trim();
     const emailRegex = /^[^\s@]+@[^\s@]+\.com$/;
     if (!emailRegex.test(emailTrim)) {
-      alert('Introduza um email vÃƒÂ¡lido no formato nome@dominio.com.');
+      this.errorMessage = 'Introduza um email válido no formato nome@dominio.com.';
       return;
     }
     this.user.email = emailTrim;
@@ -126,11 +130,11 @@ export class RegisterComponent {
     const birthDate = new Date(`${birthTrim}T00:00:00`);
     const todayDate = new Date(`${this.todayISO}T00:00:00`);
     if (!birthTrim || isNaN(birthDate.getTime())) {
-      alert('Por favor preencha uma data de nascimento vÃƒÂ¡lida.');
+      this.errorMessage = 'Por favor preencha uma data de nascimento válida.';
       return;
     }
     if (birthDate > todayDate) {
-      alert('A data de nascimento nÃƒÂ£o pode ser futura.');
+      this.errorMessage = 'A data de nascimento não pode ser futura.';
       return;
     }
     this.user.dataNascimento = birthTrim;
@@ -148,7 +152,7 @@ export class RegisterComponent {
     // Validar confirmaÃ§Ã£o de password
     if (this.user.password !== this.user.confirmPassword) {
       this.showPasswordMismatch = true;
-      alert('As passwords nÃ£o coincidem. Por favor, verifique.');
+      this.errorMessage = 'As passwords não coincidem. Por favor, verifique.';
       return;
     }
     this.showPasswordMismatch = false;
@@ -165,7 +169,7 @@ export class RegisterComponent {
             console.log('Token de desenvolvimento (apenas para testes):', res.developmentToken);
           }
         } else {
-          alert('Utilizador criado com sucesso!');
+          this.successMessage = 'Utilizador criado com sucesso!';
           this.router.navigate(['/login']);
         }
       },
@@ -193,9 +197,7 @@ export class RegisterComponent {
         } else {
           errorMessage += 'Erro de ligaÃ§Ã£o ao servidor. Verifica se o servidor estÃ¡ a correr.';
         }
-        if (!errorMessage.toLowerCase().includes('password') && !errorMessage.toLowerCase().includes('senha')) {
-        alert(errorMessage);
-        }
+        this.errorMessage = errorMessage;
       }
     });
   }
@@ -204,15 +206,17 @@ export class RegisterComponent {
     if (!this.registeredEmail) return;
     
     this.isLoading = true;
+    this.errorMessage = '';
+    this.successMessage = '';
     this.authService.reenviarEmailVerificacao(this.registeredEmail).subscribe({
       next: (res) => {
         this.isLoading = false;
-        alert(res.message || 'Email de verificaÃƒÂ§ÃƒÂ£o reenviado com sucesso!');
+        this.successMessage = res.message || 'Email de verificação reenviado com sucesso!';
       },
       error: (err) => {
         this.isLoading = false;
         console.error(err);
-        alert('Erro ao reenviar email. Tente novamente mais tarde.');
+        this.errorMessage = err?.error?.message || 'Erro ao reenviar email. Tente novamente mais tarde.';
       }
     });
   }

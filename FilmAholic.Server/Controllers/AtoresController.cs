@@ -16,12 +16,9 @@ public class AtoresController : ControllerBase
     }
 
     [HttpGet("popular")]
-    public async Task<IActionResult> GetPopularActors([FromQuery] int page = 1, [FromQuery] int count = 10)
+    public async Task<IActionResult> GetPopularActors([FromQuery] int count = 100)
     {
-        if (count <= 0) count = 10;
-        if (count > 50) count = 50;
-
-        var actors = await _movieService.GetPopularActorsAsync(page, count);
+        var actors = await _movieService.GetPopularActorsAsync(page: 1, count: count);
         return Ok(actors);
     }
 

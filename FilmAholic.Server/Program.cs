@@ -8,9 +8,11 @@ using Microsoft.AspNetCore.Http;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
 
-builder.Services.AddControllers();
+builder.Services.AddControllers().AddJsonOptions(options =>
+{
+    options.JsonSerializerOptions.PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase;
+});
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
@@ -20,27 +22,21 @@ builder.Services.AddDbContext<FilmAholicDbContext>(options =>
         sql => sql.EnableRetryOnFailure()
     ));
 
-// Configurar Identity com opções personalizadas
 builder.Services.AddIdentity<Utilizador, IdentityRole>(options =>
 {
-    // Requer confirmação de email (mas não para login externo)
     options.SignIn.RequireConfirmedEmail = true;
-    // Configurações de password
     options.Password.RequireDigit = true;
     options.Password.RequireLowercase = true;
     options.Password.RequireUppercase = true;
     options.Password.RequireNonAlphanumeric = true;
     options.Password.RequiredLength = 8;
-    // Configurações de token
     options.Tokens.EmailConfirmationTokenProvider = TokenOptions.DefaultProvider;
 })
 .AddEntityFrameworkStores<FilmAholicDbContext>()
 .AddDefaultTokenProviders();
 
-// Configurar autenticação externa (OAuth)
 var authBuilder = builder.Services.AddAuthentication();
 
-// Adicionar Google OAuth apenas se as credenciais estiverem configuradas
 var googleClientId = builder.Configuration["Authentication:Google:ClientId"];
 var googleClientSecret = builder.Configuration["Authentication:Google:ClientSecret"];
 if (!string.IsNullOrEmpty(googleClientId) && !string.IsNullOrEmpty(googleClientSecret))
@@ -49,14 +45,12 @@ if (!string.IsNullOrEmpty(googleClientId) && !string.IsNullOrEmpty(googleClientS
     {
         options.ClientId = googleClientId;
         options.ClientSecret = googleClientSecret;
-        options.SaveTokens = true; // Guardar tokens para debug
-        // Adicionar scopes explícitos
+        options.SaveTokens = true;
         options.Scope.Add("https://www.googleapis.com/auth/userinfo.email");
         options.Scope.Add("https://www.googleapis.com/auth/userinfo.profile");
     });
 }
 
-// Adicionar Facebook OAuth apenas se as credenciais estiverem configuradas
 var facebookAppId = builder.Configuration["Authentication:Facebook:AppId"];
 var facebookAppSecret = builder.Configuration["Authentication:Facebook:AppSecret"];
 if (!string.IsNullOrEmpty(facebookAppId) && !string.IsNullOrEmpty(facebookAppSecret))
@@ -65,7 +59,7 @@ if (!string.IsNullOrEmpty(facebookAppId) && !string.IsNullOrEmpty(facebookAppSec
     {
         options.AppId = facebookAppId;
         options.AppSecret = facebookAppSecret;
-        options.SaveTokens = true; // Guardar tokens para debug
+        options.SaveTokens = true;
         options.Scope.Add("public_profile");
         options.Scope.Add("email");
         options.Fields.Add("name");
@@ -75,7 +69,6 @@ if (!string.IsNullOrEmpty(facebookAppId) && !string.IsNullOrEmpty(facebookAppSec
     });
 }
 
-// Configurar cookies para autenticação
 builder.Services.ConfigureApplicationCookie(options =>
 {
     options.Cookie.HttpOnly = true;
@@ -85,7 +78,6 @@ builder.Services.ConfigureApplicationCookie(options =>
     options.Cookie.SecurePolicy = CookieSecurePolicy.Always; 
 });
 
-// Configurar cookies para autenticação externa (OAuth)
 builder.Services.ConfigureExternalCookie(options =>
 {
     options.Cookie.HttpOnly = true;
@@ -97,19 +89,16 @@ builder.Services.ConfigureExternalCookie(options =>
     options.SlidingExpiration = false; 
 });
 
-// Registar serviço de email
 builder.Services.AddScoped<IEmailService, EmailService>();
 
-// Registar serviço de preferências
 builder.Services.AddScoped<IPreferenciasService, PreferenciasService>();
 
-// Registar HttpClient e serviço de filmes para APIs externas
 builder.Services.AddHttpClient();
 builder.Services.AddScoped<IMovieService, MovieService>();
 
 builder.Services.AddCors(options => {
     options.AddPolicy("AllowAngular",
-        policy => policy.WithOrigins("http://localhost:4200", "https://localhost:50905")
+        policy => policy.WithOrigins("http://localhost:4200", "https://localhost:50905", "http://localhost:50905", "https://localhost:7277", "http://localhost:7277")
                         .AllowAnyMethod()
                         .AllowAnyHeader()
                         .AllowCredentials());
@@ -120,14 +109,13 @@ var app = builder.Build();
 app.UseDefaultFiles();
 app.UseStaticFiles();
 
-// Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
 }
 
-app.UseHttpsRedirection();
+// app.UseHttpsRedirection();
 
 app.UseCors("AllowAngular");
 
@@ -139,7 +127,6 @@ app.MapControllers();
 
 app.MapFallbackToFile("/index.html");
 
-// Popular géneros iniciais e desafios se ainda não existirem
 await using (var scope = app.Services.CreateAsyncScope())
 {
     var context = scope.ServiceProvider.GetRequiredService<FilmAholicDbContext>();
@@ -150,7 +137,6 @@ await using (var scope = app.Services.CreateAsyncScope())
         var canConnect = await context.Database.CanConnectAsync();
         if (canConnect)
         {
-            // --------- Generos ----------
             var generosExist = false;
             try
             {
@@ -188,7 +174,6 @@ await using (var scope = app.Services.CreateAsyncScope())
                 logger.LogInformation("Géneros iniciais criados com sucesso.");
             }
 
-            // --------- Desafios ----------
             var desafiosExist = false;
             try
             {
@@ -201,7 +186,6 @@ await using (var scope = app.Services.CreateAsyncScope())
 
             if (!desafiosExist)
             {
-                // Map seed items into new entities (do not set Id explicitly to let DB generate it)
                 var seedList = DesafioSeed.Desafios.Select(d => new Desafio
                 {
                     DataInicio = d.DataInicio,
@@ -222,7 +206,6 @@ await using (var scope = app.Services.CreateAsyncScope())
     catch (Exception ex)
     {
         logger.LogError(ex, "Erro ao popular dados iniciais. Certifique-se de que as migrações foram aplicadas.");
-        // Não lançar a exceção para permitir que a aplicação continue a correr
     }
 }
 

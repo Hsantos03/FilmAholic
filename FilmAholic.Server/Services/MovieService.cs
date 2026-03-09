@@ -1,8 +1,9 @@
-using System.Text.Json;
 using FilmAholic.Server.Data;
 using FilmAholic.Server.DTOs;
 using FilmAholic.Server.Models;
 using Microsoft.EntityFrameworkCore;
+using System.Net.Http;
+using System.Text.Json;
 
 namespace FilmAholic.Server.Services;
 
@@ -65,7 +66,36 @@ public class MovieService : IMovieService
                 PropertyNameCaseInsensitive = false
             });
 
-            return result ?? new TmdbSearchResponse();
+            if (result?.Results == null || result.Results.Count == 0)
+                return result ?? new TmdbSearchResponse();
+
+            // Filter out adult movies right away
+            result.Results = result.Results.Where(r => !r.Adult).ToList();
+
+            // TMDb search does not return runtime; fetch details for each movie to get duration (with limited concurrency)
+            var semaphore = new SemaphoreSlim(5);
+            var tasks = result.Results.Select(async (movie) =>
+            {
+                if (movie.Runtime.HasValue && movie.Runtime.Value > 0) return;
+                await semaphore.WaitAsync();
+                try
+                {
+                    var details = await GetMovieDetailsFromTmdbAsync(movie.Id);
+                    if (details?.Runtime.HasValue == true)
+                        movie.Runtime = details.Runtime;
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogDebug(ex, "Could not fetch runtime for TMDb movie {Id}", movie.Id);
+                }
+                finally
+                {
+                    semaphore.Release();
+                }
+            });
+            await Task.WhenAll(tasks);
+
+            return result;
         }
         catch (Exception ex)
         {
@@ -74,7 +104,7 @@ public class MovieService : IMovieService
         }
     }
 
-    public async Task<TmdbMovieDto?> GetMovieDetailsFromTmdbAsync(int tmdbId)
+    public async Task<TmdbMovieDto?> GetMovieDetailsFromTmdbAsync(int tmdbId, string language = "pt-PT")
     {
         if (string.IsNullOrEmpty(_tmdbApiKey))
         {
@@ -156,19 +186,55 @@ public class MovieService : IMovieService
 
     public async Task<Filme?> GetMovieInfoAsync(int tmdbId)
     {
-        var tmdbMovie = await GetMovieDetailsFromTmdbAsync(tmdbId);
-        if (tmdbMovie == null)
+        // Get Portuguese version for synopsis and genres
+        var tmdbMoviePt = await GetMovieDetailsFromTmdbAsync(tmdbId);
+        if (tmdbMoviePt == null)
         {
             return null;
         }
 
-        OmdbMovieDto? omdbMovie = null;
-        if (!string.IsNullOrEmpty(tmdbMovie.ImdbId))
+        // Exclude adult movies
+        if (tmdbMoviePt.Adult)
         {
-            omdbMovie = await GetMovieDetailsFromOmdbAsync(tmdbMovie.ImdbId);
+            _logger.LogInformation("Skipping TMDb movie {TmdbId} because it is flagged as adult.", tmdbId);
+            return null;
         }
 
-        return MapToFilme(tmdbMovie, omdbMovie);
+        // Get English version for title only
+        var httpClient = _httpClientFactory.CreateClient();
+        var urlEn = $"{_tmdbBaseUrl}/movie/{tmdbId}?api_key={_tmdbApiKey}&language=en-US";
+        var responseEn = await httpClient.GetAsync(urlEn);
+        if (!responseEn.IsSuccessStatusCode)
+        {
+            _logger.LogWarning("TMDb API returned status {StatusCode} for movie {TmdbId}", responseEn.StatusCode, tmdbId);
+            return null;
+        }
+
+        var jsonEn = await responseEn.Content.ReadAsStringAsync();
+        var tmdbMovieEn = JsonSerializer.Deserialize<TmdbMovieDto>(jsonEn, new JsonSerializerOptions
+        {
+            PropertyNameCaseInsensitive = false
+        });
+
+        if (tmdbMovieEn == null)
+        {
+            return null;
+        }
+
+        // Additional guard: english record flagged adult
+        if (tmdbMovieEn.Adult)
+        {
+            _logger.LogInformation("Skipping TMDb movie {TmdbId} because English entry is flagged as adult.", tmdbId);
+            return null;
+        }
+
+        OmdbMovieDto? omdbMovie = null;
+        if (!string.IsNullOrEmpty(tmdbMoviePt.ImdbId))
+        {
+            omdbMovie = await GetMovieDetailsFromOmdbAsync(tmdbMoviePt.ImdbId);
+        }
+
+        return MapToFilme(tmdbMovieEn, tmdbMoviePt, omdbMovie);
     }
 
     public async Task<Filme> GetOrCreateMovieFromTmdbAsync(int tmdbId)
@@ -222,27 +288,30 @@ public class MovieService : IMovieService
         filme.Duracao = updatedInfo.Duracao;
         filme.TmdbId = updatedInfo.TmdbId;
         filme.Ano = updatedInfo.Ano;
+        filme.ReleaseDate = updatedInfo.ReleaseDate;
 
         await _context.SaveChangesAsync();
 
         return filme;
     }
 
-    private Filme MapToFilme(TmdbMovieDto tmdbMovie, OmdbMovieDto? omdbMovie)
+    private Filme MapToFilme(TmdbMovieDto tmdbMovieEn, TmdbMovieDto tmdbMoviePt, OmdbMovieDto? omdbMovie)
     {
         var filme = new Filme
         {
-            TmdbId = tmdbMovie.Id.ToString(),
-            Titulo = tmdbMovie.Title,
-            PosterUrl = tmdbMovie.PosterPath != null
-                ? $"https://image.tmdb.org/t/p/w500{tmdbMovie.PosterPath}"
+            TmdbId = tmdbMovieEn.Id.ToString(),
+            Titulo = !string.IsNullOrEmpty(tmdbMoviePt.Title) ? tmdbMoviePt.Title : tmdbMovieEn.Title,
+            PosterUrl = tmdbMoviePt.PosterPath != null
+            ? $"https://image.tmdb.org/t/p/w500{tmdbMoviePt.PosterPath}"
+            : tmdbMovieEn.PosterPath != null
+                ? $"https://image.tmdb.org/t/p/w500{tmdbMovieEn.PosterPath}"
                 : "",
-            Duracao = tmdbMovie.Runtime ?? 0
+            Duracao = tmdbMovieEn.Runtime ?? 0
         };
 
-        if (tmdbMovie.Genres != null && tmdbMovie.Genres.Any())
+        if (tmdbMoviePt.Genres != null && tmdbMoviePt.Genres.Any())
         {
-            filme.Genero = string.Join(", ", tmdbMovie.Genres.Select(g => g.Name));
+            filme.Genero = string.Join(", ", tmdbMoviePt.Genres.Select(g => g.Name));
         }
         else if (omdbMovie != null && !string.IsNullOrEmpty(omdbMovie.Genre))
         {
@@ -267,13 +336,32 @@ public class MovieService : IMovieService
             filme.PosterUrl = omdbMovie.Poster;
         }
 
-        if (!string.IsNullOrEmpty(tmdbMovie.ReleaseDate) && tmdbMovie.ReleaseDate.Length >= 4 && int.TryParse(tmdbMovie.ReleaseDate.Substring(0, 4), out var ano))
+        // set Ano from TMDb release date (year)
+        if (!string.IsNullOrEmpty(tmdbMoviePt.ReleaseDate) && tmdbMoviePt.ReleaseDate.Length >= 4 && int.TryParse(tmdbMoviePt.ReleaseDate.Substring(0, 4), out var ano))
         {
             filme.Ano = ano;
         }
         if (filme.Ano == null && omdbMovie != null && !string.IsNullOrEmpty(omdbMovie.Year) && int.TryParse(omdbMovie.Year.Trim(), out var anoOmdb))
         {
             filme.Ano = anoOmdb;
+        }
+
+        // New: parse and store full release date when available (TMDb format is "yyyy-MM-dd")
+        if (!string.IsNullOrEmpty(tmdbMoviePt.ReleaseDate))
+        {
+            if (DateTime.TryParseExact(tmdbMoviePt.ReleaseDate, "yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.AssumeUniversal | System.Globalization.DateTimeStyles.AdjustToUniversal, out var parsedDate))
+            {
+                // store as UTC (DB will persist DateTime)
+                filme.ReleaseDate = parsedDate;
+            }
+            else if (DateTime.TryParse(tmdbMoviePt.ReleaseDate, out var fallbackDate))
+            {
+                filme.ReleaseDate = fallbackDate;
+            }
+        }
+        else if (omdbMovie != null && !string.IsNullOrEmpty(omdbMovie.Released) && DateTime.TryParse(omdbMovie.Released, out var omdbDate))
+        {
+            filme.ReleaseDate = omdbDate;
         }
 
         return filme;
@@ -306,8 +394,10 @@ public class MovieService : IMovieService
                 return new List<Filme>();
             }
 
+            // Filter out adult movies
+            var moviesToProcess = result.Results.Where(m => !m.Adult).Take(count).ToList();
+
             var movies = new List<Filme>();
-            var moviesToProcess = result.Results.Take(count).ToList();
 
             foreach (var tmdbMovie in moviesToProcess)
             {
@@ -336,7 +426,7 @@ public class MovieService : IMovieService
                         omdbMovie = await GetMovieDetailsFromOmdbAsync(fullDetails.ImdbId);
                     }
 
-                    var filme = MapToFilme(fullDetails, omdbMovie);
+                    var filme = MapToFilme(tmdbMovie, fullDetails, omdbMovie);
                     movies.Add(filme);
                 }
                 catch (Exception ex)
@@ -354,7 +444,7 @@ public class MovieService : IMovieService
         } 
     }
 
-    public async Task<List<PopularActorDto>> GetPopularActorsAsync(int page = 1, int count = 10)
+    public async Task<List<PopularActorDto>> GetPopularActorsAsync(int page = 1, int count = 20)
     {
         if (string.IsNullOrEmpty(_tmdbApiKey))
         {
@@ -364,35 +454,55 @@ public class MovieService : IMovieService
 
         try
         {
-            var httpClient = _httpClientFactory.CreateClient();
-            var url = $"{_tmdbBaseUrl}/person/popular?api_key={_tmdbApiKey}&page={page}&language=pt-PT";
+            var allPeople = new List<TmdbPersonDto>();
+            var pagesToFetch = Math.Min(5, (int)Math.Ceiling(count / 20.0) + 2);
 
-            var response = await httpClient.GetAsync(url);
-            response.EnsureSuccessStatusCode();
-
-            var json = await response.Content.ReadAsStringAsync();
-            var result = JsonSerializer.Deserialize<TmdbPopularPeopleResponse>(json, new JsonSerializerOptions
+            for (int p = 1; p <= pagesToFetch; p++)
             {
-                PropertyNameCaseInsensitive = false
-            });
+                var httpClient = _httpClientFactory.CreateClient();
+                var url = $"{_tmdbBaseUrl}/person/popular?api_key={_tmdbApiKey}&page={p}&language=en-US";
+                var response = await httpClient.GetAsync(url);
+                if (!response.IsSuccessStatusCode) break;
 
-            if (result?.Results == null || result.Results.Count == 0)
+                var json = await response.Content.ReadAsStringAsync();
+                var result = JsonSerializer.Deserialize<TmdbPopularPeopleResponse>(json, new JsonSerializerOptions
+                {
+                    PropertyNameCaseInsensitive = false
+                });
+
+                if (result?.Results == null || result.Results.Count == 0) break;
+                allPeople.AddRange(result.Results);
+            }
+
+            if (allPeople.Count == 0)
             {
                 return new List<PopularActorDto>();
             }
 
-            return result.Results
+            // embaralha para não dar sempre os mesmos pares
+            var rng = new Random();
+            var shuffled = allPeople
+                .Where(p => !string.IsNullOrEmpty(p.ProfilePath))
+                .OrderBy(_ => rng.Next())
+                .ToList();
+
+            var actors = shuffled
                 .Take(count)
                 .Select(p => new PopularActorDto
                 {
                     Id = p.Id,
                     Nome = p.Name,
                     Popularidade = p.Popularity,
-                    FotoUrl = p.ProfilePath != null
-                        ? $"https://image.tmdb.org/t/p/w500{p.ProfilePath}"
-                        : ""
+                    FotoUrl = $"https://image.tmdb.org/t/p/w500{p.ProfilePath}"
                 })
                 .ToList();
+
+            if (actors.Count > count)
+            {
+                actors = actors.Take(count).ToList();
+            }
+
+            return actors;
         }
         catch (Exception ex)
         {
@@ -508,8 +618,9 @@ public class MovieService : IMovieService
                 return new List<Filme>();
             }
 
+            // Filter out adult movies
             var recommendations = new List<Filme>();
-            var moviesToProcess = result.Results.Take(count).ToList();
+            var moviesToProcess = result.Results.Where(m => !m.Adult).Take(count).ToList();
 
             foreach (var tmdbMovie in moviesToProcess)
             {

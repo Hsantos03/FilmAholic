@@ -49,7 +49,7 @@ export class SearchResultsComponent implements OnInit, OnDestroy {
   selectedDateFrom: string | null = null;
   selectedDateTo: string | null = null;
 
-  // sort
+  // sort: null = keep API order
   sortBy: SortOption = null;
   showSortMenu = false;
 
@@ -63,6 +63,7 @@ export class SearchResultsComponent implements OnInit, OnDestroy {
   ) { }
 
   ngOnInit(): void {
+    // Restore filter state from sessionStorage
     const savedGenres = sessionStorage.getItem('selectedGenres');
     const savedDateFrom = sessionStorage.getItem('selectedDateFrom');
     const savedDateTo = sessionStorage.getItem('selectedDateTo');
@@ -80,6 +81,7 @@ export class SearchResultsComponent implements OnInit, OnDestroy {
 
       if (this.query) {
         this.loadActorResults(this.query);
+        // Always search both local DB and TMDb for better coverage
         if (this.selectedGenres.length > 0 || this.selectedDateFrom || this.selectedDateTo) {
           this.filterDbMovies(this.query, this.selectedGenres, this.selectedDateFrom, this.selectedDateTo);
         } else {
@@ -111,10 +113,18 @@ export class SearchResultsComponent implements OnInit, OnDestroy {
     const list = [...this.results];
     switch (this.sortBy) {
       case 'date-desc':
-        list.sort((a, b) => (b.release_date || '').localeCompare(a.release_date || ''));
+        list.sort((a, b) => {
+          const da = a.release_date || '';
+          const db = b.release_date || '';
+          return db.localeCompare(da);
+        });
         break;
       case 'date-asc':
-        list.sort((a, b) => (a.release_date || '').localeCompare(b.release_date || ''));
+        list.sort((a, b) => {
+          const da = a.release_date || '';
+          const db = b.release_date || '';
+          return da.localeCompare(db);
+        });
         break;
       case 'rating-desc':
         list.sort((a, b) => (b.vote_average ?? 0) - (a.vote_average ?? 0));
@@ -164,10 +174,12 @@ export class SearchResultsComponent implements OnInit, OnDestroy {
     this.showSortMenu = false;
   }
 
+  // Load combined results from both local DB and TMDb for better coverage
   private loadCombinedResults(query: string, page: number): void {
     this.isLoading = true;
     this.error = '';
     this.results = [];
+
     const q = query.trim().toLowerCase();
 
     this.filmesService.searchMovies(query, page).subscribe({
@@ -181,6 +193,7 @@ export class SearchResultsComponent implements OnInit, OnDestroy {
           runtime: r.runtime ?? undefined
         }));
 
+        // Só inclui filmes locais que correspondam à pesquisa
         this.filmesService.getAll().subscribe({
           next: (localMovies) => {
             const localResults = (localMovies || [])
@@ -194,6 +207,7 @@ export class SearchResultsComponent implements OnInit, OnDestroy {
                 vote_average: undefined,
                 runtime: m.duracao ?? undefined
               }));
+
             const allResults = [...localResults, ...tmdbResults];
             const uniqueResults = this.deduplicateResults(allResults);
             this.results = uniqueResults.slice(0, 30);
@@ -212,6 +226,7 @@ export class SearchResultsComponent implements OnInit, OnDestroy {
     });
   }
 
+  // Helper method to deduplicate results by tmdbId or title
   private deduplicateResults(results: SearchResultItem[]): SearchResultItem[] {
     const seen = new Map<string, SearchResultItem>();
     const unique: SearchResultItem[] = [];
@@ -268,7 +283,8 @@ export class SearchResultsComponent implements OnInit, OnDestroy {
     });
   }
 
-  private filterDbMovies(query: string, genres: string[] | null, dateFrom: string | null, dateTo: string | null): void {
+  // Filter using local DB movies (preferred for category filtering)
+  private filterDbMovies(query: string, genres: string[] | null, dateFrom: string | null = null, dateTo: string | null = null): void {
     this.isLoading = true;
     this.error = '';
     this.results = [];
@@ -281,8 +297,8 @@ export class SearchResultsComponent implements OnInit, OnDestroy {
           const movieGenres = (m?.genero || '').toLowerCase();
           const genreMatches = !genres || genres.length === 0 ||
             genres.some(selected => movieGenres.split(',').some((g: string) => g.trim().toLowerCase() === selected.toLowerCase()));
-          let dateMatches = true;
           const releaseDate = m?.ano ? m.ano.toString() : '';
+          let dateMatches = true;
           if (dateFrom && releaseDate) dateMatches = dateMatches && releaseDate >= dateFrom;
           if (dateTo && releaseDate) dateMatches = dateMatches && releaseDate <= dateTo;
           return titleMatches && genreMatches && dateMatches;
@@ -306,7 +322,7 @@ export class SearchResultsComponent implements OnInit, OnDestroy {
       },
       error: () => {
         this.isLoading = false;
-        if (!genres?.length && !dateFrom && !dateTo) this.loadResults(query, 1);
+        if ((!genres || genres.length === 0) && !dateFrom && !dateTo) this.loadResults(query, 1);
       }
     });
   }
@@ -316,13 +332,14 @@ export class SearchResultsComponent implements OnInit, OnDestroy {
   }
 
   public toggleGenre(genre: string): void {
-    const idx = this.selectedGenres.indexOf(genre);
-    if (idx > -1) this.selectedGenres.splice(idx, 1);
+    const index = this.selectedGenres.indexOf(genre);
+    if (index > -1) this.selectedGenres.splice(index, 1);
     else this.selectedGenres.push(genre);
     sessionStorage.setItem('selectedGenres', JSON.stringify(this.selectedGenres));
     this.applyFilters();
   }
 
+  // Apply all filters (genre + date)
   public applyFilters(): void {
     sessionStorage.setItem('selectedDateFrom', this.selectedDateFrom || '');
     sessionStorage.setItem('selectedDateTo', this.selectedDateTo || '');

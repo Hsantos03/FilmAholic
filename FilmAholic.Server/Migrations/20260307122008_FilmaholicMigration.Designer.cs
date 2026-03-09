@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace FilmAholic.Server.Migrations
 {
     [DbContext(typeof(FilmAholicDbContext))]
-    [Migration("20260205212549_initialMigration")]
-    partial class initialMigration
+    [Migration("20260307122008_FilmaholicMigration")]
+    partial class FilmaholicMigration
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -25,7 +25,39 @@ namespace FilmAholic.Server.Migrations
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
-            modelBuilder.Entity("FilmAholic.Server.Models.Comment", b =>
+            modelBuilder.Entity("FilmAholic.Server.Models.CommentVote", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("CommentId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("DataAtualizacao")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("DataCriacao")
+                        .HasColumnType("datetime2");
+
+                    b.Property<bool>("IsLike")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CommentId", "UserId")
+                        .IsUnique();
+
+                    b.ToTable("CommentVotes");
+                });
+
+            modelBuilder.Entity("FilmAholic.Server.Models.Comments", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -39,16 +71,12 @@ namespace FilmAholic.Server.Migrations
                     b.Property<int>("FilmeId")
                         .HasColumnType("int");
 
-                    b.Property<int>("Rating")
-                        .HasColumnType("int");
-
                     b.Property<string>("Texto")
                         .IsRequired()
                         .HasMaxLength(2000)
                         .HasColumnType("nvarchar(2000)");
 
                     b.Property<string>("UserId")
-                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("UserName")
@@ -124,6 +152,9 @@ namespace FilmAholic.Server.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<DateTime?>("ReleaseDate")
+                        .HasColumnType("datetime2");
+
                     b.Property<string>("Titulo")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
@@ -135,6 +166,35 @@ namespace FilmAholic.Server.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Filmes");
+                });
+
+            modelBuilder.Entity("FilmAholic.Server.Models.GameHistory", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("DataCriacao")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("RoundsJson")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("Score")
+                        .HasColumnType("int");
+
+                    b.Property<string>("UtilizadorId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UtilizadorId");
+
+                    b.ToTable("GameHistories", (string)null);
                 });
 
             modelBuilder.Entity("FilmAholic.Server.Models.Genero", b =>
@@ -153,6 +213,35 @@ namespace FilmAholic.Server.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Generos");
+                });
+
+            modelBuilder.Entity("FilmAholic.Server.Models.MovieRating", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("FilmeId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Score")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("FilmeId", "UserId")
+                        .IsUnique();
+
+                    b.ToTable("MovieRatings");
                 });
 
             modelBuilder.Entity("FilmAholic.Server.Models.UserDesafio", b =>
@@ -474,7 +563,29 @@ namespace FilmAholic.Server.Migrations
                     b.ToTable("AspNetUserTokens", (string)null);
                 });
 
-            modelBuilder.Entity("FilmAholic.Server.Models.Comment", b =>
+            modelBuilder.Entity("FilmAholic.Server.Models.CommentVote", b =>
+                {
+                    b.HasOne("FilmAholic.Server.Models.Comments", "Comment")
+                        .WithMany()
+                        .HasForeignKey("CommentId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Comment");
+                });
+
+            modelBuilder.Entity("FilmAholic.Server.Models.Comments", b =>
+                {
+                    b.HasOne("FilmAholic.Server.Models.Filme", "Filme")
+                        .WithMany()
+                        .HasForeignKey("FilmeId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Filme");
+                });
+
+            modelBuilder.Entity("FilmAholic.Server.Models.MovieRating", b =>
                 {
                     b.HasOne("FilmAholic.Server.Models.Filme", "Filme")
                         .WithMany()

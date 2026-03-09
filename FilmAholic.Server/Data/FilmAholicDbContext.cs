@@ -1,4 +1,4 @@
-﻿using FilmAholic.Server.Models;
+using FilmAholic.Server.Models;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 
@@ -9,7 +9,9 @@ public class FilmAholicDbContext : IdentityDbContext<Utilizador>
     public DbSet<UserMovie> UserMovies { get; set; }
 
     public FilmAholicDbContext(DbContextOptions<FilmAholicDbContext> options) : base(options) { }
-    public DbSet<Comment> Comments { get; set; }
+    public DbSet<Comments> Comments { get; set; }
+    public DbSet<MovieRating> MovieRatings { get; set; }
+    public DbSet<CommentVote> CommentVotes { get; set; }
     public DbSet<Filme> Filmes => Set<Filme>();
     public DbSet<Genero> Generos => Set<Genero>();
     public DbSet<UtilizadorGenero> UtilizadorGeneros => Set<UtilizadorGenero>();
@@ -17,6 +19,9 @@ public class FilmAholicDbContext : IdentityDbContext<Utilizador>
 
     // NEW: UserDesafios table to track user progress on desafios
     public DbSet<UserDesafio> UserDesafios => Set<UserDesafio>();
+
+    // NEW: Game history
+    public DbSet<GameHistory> GameHistories => Set<GameHistory>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -40,6 +45,34 @@ public class FilmAholicDbContext : IdentityDbContext<Utilizador>
             .HasOne(ug => ug.Genero)
             .WithMany(g => g.Utilizadores)
             .HasForeignKey(ug => ug.GeneroId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+       builder.Entity<MovieRating>()
+        .HasIndex(r => new { r.FilmeId, r.UserId })
+        .IsUnique();
+
+        builder.Entity<MovieRating>()
+            .HasOne(r => r.Filme)
+            .WithMany()
+            .HasForeignKey(r => r.FilmeId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        // Compatibilidade: tabela Comments sem coluna DataEdicao; coluna do filme usa nome EF por defeito (FilmeId)
+        builder.Entity<Comments>(e =>
+        {
+            e.Ignore(c => c.DataEdicao);
+            // Allow UserId to be nullable for deleted accounts
+            e.Property(c => c.UserId).IsRequired(false);
+        });
+
+        builder.Entity<CommentVote>()
+            .HasIndex(v => new { v.CommentId, v.UserId })
+            .IsUnique();
+
+        builder.Entity<CommentVote>()
+            .HasOne(v => v.Comment)
+            .WithMany()
+            .HasForeignKey(v => v.CommentId)
             .OnDelete(DeleteBehavior.Cascade);
 
         // Optional: basic configuration for Desafio
@@ -67,6 +100,16 @@ public class FilmAholicDbContext : IdentityDbContext<Utilizador>
 
             ud.Property(x => x.QuantidadeProgresso).HasDefaultValue(0);
             ud.Property(x => x.DataAtualizacao).HasDefaultValueSql("CURRENT_TIMESTAMP");
+        });
+
+        // Configure GameHistory basic mapping
+        builder.Entity<GameHistory>(gh =>
+        {
+            gh.HasKey(x => x.Id);
+            gh.Property(x => x.UtilizadorId).IsRequired();
+            gh.Property(x => x.RoundsJson).IsRequired();
+            gh.HasIndex(x => x.UtilizadorId);
+            gh.ToTable("GameHistories");
         });
     }
 }

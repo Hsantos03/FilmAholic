@@ -1,13 +1,19 @@
 <div class="page">
   <header class="topbar">
-    <button class="icon-btn" (click)="openDesafios()" aria-label="Desafios">&#127942;</button>
+    <button class="icon-btn" (click)="openDesafios()" aria-label="Desafios">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+        <path d="M12 2L14.09 8.26L21 9.27L16.5 13.14L17.82 20L12 16.77L6.18 20L7.5 13.14L3 9.27L9.91 8.26L12 2Z"/>
+      </svg>
+    </button>
 
     <a class="brand" routerLink="/dashboard" aria-label="Go to dashboard">FilmAholic</a>
 
     <div class="search" #searchContainer>
       <div class="search-pill" role="search">
         <button class="pill-icon left" type="button" aria-label="Opcoes">
-          &#9776;
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"/>
+          </svg>
         </button>
 
         <input type="text"
@@ -19,11 +25,21 @@
                aria-label="Pesquisar" />
 
         <button class="pill-icon right" type="button" aria-label="Pesquisar" (click)="doSearch()">
-          &#128269;
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
+          </svg>
         </button>
       </div>
 
       <div class="search-menu" *ngIf="showSearchMenu" role="listbox" aria-label="Sugestões de filmes">
+        <div *ngIf="isSuggestionsMode" class="search-menu-title">Sugestões para si</div>
+        <div *ngIf="isSuggestionsMode && isLoadingSuggestions" class="search-empty">A carregar sugestões…</div>
+        <div *ngIf="isSuggestionsMode && !isLoadingSuggestions && searchResults.length === 0 && hasGenrePreferences" class="search-empty">
+          Nenhum filme dos teus géneros apareceu agora — tenta outro título ou mistura de géneros.
+        </div>
+        <div *ngIf="isSuggestionsMode && !isLoadingSuggestions && searchResults.length === 0 && !hasGenrePreferences" class="search-empty">
+          Escolhe os teus géneros favoritos no perfil para desbloquear sugestões só para ti.
+        </div>
         <div *ngIf="searchResultsLoading" class="search-empty">
           A pesquisar…
         </div>
@@ -35,17 +51,80 @@
           <img class="search-thumb" [src]="posterOf(m)" [alt]="m.titulo" />
           <div class="search-title">{{ m.titulo }}</div>
         </a>
-
-        <div *ngIf="!searchResultsLoading && searchResults.length === 0" class="search-empty">
+        <div *ngIf="!isSuggestionsMode && !searchResultsLoading && searchResults.length === 0" class="search-empty">
           Nao foram encontrados resultados para "{{ searchTerm }}"
         </div>
       </div>
     </div>
 
     <div class="top-actions">
-      <button class="icon-btn" aria-label="Favoritos">&#128278;</button>
+      <button class="icon-btn" aria-label="Favoritos">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M17 3H7c-1.1 0-1.99.9-1.99 2L5 21l7-3 7 3V5c0-1.1-.9-2-2-2z"/>
+        </svg>
+      </button>
 
-      <button class="icon-btn" routerLink="/profile" aria-label="Perfil">&#128100;</button>
+      <!-- Cinema Movies -->
+      <button class="icon-btn" routerLink="/cinema-movies" aria-label="Filmes em Cartaz">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M18 4l2 4h-3l-2-4h-2l2 4h-3l-2-4H8l2 4H7L5 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V4h-4z"/>
+        </svg>
+      </button>
+
+      <!-- Higher or Lower -->
+      <button class="icon-btn" routerLink="/higher-or-lower" title="Higher or lower" aria-label="Higher or lower">🎮</button>
+
+      <!-- Notifications bell with menu -->
+      <div class="notifications-wrap" style="position: relative;">
+        <button
+          class="icon-btn"
+          type="button"
+          (click)="toggleNotifications($event)"
+          aria-haspopup="true"
+          [attr.aria-expanded]="isNotificationsOpen"
+          aria-label="Notificações">
+          &#128276;
+        </button>
+
+        <div
+          class="notifications-menu"
+          #notificationsContainer
+          *ngIf="isNotificationsOpen"
+          role="menu"
+          aria-label="Notificações"
+          style="position: absolute; top: calc(100% + 8px); right: 0; min-width:260px; background: var(--bg-card, #0a0a0a); border: 1px solid rgba(255,255,255,0.06); border-radius:8px; box-shadow: 0 8px 24px rgba(0,0,0,0.45); padding:8px; z-index:1500;">
+
+          <div *ngIf="upcomingMovies.length > 0; else noUpcoming" style="display:flex; flex-direction:column; gap:8px;">
+            <div style="font-weight:600; padding:6px 8px; color:var(--text-primary, #fff);">Upcoming movies</div>
+
+            <a
+              class="notification-card"
+              *ngFor="let m of upcomingMovies"
+              href="javascript:void(0)"
+              role="menuitem"
+              (click)="openNotificationMovie(m)"
+              style="display:flex; gap:10px; align-items:center; padding:8px; border-radius:8px; text-decoration:none; color:inherit;">
+              <img [src]="posterOf(m)" [alt]="m.titulo" style="width:56px; height:84px; object-fit:cover; border-radius:6px; flex-shrink:0;" />
+              <div style="display:flex; flex-direction:column; min-width:0;">
+                <div style="font-size:13px; font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ m.titulo }}</div>
+                <div style="font-size:12px; color:var(--text-muted,#aaa); margin-top:6px;">{{ releaseLabel(m) }}</div>
+              </div>
+            </a>
+          </div>
+
+          <ng-template #noUpcoming>
+            <div class="notifications-empty" style="padding:12px; color:var(--text-muted, #aaa);">
+              Ainda sem próximas estreias.
+            </div>
+          </ng-template>
+        </div>
+      </div>
+
+      <button class="icon-btn" routerLink="/profile" aria-label="Perfil">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+        </svg>
+      </button>
     </div>
   </header>
 
@@ -126,7 +205,11 @@
         </div>
         <div class="desafios-dashboard-cards">
           <button class="desafio-card-btn" (click)="openDesafios()" type="button">
-            <span class="desafio-card-icon">&#127942;</span>
+            <span class="desafio-card-icon">
+              <svg width="42" height="42" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12 2L14.09 8.26L21 9.27L16.5 13.14L17.82 20L12 16.77L6.18 20L7.5 13.14L3 9.27L9.91 8.26L12 2Z"/>
+              </svg>
+            </span>
             <span class="desafio-card-label">Ver desafios</span>
             <span class="desafio-card-desc">Completa desafios e ganha XP</span>
           </button>
@@ -148,7 +231,7 @@
 
         <div class="nextup-content">
           <div *ngIf="!isLoadingMovies && movies.length === 0" class="empty-list-message">
-            Nenhum filme disponível.
+            A lista está em branco como um ecrã antes da sessão. Procura ou escolhe géneros para começar o espetáculo.
           </div>
 
           <div class="nextup-card" *ngIf="nextToWatch">
@@ -158,7 +241,7 @@
 
             <div class="nextup-meta">
               <h3 class="nextup-title">{{ nextToWatch.titulo }}</h3>
-              <div class="nextup-sub">{{ nextToWatch.genero }} &middot; {{ nextToWatch.duracao }} min</div>
+              <div class="nextup-sub">{{ nextToWatch.genero }} &middot; {{ nextToWatch.duracao | formatDuration }}</div>
               <div class="nextup-actions">
                 <button class="action-btn" (click)="goToMovieDetail(nextToWatch.id)">Ver detalhes</button>
               </div>
@@ -176,31 +259,9 @@
     <section class="strip strip-full" *ngIf="!isLoadingActors && atores.length">
       <div class="strip-inner">
         <div class="section-head">
-          <h2>Top 10 atores</h2>
+          <h2>Top 10 Atores</h2>
         </div>
-
-        <div class="carousel top10">
-          <button class="chevron left"
-                  (click)="prevAtores()"
-                  [disabled]="atoresIndex === 0"
-                  aria-label="Anterior">
-            &lsaquo;
-          </button>
-
-          <div class="carousel-track">
-            <div class="actor-card" *ngFor="let a of atoresVisible">
-              <img class="actor-photo" [src]="fotoAtor(a)" [alt]="a.nome" />
-              <div class="actor-name">{{ a.nome }}</div>
-            </div>
-          </div>
-
-          <button class="chevron right"
-                  (click)="nextAtores()"
-                  [disabled]="atoresIndex >= (atores.length - atoresVisibleCount)"
-                  aria-label="Seguinte">
-            &rsaquo;
-          </button>
-        </div>
+        <app-actors-carousel [actors]="atores" [visibleCount]="atoresVisibleCount"></app-actors-carousel>
       </div>
     </section>
   </main>
@@ -230,7 +291,12 @@
               {{ d.progresso }} / {{ d.quantidadeNecessaria }}
             </span>
 
-            <span *ngIf="isCompleted(d)" aria-live="polite">&#10003; Completed</span>
+            <span *ngIf="isCompleted(d)" aria-live="polite">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="#28a745">
+                <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
+              </svg>
+              Completed
+            </span>
           </div>
 
           <div class="progress-bar" aria-hidden="true">

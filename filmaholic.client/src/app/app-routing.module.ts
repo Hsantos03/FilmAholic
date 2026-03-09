@@ -10,6 +10,8 @@ import { ProfileComponent } from './components/profile/profile.component';
 import { SelecionarGenerosComponent } from './components/selecionar-generos/selecionar-generos.component';
 import { SearchResultsComponent } from './components/search-results/search-results.component';
 import { MoviePageComponent } from './components/movie-page/movie-page.component';
+import { HigherOrLowerComponent } from './components/higher-or-lower/higher-or-lower.component';
+import { CinemaMoviesComponent } from './components/cinema-movies/cinema-movies.component';
 
 const routes: Routes = [
   { path: 'register', component: RegisterComponent },
@@ -22,6 +24,8 @@ const routes: Routes = [
   { path: 'profile', component: ProfileComponent },
   { path: 'search', component: SearchResultsComponent },
   { path: 'movie-detail/:id', component: MoviePageComponent }, // new route
+  { path: 'higher-or-lower', component: HigherOrLowerComponent }, // game page
+  { path: 'cinema-movies', component: CinemaMoviesComponent }, // cinema movies page
   { path: '', redirectTo: '/register', pathMatch: 'full' } // Rota inicial
 ];
 
