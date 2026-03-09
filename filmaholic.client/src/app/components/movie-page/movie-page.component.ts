@@ -62,6 +62,8 @@ export class MoviePageComponent implements OnInit, OnDestroy {
   cast: CastMemberDto[] = [];
   isLoadingCast = false;
 
+  trailerUrl: string | null = null;
+
   private routeSub!: Subscription;
 
   constructor(
@@ -164,6 +166,7 @@ export class MoviePageComponent implements OnInit, OnDestroy {
       next: (f) => {
         this.filme = f;
         this.isLoading = false;
+        this.loadTrailer(id);
         
         if (this.filme) {
           this.loadRatings(id);
@@ -220,7 +223,8 @@ export class MoviePageComponent implements OnInit, OnDestroy {
           // This is a regular TMDB movie from our database
           this.filme = f;
           this.isLoading = false;
-          
+
+          this.loadTrailer(this.filme.tmdbId ? parseInt(this.filme.tmdbId) : id);
           this.loadRatings(this.filme.id);
           this.loadOverviewFromTmdb(this.filme);
           this.loadComments(this.filme.id);
@@ -244,6 +248,13 @@ export class MoviePageComponent implements OnInit, OnDestroy {
           this.isLoading = false;
         }
       }
+    });
+  }
+
+  private loadTrailer(id: number): void {
+    this.filmesService.getTrailer(id).subscribe({
+      next: (url) => this.trailerUrl = url,
+      error: () => this.trailerUrl = null
     });
   }
 

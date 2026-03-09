@@ -165,4 +165,17 @@ export class CinemaMoviesComponent implements OnInit, OnDestroy, AfterViewInit {
     
     return (hours * 60) + minutes;
   }
+
+  formatDuration(duracao: string | number): string {
+    if (!duracao) return '';
+
+    if (typeof duracao === 'string' && duracao.includes('h')) return duracao;
+
+    const mins = typeof duracao === 'string' ? parseInt(duracao) : duracao;
+    if (isNaN(mins) || mins <= 0) return '';
+
+    const h = Math.floor(mins / 60);
+    const m = mins % 60;
+    return h > 0 ? `${h}h ${m}min` : `${m}min`;
+  }
 }
