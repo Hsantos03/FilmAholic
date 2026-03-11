@@ -1,32 +1,71 @@
 <div class="cinema-map-page">
-  <header class="cinema-map-header">
-    <h1>Cinemas próximos</h1>
-    <p class="subtitle">Veja os cinemas no mapa e a distância a si (com localização ativada).</p>
+
+  <!-- BG ORBS -->
+  <div class="bg-orb orb1"></div>
+  <div class="bg-orb orb2"></div>
+
+  <!-- BOTÃO VOLTAR — canto superior direito -->
+  <button class="back-btn" routerLink="/dashboard">
+    ← Dashboard
+  </button>
+
+  <!-- HERO HEADER -->
+  <header class="cinema-hero">
+    <div class="hero-badge">📍 LOCALIZAÇÃO</div>
+    <h1 class="hero-title">Cinemas<span class="title-accent"> Próximos</span></h1>
+    <p class="hero-sub">Encontra o cinema mais perto de ti e planeia a tua próxima sessão.</p>
   </header>
 
-  <div *ngIf="loading" class="state loading">
-    <span class="spinner"></span>
-    A obter a sua localização e a carregar cinemas…
+  <!-- LOADING -->
+  <div *ngIf="loading" class="state-loading">
+    <div class="loading-ring"></div>
+    <p>A obter a sua localização e a carregar cinemas…</p>
   </div>
 
-  <div *ngIf="!loading && geoError" class="state geo-error" role="alert">
-    {{ geoError }}
+  <!-- ERROS -->
+  <div *ngIf="!loading && geoError" class="state-error" role="alert">
+    <span>⚠️</span> {{ geoError }}
+  </div>
+  <div *ngIf="!loading && cinemasError" class="state-error" role="alert">
+    <span>⚠️</span> Não foi possível carregar a lista de cinemas. Tente mais tarde.
   </div>
 
-  <div *ngIf="!loading && cinemasError" class="state cinemas-error" role="alert">
-    Não foi possível carregar a lista de cinemas. Tente mais tarde.
+  <!-- MAPA -->
+  <div class="map-wrap" [class.hidden]="loading">
+    <div #mapContainer class="map-container"></div>
+    <div class="map-overlay-label">🗺️ Mapa interativo</div>
   </div>
 
-  <div #mapContainer class="map-container" [class.hidden]="loading"></div>
+  <!-- LISTA DE CINEMAS -->
+  <section *ngIf="!loading && cinemas.length > 0"
+           class="cinema-list"
+           aria-label="Lista de cinemas por distância">
 
-  <section *ngIf="!loading && cinemas.length > 0" class="cinema-list" aria-label="Lista de cinemas por distância">
-    <h2>Cinemas por distância</h2>
-    <ul>
-      <li *ngFor="let c of sortedCinemas" class="cinema-item">
-        <strong>{{ c.nome }}</strong>
-        <span class="morada">{{ c.morada }}</span>
-        <span *ngIf="c.distanceKm != null" class="distance">{{ c.distanceKm }} km</span>
-      </li>
-    </ul>
+    <div class="list-header">
+      <h2 class="list-title">Cinemas por distância</h2>
+      <span class="list-count">{{ cinemas.length }} cinemas</span>
+    </div>
+
+    <div class="cinema-grid">
+      <div *ngFor="let c of sortedCinemas; let i = index"
+           class="cinema-card"
+           [style.animation-delay]="i * 50 + 'ms'">
+
+        <div class="cinema-rank">{{ i + 1 }}</div>
+
+        <div class="cinema-icon">🎬</div>
+
+        <div class="cinema-info">
+          <strong class="cinema-name">{{ c.nome }}</strong>
+          <span class="cinema-address">{{ c.morada }}</span>
+        </div>
+
+        <div class="cinema-distance" *ngIf="c.distanceKm != null">
+          <span class="dist-value">{{ c.distanceKm }}</span>
+          <span class="dist-unit">km</span>
+        </div>
+
+      </div>
+    </div>
   </section>
 </div>
