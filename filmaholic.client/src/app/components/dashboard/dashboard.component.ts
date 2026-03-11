@@ -6,6 +6,7 @@ import { DesafiosService } from '../../services/desafios.service';
 import { Filme, FilmesService } from '../../services/filmes.service';
 import { AtoresService, PopularActor } from '../../services/atores.service';
 import { ProfileService } from '../../services/profile.service';
+import { MenuService } from '../../services/menu.service';
 
 export interface SearchResultItem {
   id?: number;
@@ -60,8 +61,6 @@ export class DashboardComponent implements OnInit, OnDestroy {
   isAtoresAnimating = false;
   atoresSlideDir: 'fade-out' | 'left' | 'right' | null = null;
 
-  isMenuOpen = false;
-
   nextToWatch: Filme | null = null;
   isDiscovering = false;
 
@@ -76,7 +75,8 @@ export class DashboardComponent implements OnInit, OnDestroy {
     private filmesService: FilmesService,
     private atoresService: AtoresService,
     private profileService: ProfileService,
-    private router: Router
+    private router: Router,
+    public menuService: MenuService
   ) { }
 
   ngOnInit(): void {
@@ -558,9 +558,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
     this.featuredIndex = Math.min(maxIndex, this.featuredIndex + this.featuredVisibleCount);
   }
 
-  toggleMenu(): void {
-    this.isMenuOpen = !this.isMenuOpen;
-  }
+  toggleMenu(): void { this.menuService.toggle(); }
 
   get top10Visible(): Filme[] {
     return this.top10.slice(this.top10Index, this.top10Index + this.top10VisibleCount);
@@ -621,7 +619,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
   }
 
   openMenu(): void {
-    this.openDesafios();
+    this.menuService.toggle();
   }
 
   public doSearch(): void {

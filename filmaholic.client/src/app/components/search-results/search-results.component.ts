@@ -2,6 +2,8 @@ import { Component, OnInit, OnDestroy, ElementRef, ViewChild } from '@angular/co
 import { ActivatedRoute, Router } from '@angular/router';
 import { FilmesService, TmdbSearchResponse, TmdbMovieResult } from '../../services/filmes.service';
 import { AtoresService, ActorSearchResult, ActorMovie } from '../../services/atores.service';
+import { MenuService } from '../../services/menu.service';
+import { DesafiosService } from '../../services/desafios.service';
 
 export type SearchResultItem = {
   id?: number;
@@ -53,13 +55,19 @@ export class SearchResultsComponent implements OnInit, OnDestroy {
   sortBy: SortOption = null;
   showSortMenu = false;
 
+  isDesafiosOpen: boolean = false;
+  desafios: any[] = [];
+  isLoadingDesafios = false;
+
   private onDocumentClickBound = (e: MouseEvent) => this.onDocumentClick(e);
 
   constructor(
     private route: ActivatedRoute,
     private router: Router,
     private filmesService: FilmesService,
-    private atoresService: AtoresService
+    private atoresService: AtoresService,
+    private desafiosService: DesafiosService,
+    public menuService: MenuService
   ) { }
 
   ngOnInit(): void {
@@ -494,8 +502,12 @@ export class SearchResultsComponent implements OnInit, OnDestroy {
     });
   }
 
+  openDesafios(): void {
+    this.router.navigate(['/dashboard'], { fragment: 'desafios' });
+  }
+
   // topbar helpers
-  openMenu(): void { /* no-op for now */ }
+  openMenu(): void { this.menuService.toggle(); }
 
   doSearch(): void {
     const q = (this.searchTerm || '').trim();
