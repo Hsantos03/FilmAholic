@@ -15,6 +15,7 @@ export class ActorDetailComponent implements OnInit, OnDestroy {
   movies: ActorMovie[] = [];
   isLoading = false;
   error = '';
+  showFullBio = false;
 
   private sub?: Subscription;
 
@@ -47,6 +48,7 @@ export class ActorDetailComponent implements OnInit, OnDestroy {
     this.error = '';
     this.actor = null;
     this.movies = [];
+    this.showFullBio = false;
 
     this.atoresService.getActorDetails(personId).subscribe({
       next: (a) => {
@@ -108,6 +110,14 @@ export class ActorDetailComponent implements OnInit, OnDestroy {
 
   get actorPhoto(): string {
     return this.actor?.fotoUrl || 'https://via.placeholder.com/220x220?text=Actor';
+  }
+
+  toggleBio(): void {
+    this.showFullBio = !this.showFullBio;
+  }
+
+  get hasBio(): boolean {
+    return !!(this.actor?.biografia && this.actor.biografia.trim().length);
   }
 }
 
