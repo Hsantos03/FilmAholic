@@ -38,13 +38,13 @@ export class CinemaMoviesComponent implements OnInit, OnDestroy, AfterViewInit {
   ngAfterViewInit(): void {
     setTimeout(() => {
       this.startAutoScroll('nos');
-      this.startAutoScroll('cineplace');
+      this.startAutoScroll('cinemacity');
     }, 500);
   }
 
   ngOnDestroy(): void {
     this.stopAutoScroll('nos');
-    this.stopAutoScroll('cineplace');
+    this.stopAutoScroll('cinemacity');
     if (this.resumeTimeoutNos) clearTimeout(this.resumeTimeoutNos);
     if (this.resumeTimeoutCineplace) clearTimeout(this.resumeTimeoutCineplace);
   }
@@ -53,7 +53,7 @@ export class CinemaMoviesComponent implements OnInit, OnDestroy, AfterViewInit {
     this.cinemaService.getCinemaMovies().subscribe({
       next: (movies) => {
         this.nosMovies = movies.filter(m => m.cinema === 'Cinema NOS');
-        this.cineplaceMovies = movies.filter(m => m.cinema === 'Cineplace');
+        this.cineplaceMovies = movies.filter(m => m.cinema === 'Cinema City');
         this.cinemaMovies = movies;
         this.isLoading = false;
         this.lastUpdated = new Date();
@@ -77,7 +77,7 @@ export class CinemaMoviesComponent implements OnInit, OnDestroy, AfterViewInit {
     this.router.navigate(['/dashboard']);
   }
 
-  startAutoScroll(carousel: 'nos' | 'cineplace'): void {
+  startAutoScroll(carousel: 'nos' | 'cineplace' | 'cinemacity'): void {
     this.stopAutoScroll(carousel);
     const ref = carousel === 'nos' ? this.carouselNosRef : this.carouselCineplaceRef;
     const interval = setInterval(() => {
@@ -99,17 +99,17 @@ export class CinemaMoviesComponent implements OnInit, OnDestroy, AfterViewInit {
     else this.intervalCineplace = interval;
   }
 
-  stopAutoScroll(carousel: 'nos' | 'cineplace'): void {
+  stopAutoScroll(carousel: 'nos' | 'cineplace' | 'cinemacity'): void {
     if (carousel === 'nos' && this.intervalNos) {
       clearInterval(this.intervalNos);
       this.intervalNos = null;
-    } else if (carousel === 'cineplace' && this.intervalCineplace) {
+    } else if (this.intervalCineplace) {
       clearInterval(this.intervalCineplace);
       this.intervalCineplace = null;
     }
   }
 
-  scrollCarousel(direction: number, carousel: 'nos' | 'cineplace'): void {
+  scrollCarousel(direction: number, carousel: 'nos' | 'cineplace' | 'cinemacity'): void {
     this.stopAutoScroll(carousel);
     const ref = carousel === 'nos' ? this.carouselNosRef : this.carouselCineplaceRef;
     const el = ref.nativeElement;

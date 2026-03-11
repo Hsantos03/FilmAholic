@@ -23,10 +23,11 @@ namespace FilmAholic.Server.Controllers
             try
             {
                 var nosMovies = await ScrapeCinemaNos();
-                var cineplaceMovies = await ScrapeCineplace();
-                var cineplaceEnriched = await EnrichWithTmdb(cineplaceMovies);
+                var cinemaCityMovies = await ScrapeCinemaCity();
+                var enriched = await EnrichWithTmdb(cinemaCityMovies);
+                foreach (var m in enriched) m.Cinema = "Cinema City";
 
-                var allMovies = nosMovies.Concat(cineplaceEnriched).ToList();
+                var allMovies = nosMovies.Concat(enriched).ToList();
 
                 if (allMovies.Count == 0)
                     return Ok(GetMockCinemaMovies());
@@ -307,6 +308,69 @@ namespace FilmAholic.Server.Controllers
                 }
             }
 
+            return movies;
+        }
+
+
+        private async Task<List<CinemaMovieDto>> ScrapeCinemaCity()
+        {
+            var movies = new List<CinemaMovieDto>();
+            try
+            {
+                using var playwright = await Playwright.CreateAsync();
+                await using var browser = await playwright.Chromium.LaunchAsync(new() { Headless = true });
+                var page = await browser.NewPageAsync();
+                await page.GotoAsync("https://www.cinemacity.pt/", new() { Timeout = 30000 });
+                await page.WaitForSelectorAsync(".flip-container", new() { Timeout = 15000 });
+
+                var cards = await page.QuerySelectorAllAsync(".flip-container");
+                foreach (var card in cards)
+                {
+                    try
+                    {
+                        var titulo = await card.EvalOnSelectorAsync<string>(".title", "el => el.textContent");
+                        var poster = await card.EvalOnSelectorAsync<string>(".front img", "el => el.src");
+                        var link = await card.EvalOnSelectorAsync<string>(".front a", "el => el.href");
+
+                        var duracaoText = "";
+                        var duracaoEl = await card.QuerySelectorAsync(".back .text p:nth-child(4)");
+                        if (duracaoEl != null)
+                        {
+                            var text = await duracaoEl.TextContentAsync();
+                            var match = System.Text.RegularExpressions.Regex.Match(text ?? "", @"\d+");
+                            if (match.Success)
+                            {
+                                var mins = int.Parse(match.Value);
+                                duracaoText = $"{mins / 60}h {mins % 60}min";
+                            }
+                        }
+
+                        var classificacao = "";
+                        var classEl = await card.QuerySelectorAsync(".back .text p:nth-child(3)");
+                        if (classEl != null)
+                        {
+                            var text = await classEl.TextContentAsync();
+                            classificacao = text?.Replace("Rating:", "").Trim() ?? "";
+                        }
+
+                        movies.Add(new CinemaMovieDto
+                        {
+                            Titulo = titulo?.Trim() ?? "",
+                            Poster = poster ?? "",
+                            Link = link ?? "",
+                            Cinema = "Cinema City",
+                            Duracao = duracaoText,
+                            Classificacao = classificacao,
+                            Genero = ""
+                        });
+                    }
+                    catch { }
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Erro ao fazer scraping do Cinema City: {ex.Message}");
+            }
             return movies;
         }
 

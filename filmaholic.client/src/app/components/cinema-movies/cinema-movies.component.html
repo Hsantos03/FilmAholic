@@ -79,20 +79,20 @@
     </div>
   </div>
 
-  <!-- CINEPLACE -->
+  <!-- CINEMA CITY -->
   <div *ngIf="!isLoading && !error && cineplaceMovies.length > 0" class="cinema-section">
     <div class="section-header">
       <div class="cinema-branding">
         <span class="cinema-dot"></span>
-        <span class="cinema-name">Cineplace</span>
+        <span class="cinema-name">Cinema City</span>
         <span class="cinema-dot"></span>
       </div>
     </div>
 
     <div class="cinema-movies-grid">
       <div class="carousel-container"
-           (mouseenter)="stopAutoScroll('cineplace')"
-           (mouseleave)="startAutoScroll('cineplace')">
+           (mouseenter)="stopAutoScroll('cinemacity')"
+           (mouseleave)="startAutoScroll('cinemacity')">
         <div class="carousel-wrapper" #carouselCineplace>
           <ng-container *ngFor="let movie of cineplaceMovies">
             <div class="cinema-movie-card">
@@ -108,7 +108,7 @@
                 <div class="overlay-bottom">
                   <span class="duration">{{ movie.duracao }}</span>
                   <div class="movie-actions">
-                    <a class="btn primary" [href]="movie.link" target="_blank" rel="noopener">Ver Sessões no Cineplace</a>
+                    <a class="btn primary" [href]="movie.link" target="_blank" rel="noopener">Ver Sessões no Cinema City</a>
                     <button class="btn secondary" (click)="viewMovieDetails(movie)">Ver Detalhes</button>
                   </div>
                 </div>
@@ -129,7 +129,7 @@
                 <div class="overlay-bottom">
                   <span class="duration">{{ movie.duracao }}</span>
                   <div class="movie-actions">
-                    <a class="btn primary" [href]="movie.link" target="_blank" rel="noopener">Ver Sessões no Cineplace</a>
+                    <a class="btn primary" [href]="movie.link" target="_blank" rel="noopener">Ver Sessões no Cinema City</a>
                     <button class="btn secondary" (click)="viewMovieDetails(movie)">Ver Detalhes</button>
                   </div>
                 </div>
@@ -139,9 +139,9 @@
         </div>
       </div>
       <div class="carousel-controls">
-        <button class="carousel-btn" (click)="scrollCarousel(-1, 'cineplace')">&#8249;</button>
+        <button class="carousel-btn" (click)="scrollCarousel(-1, 'cinemacity')">&#8249;</button>
         <span class="carousel-hint">Passa o rato para pausar</span>
-        <button class="carousel-btn" (click)="scrollCarousel(1, 'cineplace')">&#8250;</button>
+        <button class="carousel-btn" (click)="scrollCarousel(1, 'cinemacity')">&#8250;</button>
       </div>
     </div>
   </div>
