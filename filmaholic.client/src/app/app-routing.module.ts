@@ -28,6 +28,8 @@ const routes: Routes = [
   { path: 'higher-or-lower', component: HigherOrLowerComponent }, // game page
   { path: 'cinema-movies', component: CinemaMoviesComponent }, // cinema movies page
   { path: 'cinemas-proximos', component: CinemaMapComponent }, // mapa de cinemas próximos (FR40)
+  // Alias para compatibilidade com links antigos
+  { path: 'mapa-cinemas', redirectTo: 'cinemas-proximos', pathMatch: 'full' },
   { path: '', redirectTo: '/register', pathMatch: 'full' } // Rota inicial
 ];
 
