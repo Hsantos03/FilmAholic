@@ -53,7 +53,6 @@
           <button type="button" class="filter-btn" (click)="toggleFilterMenu()" [class.active]="showFilterMenu" aria-label="Filtrar resultados" aria-haspopup="true" [attr.aria-expanded]="showFilterMenu">
             Filtrar {{ (selectedGenres.length > 0 || selectedDateFrom || selectedDateTo) ? '· ' + getActiveFiltersCount() : '' }}
           </button>
-          <!-- Filter menu positioned here instead of in search bar -->
           <div class="filter-menu" *ngIf="showFilterMenu" role="menu" aria-label="Filtrar por género e data">
             <div class="filter-section">
               <div class="filter-title">Género</div>
@@ -96,29 +95,69 @@
     <div *ngIf="isLoading" class="state">A pesquisar&hellip;</div>
     <div *ngIf="error" class="state error">{{ error }}</div>
 
-    <div *ngIf="!isLoading && results.length === 0 && !error" class="empty">
+    <div *ngIf="!isLoading && results.length === 0 && !error && actorResults.length === 0" class="empty">
       Nao foram encontrados resultados para "{{ query }}"
     </div>
 
-    <div class="results-grid" *ngIf="results.length">
-      <div class="result-card"
-           *ngFor="let r of sortedResults"
-           (click)="openResult(r)"
-           [class.loading]="isLoading">
-
-        <img *ngIf="r.posterUrl"
-             class="result-thumb"
-             [src]="r.posterUrl"
-             [alt]="r.titulo" />
-
-        <div *ngIf="!r.posterUrl" class="result-no-poster">
-          {{ r.titulo }}
+    <!-- Secção Atores -->
+    <section class="search-section" *ngIf="actorResults.length > 0">
+      <h3 class="section-title">Atores</h3>
+      <div class="actors-row">
+        <button type="button"
+                class="actor-card"
+                *ngFor="let a of actorResults"
+                (click)="selectActor(a)"
+                [class.selected]="selectedActor?.id === a.id">
+          <img *ngIf="a.fotoUrl" class="actor-thumb" [src]="a.fotoUrl" [alt]="a.nome" />
+          <div *ngIf="!a.fotoUrl" class="actor-no-photo">{{ a.nome }}</div>
+          <span class="actor-name">{{ a.nome }}</span>
+        </button>
+      </div>
+      <div *ngIf="selectedActor" class="actor-movies-block">
+        <div class="actor-movies-header">
+          <h4>Filmes de {{ selectedActor.nome }}</h4>
+          <button type="button" class="link-btn" (click)="clearActorSelection()">Ver menos</button>
         </div>
+        <div *ngIf="loadingActorMovies" class="state">A carregar filmes&hellip;</div>
+        <div class="results-grid" *ngIf="!loadingActorMovies && actorMovies.length">
+          <div class="result-card"
+               *ngFor="let m of actorMovies"
+               (click)="openActorMovie(m)">
+            <img *ngIf="m.posterUrl" class="result-thumb" [src]="m.posterUrl" [alt]="m.titulo" />
+            <div *ngIf="!m.posterUrl" class="result-no-poster">{{ m.titulo }}</div>
+            <div class="result-overlay">
+              <div class="result-title">{{ m.titulo }}</div>
+              <div *ngIf="m.personagem" class="result-subtitle">{{ m.personagem }}</div>
+            </div>
+          </div>
+        </div>
+        <div *ngIf="!loadingActorMovies && actorMovies.length === 0" class="state">Nenhum filme encontrado.</div>
+      </div>
+    </section>
 
-        <div class="result-overlay">
-          <div class="result-title">{{ r.titulo }}</div>
+    <!-- Secção Filmes -->
+    <section class="search-section" *ngIf="results.length">
+      <h3 class="section-title" *ngIf="actorResults.length">Filmes</h3>
+      <div class="results-grid">
+        <div class="result-card"
+             *ngFor="let r of sortedResults"
+             (click)="openResult(r)"
+             [class.loading]="isLoading">
+
+          <img *ngIf="r.posterUrl"
+               class="result-thumb"
+               [src]="r.posterUrl"
+               [alt]="r.titulo" />
+
+          <div *ngIf="!r.posterUrl" class="result-no-poster">
+            {{ r.titulo }}
+          </div>
+
+          <div class="result-overlay">
+            <div class="result-title">{{ r.titulo }}</div>
+          </div>
         </div>
       </div>
-    </div>
+    </section>
   </div>
 </main>

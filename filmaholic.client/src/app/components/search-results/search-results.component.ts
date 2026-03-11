@@ -1,6 +1,7 @@
 import { Component, OnInit, OnDestroy, ElementRef, ViewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { FilmesService, TmdbSearchResponse, TmdbMovieResult } from '../../services/filmes.service';
+import { AtoresService, ActorSearchResult, ActorMovie } from '../../services/atores.service';
 
 export type SearchResultItem = {
   id?: number;
@@ -9,7 +10,7 @@ export type SearchResultItem = {
   posterUrl: string | null;
   release_date?: string | null;
   vote_average?: number;
-  runtime?: number; // duration in minutes
+  runtime?: number;
 };
 
 export type SortOption =
@@ -31,6 +32,10 @@ export class SearchResultsComponent implements OnInit, OnDestroy {
 
   query: string = '';
   results: SearchResultItem[] = [];
+  actorResults: ActorSearchResult[] = [];
+  selectedActor: ActorSearchResult | null = null;
+  actorMovies: ActorMovie[] = [];
+  loadingActorMovies = false;
   isLoading = false;
   error = '';
 
@@ -53,7 +58,8 @@ export class SearchResultsComponent implements OnInit, OnDestroy {
   constructor(
     private route: ActivatedRoute,
     private router: Router,
-    private filmesService: FilmesService
+    private filmesService: FilmesService,
+    private atoresService: AtoresService
   ) { }
 
   ngOnInit(): void {
@@ -61,25 +67,20 @@ export class SearchResultsComponent implements OnInit, OnDestroy {
     const savedGenres = sessionStorage.getItem('selectedGenres');
     const savedDateFrom = sessionStorage.getItem('selectedDateFrom');
     const savedDateTo = sessionStorage.getItem('selectedDateTo');
-    const savedResults = sessionStorage.getItem('filteredResults');
-    
-    if (savedGenres) {
-      this.selectedGenres = JSON.parse(savedGenres);
-    }
-    if (savedDateFrom) {
-      this.selectedDateFrom = savedDateFrom;
-    }
-    if (savedDateTo) {
-      this.selectedDateTo = savedDateTo;
-    }
-
+    if (savedGenres) this.selectedGenres = JSON.parse(savedGenres);
+    if (savedDateFrom) this.selectedDateFrom = savedDateFrom;
+    if (savedDateTo) this.selectedDateTo = savedDateTo;
 
     this.route.queryParamMap.subscribe(params => {
       const q = params.get('q') || '';
       this.query = q.trim();
       this.searchTerm = this.query;
-      
+      this.selectedActor = null;
+      this.actorMovies = [];
+      this.actorResults = [];
+
       if (this.query) {
+        this.loadActorResults(this.query);
         // Always search both local DB and TMDb for better coverage
         if (this.selectedGenres.length > 0 || this.selectedDateFrom || this.selectedDateTo) {
           this.filterDbMovies(this.query, this.selectedGenres, this.selectedDateFrom, this.selectedDateTo);
@@ -91,10 +92,7 @@ export class SearchResultsComponent implements OnInit, OnDestroy {
       }
     });
 
-    // load local genres for filter menu
     this.loadGenresFromDb();
-
-    // click outside -> close menus
     document.addEventListener('click', this.onDocumentClickBound);
   }
 
@@ -118,37 +116,27 @@ export class SearchResultsComponent implements OnInit, OnDestroy {
         list.sort((a, b) => {
           const da = a.release_date || '';
           const db = b.release_date || '';
-          return db.localeCompare(da); // newest first
+          return db.localeCompare(da);
         });
         break;
       case 'date-asc':
         list.sort((a, b) => {
           const da = a.release_date || '';
           const db = b.release_date || '';
-          return da.localeCompare(db); // oldest first
+          return da.localeCompare(db);
         });
         break;
       case 'rating-desc':
-        list.sort((a, b) => (b.vote_average ?? 0) - (a.vote_average ?? 0)); // highest first
+        list.sort((a, b) => (b.vote_average ?? 0) - (a.vote_average ?? 0));
         break;
       case 'rating-asc':
-        list.sort((a, b) => (a.vote_average ?? 0) - (b.vote_average ?? 0)); // lowest first
+        list.sort((a, b) => (a.vote_average ?? 0) - (b.vote_average ?? 0));
         break;
       case 'duration-desc':
-        // longest first; undefined runtime goes to end
-        list.sort((a, b) => {
-          const ra = a.runtime ?? -1;
-          const rb = b.runtime ?? -1;
-          return rb - ra;
-        });
+        list.sort((a, b) => (b.runtime ?? -1) - (a.runtime ?? -1));
         break;
       case 'duration-asc':
-        // shortest first; undefined runtime goes to end
-        list.sort((a, b) => {
-          const ra = a.runtime ?? 999999;
-          const rb = b.runtime ?? 999999;
-          return ra - rb;
-        });
+        list.sort((a, b) => (a.runtime ?? 999999) - (b.runtime ?? 999999));
         break;
       case 'name-asc':
         list.sort((a, b) => (a.titulo || '').localeCompare(b.titulo || '', 'pt'));
@@ -242,16 +230,13 @@ export class SearchResultsComponent implements OnInit, OnDestroy {
   private deduplicateResults(results: SearchResultItem[]): SearchResultItem[] {
     const seen = new Map<string, SearchResultItem>();
     const unique: SearchResultItem[] = [];
-    
     for (const result of results) {
       const key = result.tmdbId ? `tmdb_${result.tmdbId}` : `title_${result.titulo.toLowerCase()}`;
-      
       if (!seen.has(key)) {
         seen.set(key, result);
         unique.push(result);
       }
     }
-    
     return unique;
   }
 
@@ -273,7 +258,7 @@ export class SearchResultsComponent implements OnInit, OnDestroy {
         }));
         this.isLoading = false;
       },
-      error: (err: any) => {
+      error: () => {
         this.error = 'Erro ao pesquisar filmes. Tente novamente.';
         this.isLoading = false;
       }
@@ -303,44 +288,23 @@ export class SearchResultsComponent implements OnInit, OnDestroy {
     this.isLoading = true;
     this.error = '';
     this.results = [];
-
     const q = (query || '').trim().toLowerCase();
 
     this.filmesService.getAll().subscribe({
       next: (movies) => {
         const filtered = (movies || []).filter(m => {
           const titleMatches = !q || (m?.titulo || '').toLowerCase().includes(q);
-          
-          // Genre filtering - match ANY selected genre
           const movieGenres = (m?.genero || '').toLowerCase();
-          const genreMatches = !genres || !genres || genres.length === 0 || 
-            genres.some(selectedGenre => {
-              const selected = selectedGenre.toLowerCase().trim();
-              return movieGenres.split(',').some(movieGenre => 
-                movieGenre.trim().toLowerCase() === selected
-              );
-            });
-          
-          // Date filtering
+          const genreMatches = !genres || genres.length === 0 ||
+            genres.some(selected => movieGenres.split(',').some((g: string) => g.trim().toLowerCase() === selected.toLowerCase()));
           const releaseDate = m?.ano ? m.ano.toString() : '';
           let dateMatches = true;
-          
-          if (dateFrom && releaseDate) {
-            dateMatches = dateMatches && releaseDate >= dateFrom;
-          }
-          if (dateTo && releaseDate) {
-            dateMatches = dateMatches && releaseDate <= dateTo;
-          }
-          
-          const finalMatch = titleMatches && genreMatches && dateMatches;
-          
-          return finalMatch;
+          if (dateFrom && releaseDate) dateMatches = dateMatches && releaseDate >= dateFrom;
+          if (dateTo && releaseDate) dateMatches = dateMatches && releaseDate <= dateTo;
+          return titleMatches && genreMatches && dateMatches;
         });
 
-        // Limit to 30 results
-        const limitedResults = filtered.slice(0, 30);
-        
-        this.results = limitedResults.map(m => ({
+        this.results = filtered.slice(0, 30).map(m => ({
           id: m.id,
           tmdbId: m.tmdbId ? parseInt(m.tmdbId) : undefined,
           titulo: m.titulo,
@@ -350,54 +314,36 @@ export class SearchResultsComponent implements OnInit, OnDestroy {
           runtime: m.duracao ?? undefined
         }));
 
-        // Save filtered results to sessionStorage for consistency
-        if (genres || dateFrom || dateTo) {
-          sessionStorage.setItem('filteredResults', JSON.stringify(this.results));
-        }
-
-        // if DB returned nothing, fall back to TMDb search (no genre/date filtering possible)
         if (this.results.length === 0 && q && (!genres || genres.length === 0) && !dateFrom && !dateTo) {
           this.loadResults(query, 1);
         } else {
           this.isLoading = false;
         }
       },
-      error: (err: any) => {
+      error: () => {
         this.isLoading = false;
-        // fallback
-        if ((!genres || genres.length === 0) && !dateFrom && !dateTo) {
-          this.loadResults(query, 1);
-        }
+        if ((!genres || genres.length === 0) && !dateFrom && !dateTo) this.loadResults(query, 1);
       }
     });
   }
 
-  // Toggle filter menu visibility
   public toggleFilterMenu(): void {
     this.showFilterMenu = !this.showFilterMenu;
   }
 
-  // Toggle genre selection (now supports multiple selection)
   public toggleGenre(genre: string): void {
     const index = this.selectedGenres.indexOf(genre);
-    if (index > -1) {
-      this.selectedGenres.splice(index, 1);
-    } else {
-      this.selectedGenres.push(genre);
-    }
-    // Save to sessionStorage
+    if (index > -1) this.selectedGenres.splice(index, 1);
+    else this.selectedGenres.push(genre);
     sessionStorage.setItem('selectedGenres', JSON.stringify(this.selectedGenres));
     this.applyFilters();
   }
 
   // Apply all filters (genre + date)
   public applyFilters(): void {
-    // Save filter state to sessionStorage
     sessionStorage.setItem('selectedDateFrom', this.selectedDateFrom || '');
     sessionStorage.setItem('selectedDateTo', this.selectedDateTo || '');
-    
     if (!this.query) {
-      // if no query, just filter DB by genre and date
       if (this.selectedGenres.length === 0 && !this.selectedDateFrom && !this.selectedDateTo) {
         this.results = [];
       } else {
@@ -405,18 +351,13 @@ export class SearchResultsComponent implements OnInit, OnDestroy {
       }
       return;
     }
-
     if (this.selectedGenres.length === 0 && !this.selectedDateFrom && !this.selectedDateTo) {
-      // clear all filters -> TMDb search
-      this.loadResults(this.query, 1);
+      this.loadCombinedResults(this.query, 1);
       return;
     }
-
-    // filter DB using query + genre + date
     this.filterDbMovies(this.query, this.selectedGenres, this.selectedDateFrom, this.selectedDateTo);
   }
 
-  // Date change handlers
   public onDateFromChange(date: string): void {
     this.selectedDateFrom = date;
     sessionStorage.setItem('selectedDateFrom', date || '');
@@ -429,14 +370,12 @@ export class SearchResultsComponent implements OnInit, OnDestroy {
     this.applyFilters();
   }
 
-  // Clear genre filters
   public clearGenreFilters(): void {
     this.selectedGenres = [];
     sessionStorage.setItem('selectedGenres', JSON.stringify(this.selectedGenres));
     this.applyFilters();
   }
 
-  // Clear date filters
   public clearDateFilters(): void {
     this.selectedDateFrom = null;
     this.selectedDateTo = null;
@@ -445,39 +384,26 @@ export class SearchResultsComponent implements OnInit, OnDestroy {
     this.applyFilters();
   }
 
-  // Get date filter label for display
   public getDateFilterLabel(): string {
-    if (this.selectedDateFrom && this.selectedDateTo) {
-      return `Data: ${this.selectedDateFrom} - ${this.selectedDateTo}`;
-    } else if (this.selectedDateFrom) {
-      return `Data: a partir de ${this.selectedDateFrom}`;
-    } else if (this.selectedDateTo) {
-      return `Data: até ${this.selectedDateTo}`;
-    }
+    if (this.selectedDateFrom && this.selectedDateTo) return `Data: ${this.selectedDateFrom} - ${this.selectedDateTo}`;
+    if (this.selectedDateFrom) return `Data: a partir de ${this.selectedDateFrom}`;
+    if (this.selectedDateTo) return `Data: até ${this.selectedDateTo}`;
     return '';
   }
 
-  // Get count of active filters
   public getActiveFiltersCount(): number {
-    let count = 0;
-    count += this.selectedGenres.length;
+    let count = this.selectedGenres.length;
     if (this.selectedDateFrom) count++;
     if (this.selectedDateTo) count++;
     return count;
   }
 
-  // Get selected genres label for display
   public getSelectedGenresLabel(): string {
     if (this.selectedGenres.length === 0) return '';
     if (this.selectedGenres.length === 1) return this.selectedGenres[0];
     return `${this.selectedGenres.length} géneros`;
   }
 
-  /**
-   * Open a movie page. Accepts either:
-   * - an item with a DB `id` -> navigate directly to /movie-detail/:id
-   * - an item with a `tmdbId` -> call API to get-or-create DB record then navigate
-   */
   openResult(item: SearchResultItem): void {
     if (!item) return;
 
@@ -508,6 +434,60 @@ export class SearchResultsComponent implements OnInit, OnDestroy {
       },
       error: (err: any) => {
         console.error('Failed to add/get movie', err);
+        this.error = 'Erro ao abrir o filme. Por favor tente novamente.';
+        this.isLoading = false;
+      }
+    });
+  }
+
+  private loadActorResults(query: string): void {
+    const q = query.trim();
+    if (!q) return;
+    this.atoresService.searchActors(q).subscribe({
+      next: (actors) => {
+        this.actorResults = actors || [];
+      },
+      error: () => {
+        this.actorResults = [];
+      }
+    });
+  }
+
+  selectActor(actor: ActorSearchResult): void {
+    this.selectedActor = actor;
+    this.actorMovies = [];
+    this.loadingActorMovies = true;
+    this.atoresService.getMoviesByActor(actor.id).subscribe({
+      next: (movies) => {
+        this.actorMovies = movies || [];
+        this.loadingActorMovies = false;
+      },
+      error: () => {
+        this.actorMovies = [];
+        this.loadingActorMovies = false;
+      }
+    });
+  }
+
+  clearActorSelection(): void {
+    this.selectedActor = null;
+    this.actorMovies = [];
+  }
+
+  openActorMovie(movie: ActorMovie): void {
+    if (!movie?.id) return;
+    this.isLoading = true;
+    this.error = '';
+    this.filmesService.addMovieFromTmdb(movie.id).subscribe({
+      next: (m: any) => {
+        this.isLoading = false;
+        if (m?.id != null) {
+          this.router.navigate(['/movie-detail', m.id]);
+        } else {
+          this.error = 'Não foi possível abrir o filme.';
+        }
+      },
+      error: () => {
         this.error = 'Erro ao abrir o filme. Por favor tente novamente.';
         this.isLoading = false;
       }

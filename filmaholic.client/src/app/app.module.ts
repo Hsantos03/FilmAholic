@@ -22,6 +22,7 @@ import { CinemaMoviesComponent } from './components/cinema-movies/cinema-movies.
 import { FormatDurationPipe } from './pipes/format-duration.pipe';
 import { ActorsCarouselComponent } from './components/actors-carousel/actors-carousel.component';
 import { HigherOrLowerComponent } from './components/higher-or-lower/higher-or-lower.component';
+import { CinemaMapComponent } from './components/cinema-map/cinema-map.component';
 
 
 registerLocaleData(localePt);
@@ -41,6 +42,7 @@ registerLocaleData(localePt);
     SearchResultsComponent,
     MoviePageComponent,
     CinemaMoviesComponent,
+    CinemaMapComponent,
     ActorsCarouselComponent,
     HigherOrLowerComponent
   ],

@@ -1,3 +1,4 @@
+using FilmAholic.Server.DTOs;
 using FilmAholic.Server.Services;
 using Microsoft.AspNetCore.Mvc;
 
@@ -19,6 +20,25 @@ public class AtoresController : ControllerBase
     {
         var actors = await _movieService.GetPopularActorsAsync(page: 1, count: count);
         return Ok(actors);
+    }
+
+    /// <summary>Pesquisa atores por nome.</summary>
+    [HttpGet("search")]
+    public async Task<ActionResult<List<ActorSearchResultDto>>> SearchActors([FromQuery] string? query)
+    {
+        if (string.IsNullOrWhiteSpace(query))
+            return Ok(new List<ActorSearchResultDto>());
+
+        var actors = await _movieService.SearchActorsAsync(query!);
+        return Ok(actors);
+    }
+
+    /// <summary>Lista todos os filmes em que o ator participa.</summary>
+    [HttpGet("{personId:int}/movies")]
+    public async Task<ActionResult<List<ActorMovieDto>>> GetMoviesByActor([FromRoute] int personId)
+    {
+        var movies = await _movieService.GetMoviesByActorAsync(personId);
+        return Ok(movies);
     }
 }
 
