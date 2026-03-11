@@ -3,6 +3,8 @@ using FilmAholic.Server.DTOs;
 using FilmAholic.Server.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Net.Http;
+using System.Text.Json;
 
 namespace FilmAholic.Server.Controllers
 {
@@ -12,11 +14,15 @@ namespace FilmAholic.Server.Controllers
     {
         private readonly IMovieService _movieService;
         private readonly FilmAholicDbContext _context;
+        private readonly IConfiguration _configuration;
+        private readonly IHttpClientFactory _httpClientFactory;
 
-        public FilmesController(IMovieService movieService, FilmAholicDbContext context)
+        public FilmesController(IMovieService movieService, FilmAholicDbContext context, IConfiguration configuration, IHttpClientFactory httpClientFactory)
         {
             _movieService = movieService;
             _context = context;
+            _configuration = configuration;
+            _httpClientFactory = httpClientFactory;
         }
 
         [HttpGet]
@@ -105,7 +111,7 @@ namespace FilmAholic.Server.Controllers
             if (filme == null)
                 filme = FilmSeed.Filmes.FirstOrDefault(f => f.Id == id);
 
-            // Se ainda não encontrou, vai buscar ao TMDB
+            // Se ainda nï¿½o encontrou, vai buscar ao TMDB
             if (filme == null)
             {
                 try
@@ -259,6 +265,44 @@ namespace FilmAholic.Server.Controllers
 
             var cast = await _movieService.GetCastAsync(tmdbId);
             return Ok(cast);
+        }
+
+        [HttpGet("{id:int}/trailer")]
+        public async Task<IActionResult> GetTrailer(int id)
+        {
+            var apiKey = _configuration["ExternalApis:TmdbApiKey"];
+            var _httpClient = _httpClientFactory.CreateClient();
+
+            string? trailerKey = null;
+
+            foreach (var lang in new[] { "pt-PT", "en-US" })
+            {
+                var response = await _httpClient.GetAsync(
+                    $"https://api.themoviedb.org/3/movie/{id}/videos?api_key={apiKey}&language={lang}");
+
+                if (!response.IsSuccessStatusCode) continue;
+
+                var json = await response.Content.ReadAsStringAsync();
+                var data = JsonSerializer.Deserialize<JsonElement>(json);
+                var results = data.GetProperty("results");
+
+                foreach (var v in results.EnumerateArray())
+                {
+                    var type = v.TryGetProperty("type", out var t) ? t.GetString() : "";
+                    var site = v.TryGetProperty("site", out var s) ? s.GetString() : "";
+                    if (type == "Trailer" && site == "YouTube")
+                    {
+                        trailerKey = v.GetProperty("key").GetString();
+                        break;
+                    }
+                }
+
+                if (trailerKey != null) break;
+            }
+
+            if (trailerKey == null) return NotFound();
+
+            return Ok(new { url = $"https://www.youtube.com/watch?v={trailerKey}" });
         }
     }
 }

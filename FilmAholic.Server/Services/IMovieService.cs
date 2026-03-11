@@ -23,6 +23,8 @@ public interface IMovieService
 
     Task<List<ActorSearchResultDto>> SearchActorsAsync(string query);
 
+    Task<ActorDetailsDto?> GetActorDetailsAsync(int personId);
+
     Task<List<ActorMovieDto>> GetMoviesByActorAsync(int personId);
 
     Task<RatingsDto> GetRatingsAsync(string? tmdbId, string? title);

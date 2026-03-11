@@ -20,9 +20,9 @@ import { SearchResultsComponent } from './components/search-results/search-resul
 import { MoviePageComponent } from './components/movie-page/movie-page.component';
 import { CinemaMoviesComponent } from './components/cinema-movies/cinema-movies.component';
 import { FormatDurationPipe } from './pipes/format-duration.pipe';
-import { ActorsCarouselComponent } from './components/actors-carousel/actors-carousel.component';
 import { HigherOrLowerComponent } from './components/higher-or-lower/higher-or-lower.component';
 import { CinemaMapComponent } from './components/cinema-map/cinema-map.component';
+import { ActorDetailComponent } from './components/actor-detail/actor-detail.component';
 
 
 registerLocaleData(localePt);
@@ -43,7 +43,7 @@ registerLocaleData(localePt);
     MoviePageComponent,
     CinemaMoviesComponent,
     CinemaMapComponent,
-    ActorsCarouselComponent,
+    ActorDetailComponent,
     HigherOrLowerComponent
   ],
   imports: [

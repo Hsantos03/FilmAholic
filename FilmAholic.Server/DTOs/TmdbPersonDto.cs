@@ -120,6 +120,31 @@ public class TmdbCastMovieDto
     public string? ReleaseDate { get; set; }
 }
 
+/// <summary>Response from TMDb GET /person/{id}</summary>
+public class TmdbPersonDetailsDto
+{
+    [JsonPropertyName("id")]
+    public int Id { get; set; }
+
+    [JsonPropertyName("name")]
+    public string Name { get; set; } = "";
+
+    [JsonPropertyName("biography")]
+    public string? Biography { get; set; }
+
+    [JsonPropertyName("birthday")]
+    public string? Birthday { get; set; }
+
+    [JsonPropertyName("place_of_birth")]
+    public string? PlaceOfBirth { get; set; }
+
+    [JsonPropertyName("profile_path")]
+    public string? ProfilePath { get; set; }
+
+    [JsonPropertyName("known_for_department")]
+    public string? KnownForDepartment { get; set; }
+}
+
 /// <summary>API response: actor in search results (same shape as PopularActorDto for client)</summary>
 public class ActorSearchResultDto
 {
@@ -136,4 +161,16 @@ public class ActorMovieDto
     public string? PosterUrl { get; set; }
     public string? Personagem { get; set; }
     public string? DataLancamento { get; set; }
+}
+
+/// <summary>API response: actor details page</summary>
+public class ActorDetailsDto
+{
+    public int Id { get; set; }
+    public string Nome { get; set; } = "";
+    public string? FotoUrl { get; set; }
+    public string? Biografia { get; set; }
+    public string? DataNascimento { get; set; }
+    public string? LocalNascimento { get; set; }
+    public string? Departamento { get; set; }
 }

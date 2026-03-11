@@ -193,10 +193,39 @@ export class ProfileComponent implements OnInit {
           }
 
           this.xp = res?.xp ?? 0;
-          this.level = Math.floor(this.xp / 10);
+          this.level = res?.nivel ?? this.calcularNivelLocal(this.xp);
         },
         error: (err) => console.warn('Failed to load profile from API; keeping local values.', err)
       });
+  }
+
+  private xpParaNivel(n: number): number {
+    if (n <= 1) return 0;
+    return 100 * (n - 1) * n / 2;
+  }
+
+  xpParaProximoNivel(): number {
+    const xpProximo = this.xpParaNivel(this.level + 1);
+    return Math.max(0, xpProximo - this.xp);
+  }
+
+  xpProgressPercent(): number {
+    const xpAtual = this.xpParaNivel(this.level);
+    const xpProximo = this.xpParaNivel(this.level + 1);
+    const intervalo = xpProximo - xpAtual;
+    if (intervalo <= 0) return 100;
+    const progresso = this.xp - xpAtual;
+    return Math.min(100, Math.max(0, (progresso / intervalo) * 100));
+  }
+
+  private calcularNivelLocal(xpTotal: number): number {
+    let nivel = 1;
+    while (true) {
+      const xpNecessario = 100 * nivel * (nivel + 1) / 2;
+      if (xpTotal < xpNecessario) break;
+      nivel++;
+    }
+    return nivel;
   }
 
   toggleGraphCustomize(): void {

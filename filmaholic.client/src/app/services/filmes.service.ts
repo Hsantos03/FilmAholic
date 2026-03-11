@@ -2,6 +2,8 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../environments/environment';
+import { map, catchError } from 'rxjs/operators';
+import { of } from 'rxjs';
 
 export interface Filme {
   id: number;
@@ -72,6 +74,13 @@ export class FilmesService {
 
   getById(id: number): Observable<Filme> {
     return this.http.get<Filme>(`${this.apiUrl}/${id}`);
+  }
+
+  getTrailer(id: number): Observable<string | null> {
+    return this.http.get<{ url: string }>(`https://localhost:7277/api/filmes/${id}/trailer`).pipe(
+      map(res => res.url),
+      catchError(() => of(null))
+    );
   }
 
   searchMovies(query: string, page: number = 1): Observable<TmdbSearchResponse> {

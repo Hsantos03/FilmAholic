@@ -350,6 +350,9 @@ namespace FilmAholic.Server.Migrations
                     b.Property<DateTimeOffset?>("LockoutEnd")
                         .HasColumnType("datetimeoffset");
 
+                    b.Property<int>("Nivel")
+                        .HasColumnType("int");
+
                     b.Property<string>("Nome")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
@@ -389,11 +392,17 @@ namespace FilmAholic.Server.Migrations
                     b.Property<bool>("TwoFactorEnabled")
                         .HasColumnType("bit");
 
+                    b.Property<DateTime?>("UltimoResetDiario")
+                        .HasColumnType("datetime2");
+
                     b.Property<string>("UserName")
                         .HasMaxLength(256)
                         .HasColumnType("nvarchar(256)");
 
                     b.Property<int>("XP")
+                        .HasColumnType("int");
+
+                    b.Property<int>("XPDiario")
                         .HasColumnType("int");
 
                     b.HasKey("Id");

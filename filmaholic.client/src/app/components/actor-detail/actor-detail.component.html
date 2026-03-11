@@ -1,0 +1,57 @@
+<header class="topbar">
+  <button class="icon-btn" (click)="goBack()" aria-label="Back">&larr;</button>
+  <a class="brand" routerLink="/dashboard">FilmAholic</a>
+</header>
+
+<main class="content actor-content">
+  <div *ngIf="isLoading" class="state">A carregar ator…</div>
+  <div *ngIf="error" class="state error">{{ error }}</div>
+
+  <section *ngIf="actor as a" class="actor-page">
+    <div class="actor-hero">
+      <img class="actor-photo" [src]="actorPhoto" [alt]="a.nome" />
+
+      <div class="actor-meta">
+        <h1 class="actor-name">{{ a.nome }}</h1>
+
+        <div class="actor-sub">
+          <span *ngIf="a.departamento">{{ a.departamento }}</span>
+          <span *ngIf="a.dataNascimento">· Nasc.: {{ a.dataNascimento }}</span>
+          <span *ngIf="a.localNascimento">· {{ a.localNascimento }}</span>
+        </div>
+
+        <div class="actor-bio" *ngIf="a.biografia && a.biografia.trim().length">
+          <h3>Biografia</h3>
+          <p>{{ a.biografia }}</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="filmography">
+      <div class="section-head">
+        <h2>Filmes</h2>
+      </div>
+
+      <div *ngIf="movies.length === 0 && !isLoading" class="empty">
+        Não foi possível encontrar filmes para este ator.
+      </div>
+
+      <div class="movies-grid" *ngIf="movies.length">
+        <div class="movie-card"
+             *ngFor="let m of movies"
+             (click)="openMovie(m)"
+             [class.loading]="isLoading">
+          <img *ngIf="m.posterUrl" class="movie-poster" [src]="m.posterUrl" [alt]="m.titulo" />
+          <div *ngIf="!m.posterUrl" class="movie-no-poster">{{ m.titulo }}</div>
+
+          <div class="movie-overlay">
+            <div class="movie-title">{{ m.titulo }}</div>
+            <div class="movie-subtitle" *ngIf="m.personagem">{{ m.personagem }}</div>
+            <div class="movie-subtitle" *ngIf="!m.personagem && m.dataLancamento">{{ m.dataLancamento }}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+

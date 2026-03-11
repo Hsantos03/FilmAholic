@@ -7,6 +7,7 @@ import { UserMoviesService } from '../../services/user-movies.service';
 import { FavoritesService } from '../../services/favorites.service';
 import { CommentsService, CommentDTO } from '../../services/comments.service';
 import { MovieRatingService, MovieRatingSummaryDTO } from '../../services/movie-rating.service';
+import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 @Component({
   selector: 'app-movie-page',
   templateUrl: './movie-page.component.html',
@@ -62,6 +63,11 @@ export class MoviePageComponent implements OnInit, OnDestroy {
   cast: CastMemberDto[] = [];
   isLoadingCast = false;
 
+  trailerUrl: string | null = null;
+
+  showTrailer = false;
+  safeTrailerUrl: SafeResourceUrl | null = null;
+
   private routeSub!: Subscription;
 
   constructor(
@@ -72,7 +78,8 @@ export class MoviePageComponent implements OnInit, OnDestroy {
     private userMoviesService: UserMoviesService,
     private favoritesService: FavoritesService,
     private commentsService: CommentsService,
-    private movieRatingService: MovieRatingService
+    private movieRatingService: MovieRatingService,
+    private sanitizer: DomSanitizer
   ) { }
 
   ngOnInit(): void {
@@ -151,6 +158,27 @@ export class MoviePageComponent implements OnInit, OnDestroy {
     return !!localStorage.getItem('user_id') || !!localStorage.getItem('token');
   }
 
+
+
+
+  openTrailer(): void {
+    if (!this.trailerUrl) return;
+    const embedUrl = this.trailerUrl.replace('watch?v=', 'embed/') + '?autoplay=1';
+    this.safeTrailerUrl = this.sanitizer.bypassSecurityTrustResourceUrl(embedUrl);
+    this.showTrailer = true;
+  }
+
+  closeTrailer(): void {
+    this.showTrailer = false;
+    this.safeTrailerUrl = null;
+  }
+
+
+
+
+
+
+
   get canRateMovie(): boolean {
     return this.canComment;
   }
@@ -164,6 +192,7 @@ export class MoviePageComponent implements OnInit, OnDestroy {
       next: (f) => {
         this.filme = f;
         this.isLoading = false;
+        this.loadTrailer(id);
         
         if (this.filme) {
           this.loadRatings(id);
@@ -220,7 +249,8 @@ export class MoviePageComponent implements OnInit, OnDestroy {
           // This is a regular TMDB movie from our database
           this.filme = f;
           this.isLoading = false;
-          
+
+          this.loadTrailer(this.filme.tmdbId ? parseInt(this.filme.tmdbId) : id);
           this.loadRatings(this.filme.id);
           this.loadOverviewFromTmdb(this.filme);
           this.loadComments(this.filme.id);
@@ -244,6 +274,13 @@ export class MoviePageComponent implements OnInit, OnDestroy {
           this.isLoading = false;
         }
       }
+    });
+  }
+
+  private loadTrailer(id: number): void {
+    this.filmesService.getTrailer(id).subscribe({
+      next: (url) => this.trailerUrl = url,
+      error: () => this.trailerUrl = null
     });
   }
 
@@ -672,5 +709,11 @@ export class MoviePageComponent implements OnInit, OnDestroy {
       error: (err) => { console.warn('Failed to load cast', err); this.cast = []; },
       complete: () => { this.isLoadingCast = false; }
     });
+  }
+
+  openActor(a: CastMemberDto): void {
+    const personId = a?.id;
+    if (!personId) return;
+    this.router.navigate(['/actor', personId]);
   }
 }
