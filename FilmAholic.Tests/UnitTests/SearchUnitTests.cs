@@ -9,6 +9,7 @@ using FilmAholic.Server.Models;
 using FilmAholic.Server.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Moq;
 using Xunit;
 
@@ -26,6 +27,8 @@ namespace FilmAholic.Tests.UnitTests
             using (var context = new FilmAholicDbContext(options))
             {
                 var mockMovieService = new Mock<IMovieService>();
+                var mockConfiguration = new Mock<IConfiguration>();
+                var mockHttpClientFactory = new Mock<IHttpClientFactory>();
                 
                 var mockResponse = new TmdbSearchResponse
                 {
@@ -42,7 +45,7 @@ namespace FilmAholic.Tests.UnitTests
                 
                 mockMovieService.Setup(s => s.SearchMoviesAsync("Action", 1)).ReturnsAsync(mockResponse);
                 
-                var controller = new FilmesController(mockMovieService.Object, context);
+                var controller = new FilmesController(mockMovieService.Object, context, mockConfiguration.Object, mockHttpClientFactory.Object);
 
                 var result = await controller.SearchMovies("Action");
 
@@ -63,6 +66,8 @@ namespace FilmAholic.Tests.UnitTests
             using (var context = new FilmAholicDbContext(options))
             {
                 var mockMovieService = new Mock<IMovieService>();
+                var mockConfiguration = new Mock<IConfiguration>();
+                var mockHttpClientFactory = new Mock<IHttpClientFactory>();
                 
                 var mockResponse = new TmdbSearchResponse
                 {
@@ -80,7 +85,7 @@ namespace FilmAholic.Tests.UnitTests
                 
                 mockMovieService.Setup(s => s.SearchMoviesAsync("Action", 1)).ReturnsAsync(mockResponse);
                 
-                var controller = new FilmesController(mockMovieService.Object, context);
+                var controller = new FilmesController(mockMovieService.Object, context, mockConfiguration.Object, mockHttpClientFactory.Object);
 
                 var result = await controller.SearchMovies("Action");
 
@@ -101,6 +106,8 @@ namespace FilmAholic.Tests.UnitTests
             using (var context = new FilmAholicDbContext(options))
             {
                 var mockMovieService = new Mock<IMovieService>();
+                var mockConfiguration = new Mock<IConfiguration>();
+                var mockHttpClientFactory = new Mock<IHttpClientFactory>();
                 
                 var mockResponse = new TmdbSearchResponse
                 {
@@ -116,7 +123,7 @@ namespace FilmAholic.Tests.UnitTests
                 
                 mockMovieService.Setup(s => s.SearchMoviesAsync("Movie", 1)).ReturnsAsync(mockResponse);
                 
-                var controller = new FilmesController(mockMovieService.Object, context);
+                var controller = new FilmesController(mockMovieService.Object, context, mockConfiguration.Object, mockHttpClientFactory.Object);
 
                 var result = await controller.SearchMovies("Movie");
 

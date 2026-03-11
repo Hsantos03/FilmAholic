@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { FilmesService, Filme, RatingsDto, ActorDto } from '../../services/filmes.service';
-import { GameService, GameHistoryEntry } from '../../services/game.service';
+import { GameService, GameHistoryEntry, SaveResultResponse } from '../../services/game.service';
 import { forkJoin, firstValueFrom } from 'rxjs';
 
 @Component({
@@ -30,30 +30,37 @@ export class HigherOrLowerComponent implements OnInit {
   gameCategory: 'films' | 'actors' | null = null;
   private readonly sessionCategoryKey = 'hol_category';
 
+  private audioCtx: AudioContext | null = null;
+  flashClass: string = '';
+
   isLoadingPair = false;
   notifier: 'correct' | 'wrong' | null = null;
 
   score = 0;
   rounds: any[] = [];
 
-  // history entries will include roundsCount computed client-side
   history: Array<GameHistoryEntry & { roundsCount?: number; category?: string }> = [];
   localHistoryKey = 'hol_local_history';
 
-  // Min rating threshold (strictly greater than)
   private readonly minRatingThreshold = 3;
 
-  // New: UI/result state for selected round
   showResults = false;
   resultWinner: 'left' | 'right' | 'either' | null = null;
   chosenSide: 'left' | 'right' | null = null;
 
-  // Preloaded next pair stored while showing current results
   private nextPair?: { left: Filme; right: Filme; leftRating: number; rightRating: number } | undefined;
 
-  // New: end-of-game stats view
   showEndStats = false;
-  endStats: { score: number; roundsCount: number; rounds: any[]; date: string } | null = null;
+  endStats: {
+    score: number;
+    roundsCount: number;
+    rounds: any[];
+    date: string;
+    xpGanho?: number;
+    xpTotal?: number;
+    nivel?: number;
+    xpDiarioRestante?: number;
+  } | null = null;
 
   constructor(
     private router: Router,
@@ -134,19 +141,15 @@ export class HigherOrLowerComponent implements OnInit {
     this.nextPair = undefined;
 
     if (!this.films || this.films.length < 1) {
-      // cannot play (we can still try fetching random movies, but keep previous behavior)
       this.isPlaying = false;
       return;
     }
 
     this.isLoadingPair = true;
 
-    // Try to fetch two random TMDb movies (server will GetOrCreate them) with rating > minRatingThreshold and having a cover
-    // If that fails, fallback to picking from the local list using same constraints
     let leftCandidate = await this.fetchRandomTmdbMovieWithMinRating(12, this.minRatingThreshold);
     let rightCandidate = await this.fetchRandomTmdbMovieWithMinRating(12, this.minRatingThreshold);
 
-    // ensure distinct; if same try a few times
     let tries = 0;
     while (leftCandidate && rightCandidate && leftCandidate.movie.id === rightCandidate.movie.id && tries < 6) {
       rightCandidate = await this.fetchRandomTmdbMovieWithMinRating(8, this.minRatingThreshold);
@@ -156,11 +159,9 @@ export class HigherOrLowerComponent implements OnInit {
     if (leftCandidate && rightCandidate) {
       this.leftFilm = leftCandidate.movie;
       this.rightFilm = rightCandidate.movie;
-      // use pre-fetched ratings directly to avoid immediate duplicate requests
       this.leftRating = leftCandidate.rating ?? 0;
       this.rightRating = rightCandidate.rating ?? 0;
 
-      // still run the forkJoin to keep same UI flow; but if ratings are already set we will keep them
       const leftObs = this.filmesService.getRatings(this.leftFilm?.id ?? 0);
       const rightObs = this.filmesService.getRatings(this.rightFilm?.id ?? 0);
 
@@ -175,7 +176,6 @@ export class HigherOrLowerComponent implements OnInit {
           if (this.rightRating == null) this.rightRating = 0;
         },
         error: () => {
-          // keep pre-fetched or zero
           this.leftRating = this.leftRating ?? 0;
           this.rightRating = this.rightRating ?? 0;
         },
@@ -187,16 +187,13 @@ export class HigherOrLowerComponent implements OnInit {
       return;
     }
 
-    // Fallback: try to pick from local list ensuring rating > threshold and having a cover
     const localPair = await this.getTwoLocalFilmsWithMinRating(this.minRatingThreshold, 20);
     if (localPair) {
       this.leftFilm = localPair.left;
       this.rightFilm = localPair.right;
     } else {
-      // if still cannot find, fallback to any local pair that has covers (original behavior without ratings)
       const candidates = this.films.filter(f => this.hasCover(f));
       if (!candidates || candidates.length < 2) {
-        // last resort: allow any local pair
         if (!this.films || this.films.length < 2) {
           this.isPlaying = false;
           this.isLoadingPair = false;
@@ -229,7 +226,6 @@ export class HigherOrLowerComponent implements OnInit {
       }
     }
 
-    // fetch ratings for both (normal flow)
     const leftObs = this.filmesService.getRatings(this.leftFilm?.id ?? 0);
     const rightObs = this.filmesService.getRatings(this.rightFilm?.id ?? 0);
 
@@ -240,7 +236,6 @@ export class HigherOrLowerComponent implements OnInit {
         this.leftRating = (l?.tmdbVoteAverage ?? 0) as number;
         this.rightRating = (r?.tmdbVoteAverage ?? 0) as number;
 
-        // If both ratings are null/undefined use 0
         if (this.leftRating == null) this.leftRating = 0;
         if (this.rightRating == null) this.rightRating = 0;
       },
@@ -255,7 +250,6 @@ export class HigherOrLowerComponent implements OnInit {
   }
 
   // Try to fetch a random TMDb movie by calling GET /api/filmes/{id} and verify its rating is above threshold and it has a cover.
-  // Returns { movie, rating } when successful.
   private async fetchRandomTmdbMovieWithMinRating(maxAttempts: number = 8, minRating: number = 3): Promise<{ movie: Filme; rating: number } | undefined> {
     const minId = 1;
     const maxIdRange = 1000000;
@@ -265,7 +259,6 @@ export class HigherOrLowerComponent implements OnInit {
         const movie = await firstValueFrom(this.filmesService.getById(randomTmdbId));
         if (!movie) continue;
 
-        // skip movies without cover
         if (!this.hasCover(movie)) continue;
 
         try {
@@ -274,13 +267,10 @@ export class HigherOrLowerComponent implements OnInit {
           if (vote > minRating) {
             return { movie, rating: vote };
           }
-          // otherwise try another id
         } catch {
-          // rating fetch failed - skip this movie
           continue;
         }
       } catch {
-        // not found or error, try another id
         continue;
       }
     }
@@ -385,7 +375,39 @@ export class HigherOrLowerComponent implements OnInit {
     return undefined;
   }
 
-  // returns true when film has a usable poster (not empty, not placeholder)
+  private playSound(type: 'correct' | 'wrong'): void {
+    try {
+      if (!this.audioCtx) {
+        this.audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
+      }
+      const ctx = this.audioCtx;
+      const oscillator = ctx.createOscillator();
+      const gainNode = ctx.createGain();
+
+      oscillator.connect(gainNode);
+      gainNode.connect(ctx.destination);
+
+      if (type === 'correct') {
+        oscillator.frequency.setValueAtTime(440, ctx.currentTime);
+        oscillator.frequency.setValueAtTime(554, ctx.currentTime + 0.1);
+        oscillator.frequency.setValueAtTime(659, ctx.currentTime + 0.2);
+        gainNode.gain.setValueAtTime(0.3, ctx.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.5);
+        oscillator.start(ctx.currentTime);
+        oscillator.stop(ctx.currentTime + 0.5);
+      } else {
+        oscillator.frequency.setValueAtTime(300, ctx.currentTime);
+        oscillator.frequency.setValueAtTime(200, ctx.currentTime + 0.15);
+        oscillator.frequency.setValueAtTime(150, ctx.currentTime + 0.3);
+        gainNode.gain.setValueAtTime(0.3, ctx.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.5);
+        oscillator.start(ctx.currentTime);
+        oscillator.stop(ctx.currentTime + 0.5);
+      }
+    } catch {
+    }
+  }
+
   private hasCover(f?: Filme): boolean {
     if (!f) return false;
     const p = (f.posterUrl ?? '').trim();
@@ -395,14 +417,11 @@ export class HigherOrLowerComponent implements OnInit {
     return true;
   }
 
-  // Preload the next pair and ratings in background without changing current UI.
   private async preloadNextPair(): Promise<{ left: Filme; right: Filme; leftRating: number; rightRating: number } | undefined> {
-    // Try same strategy as startRound but return the result
     try {
       let leftCandidate = await this.fetchRandomTmdbMovieWithMinRating(8, this.minRatingThreshold);
       let rightCandidate = await this.fetchRandomTmdbMovieWithMinRating(8, this.minRatingThreshold);
 
-      // ensure distinct
       let tries = 0;
       while (leftCandidate && rightCandidate && leftCandidate.movie.id === rightCandidate.movie.id && tries < 6) {
         rightCandidate = await this.fetchRandomTmdbMovieWithMinRating(6, this.minRatingThreshold);
@@ -420,7 +439,6 @@ export class HigherOrLowerComponent implements OnInit {
 
       const localPair = await this.getTwoLocalFilmsWithMinRating(this.minRatingThreshold, 12);
       if (localPair) {
-        // fetch ratings
         const leftRatings = await firstValueFrom(this.filmesService.getRatings(localPair.left.id));
         const rightRatings = await firstValueFrom(this.filmesService.getRatings(localPair.right.id));
         const l = leftRatings?.tmdbVoteAverage ?? 0;
@@ -428,7 +446,6 @@ export class HigherOrLowerComponent implements OnInit {
         return { left: localPair.left, right: localPair.right, leftRating: l, rightRating: r };
       }
 
-      // fallback: pick any two local films that have covers
       const candidates = (this.films || []).filter(f => this.hasCover(f));
       if (candidates.length >= 2) {
         let i = Math.floor(Math.random() * candidates.length);
@@ -477,7 +494,6 @@ export class HigherOrLowerComponent implements OnInit {
     const correctSide = left === right ? 'either' : (left > right ? 'left' : 'right');
     const isCorrect = (correctSide === 'either') || (side === correctSide);
 
-    // set UI result state immediately
     this.chosenSide = side;
     this.resultWinner = correctSide === 'either' ? 'either' : correctSide as ('left' | 'right');
     this.showResults = true;
@@ -497,11 +513,16 @@ export class HigherOrLowerComponent implements OnInit {
     if (isCorrect) {
       this.score++;
       this.notifier = 'correct';
+      this.playSound('correct');
+      this.flashClass = isCorrect ? 'flash-correct' : 'flash-wrong';
+      setTimeout(() => this.flashClass = '', 600);
     } else {
       this.notifier = 'wrong';
+      this.playSound('wrong');
+      this.flashClass = isCorrect ? 'flash-correct' : 'flash-wrong';
+      setTimeout(() => this.flashClass = '', 600);
     }
 
-    // Start preloading next pair immediately in background
     this.nextPair = undefined;
     this.preloadNextPair().then(p => {
       this.nextPair = p;
@@ -509,7 +530,6 @@ export class HigherOrLowerComponent implements OnInit {
       this.nextPair = undefined;
     });
 
-    // Show results for 4s (4000ms), during which next pair is being loaded.
     setTimeout(() => {
       if (isCorrect) {
         if (this.gameCategory === 'actors') {
@@ -541,13 +561,10 @@ export class HigherOrLowerComponent implements OnInit {
           this.startRound();
         }
       } else {
-        // wrong answer: end game after showing results
         this.isPlaying = false;
 
-        // persist history (server if logged, else localStorage)
         this.persistHistory();
 
-        // Prepare and show end-of-game stats card instead of history
         this.endStats = {
           score: this.score,
           roundsCount: this.rounds.length,
@@ -556,7 +573,6 @@ export class HigherOrLowerComponent implements OnInit {
         };
         this.showEndStats = true;
 
-        // reset transient UI flags
         this.notifier = null;
         this.showResults = false;
         this.resultWinner = null;
@@ -569,11 +585,16 @@ export class HigherOrLowerComponent implements OnInit {
     const roundsJson = JSON.stringify(this.rounds || []);
     const userId = localStorage.getItem('user_id');
     if (userId) {
-      // try to persist to server (authorized)
       this.gameService.saveResult(this.score, roundsJson).subscribe({
-        next: () => { /* saved */ },
+        next: (res) => {
+          if (this.endStats) {
+            this.endStats.xpGanho = res.xpGanho;
+            this.endStats.xpTotal = res.xpTotal;
+            this.endStats.nivel = res.nivel;
+            this.endStats.xpDiarioRestante = res.xpDiarioRestante;
+          }
+        },
         error: () => {
-          // fallback: store locally
           this.saveLocalHistory(this.score, roundsJson);
         }
       });
@@ -591,10 +612,8 @@ export class HigherOrLowerComponent implements OnInit {
         score,
         roundsJson
       });
-      // keep last 50
       localStorage.setItem(this.localHistoryKey, JSON.stringify(existing.slice(0, 50)));
     } catch {
-      // ignore
     }
   }
 
@@ -603,7 +622,6 @@ export class HigherOrLowerComponent implements OnInit {
     this.isPlaying = false;
     this.history = [];
 
-    // load server history if logged
     const userId = localStorage.getItem('user_id');
     if (userId) {
       this.gameService.getMyHistory().subscribe({
@@ -613,7 +631,6 @@ export class HigherOrLowerComponent implements OnInit {
             roundsCount: this.computeRoundsCount(h.roundsJson),
             category: this.computeCategory(h.roundsJson)
           }));
-          // include local fallback entries also (non-auth)
           this.appendLocalHistory();
         },
         error: () => {
@@ -628,7 +645,6 @@ export class HigherOrLowerComponent implements OnInit {
   private appendLocalHistory(): void {
     try {
       const local = JSON.parse(localStorage.getItem(this.localHistoryKey) || '[]') || [];
-      // Convert to same shape for showing and compute roundsCount
       const mapped = (local as any[]).map(l => ({
         id: l.id ?? null,
         dataCriacao: l.dataCriacao ?? new Date().toISOString(),
@@ -637,10 +653,8 @@ export class HigherOrLowerComponent implements OnInit {
         roundsCount: this.computeRoundsCount(l.roundsJson),
         category: this.computeCategory(l.roundsJson)
       }));
-      // Merge (server first already in this.history), then local
       this.history = [...(this.history || []), ...mapped];
     } catch {
-      // ignore
     }
   }
 
@@ -651,7 +665,6 @@ export class HigherOrLowerComponent implements OnInit {
       if (Array.isArray(parsed)) return parsed.length;
       return 0;
     } catch {
-      // invalid JSON -> not countable
       return 0;
     }
   }

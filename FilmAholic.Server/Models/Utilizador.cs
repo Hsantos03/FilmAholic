@@ -17,6 +17,9 @@ public class Utilizador : IdentityUser
     public string TopFilmes { get; set; } = "[]";
     public string TopAtores { get; set; } = "[]";
     public int XP { get; set; } = 0;
+    public int Nivel { get; set; } = 1;
+    public int XPDiario { get; set; } = 0;
+    public DateTime? UltimoResetDiario { get; set; } = null;
     public string? Bio { get; set; } 
     public DateTime DataCriacao { get; set; } = DateTime.UtcNow;
 

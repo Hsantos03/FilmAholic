@@ -7,6 +7,7 @@ import { UserMoviesService } from '../../services/user-movies.service';
 import { FavoritesService } from '../../services/favorites.service';
 import { CommentsService, CommentDTO } from '../../services/comments.service';
 import { MovieRatingService, MovieRatingSummaryDTO } from '../../services/movie-rating.service';
+import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 @Component({
   selector: 'app-movie-page',
   templateUrl: './movie-page.component.html',
@@ -64,6 +65,9 @@ export class MoviePageComponent implements OnInit, OnDestroy {
 
   trailerUrl: string | null = null;
 
+  showTrailer = false;
+  safeTrailerUrl: SafeResourceUrl | null = null;
+
   private routeSub!: Subscription;
 
   constructor(
@@ -74,7 +78,8 @@ export class MoviePageComponent implements OnInit, OnDestroy {
     private userMoviesService: UserMoviesService,
     private favoritesService: FavoritesService,
     private commentsService: CommentsService,
-    private movieRatingService: MovieRatingService
+    private movieRatingService: MovieRatingService,
+    private sanitizer: DomSanitizer
   ) { }
 
   ngOnInit(): void {
@@ -152,6 +157,27 @@ export class MoviePageComponent implements OnInit, OnDestroy {
   get canComment(): boolean {
     return !!localStorage.getItem('user_id') || !!localStorage.getItem('token');
   }
+
+
+
+
+  openTrailer(): void {
+    if (!this.trailerUrl) return;
+    const embedUrl = this.trailerUrl.replace('watch?v=', 'embed/') + '?autoplay=1';
+    this.safeTrailerUrl = this.sanitizer.bypassSecurityTrustResourceUrl(embedUrl);
+    this.showTrailer = true;
+  }
+
+  closeTrailer(): void {
+    this.showTrailer = false;
+    this.safeTrailerUrl = null;
+  }
+
+
+
+
+
+
 
   get canRateMovie(): boolean {
     return this.canComment;

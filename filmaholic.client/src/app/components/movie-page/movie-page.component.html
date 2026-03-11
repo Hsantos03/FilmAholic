@@ -13,17 +13,24 @@
       <!--  CAPA -->
       <aside class="poster-col">
         <img class="movie-poster" [src]="posterOf()" [alt]="f.titulo" />
-        <!-- TRAILER -->
-        <a *ngIf="trailerUrl"
-           [href]="trailerUrl"
-           target="_blank"
-           class="trailer-btn">
-          Ver Trailer
-        </a>
-        <div class="hours" *ngIf="totalHours">
-          Total de horas vistas: {{ totalHours | number:'1.1-2' }}h
-        </div>
+        <button *ngIf="trailerUrl" class="trailer-btn" (click)="openTrailer()">
+          ▶ Ver Trailer
+        </button>
       </aside>
+
+      <!-- Modal FORA do aside -->
+      <div class="trailer-modal" *ngIf="showTrailer" (click)="closeTrailer()">
+        <div class="trailer-modal-wrapper" (click)="$event.stopPropagation()">
+          <button class="trailer-close" (click)="closeTrailer()">✕</button>
+          <div class="trailer-modal-inner">
+            <iframe [src]="safeTrailerUrl"
+                    frameborder="0"
+                    allowfullscreen
+                    allow="autoplay; encrypted-media">
+            </iframe>
+          </div>
+        </div>
+      </div>
 
       <!-- INFO -->
       <section class="info-col centered">
