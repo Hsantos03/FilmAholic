@@ -1,19 +1,16 @@
 import { Component, OnInit, OnDestroy, ViewChild, ElementRef, AfterViewInit } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
 import { CinemaService, CinemaVenue } from '../../services/cinema.service';
 import * as L from 'leaflet';
 
-// Fix Leaflet default icon 404 in Angular (marker icons must be served from assets)
+// Fix Leaflet default icon 404 in Angular
 const iconUrl = 'leaflet/marker-icon.png';
 const iconRetinaUrl = 'leaflet/marker-icon-2x.png';
 const shadowUrl = 'leaflet/marker-shadow.png';
 const iconDefault = L.icon({
-  iconUrl,
-  iconRetinaUrl,
-  shadowUrl,
-  iconSize: [25, 41],
-  iconAnchor: [12, 41],
-  popupAnchor: [1, -34],
-  shadowSize: [41, 41]
+  iconUrl, iconRetinaUrl, shadowUrl,
+  iconSize: [25, 41], iconAnchor: [12, 41],
+  popupAnchor: [1, -34], shadowSize: [41, 41]
 });
 L.Marker.prototype.options.icon = iconDefault;
 
@@ -31,31 +28,84 @@ export class CinemaMapComponent implements OnInit, AfterViewInit, OnDestroy {
   loading = true;
   geoError: string | null = null;
   cinemasError = false;
+
+  // Favoritos
+  favoritosIds: Set<string> = new Set();
+  togglingId: string | null = null;
+
+  private markers: Map<string, any> = new Map();
+
   private geoDone = false;
   private cinemasDone = false;
   private geoErrorTimeoutId: ReturnType<typeof setTimeout> | null = null;
 
   private readonly PORTUGAL_CENTER = { lat: 38.7223, lng: -9.1393 };
   private readonly DEFAULT_ZOOM = 10;
-  /** Atrasar a mensagem de erro para não mostrar se a localização chegar logo a seguir (ex.: 2 s). */
   private readonly GEO_ERROR_DELAY_MS = 3500;
+  private readonly API = '/api/cinema';
 
-  constructor(private cinemaService: CinemaService) {}
+  constructor(
+    private cinemaService: CinemaService,
+    private http: HttpClient
+  ) { }
 
   ngOnInit(): void {
     this.loadCinemas();
     this.requestGeolocation();
+    this.loadFavoritos();
   }
 
-  ngAfterViewInit(): void {}
+  ngAfterViewInit(): void { }
 
   ngOnDestroy(): void {
     if (this.geoErrorTimeoutId != null) clearTimeout(this.geoErrorTimeoutId);
-    if (this.map) {
-      this.map.remove();
-      this.map = null;
-    }
+    if (this.map) { this.map.remove(); this.map = null; }
   }
+
+
+  // ─── FAVORITOS ─────
+
+  private loadFavoritos(): void {
+    this.http.get<string[]>(`${this.API}/cinemas-favoritos`, { withCredentials: true })
+      .subscribe({
+        next: (ids) => { this.favoritosIds = new Set(ids); },
+        error: () => { }
+      });
+  }
+
+  isFavorito(cinema: CinemaVenue): boolean {
+    return this.favoritosIds.has(this.cinemaId(cinema));
+  }
+
+  toggleFavorito(cinema: CinemaVenue): void {
+    const id = this.cinemaId(cinema);
+    if (this.togglingId === id) return;
+    this.togglingId = id;
+
+    this.http.post<{ cinemaId: string; isFavorito: boolean }>(
+      `${this.API}/favoritos/toggle`,
+      { cinemaId: id },
+      { withCredentials: true }
+    ).subscribe({
+      next: (res) => {
+        if (res.isFavorito) {
+          this.favoritosIds.add(id);
+        } else {
+          this.favoritosIds.delete(id);
+        }
+        this.togglingId = null;
+      },
+      error: () => { this.togglingId = null; }
+    });
+  }
+
+  // ID único para cada cinema baseado no nome + coordenadas
+  cinemaId(c: CinemaVenue): string {
+    return `${c.nome}|${c.latitude}|${c.longitude}`;
+  }
+
+
+  // ─── GEO + CINEMAS ────
 
   private requestGeolocation(): void {
     if (!navigator.geolocation) {
@@ -71,34 +121,26 @@ export class CinemaMapComponent implements OnInit, AfterViewInit, OnDestroy {
           this.geoErrorTimeoutId = null;
         }
         this.geoError = null;
-        this.userPosition = {
-          lat: position.coords.latitude,
-          lng: position.coords.longitude
-        };
+        this.userPosition = { lat: position.coords.latitude, lng: position.coords.longitude };
         this.calculateDistances();
         this.geoDone = true;
         this.tryFinishAndInitMap();
-        // Se o mapa já foi inicializado (ex.: após timeout), adicionar marcador da posição agora
         if (this.map) this.addUserMarkerAndFit();
       },
       (err) => {
         let message: string;
         switch (err.code) {
           case err.PERMISSION_DENIED:
-            message = 'Permissão de localização negada. Ative a localização para ver a distância aos cinemas.';
-            break;
+            message = 'Permissão de localização negada. Ative a localização para ver a distância aos cinemas.'; break;
           case err.POSITION_UNAVAILABLE:
-            message = 'Localização indisponível.';
-            break;
+            message = 'Localização indisponível.'; break;
           case err.TIMEOUT:
-            message = 'Tempo esgotado ao obter a localização. Tente atualizar a página após ativar a localização.';
-            break;
+            message = 'Tempo esgotado ao obter a localização.'; break;
           default:
             message = 'Não foi possível obter a sua localização.';
         }
         this.geoDone = true;
         this.tryFinishAndInitMap();
-        // Só mostrar o erro após um pequeno atraso; se entretanto chegar sucesso, não mostramos
         this.geoErrorTimeoutId = setTimeout(() => {
           this.geoErrorTimeoutId = null;
           if (!this.userPosition) this.geoError = message;
@@ -136,10 +178,8 @@ export class CinemaMapComponent implements OnInit, AfterViewInit, OnDestroy {
     if (!this.userPosition) return;
     this.cinemas.forEach(c => {
       c.distanceKm = this.haversineKm(
-        this.userPosition!.lat,
-        this.userPosition!.lng,
-        c.latitude,
-        c.longitude
+        this.userPosition!.lat, this.userPosition!.lng,
+        c.latitude, c.longitude
       );
     });
     this.cinemas.sort((a, b) => (a.distanceKm ?? 999) - (b.distanceKm ?? 999));
@@ -150,11 +190,10 @@ export class CinemaMapComponent implements OnInit, AfterViewInit, OnDestroy {
     const dLat = (lat2 - lat1) * Math.PI / 180;
     const dLon = (lon2 - lon1) * Math.PI / 180;
     const a =
-      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.sin(dLat / 2) ** 2 +
       Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
-      Math.sin(dLon / 2) * Math.sin(dLon / 2);
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-    return Math.round(R * c * 10) / 10;
+      Math.sin(dLon / 2) ** 2;
+    return Math.round(6371 * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)) * 10) / 10;
   }
 
   private initMap(): void {
@@ -179,13 +218,20 @@ export class CinemaMapComponent implements OnInit, AfterViewInit, OnDestroy {
     this.cinemas.forEach(c => {
       const distText = c.distanceKm != null ? `<br><strong>Distância:</strong> ${c.distanceKm} km` : '';
       const popup = `<strong>${this.escapeHtml(c.nome)}</strong><br>${this.escapeHtml(c.morada)}${distText}`;
-      L.marker([c.latitude, c.longitude])
-        .addTo(this.map)
-        .bindPopup(popup);
+      const marker = L.marker([c.latitude, c.longitude]).addTo(this.map).bindPopup(popup);
+      this.markers.set(c.id, marker);
     });
   }
 
-  /** Chamado quando a geolocalização tem sucesso depois do mapa já estar inicializado (ex.: utilizador autorizou com atraso). */
+  flyToMarker(cinema: CinemaVenue): void {
+    if (!this.map) return;
+    this.map.flyTo([cinema.latitude, cinema.longitude], 15, { duration: 1.2 });
+    const marker = this.markers.get(cinema.id);
+    if (marker) marker.openPopup();
+    // Scroll para o mapa
+    document.querySelector('.map-wrap')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
+
   private addUserMarkerAndFit(): void {
     if (!this.map || !this.userPosition) return;
     L.marker([this.userPosition.lat, this.userPosition.lng])

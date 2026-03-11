@@ -4,10 +4,8 @@
   <div class="bg-orb orb1"></div>
   <div class="bg-orb orb2"></div>
 
-  <!-- BOTÃO VOLTAR — canto superior direito -->
-  <button class="back-btn" routerLink="/dashboard">
-    ← Dashboard
-  </button>
+  <!-- BOTÃO VOLTAR -->
+  <button class="back-btn" routerLink="/dashboard">← Dashboard</button>
 
   <!-- HERO HEADER -->
   <header class="cinema-hero">
@@ -46,16 +44,22 @@
       <span class="list-count">{{ cinemas.length }} cinemas</span>
     </div>
 
+    <p class="fav-hint" *ngIf="userPosition">
+      ⭐ Clica na estrela para guardar um favorito &nbsp;|&nbsp; 🎬 Clica no nome para ver no mapa
+    </p>
+
     <div class="cinema-grid">
       <div *ngFor="let c of sortedCinemas; let i = index"
            class="cinema-card"
+           [class.card-fav]="isFavorito(c)"
            [style.animation-delay]="i * 50 + 'ms'">
 
         <div class="cinema-rank">{{ i + 1 }}</div>
 
         <div class="cinema-icon">🎬</div>
 
-        <div class="cinema-info">
+        <!-- Nome clicável para voar ao marcador -->
+        <div class="cinema-info" (click)="flyToMarker(c)">
           <strong class="cinema-name">{{ c.nome }}</strong>
           <span class="cinema-address">{{ c.morada }}</span>
         </div>
@@ -64,6 +68,28 @@
           <span class="dist-value">{{ c.distanceKm }}</span>
           <span class="dist-unit">km</span>
         </div>
+
+        <!-- BOTÃO FAVORITO -->
+        <button class="fav-btn"
+                [class.fav-active]="isFavorito(c)"
+                [class.fav-loading]="togglingId === cinemaId(c)"
+                (click)="toggleFavorito(c)"
+                [disabled]="togglingId === cinemaId(c)"
+                [title]="isFavorito(c) ? 'Remover dos favoritos' : 'Adicionar aos favoritos'"
+                aria-label="Toggle favorito">
+          <span *ngIf="togglingId !== cinemaId(c)">{{ isFavorito(c) ? '⭐' : '☆' }}</span>
+          <span *ngIf="togglingId === cinemaId(c)" class="fav-spinner"></span>
+        </button>
+
+        <!-- BOTÃO WEBSITE -->
+        <a *ngIf="c.website"
+           [href]="c.website"
+           target="_blank"
+           rel="noopener"
+           class="website-btn"
+           title="Ver filmes em cartaz">
+          🎬
+        </a>
 
       </div>
     </div>

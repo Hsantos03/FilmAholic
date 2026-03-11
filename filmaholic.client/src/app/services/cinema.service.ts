@@ -25,6 +25,7 @@ export interface CinemaVenue {
   latitude: number;
   longitude: number;
   distanceKm?: number;
+  website?: string;
 }
 
 @Injectable({
