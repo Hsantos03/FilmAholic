@@ -284,7 +284,7 @@
   border-radius: 16px;
   transition: background 0.2s, transform 0.2s, border-color 0.2s;
   animation: slideIn 0.4s ease both;
-  cursor: default;
+  cursor: pointer;
   overflow: visible;
 }
 
@@ -304,6 +304,16 @@
   background: rgba(59,130,246,0.06);
   border-color: rgba(59,130,246,0.2);
   transform: translateX(4px);
+}
+
+.cinema-card.card-selected {
+  background: rgba(59,130,246,0.16);
+  border-color: rgba(59,130,246,0.45);
+  box-shadow: 0 0 0 1px rgba(59,130,246,0.4);
+}
+
+.cinema-card.card-selected .cinema-name {
+  color: #bfdbfe;
 }
 
 .cinema-rank {

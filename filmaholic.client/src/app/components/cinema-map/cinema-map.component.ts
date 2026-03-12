@@ -24,6 +24,7 @@ export class CinemaMapComponent implements OnInit, AfterViewInit, OnDestroy {
 
   map: any = null;
   cinemas: CinemaVenue[] = [];
+  selectedCinemaId: string | null = null;
   userPosition: { lat: number; lng: number } | null = null;
   loading = true;
   geoError: string | null = null;
@@ -219,15 +220,22 @@ export class CinemaMapComponent implements OnInit, AfterViewInit, OnDestroy {
       const distText = c.distanceKm != null ? `<br><strong>Distância:</strong> ${c.distanceKm} km` : '';
       const popup = `<strong>${this.escapeHtml(c.nome)}</strong><br>${this.escapeHtml(c.morada)}${distText}`;
       const marker = L.marker([c.latitude, c.longitude]).addTo(this.map).bindPopup(popup);
-      this.markers.set(c.id, marker);
+      const id = this.cinemaId(c);
+      this.markers.set(id, marker);
+      marker.on('click', () => {
+        this.selectedCinemaId = id;
+        this.scrollToCardById(id);
+      });
     });
   }
 
   flyToMarker(cinema: CinemaVenue): void {
     if (!this.map) return;
     this.map.flyTo([cinema.latitude, cinema.longitude], 15, { duration: 1.2 });
-    const marker = this.markers.get(cinema.id);
+    const id = this.cinemaId(cinema);
+    const marker = this.markers.get(id);
     if (marker) marker.openPopup();
+    this.selectedCinemaId = id;
     // Scroll para o mapa
     document.querySelector('.map-wrap')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
   }
@@ -249,5 +257,17 @@ export class CinemaMapComponent implements OnInit, AfterViewInit, OnDestroy {
 
   get sortedCinemas(): CinemaVenue[] {
     return [...this.cinemas].sort((a, b) => (a.distanceKm ?? 999) - (b.distanceKm ?? 999));
+  }
+
+  onCardClick(cinema: CinemaVenue): void {
+    this.selectedCinemaId = this.cinemaId(cinema);
+    this.flyToMarker(cinema);
+  }
+
+  private scrollToCardById(id: string): void {
+    const el = document.querySelector(`.cinema-card[data-id="${id}"]`) as HTMLElement | null;
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
   }
 }

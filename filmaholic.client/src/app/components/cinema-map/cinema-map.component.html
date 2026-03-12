@@ -51,7 +51,10 @@
     <div class="cinema-grid">
       <div *ngFor="let c of sortedCinemas; let i = index"
            class="cinema-card"
+           (click)="onCardClick(c)"
+           [attr.data-id]="cinemaId(c)"
            [class.card-fav]="isFavorito(c)"
+           [class.card-selected]="selectedCinemaId === cinemaId(c)"
            [style.animation-delay]="i * 50 + 'ms'">
 
         <div class="cinema-rank">{{ i + 1 }}</div>
@@ -59,7 +62,7 @@
         <div class="cinema-icon">🎬</div>
 
         <!-- Nome clicável para voar ao marcador -->
-        <div class="cinema-info" (click)="flyToMarker(c)">
+        <div class="cinema-info">
           <strong class="cinema-name">{{ c.nome }}</strong>
           <span class="cinema-address">{{ c.morada }}</span>
         </div>
@@ -73,7 +76,7 @@
         <button class="fav-btn"
                 [class.fav-active]="isFavorito(c)"
                 [class.fav-loading]="togglingId === cinemaId(c)"
-                (click)="toggleFavorito(c)"
+                (click)="toggleFavorito(c); $event.stopPropagation()"
                 [disabled]="togglingId === cinemaId(c)"
                 [title]="isFavorito(c) ? 'Remover dos favoritos' : 'Adicionar aos favoritos'"
                 aria-label="Toggle favorito">
@@ -87,7 +90,8 @@
            target="_blank"
            rel="noopener"
            class="website-btn"
-           title="Ver filmes em cartaz">
+           title="Ver filmes em cartaz"
+           (click)="$event.stopPropagation()">
           🎬
         </a>
 
