@@ -34,6 +34,15 @@ public class AtoresController : ControllerBase
     }
 
     /// <summary>Lista todos os filmes em que o ator participa.</summary>
+    [HttpGet("{personId:int}")]
+    public async Task<ActionResult<ActorDetailsDto>> GetActorDetails([FromRoute] int personId)
+    {
+        var details = await _movieService.GetActorDetailsAsync(personId);
+        if (details == null) return NotFound();
+        return Ok(details);
+    }
+
+    /// <summary>Lista todos os filmes em que o ator participa.</summary>
     [HttpGet("{personId:int}/movies")]
     public async Task<ActionResult<List<ActorMovieDto>>> GetMoviesByActor([FromRoute] int personId)
     {

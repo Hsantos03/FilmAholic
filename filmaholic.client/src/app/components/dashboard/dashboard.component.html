@@ -104,7 +104,6 @@
     </div>
   </header>
 
-
   <!-- Sidebar overlay -->
   <div class="sidebar-overlay" *ngIf="menuService.isOpen$ | async" (click)="toggleMenu()"></div>
 
@@ -308,7 +307,12 @@
                [class.slide-left]="atoresSlideDir === 'left'"
                [class.slide-right]="atoresSlideDir === 'right'">
             <div class="actor-card"
-                 *ngFor="let a of atoresVisible; let i = index">
+                 *ngFor="let a of atoresVisible; let i = index"
+                 (click)="openActor(a)"
+                 role="button"
+                 tabindex="0"
+                 (keydown.enter)="openActor(a)"
+                 (keydown.space)="openActor(a); $event.preventDefault()">
               <div class="actor-rank">{{ (atoresIndex + i) % atores.length + 1 }}</div>
               <img class="actor-photo" [src]="fotoAtor(a)" [alt]="a.nome" />
               <div class="actor-name">{{ a.nome }}</div>

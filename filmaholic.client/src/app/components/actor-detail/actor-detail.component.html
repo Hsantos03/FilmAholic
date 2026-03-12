@@ -1,0 +1,70 @@
+<header class="topbar">
+  <button class="icon-btn" (click)="goBack()" aria-label="Back">&larr;</button>
+  <a class="brand" routerLink="/dashboard">FilmAholic</a>
+</header>
+
+<main class="content actor-content">
+  <div *ngIf="isLoading" class="state">A carregar ator…</div>
+  <div *ngIf="error" class="state error">{{ error }}</div>
+
+  <section *ngIf="actor as a" class="actor-page">
+    <div class="actor-hero">
+      <div class="actor-photo-wrap">
+        <img class="actor-photo" [src]="actorPhoto" [alt]="a.nome" />
+      </div>
+
+      <div class="actor-meta">
+        <div class="actor-title-row">
+          <h1 class="actor-name">{{ a.nome }}</h1>
+        </div>
+
+        <div class="facts-grid" role="list" aria-label="Informações do ator">
+          <div class="fact" role="listitem">
+            <div class="fact-label">Departamento</div>
+            <div class="fact-value">{{ displayDepartamento(a.departamento, a.dataFalecimento) }}</div>
+          </div>
+          <div class="fact" role="listitem">
+            <div class="fact-label">Data de nascimento</div>
+            <div class="fact-value">{{ displayDataNascimento(a.dataNascimento) }}</div>
+          </div>
+          <div class="fact" role="listitem">
+            <div class="fact-label">Local de nascimento</div>
+            <div class="fact-value">{{ displayLocalNascimento(a.localNascimento) }}</div>
+          </div>
+          <div class="fact" role="listitem" *ngIf="a.dataFalecimento">
+            <div class="fact-label">Data de falecimento</div>
+            <div class="fact-value">{{ displayDataFalecimento(a.dataFalecimento) }}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="filmography">
+      <div class="section-head">
+        <h2>Filmografia</h2>
+        <div class="section-sub">{{ movies.length }} título(s)</div>
+      </div>
+
+      <div *ngIf="movies.length === 0 && !isLoading" class="empty">
+        Não foi possível encontrar filmes para este ator.
+      </div>
+
+      <div class="movies-grid" *ngIf="movies.length">
+        <div class="movie-card"
+             *ngFor="let m of movies"
+             (click)="openMovie(m)"
+             [class.loading]="isLoading">
+          <img *ngIf="m.posterUrl" class="movie-poster" [src]="m.posterUrl" [alt]="m.titulo" />
+          <div *ngIf="!m.posterUrl" class="movie-no-poster">{{ m.titulo }}</div>
+
+          <div class="movie-overlay">
+            <div class="movie-title">{{ m.titulo }}</div>
+            <div class="movie-subtitle" *ngIf="m.personagem">{{ m.personagem }}</div>
+            <div class="movie-subtitle" *ngIf="!m.personagem && m.dataLancamento">{{ m.dataLancamento }}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+

@@ -479,7 +479,7 @@ public class MovieService : IMovieService
                 return new List<PopularActorDto>();
             }
 
-            // embaralha para não dar sempre os mesmos pares
+            // embaralha para nï¿½o dar sempre os mesmos pares
             var rng = new Random();
             var shuffled = allPeople
                 .Where(p => !string.IsNullOrEmpty(p.ProfilePath))
@@ -688,6 +688,49 @@ public class MovieService : IMovieService
         {
             _logger.LogError(ex, "Error searching actors for query {Query}", query);
             return new List<ActorSearchResultDto>();
+        }
+    }
+
+    public async Task<ActorDetailsDto?> GetActorDetailsAsync(int personId)
+    {
+        if (string.IsNullOrEmpty(_tmdbApiKey))
+        {
+            _logger.LogWarning("TMDb API key is not configured. Cannot fetch actor details.");
+            return null;
+        }
+
+        try
+        {
+            var httpClient = _httpClientFactory.CreateClient();
+            var url = $"{_tmdbBaseUrl}/person/{personId}?api_key={_tmdbApiKey}&language=pt-PT";
+
+            var response = await httpClient.GetAsync(url);
+            if (!response.IsSuccessStatusCode) return null;
+
+            var json = await response.Content.ReadAsStringAsync();
+            var details = JsonSerializer.Deserialize<TmdbPersonDetailsDto>(json, new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = false
+            });
+
+            if (details == null) return null;
+
+            return new ActorDetailsDto
+            {
+                Id = details.Id,
+                Nome = details.Name,
+                FotoUrl = string.IsNullOrEmpty(details.ProfilePath) ? null : $"https://image.tmdb.org/t/p/w500{details.ProfilePath}",
+                Biografia = details.Biography,
+                DataNascimento = details.Birthday,
+                LocalNascimento = details.PlaceOfBirth,
+                Departamento = details.KnownForDepartment,
+                DataFalecimento = details.Deathday
+            };
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error fetching actor details for person {PersonId}", personId);
+            return null;
         }
     }
 

@@ -614,6 +614,10 @@ export class DashboardComponent implements OnInit, OnDestroy {
     return a?.fotoUrl || 'https://via.placeholder.com/300x300?text=Actor';
   }
 
+  openActor(a: PopularActor): void {
+    if (a?.id != null) this.router.navigate(['/actor', a.id]);
+  }
+
   posterOf(f: Filme | SearchResultItem): string {
     return f?.posterUrl || 'https://via.placeholder.com/300x450?text=Poster';
   }

@@ -24,6 +24,17 @@ export interface ActorMovie {
   dataLancamento?: string | null;
 }
 
+export interface ActorDetails {
+  id: number;
+  nome: string;
+  fotoUrl: string | null;
+  biografia?: string | null;
+  dataNascimento?: string | null;
+  localNascimento?: string | null;
+  departamento?: string | null;
+  dataFalecimento?: string | null;
+}
+
 @Injectable({ providedIn: 'root' })
 export class AtoresService {
   private readonly apiBase = environment.apiBaseUrl || '';
@@ -46,6 +57,10 @@ export class AtoresService {
 
   getMoviesByActor(personId: number): Observable<ActorMovie[]> {
     return this.http.get<ActorMovie[]>(`${this.apiUrl}/${personId}/movies`);
+  }
+
+  getActorDetails(personId: number): Observable<ActorDetails> {
+    return this.http.get<ActorDetails>(`${this.apiUrl}/${personId}`);
   }
 }
 

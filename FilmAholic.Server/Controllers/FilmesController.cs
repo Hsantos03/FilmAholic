@@ -111,7 +111,7 @@ namespace FilmAholic.Server.Controllers
             if (filme == null)
                 filme = FilmSeed.Filmes.FirstOrDefault(f => f.Id == id);
 
-            // Se ainda não encontrou, vai buscar ao TMDB
+            // Se ainda nï¿½o encontrou, vai buscar ao TMDB
             if (filme == null)
             {
                 try
