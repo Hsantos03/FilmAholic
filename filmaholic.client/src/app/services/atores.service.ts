@@ -32,6 +32,7 @@ export interface ActorDetails {
   dataNascimento?: string | null;
   localNascimento?: string | null;
   departamento?: string | null;
+  dataFalecimento?: string | null;
 }
 
 @Injectable({ providedIn: 'root' })

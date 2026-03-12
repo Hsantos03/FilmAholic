@@ -15,7 +15,6 @@ export class ActorDetailComponent implements OnInit, OnDestroy {
   movies: ActorMovie[] = [];
   isLoading = false;
   error = '';
-  showFullBio = false;
 
   private sub?: Subscription;
 
@@ -48,7 +47,6 @@ export class ActorDetailComponent implements OnInit, OnDestroy {
     this.error = '';
     this.actor = null;
     this.movies = [];
-    this.showFullBio = false;
 
     this.atoresService.getActorDetails(personId).subscribe({
       next: (a) => {
@@ -81,8 +79,91 @@ export class ActorDetailComponent implements OnInit, OnDestroy {
     }
   }
 
-  backToDashboard(): void {
-    this.router.navigate(['/dashboard']);
+  displayDepartamento(value: string | null | undefined, dataFalecimento?: string | null): string {
+    const map: Record<string, string> = {
+      Acting: 'Atuação',
+      Directing: 'Realização',
+      Writing: 'Argumento',
+      Production: 'Produção',
+      Crew: 'Equipa técnica',
+      Sound: 'Som',
+      Camera: 'Câmara',
+      Art: 'Arte',
+      Editing: 'Montagem',
+      Lighting: 'Iluminação',
+      'Visual Effects': 'Efeitos visuais',
+      Costume: 'Guardado-roupa',
+      Makeup: 'Maquilhagem'
+    };
+    const dep = value?.trim() ? (map[value] ?? value) : '—';
+    if (dataFalecimento?.trim()) return dep === '—' ? 'Falecido' : `${dep} (Falecido)`;
+    return dep;
+  }
+
+  displayDataFalecimento(value: string | null | undefined): string {
+    if (!value?.trim()) return '—';
+    const match = value.match(/^(\d{4})-(\d{2})-(\d{2})/);
+    if (match) return `${match[3]}/${match[2]}/${match[1]}`;
+    return value;
+  }
+
+  displayDataNascimento(value: string | null | undefined): string {
+    if (!value?.trim()) return '—';
+    const match = value.match(/^(\d{4})-(\d{2})-(\d{2})/);
+    if (match) return `${match[3]}/${match[2]}/${match[1]}`;
+    return value;
+  }
+
+  displayLocalNascimento(value: string | null | undefined): string {
+    if (!value?.trim()) return '—';
+    const map: Record<string, string> = {
+      'England, UK': 'Inglaterra, Reino Unido',
+      'England': 'Inglaterra',
+      'UK': 'Reino Unido',
+      'USA': 'EUA',
+      'United States': 'Estados Unidos',
+      'United Kingdom': 'Reino Unido',
+      'Scotland, UK': 'Escócia, Reino Unido',
+      'Wales, UK': 'País de Gales, Reino Unido',
+      'Northern Ireland, UK': 'Irlanda do Norte, Reino Unido',
+      'Ireland': 'Irlanda',
+      'France': 'França',
+      'Germany': 'Alemanha',
+      'Spain': 'Espanha',
+      'Italy': 'Itália',
+      'Canada': 'Canadá',
+      'Australia': 'Austrália',
+      'Brazil': 'Brasil',
+      'Portugal': 'Portugal',
+      'Mexico': 'México',
+      'Argentina': 'Argentina',
+      'Japan': 'Japão',
+      'South Korea': 'Coreia do Sul',
+      'China': 'China',
+      'India': 'Índia',
+      'Russia': 'Rússia',
+      'Netherlands': 'Países Baixos',
+      'Belgium': 'Bélgica',
+      'Sweden': 'Suécia',
+      'Norway': 'Noruega',
+      'Denmark': 'Dinamarca',
+      'Finland': 'Finlândia',
+      'Poland': 'Polónia',
+      'Czech Republic': 'República Checa',
+      'Austria': 'Áustria',
+      'Switzerland': 'Suíça',
+      'Greece': 'Grécia',
+      'Turkey': 'Turquia',
+      'Israel': 'Israel',
+      'Egypt': 'Egito',
+      'South Africa': 'África do Sul',
+      'New Zealand': 'Nova Zelândia'
+    };
+    let out = value;
+    for (const [en, pt] of Object.entries(map)) {
+      out = out.split(en).join(pt);
+    }
+    return out;
   }
 
   openMovie(m: ActorMovie): void {
@@ -110,14 +191,6 @@ export class ActorDetailComponent implements OnInit, OnDestroy {
 
   get actorPhoto(): string {
     return this.actor?.fotoUrl || 'https://via.placeholder.com/220x220?text=Actor';
-  }
-
-  toggleBio(): void {
-    this.showFullBio = !this.showFullBio;
-  }
-
-  get hasBio(): boolean {
-    return !!(this.actor?.biografia && this.actor.biografia.trim().length);
   }
 }
 

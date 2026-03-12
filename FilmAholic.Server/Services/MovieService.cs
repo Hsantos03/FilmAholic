@@ -723,7 +723,8 @@ public class MovieService : IMovieService
                 Biografia = details.Biography,
                 DataNascimento = details.Birthday,
                 LocalNascimento = details.PlaceOfBirth,
-                Departamento = details.KnownForDepartment
+                Departamento = details.KnownForDepartment,
+                DataFalecimento = details.Deathday
             };
         }
         catch (Exception ex)

@@ -16,50 +16,26 @@
       <div class="actor-meta">
         <div class="actor-title-row">
           <h1 class="actor-name">{{ a.nome }}</h1>
-          <div class="actor-actions">
-            <button type="button" class="pill-btn" (click)="backToDashboard()">Dashboard</button>
-          </div>
-        </div>
-
-        <div class="chips">
-          <span class="chip" *ngIf="a.departamento">{{ a.departamento }}</span>
-          <span class="chip" *ngIf="a.dataNascimento">Nasc.: {{ a.dataNascimento }}</span>
-          <span class="chip" *ngIf="a.localNascimento">{{ a.localNascimento }}</span>
-          <span class="chip muted" *ngIf="!a.departamento && !a.dataNascimento && !a.localNascimento">Sem informação adicional</span>
         </div>
 
         <div class="facts-grid" role="list" aria-label="Informações do ator">
           <div class="fact" role="listitem">
             <div class="fact-label">Departamento</div>
-            <div class="fact-value">{{ a.departamento || '—' }}</div>
+            <div class="fact-value">{{ displayDepartamento(a.departamento, a.dataFalecimento) }}</div>
           </div>
           <div class="fact" role="listitem">
             <div class="fact-label">Data de nascimento</div>
-            <div class="fact-value">{{ a.dataNascimento || '—' }}</div>
+            <div class="fact-value">{{ displayDataNascimento(a.dataNascimento) }}</div>
           </div>
           <div class="fact" role="listitem">
             <div class="fact-label">Local de nascimento</div>
-            <div class="fact-value">{{ a.localNascimento || '—' }}</div>
+            <div class="fact-value">{{ displayLocalNascimento(a.localNascimento) }}</div>
+          </div>
+          <div class="fact" role="listitem" *ngIf="a.dataFalecimento">
+            <div class="fact-label">Data de falecimento</div>
+            <div class="fact-value">{{ displayDataFalecimento(a.dataFalecimento) }}</div>
           </div>
         </div>
-
-        <div class="actor-bio" *ngIf="hasBio; else noBio">
-          <div class="bio-head">
-            <h3>Biografia</h3>
-            <button type="button" class="link-btn" (click)="toggleBio()">
-              {{ showFullBio ? 'Ler menos' : 'Ler mais' }}
-            </button>
-          </div>
-
-          <p class="bio-text" [class.clamped]="!showFullBio">{{ a.biografia }}</p>
-        </div>
-
-        <ng-template #noBio>
-          <div class="actor-bio no-bio">
-            <h3>Biografia</h3>
-            <p class="muted-text">Ainda não há biografia disponível para este ator.</p>
-          </div>
-        </ng-template>
       </div>
     </div>
 

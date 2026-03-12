@@ -143,6 +143,9 @@ public class TmdbPersonDetailsDto
 
     [JsonPropertyName("known_for_department")]
     public string? KnownForDepartment { get; set; }
+
+    [JsonPropertyName("deathday")]
+    public string? Deathday { get; set; }
 }
 
 /// <summary>API response: actor in search results (same shape as PopularActorDto for client)</summary>
@@ -173,4 +176,5 @@ public class ActorDetailsDto
     public string? DataNascimento { get; set; }
     public string? LocalNascimento { get; set; }
     public string? Departamento { get; set; }
+    public string? DataFalecimento { get; set; }
 }
