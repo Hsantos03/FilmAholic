@@ -19,6 +19,12 @@ export interface SaveResultResponse {
   xpDiarioRestante: number;
 }
 
+export interface GameStats {
+  melhorSequencia: number;
+  mediaPontos: number;
+  totalJogos: number;
+}
+
 @Injectable({ providedIn: 'root' })
 export class GameService {
   private readonly apiBase = environment.apiBaseUrl || '';
@@ -32,5 +38,10 @@ export class GameService {
 
   saveResult(score: number, roundsJson: string): Observable<SaveResultResponse> {
     return this.http.post<SaveResultResponse>(this.apiUrl, { score, roundsJson }, { withCredentials: true });
+  }
+
+  getStats(): Observable<GameStats> {
+    const url = this.apiBase ? `${this.apiBase}/api/game/history/stats` : '/api/game/history/stats';
+    return this.http.get<GameStats>(url, { withCredentials: true });
   }
 }

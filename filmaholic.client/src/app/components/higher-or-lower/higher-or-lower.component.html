@@ -293,6 +293,24 @@
         </div>
       </div>
 
+      <div class="stats-row" *ngIf="stats">
+        <div class="stat-chip">
+          <span class="stat-icon">🏆</span>
+          <span class="stat-value">{{ stats.melhorSequencia }}</span>
+          <span class="stat-label">Melhor sequência</span>
+        </div>
+        <div class="stat-chip">
+          <span class="stat-icon">📊</span>
+          <span class="stat-value">{{ stats.mediaPontos }}</span>
+          <span class="stat-label">Média de pontos</span>
+        </div>
+        <div class="stat-chip">
+          <span class="stat-icon">🎮</span>
+          <span class="stat-value">{{ stats.totalJogos }}</span>
+          <span class="stat-label">Total de jogos</span>
+        </div>
+      </div>
+
       <div class="history-empty" *ngIf="history.length === 0">
         Ainda não tens jogos guardados. Joga e aparece aqui!
       </div>

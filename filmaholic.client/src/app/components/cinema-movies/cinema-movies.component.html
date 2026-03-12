@@ -1,157 +1,169 @@
-<header class="topbar">
-  <button class="icon-btn" (click)="goBack()" aria-label="Back">&larr;</button>
-  <a class="brand" routerLink="/dashboard">FilmAholic</a>
-</header>
+<div class="cinema-page">
+  <!-- BG ORBS -->
+  <div class="bg-orb orb1"></div>
+  <div class="bg-orb orb2"></div>
 
-<main class="content">
-  <div class="page-header">
-    <h1>Filmes em Cartaz</h1>
-    <p class="page-subtitle">A sua próxima sessão favorita está à sua espera. 🍿</p>
+  <!-- BOTÃO VOLTAR -->
+  <button class="back-btn" (click)="goBack()">← Dashboard</button>
+
+  <!-- HERO -->
+  <header class="cinema-hero">
+    <div class="hero-badge">🍿 EM CARTAZ</div>
+    <h1 class="hero-title">Filmes em<br><span class="title-accent">Cartaz</span></h1>
+    <p class="hero-sub">A sua próxima sessão favorita está à sua espera.</p>
+  </header>
+
+  <!-- LOADING -->
+  <div *ngIf="isLoading" class="state-loading">
+    <div class="loading-ring"></div>
+    <p>A carregar filmes em cartaz…</p>
   </div>
 
-  <div *ngIf="isLoading" class="state">A carregar filmes em cartaz…</div>
-  <div *ngIf="error" class="state error">{{ error }}</div>
-
-  <!-- CINEMA NOS -->
-  <div *ngIf="!isLoading && !error && nosMovies.length > 0" class="cinema-section">
-    <div class="section-header">
-      <div class="cinema-branding">
-        <span class="cinema-dot"></span>
-        <span class="cinema-name">Cinema NOS</span>
-        <span class="cinema-dot"></span>
-      </div>
-    </div>
-
-    <div class="cinema-movies-grid">
-      <div class="carousel-container"
-           (mouseenter)="stopAutoScroll('nos')"
-           (mouseleave)="startAutoScroll('nos')">
-        <div class="carousel-wrapper" #carouselNos>
-          <ng-container *ngFor="let movie of nosMovies">
-            <div class="cinema-movie-card">
-              <img class="movie-poster" [src]="posterOf(movie)" [alt]="movie.titulo" />
-              <div class="movie-overlay">
-                <div class="overlay-top">
-                  <div class="overlay-top-left">
-                    <h3 class="movie-title">{{ movie.titulo }}</h3>
-                    <span class="genre">{{ movie.genero }}</span>
-                  </div>
-                  <span class="rating">{{ movie.classificacao }}</span>
-                </div>
-                <div class="overlay-bottom">
-                  <span class="duration">{{ formatDuration(movie.duracao) }}</span>
-                  <div class="movie-actions">
-                    <a class="btn primary" [href]="movie.link" target="_blank" rel="noopener">Ver Sessões no Cinema NOS</a>
-                    <button class="btn secondary" (click)="viewMovieDetails(movie)">Ver Detalhes</button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </ng-container>
-          <ng-container *ngFor="let movie of nosMovies">
-            <div class="cinema-movie-card">
-              <img class="movie-poster" [src]="posterOf(movie)" [alt]="movie.titulo" />
-              <div class="movie-overlay">
-                <div class="overlay-top">
-                  <div class="overlay-top-left">
-                    <h3 class="movie-title">{{ movie.titulo }}</h3>
-                    <span class="genre">{{ movie.genero }}</span>
-                  </div>
-                  <span class="rating">{{ movie.classificacao }}</span>
-                </div>
-                <div class="overlay-bottom">
-                  <span class="duration">{{ movie.duracao }}</span>
-                  <div class="movie-actions">
-                    <a class="btn primary" [href]="movie.link" target="_blank" rel="noopener">Ver Sessões no Cinema NOS</a>
-                    <button class="btn secondary" (click)="viewMovieDetails(movie)">Ver Detalhes</button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </ng-container>
-        </div>
-      </div>
-      <div class="carousel-controls">
-        <button class="carousel-btn" (click)="scrollCarousel(-1, 'nos')">&#8249;</button>
-        <span class="carousel-hint">Passa o rato para pausar</span>
-        <button class="carousel-btn" (click)="scrollCarousel(1, 'nos')">&#8250;</button>
-      </div>
-    </div>
+  <!-- ERRO -->
+  <div *ngIf="error" class="state-error">
+    <span>⚠️</span> {{ error }}
   </div>
 
-  <!-- CINEMA CITY -->
-  <div *ngIf="!isLoading && !error && cineplaceMovies.length > 0" class="cinema-section">
-    <div class="section-header">
-      <div class="cinema-branding">
-        <span class="cinema-dot"></span>
-        <span class="cinema-name">Cinema City</span>
-        <span class="cinema-dot"></span>
-      </div>
-    </div>
-
-    <div class="cinema-movies-grid">
-      <div class="carousel-container"
-           (mouseenter)="stopAutoScroll('cinemacity')"
-           (mouseleave)="startAutoScroll('cinemacity')">
-        <div class="carousel-wrapper" #carouselCineplace>
-          <ng-container *ngFor="let movie of cineplaceMovies">
-            <div class="cinema-movie-card">
-              <img class="movie-poster" [src]="posterOf(movie)" [alt]="movie.titulo" />
-              <div class="movie-overlay">
-                <div class="overlay-top">
-                  <div class="overlay-top-left">
-                    <h3 class="movie-title">{{ movie.titulo }}</h3>
-                    <span class="genre">{{ movie.genero }}</span>
-                  </div>
-                  <span class="rating">{{ movie.classificacao }}</span>
-                </div>
-                <div class="overlay-bottom">
-                  <span class="duration">{{ movie.duracao }}</span>
-                  <div class="movie-actions">
-                    <a class="btn primary" [href]="movie.link" target="_blank" rel="noopener">Ver Sessões no Cinema City</a>
-                    <button class="btn secondary" (click)="viewMovieDetails(movie)">Ver Detalhes</button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </ng-container>
-          <ng-container *ngFor="let movie of cineplaceMovies">
-            <div class="cinema-movie-card">
-              <img class="movie-poster" [src]="posterOf(movie)" [alt]="movie.titulo" />
-              <div class="movie-overlay">
-                <div class="overlay-top">
-                  <div class="overlay-top-left">
-                    <h3 class="movie-title">{{ movie.titulo }}</h3>
-                    <span class="genre">{{ movie.genero }}</span>
-                  </div>
-                  <span class="rating">{{ movie.classificacao }}</span>
-                </div>
-                <div class="overlay-bottom">
-                  <span class="duration">{{ movie.duracao }}</span>
-                  <div class="movie-actions">
-                    <a class="btn primary" [href]="movie.link" target="_blank" rel="noopener">Ver Sessões no Cinema City</a>
-                    <button class="btn secondary" (click)="viewMovieDetails(movie)">Ver Detalhes</button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </ng-container>
-        </div>
-      </div>
-      <div class="carousel-controls">
-        <button class="carousel-btn" (click)="scrollCarousel(-1, 'cinemacity')">&#8249;</button>
-        <span class="carousel-hint">Passa o rato para pausar</span>
-        <button class="carousel-btn" (click)="scrollCarousel(1, 'cinemacity')">&#8250;</button>
-      </div>
-    </div>
-  </div>
-
+  <!-- FILME NÃO ENCONTRADO -->
   <div class="movie-not-found" *ngIf="movieNotFound">
     <span>🎬</span>
     <p>O filme <strong>{{ movieNotFound }}</strong> ainda não está disponível na base de dados.</p>
   </div>
 
-  <div class="last-updated" *ngIf="!isLoading && !error">
-    <small>Última atualização: {{ lastUpdated | date:'dd/MM/yyyy, HH:mm' }}</small>
+  <!-- CONTEÚDO -->
+  <div *ngIf="!isLoading && !error" class="cinema-content">
+
+    <!-- ── CINEMA NOS ── -->
+    <section *ngIf="nosMovies.length > 0" class="cinema-section">
+      <div class="section-header">
+        <div class="section-badge nos-badge">🎬 Cinema NOS</div>
+        <span class="section-count">{{ nosMovies.length }} filmes</span>
+      </div>
+
+      <div class="cinema-movies-grid">
+        <div class="carousel-container"
+             (mouseenter)="stopAutoScroll('nos')"
+             (mouseleave)="startAutoScroll('nos')">
+          <div class="carousel-wrapper" #carouselNos>
+            <ng-container *ngFor="let movie of nosMovies">
+              <div class="cinema-movie-card">
+                <img class="movie-poster" [src]="posterOf(movie)" [alt]="movie.titulo" />
+                <div class="movie-overlay">
+                  <div class="overlay-top">
+                    <div class="overlay-top-left">
+                      <h3 class="movie-title">{{ movie.titulo }}</h3>
+                      <span class="genre">{{ movie.genero }}</span>
+                    </div>
+                    <span class="rating">{{ movie.classificacao }}</span>
+                  </div>
+                  <div class="overlay-bottom">
+                    <span class="duration">{{ formatDuration(movie.duracao) }}</span>
+                    <div class="movie-actions">
+                      <a class="btn primary" [href]="movie.link" target="_blank" rel="noopener">Ver Sessões</a>
+                      <button class="btn secondary" (click)="viewMovieDetails(movie)">Ver Detalhes</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </ng-container>
+            <ng-container *ngFor="let movie of nosMovies">
+              <div class="cinema-movie-card">
+                <img class="movie-poster" [src]="posterOf(movie)" [alt]="movie.titulo" />
+                <div class="movie-overlay">
+                  <div class="overlay-top">
+                    <div class="overlay-top-left">
+                      <h3 class="movie-title">{{ movie.titulo }}</h3>
+                      <span class="genre">{{ movie.genero }}</span>
+                    </div>
+                    <span class="rating">{{ movie.classificacao }}</span>
+                  </div>
+                  <div class="overlay-bottom">
+                    <span class="duration">{{ formatDuration(movie.duracao) }}</span>
+                    <div class="movie-actions">
+                      <a class="btn primary" [href]="movie.link" target="_blank" rel="noopener">Ver Sessões</a>
+                      <button class="btn secondary" (click)="viewMovieDetails(movie)">Ver Detalhes</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </ng-container>
+          </div>
+        </div>
+        <div class="carousel-controls">
+          <button class="carousel-btn" (click)="scrollCarousel(-1, 'nos')">&#8249;</button>
+          <span class="carousel-hint">Passa o rato para pausar</span>
+          <button class="carousel-btn" (click)="scrollCarousel(1, 'nos')">&#8250;</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── CINEMA CITY ── -->
+    <section *ngIf="cineplaceMovies.length > 0" class="cinema-section">
+      <div class="section-header">
+        <div class="section-badge city-badge">🎬 Cinema City</div>
+        <span class="section-count">{{ cineplaceMovies.length }} filmes</span>
+      </div>
+
+      <div class="cinema-movies-grid">
+        <div class="carousel-container"
+             (mouseenter)="stopAutoScroll('cinemacity')"
+             (mouseleave)="startAutoScroll('cinemacity')">
+          <div class="carousel-wrapper" #carouselCineplace>
+            <ng-container *ngFor="let movie of cineplaceMovies">
+              <div class="cinema-movie-card">
+                <img class="movie-poster" [src]="posterOf(movie)" [alt]="movie.titulo" />
+                <div class="movie-overlay">
+                  <div class="overlay-top">
+                    <div class="overlay-top-left">
+                      <h3 class="movie-title">{{ movie.titulo }}</h3>
+                      <span class="genre">{{ movie.genero }}</span>
+                    </div>
+                    <span class="rating">{{ movie.classificacao }}</span>
+                  </div>
+                  <div class="overlay-bottom">
+                    <span class="duration">{{ formatDuration(movie.duracao) }}</span>
+                    <div class="movie-actions">
+                      <a class="btn primary" [href]="movie.link" target="_blank" rel="noopener">Ver Sessões</a>
+                      <button class="btn secondary" (click)="viewMovieDetails(movie)">Ver Detalhes</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </ng-container>
+            <ng-container *ngFor="let movie of cineplaceMovies">
+              <div class="cinema-movie-card">
+                <img class="movie-poster" [src]="posterOf(movie)" [alt]="movie.titulo" />
+                <div class="movie-overlay">
+                  <div class="overlay-top">
+                    <div class="overlay-top-left">
+                      <h3 class="movie-title">{{ movie.titulo }}</h3>
+                      <span class="genre">{{ movie.genero }}</span>
+                    </div>
+                    <span class="rating">{{ movie.classificacao }}</span>
+                  </div>
+                  <div class="overlay-bottom">
+                    <span class="duration">{{ formatDuration(movie.duracao) }}</span>
+                    <div class="movie-actions">
+                      <a class="btn primary" [href]="movie.link" target="_blank" rel="noopener">Ver Sessões</a>
+                      <button class="btn secondary" (click)="viewMovieDetails(movie)">Ver Detalhes</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </ng-container>
+          </div>
+        </div>
+        <div class="carousel-controls">
+          <button class="carousel-btn" (click)="scrollCarousel(-1, 'cinemacity')">&#8249;</button>
+          <span class="carousel-hint">Passa o rato para pausar</span>
+          <button class="carousel-btn" (click)="scrollCarousel(1, 'cinemacity')">&#8250;</button>
+        </div>
+      </div>
+    </section>
+
+    <div class="last-updated" *ngIf="!isLoading && !error">
+      <small>Última atualização: {{ lastUpdated | date:'dd/MM/yyyy, HH:mm' }}</small>
+    </div>
+
   </div>
-</main>
+</div>

@@ -114,6 +114,33 @@ namespace FilmAholic.Server.Controllers
             }
             return nivel;
         }
+
+        [Authorize]
+        [HttpGet("stats")]
+        public async Task<IActionResult> GetStats()
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(userId)) return Unauthorized();
+
+            var history = await _context.Set<GameHistory>()
+                .Where(h => h.UtilizadorId == userId)
+                .OrderByDescending(h => h.DataCriacao)
+                .ToListAsync();
+
+            if (!history.Any())
+                return Ok(new { melhorSequencia = 0, mediapontos = 0.0, totalJogos = 0 });
+
+            var totalJogos = history.Count;
+            var mediaPontos = history.Average(h => h.Score);
+            var melhorSequencia = history.Max(h => h.Score);
+
+            return Ok(new
+            {
+                melhorSequencia,
+                mediaPontos = Math.Round(mediaPontos, 1),
+                totalJogos
+            });
+        }
     }
 
     public class GameHistoryCreateDto
