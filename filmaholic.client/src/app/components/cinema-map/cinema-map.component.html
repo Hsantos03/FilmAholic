@@ -1,0 +1,97 @@
+<div class="cinema-map-page">
+
+  <!-- BG ORBS -->
+  <div class="bg-orb orb1"></div>
+  <div class="bg-orb orb2"></div>
+
+  <!-- BOTÃO VOLTAR -->
+  <button class="back-btn" routerLink="/dashboard">← Dashboard</button>
+
+  <!-- HERO HEADER -->
+  <header class="cinema-hero">
+    <div class="hero-badge">📍 LOCALIZAÇÃO</div>
+    <h1 class="hero-title">Cinemas<span class="title-accent"> Próximos</span></h1>
+    <p class="hero-sub">Encontra o cinema mais perto de ti e planeia a tua próxima sessão.</p>
+  </header>
+
+  <!-- LOADING -->
+  <div *ngIf="loading" class="state-loading">
+    <div class="loading-ring"></div>
+    <p>A obter a sua localização e a carregar cinemas…</p>
+  </div>
+
+  <!-- ERROS -->
+  <div *ngIf="!loading && geoError" class="state-error" role="alert">
+    <span>⚠️</span> {{ geoError }}
+  </div>
+  <div *ngIf="!loading && cinemasError" class="state-error" role="alert">
+    <span>⚠️</span> Não foi possível carregar a lista de cinemas. Tente mais tarde.
+  </div>
+
+  <!-- MAPA -->
+  <div class="map-wrap" [class.hidden]="loading">
+    <div #mapContainer class="map-container"></div>
+    <div class="map-overlay-label">🗺️ Mapa interativo</div>
+  </div>
+
+  <!-- LISTA DE CINEMAS -->
+  <section *ngIf="!loading && cinemas.length > 0"
+           class="cinema-list"
+           aria-label="Lista de cinemas por distância">
+
+    <div class="list-header">
+      <h2 class="list-title">Cinemas por distância</h2>
+      <span class="list-count">{{ cinemas.length }} cinemas</span>
+    </div>
+
+    <p class="fav-hint" *ngIf="userPosition">
+      ⭐ Clica na estrela para guardar um favorito &nbsp;|&nbsp; 🎬 Clica no nome para ver no mapa
+    </p>
+
+    <div class="cinema-grid">
+      <div *ngFor="let c of sortedCinemas; let i = index"
+           class="cinema-card"
+           [class.card-fav]="isFavorito(c)"
+           [style.animation-delay]="i * 50 + 'ms'">
+
+        <div class="cinema-rank">{{ i + 1 }}</div>
+
+        <div class="cinema-icon">🎬</div>
+
+        <!-- Nome clicável para voar ao marcador -->
+        <div class="cinema-info" (click)="flyToMarker(c)">
+          <strong class="cinema-name">{{ c.nome }}</strong>
+          <span class="cinema-address">{{ c.morada }}</span>
+        </div>
+
+        <div class="cinema-distance" *ngIf="c.distanceKm != null">
+          <span class="dist-value">{{ c.distanceKm }}</span>
+          <span class="dist-unit">km</span>
+        </div>
+
+        <!-- BOTÃO FAVORITO -->
+        <button class="fav-btn"
+                [class.fav-active]="isFavorito(c)"
+                [class.fav-loading]="togglingId === cinemaId(c)"
+                (click)="toggleFavorito(c)"
+                [disabled]="togglingId === cinemaId(c)"
+                [title]="isFavorito(c) ? 'Remover dos favoritos' : 'Adicionar aos favoritos'"
+                aria-label="Toggle favorito">
+          <span *ngIf="togglingId !== cinemaId(c)">{{ isFavorito(c) ? '⭐' : '☆' }}</span>
+          <span *ngIf="togglingId === cinemaId(c)" class="fav-spinner"></span>
+        </button>
+
+        <!-- BOTÃO WEBSITE -->
+        <a *ngIf="c.website"
+           [href]="c.website"
+           target="_blank"
+           rel="noopener"
+           class="website-btn"
+           title="Ver filmes em cartaz">
+          🎬
+        </a>
+
+      </div>
+    </div>
+  </section>
+</div>

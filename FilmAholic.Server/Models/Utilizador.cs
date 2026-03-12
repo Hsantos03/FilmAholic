@@ -19,6 +19,7 @@ public class Utilizador : IdentityUser
     public int XP { get; set; } = 0;
     public int Nivel { get; set; } = 1;
     public int XPDiario { get; set; } = 0;
+    public string CinemasFavoritos { get; set; } = "[]";
     public DateTime? UltimoResetDiario { get; set; } = null;
     public string? Bio { get; set; } 
     public DateTime DataCriacao { get; set; } = DateTime.UtcNow;

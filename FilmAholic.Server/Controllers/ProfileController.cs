@@ -259,6 +259,7 @@ namespace FilmAholic.Server.Controllers
             await _context.SaveChangesAsync();
             return Ok();
         }
+        
 
         // DTOs
         public class UpdateProfileDto
