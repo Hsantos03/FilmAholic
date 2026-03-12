@@ -1,8 +1,9 @@
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { FilmesService, Filme, RatingsDto, ActorDto } from '../../services/filmes.service';
-import { GameService, GameHistoryEntry, SaveResultResponse } from '../../services/game.service';
+import { GameService, GameHistoryEntry, SaveResultResponse, GameStats } from '../../services/game.service';
 import { forkJoin, firstValueFrom } from 'rxjs';
+
 
 @Component({
   selector: 'app-higher-or-lower',
@@ -61,6 +62,8 @@ export class HigherOrLowerComponent implements OnInit {
     nivel?: number;
     xpDiarioRestante?: number;
   } | null = null;
+
+  stats: GameStats | null = null;
 
   constructor(
     private router: Router,
@@ -624,6 +627,11 @@ export class HigherOrLowerComponent implements OnInit {
 
     const userId = localStorage.getItem('user_id');
     if (userId) {
+      this.gameService.getStats().subscribe({
+        next: (s) => this.stats = s,
+        error: () => this.stats = null
+      });
+
       this.gameService.getMyHistory().subscribe({
         next: (res) => {
           this.history = (res || []).map(h => ({

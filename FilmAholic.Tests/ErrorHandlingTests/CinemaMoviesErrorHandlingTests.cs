@@ -6,6 +6,8 @@ using Moq;
 using Xunit;
 using System.Threading.Tasks;
 using System;
+using FilmAholic.Server.Data;
+using Microsoft.EntityFrameworkCore;
 
 namespace FilmAholic.Tests.ErrorHandlingTests
 {
@@ -21,7 +23,12 @@ namespace FilmAholic.Tests.ErrorHandlingTests
             
             IHttpClientFactory testFactory = new TestHttpClientFactory();
             
-            controller = new CinemaController(mockConfiguration.Object, testFactory);
+            var options = new DbContextOptionsBuilder<FilmAholicDbContext>()
+                .UseInMemoryDatabase(databaseName: "TestDb")
+                .Options;
+            var context = new FilmAholicDbContext(options);
+            
+            controller = new CinemaController(mockConfiguration.Object, testFactory, context);
         }
 
         private class TestHttpClientFactory : IHttpClientFactory
@@ -44,7 +51,7 @@ namespace FilmAholic.Tests.ErrorHandlingTests
             var mockConfigVazia = new Mock<IConfiguration>();
             mockConfigVazia.Setup(c => c["ExternalApis:TmdbApiKey"]).Returns((string?)null);
             
-            var controllerSemConfig = new CinemaController(mockConfigVazia.Object, new TestHttpClientFactory());
+            var controllerSemConfig = new CinemaController(mockConfigVazia.Object, new TestHttpClientFactory(), CreateTestContext());
             
             // Act
             var result = await controllerSemConfig.GetFilmesEmCartaz();
@@ -65,7 +72,7 @@ namespace FilmAholic.Tests.ErrorHandlingTests
         {
             // Arrange
             Assert.Throws<ArgumentNullException>(() => 
-                new CinemaController(mockConfiguration.Object, null!));
+                new CinemaController(mockConfiguration.Object, null!, CreateTestContext()));
         }
 
         [Fact]
@@ -74,7 +81,7 @@ namespace FilmAholic.Tests.ErrorHandlingTests
             // Arrange 
             
             // Act & Assert 
-            var controller = new CinemaController(null!, new TestHttpClientFactory());
+            var controller = new CinemaController(null!, new TestHttpClientFactory(), CreateTestContext());
             
             Assert.NotNull(controller);
         }
@@ -86,7 +93,7 @@ namespace FilmAholic.Tests.ErrorHandlingTests
             var mockConfigVazia = new Mock<IConfiguration>();
             mockConfigVazia.Setup(c => c["ExternalApis:TmdbApiKey"]).Returns((string?)null);
             
-            var controllerSemConfig = new CinemaController(mockConfigVazia.Object, new TestHttpClientFactory());
+            var controllerSemConfig = new CinemaController(mockConfigVazia.Object, new TestHttpClientFactory(), CreateTestContext());
             
             // Act
             var result = await controllerSemConfig.SearchTmdb("Test Movie");
@@ -126,7 +133,7 @@ namespace FilmAholic.Tests.ErrorHandlingTests
             var mockConfigVazia = new Mock<IConfiguration>();
             mockConfigVazia.Setup(c => c["ExternalApis:TmdbApiKey"]).Returns("");
             
-            var controllerConfigVazia = new CinemaController(mockConfigVazia.Object, new TestHttpClientFactory());
+            var controllerConfigVazia = new CinemaController(mockConfigVazia.Object, new TestHttpClientFactory(), CreateTestContext());
             
             // Act
             var result = await controllerConfigVazia.SearchTmdb("Test Movie");
@@ -142,7 +149,7 @@ namespace FilmAholic.Tests.ErrorHandlingTests
             var mockConfigInvalida = new Mock<IConfiguration>();
             mockConfigInvalida.Setup(c => c["ExternalApis:TmdbApiKey"]).Returns("invalid-key-123");
             
-            var controllerConfigInvalida = new CinemaController(mockConfigInvalida.Object, new TestHttpClientFactory());
+            var controllerConfigInvalida = new CinemaController(mockConfigInvalida.Object, new TestHttpClientFactory(), CreateTestContext());
             
             // Act
             var result = await controllerConfigInvalida.SearchTmdb("Test Movie");
@@ -162,6 +169,14 @@ namespace FilmAholic.Tests.ErrorHandlingTests
             
             // Assert 
             Assert.IsType<NotFoundResult>(result);
-        }                    
+        }
+
+        private FilmAholicDbContext CreateTestContext()
+        {
+            var options = new DbContextOptionsBuilder<FilmAholicDbContext>()
+                .UseInMemoryDatabase(databaseName: "TestDb")
+                .Options;
+            return new FilmAholicDbContext(options);
+        }
     }
 }

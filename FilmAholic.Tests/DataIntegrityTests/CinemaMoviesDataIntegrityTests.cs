@@ -6,6 +6,8 @@ using Moq;
 using Xunit;
 using System.Collections.Generic;
 using System.Linq;
+using FilmAholic.Server.Data;
+using Microsoft.EntityFrameworkCore;
 
 namespace FilmAholic.Tests.DataIntegrityTests
 {
@@ -20,7 +22,12 @@ namespace FilmAholic.Tests.DataIntegrityTests
             mockConfiguration = new Mock<IConfiguration>();
             mockConfiguration.Setup(c => c["ExternalApis:TmdbApiKey"]).Returns("test-api-key");
             
-            controller = new CinemaController(mockConfiguration.Object, new TestHttpClientFactory());
+            var options = new DbContextOptionsBuilder<FilmAholicDbContext>()
+                .UseInMemoryDatabase(databaseName: "TestDb")
+                .Options;
+            var context = new FilmAholicDbContext(options);
+            
+            controller = new CinemaController(mockConfiguration.Object, new TestHttpClientFactory(), context);
             
             realMoviesData = GetRealApiData();
         }
