@@ -48,9 +48,15 @@
   --spacing-lg: 20px;
   --spacing-xl: 30px;
   
-  /* TransiÃƒÂ§ÃƒÂµes */
+  /* TransiÃ§Ãµes */
   --transition: all 0.3s ease;
   --transition-fast: all 0.2s ease;
+
+  /* Accent / Perfil / Cartões (reutilizar em profile, etc.) */
+  --accent-pink: #FF4081;
+  --accent-pink-hover: #F50057;
+  --card-bg-dark: #262626;
+  --menu-bg-purple: #4A2D4F;
 }
 
 html, body {
@@ -153,6 +159,173 @@ app-root {
   justify-content: center;
   z-index: 2000;
   animation: fadeIn 0.2s ease-out;
+}
+
+/* Modal partilhado (perfil edição, etc.) - reutilizar .modal-overlay e .modal-box */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+  animation: fadeIn 0.2s ease-out;
+}
+
+.modal-box {
+  background-color: var(--bg-card);
+  border: 2px solid var(--color-primary);
+  box-shadow: var(--shadow-primary);
+  width: 92%;
+  max-width: 520px;
+  border-radius: var(--border-radius);
+  padding: 40px;
+  position: relative;
+  animation: slideUp 0.3s ease-out;
+}
+
+.modal-box h3 {
+  color: #fff;
+  font-size: 24px;
+  font-weight: 600;
+  margin: 0 0 24px 0;
+}
+
+.modal-close {
+  position: absolute;
+  right: 16px;
+  top: 16px;
+  border: none;
+  background: transparent;
+  font-size: 28px;
+  cursor: pointer;
+  color: var(--text-muted);
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  transition: var(--transition-fast);
+}
+
+.modal-close:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+}
+
+.modal-box label {
+  display: block;
+  color: #fff;
+  font-weight: 500;
+  margin-bottom: 8px;
+  margin-top: 16px;
+}
+
+.modal-box label:first-of-type {
+  margin-top: 0;
+}
+
+.modal-box input,
+.modal-box textarea {
+  width: 100%;
+  padding: 14px 16px;
+  border: 1px solid var(--border-dark);
+  border-radius: 10px;
+  margin-top: 8px;
+  margin-bottom: 4px;
+  box-sizing: border-box;
+  background: var(--bg-input);
+  color: #fff;
+  font-size: 15px;
+  font-family: inherit;
+  transition: var(--transition-fast);
+}
+
+.modal-box input:focus,
+.modal-box textarea:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(255, 64, 129, 0.25);
+}
+
+.modal-box input[type="file"] {
+  padding: 8px;
+  cursor: pointer;
+  background: var(--bg-input);
+  color: var(--text-primary);
+}
+
+.modal-box input[type="file"]::file-selector-button {
+  padding: 8px 16px;
+  margin-right: 12px;
+  background: var(--color-primary);
+  color: var(--text-primary);
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: var(--transition);
+}
+
+.modal-box input[type="file"]::file-selector-button:hover {
+  background: var(--color-primary-hover);
+}
+
+.modal-box textarea {
+  resize: vertical;
+  min-height: 100px;
+  line-height: 1.5;
+}
+
+.modal-box input::placeholder,
+.modal-box textarea::placeholder {
+  color: var(--text-disabled);
+}
+
+.modal-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+  margin-top: 24px;
+}
+
+/* Modal lista expandida (perfil Quero Ver / Já Vi) */
+.list-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.85);
+  backdrop-filter: blur(6px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2500;
+  padding: 20px;
+  overflow-y: auto;
+  animation: fadeIn 0.2s ease-out;
+}
+
+.list-modal-box {
+  background-color: var(--bg-card);
+  border: 2px solid var(--color-primary);
+  box-shadow: var(--shadow-primary);
+  width: 100%;
+  max-width: 1200px;
+  border-radius: var(--border-radius);
+  padding: 40px;
+  position: relative;
+  animation: slideUp 0.3s ease-out;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.list-modal-box h3 {
+  color: #fff;
+  font-size: 28px;
+  font-weight: 600;
+  margin: 0 0 8px 0;
 }
 
 /* Input Global */
@@ -271,6 +444,12 @@ app-root {
 .sidebar-item:hover {
   background: rgba(255,255,255,0.07);
   color: #fff;
+}
+
+.sidebar .sidebar-item.active {
+  background: rgba(255, 64, 129, 0.25);
+  color: #FF4081;
+  font-weight: 700;
 }
 
 .sidebar-item svg {
@@ -492,6 +671,29 @@ app-root {
   font-weight: 700;
   color: #fff;
   text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.cinema-map-topbar .brand:hover {
+  color: #FF4081;
+}
+
+.cinema-map-topbar .brand.active,
+.topbar .brand.active {
+  color: #FF4081;
+  font-weight: 800;
+}
+
+.topbar .brand {
+  font-size: 16px;
+  font-weight: 700;
+  color: #fff;
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.topbar .brand:hover {
+  color: #FF4081;
 }
 
 /* ============================================

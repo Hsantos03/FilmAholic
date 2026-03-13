@@ -503,7 +503,11 @@ export class SearchResultsComponent implements OnInit, OnDestroy {
   }
 
   openDesafios(): void {
-    this.router.navigate(['/dashboard'], { fragment: 'desafios' });
+    this.router.navigate(['/dashboard'], { queryParams: { openDesafios: '1' } });
+  }
+
+  goToDashboardDesafios(): void {
+    this.router.navigate(['/dashboard'], { queryParams: { openDesafios: '1' } });
   }
 
   // topbar helpers
