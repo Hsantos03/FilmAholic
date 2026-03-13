@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
+import { MenuService } from '../../services/menu.service';
 import { UserMoviesService, StatsComparison, StatsCharts, ChartDataPoint } from '../../services/user-movies.service';
 import { Filme, FilmesService } from '../../services/filmes.service';
 import { FavoritesService, FavoritosDTO } from '../../services/favorites.service';
@@ -148,10 +149,19 @@ export class ProfileComponent implements OnInit {
     private http: HttpClient,
     private router: Router,
     private authService: AuthService,
+    public menuService: MenuService,
     private userMoviesService: UserMoviesService,
     private filmesService: FilmesService,
     private favoritesService: FavoritesService
   ) { }
+
+  toggleMenu(): void {
+    this.menuService.toggle();
+  }
+
+  goToDashboardDesafios(): void {
+    this.router.navigate(['/dashboard'], { queryParams: { openDesafios: '1' } });
+  }
 
   ngOnInit(): void {
     const userId = localStorage.getItem('user_id');

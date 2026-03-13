@@ -194,3 +194,421 @@ app-root {
     opacity: 1;
   }
 }
+
+/* ============================================
+   LAYOUT PARTILHADO - Sidebar e Topbar
+   (reutilizado em dashboard, cinema-map, cinema-movies, higher-or-lower)
+   ============================================ */
+
+.sidebar-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.5);
+  backdrop-filter: blur(3px);
+  z-index: 1100;
+}
+
+.sidebar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 280px;
+  height: 100vh;
+  background: #010B15;
+  border-right: 1px solid rgba(255,255,255,0.08);
+  z-index: 1200;
+  transform: translateX(-100%);
+  transition: transform 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  display: flex;
+  flex-direction: column;
+  padding: 16px;
+}
+
+.sidebar.open {
+  transform: translateX(0);
+}
+
+.sidebar-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 28px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+
+.sidebar-brand {
+  font-size: 18px;
+  font-weight: 800;
+  color: #fff;
+}
+
+.sidebar-links {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.sidebar-item {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  color: rgba(255,255,255,0.8);
+  text-decoration: none;
+  font-size: 15px;
+  font-weight: 500;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  width: 100%;
+  text-align: left;
+  font-family: inherit;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.sidebar-item:hover {
+  background: rgba(255,255,255,0.07);
+  color: #fff;
+}
+
+.sidebar-item svg {
+  flex-shrink: 0;
+  opacity: 0.85;
+}
+
+.icon-btn {
+  height: 40px;
+  width: 40px;
+  border: none;
+  border-radius: 12px;
+  background: rgba(255,255,255,0.08);
+  color: #fff;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  transition: 0.2s ease;
+  text-decoration: none;
+}
+
+.icon-btn:hover {
+  background: rgba(255,255,255,0.12);
+}
+
+.top-actions {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 10px;
+}
+
+.brand {
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  opacity: 0.95;
+  white-space: nowrap;
+  color: #fff;
+  text-decoration: none;
+}
+
+.brand:hover {
+  color: #fff;
+  text-decoration: none;
+}
+
+/* ============================================
+   ESTADOS E FEEDBACK (loading, erro)
+   ============================================ */
+
+.state-loading {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  padding: 48px 0;
+  color: rgba(255,255,255,0.45);
+  font-size: 14px;
+}
+
+.loading-ring {
+  width: 40px;
+  height: 40px;
+  border: 3px solid rgba(255,255,255,0.2);
+  border-top-color: var(--color-primary, #e91e63);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.state-error {
+  position: relative;
+  z-index: 1;
+  max-width: 600px;
+  margin: 16px auto;
+  padding: 14px 20px;
+  background: rgba(239,68,68,0.08);
+  border: 1px solid rgba(239,68,68,0.2);
+  border-radius: 12px;
+  color: #fca5a5;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* ============================================
+   HERO SECTION (cinema-map, cinema-movies)
+   Usar --hero-accent no container para cor (ex: #3b82f6 ou #e91e63)
+   ============================================ */
+
+.cinema-hero {
+  position: relative;
+  z-index: 1;
+  text-align: center;
+  padding: 24px 0 32px;
+  animation: fadeUp 0.5s ease both;
+}
+
+.cinema-hero .hero-badge {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 3px;
+  color: var(--hero-accent, var(--color-primary));
+  border: 1px solid rgba(255,255,255,0.25);
+  padding: 4px 14px;
+  border-radius: 20px;
+  background: rgba(255,255,255,0.08);
+  margin-bottom: 12px;
+}
+
+.cinema-hero .hero-title {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: clamp(48px, 8vw, 80px);
+  line-height: 0.95;
+  letter-spacing: 2px;
+  margin: 0 0 10px;
+}
+
+.cinema-hero .title-accent {
+  color: var(--hero-accent, var(--color-primary));
+}
+
+.cinema-hero .hero-sub {
+  font-size: 15px;
+  color: rgba(255,255,255,0.45);
+  margin: 0 auto;
+  max-width: 420px;
+}
+
+@keyframes fadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ============================================
+   BG ORBS (cinema-map, cinema-movies)
+   Usar --orb1-color e --orb2-color no container
+   ============================================ */
+
+.bg-orb {
+  position: fixed;
+  border-radius: 50%;
+  filter: blur(90px);
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.12;
+}
+
+.orb1 {
+  width: 500px;
+  height: 500px;
+  background: radial-gradient(circle, var(--orb1-color, #e91e63), transparent 70%);
+  top: -120px;
+  left: -120px;
+  animation: floatA 14s ease-in-out infinite;
+}
+
+.orb2 {
+  width: 400px;
+  height: 400px;
+  background: radial-gradient(circle, var(--orb2-color, #6c3fff), transparent 70%);
+  bottom: 0;
+  right: -80px;
+  animation: floatB 18s ease-in-out infinite;
+}
+
+@keyframes floatA {
+  0%, 100% { transform: translate(0, 0); }
+  50% { transform: translate(20px, 20px); }
+}
+
+@keyframes floatB {
+  0%, 100% { transform: translate(0, 0); }
+  50% { transform: translate(-20px, -20px); }
+}
+
+/* ============================================
+   PAGE TOPBAR (cinema-map, cinema-movies)
+   ============================================ */
+
+.cinema-map-topbar {
+  position: sticky;
+  top: 0;
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 0;
+  margin: 0 -24px 0 -24px;
+  padding-left: 24px;
+  padding-right: 24px;
+  background: rgba(10,10,15,0.95);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+
+.cinema-map-topbar .top-actions {
+  margin-left: auto;
+}
+
+.cinema-map-topbar .brand {
+  font-size: 16px;
+  font-weight: 700;
+  color: #fff;
+  text-decoration: none;
+}
+
+/* ============================================
+   PÁGINAS DE AUTENTICAÇÃO (login, register, selecionar-generos)
+   ============================================ */
+
+.auth-page-wrapper {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
+  overflow-y: auto;
+  background: linear-gradient(rgba(0,0,0,0.7), rgba(0,0,0,0.7)), url('assets/fundo-cinema.png') no-repeat center center;
+  background-size: cover;
+  background-attachment: fixed;
+  z-index: 999;
+}
+
+.auth-card {
+  background-color: var(--bg-card);
+  padding: 40px;
+  border-radius: var(--border-radius);
+  border: 2px solid var(--color-primary);
+  width: 100%;
+  max-width: 500px;
+  box-shadow: var(--shadow-primary);
+  color: var(--text-primary);
+  text-align: left;
+}
+
+.auth-card .header h1 {
+  margin: 0;
+  font-size: 28px;
+}
+
+.auth-card .header p {
+  color: var(--text-muted);
+  margin-bottom: 25px;
+}
+
+.auth-card input {
+  width: 100%;
+  padding: var(--spacing-md);
+  background-color: var(--bg-input);
+  border: 1px solid var(--border-dark);
+  border-radius: var(--border-radius-sm);
+  color: var(--text-primary);
+  margin-bottom: var(--spacing-md);
+  box-sizing: border-box;
+}
+
+.auth-card input:focus {
+  outline: none;
+  border-color: var(--color-primary);
+}
+
+.auth-card input[type="password"]::-ms-reveal,
+.auth-card input[type="password"]::-ms-clear {
+  filter: invert(1);
+  display: inline-block !important;
+  cursor: pointer;
+}
+
+.auth-card .input-group {
+  margin-bottom: 20px;
+}
+
+.auth-card .input-group input {
+  margin-bottom: 0;
+}
+
+.auth-card .footer-links a {
+  color: var(--color-secondary);
+  text-decoration: none;
+  font-size: 14px;
+}
+
+.auth-card .footer-links a:hover {
+  text-decoration: underline;
+}
+
+.auth-card .footer-links {
+  margin-top: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.auth-card.auth-card-wide {
+  max-width: 800px;
+}
+
+.auth-card .btn-primary-global {
+  width: 100%;
+  margin-top: 10px;
+}
+
+/* ============================================
+   SECÇÃO (títulos de secção - actor-detail, etc.)
+   ============================================ */
+
+.section-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.section-sub {
+  color: rgba(255,255,255,0.7);
+  font-weight: 800;
+  font-size: 13px;
+}

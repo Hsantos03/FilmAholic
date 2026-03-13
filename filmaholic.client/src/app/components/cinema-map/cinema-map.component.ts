@@ -1,6 +1,8 @@
 import { Component, OnInit, OnDestroy, ViewChild, ElementRef, AfterViewInit } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
+import { Router } from '@angular/router';
 import { CinemaService, CinemaVenue } from '../../services/cinema.service';
+import { MenuService } from '../../services/menu.service';
 import * as L from 'leaflet';
 
 // Fix Leaflet default icon 404 in Angular
@@ -47,8 +49,18 @@ export class CinemaMapComponent implements OnInit, AfterViewInit, OnDestroy {
 
   constructor(
     private cinemaService: CinemaService,
-    private http: HttpClient
+    private http: HttpClient,
+    private router: Router,
+    public menuService: MenuService
   ) { }
+
+  toggleMenu(): void {
+    this.menuService.toggle();
+  }
+
+  goToDashboardDesafios(): void {
+    this.router.navigate(['/dashboard'], { queryParams: { openDesafios: '1' } });
+  }
 
   ngOnInit(): void {
     this.loadCinemas();

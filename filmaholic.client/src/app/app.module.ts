@@ -23,6 +23,7 @@ import { FormatDurationPipe } from './pipes/format-duration.pipe';
 import { HigherOrLowerComponent } from './components/higher-or-lower/higher-or-lower.component';
 import { CinemaMapComponent } from './components/cinema-map/cinema-map.component';
 import { ActorDetailComponent } from './components/actor-detail/actor-detail.component';
+import { TopbarActionsComponent } from './components/topbar-actions/topbar-actions.component';
 
 
 registerLocaleData(localePt);
@@ -44,7 +45,8 @@ registerLocaleData(localePt);
     CinemaMoviesComponent,
     CinemaMapComponent,
     ActorDetailComponent,
-    HigherOrLowerComponent
+    HigherOrLowerComponent,
+    TopbarActionsComponent
   ],
   imports: [
     BrowserModule,

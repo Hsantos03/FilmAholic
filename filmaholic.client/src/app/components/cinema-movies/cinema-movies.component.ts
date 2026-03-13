@@ -1,6 +1,7 @@
 import { Component, OnInit, OnDestroy, AfterViewInit, ViewChild, ElementRef } from '@angular/core';
 import { Router } from '@angular/router';
 import { CinemaService, CinemaMovie } from '../../services/cinema.service';
+import { MenuService } from '../../services/menu.service';
 
 @Component({
   selector: 'app-cinema-movies',
@@ -28,8 +29,17 @@ export class CinemaMoviesComponent implements OnInit, OnDestroy, AfterViewInit {
 
   constructor(
     private router: Router,
-    private cinemaService: CinemaService
+    private cinemaService: CinemaService,
+    public menuService: MenuService
   ) { }
+
+  toggleMenu(): void {
+    this.menuService.toggle();
+  }
+
+  goToDashboardDesafios(): void {
+    this.router.navigate(['/dashboard'], { queryParams: { openDesafios: '1' } });
+  }
 
   ngOnInit(): void {
     this.loadCinemaMovies();

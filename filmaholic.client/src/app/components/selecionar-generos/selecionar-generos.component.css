@@ -1,43 +1,11 @@
-/* Contentor que faz o fundo da sala de cinema */
-.page-wrapper {
-  min-height: 100vh;
-  width: 100%;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  background: linear-gradient(rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.7)), url('../../../assets/fundo-cinema.png') no-repeat center center;
-  background-size: cover;
-  background-attachment: fixed;
-  padding: 20px;
-}
+/* Layout e cartão em styles.css (auth-page-wrapper, auth-card, auth-card-wide). */
 
-/* O Cartão com a borda vermelha */
-.selecionar-generos-card {
-  background-color: var(--bg-card);
-  padding: 40px;
-  border-radius: var(--border-radius);
-  border: 2px solid var(--color-primary);
-  width: 100%;
-  max-width: 800px;
-  box-shadow: var(--shadow-primary);
-  z-index: 1;
-}
-
-.header {
+.auth-card .header {
   text-align: center;
   margin-bottom: 30px;
 }
 
-.header h1 {
-  color: white;
-  margin: 0;
-  font-size: 28px;
-  font-weight: 500;
-  margin-bottom: 10px;
-}
-
-.header p {
-  color: var(--text-disabled);
+.auth-card .header p {
   margin-bottom: 0;
 }
 
@@ -93,28 +61,7 @@
   color: #ff6b9d;
 }
 
-/* Botão Vermelho/Rosa */
-.btn-primary {
-  padding: var(--spacing-md) var(--spacing-xl);
-  background-color: var(--color-primary);
-  color: var(--text-primary);
-  border: none;
-  border-radius: var(--border-radius-md);
-  font-size: 16px;
-  font-weight: bold;
-  cursor: pointer;
-  transition: var(--transition);
-}
-
-.btn-primary:hover:not(:disabled) {
-  background-color: var(--color-primary-hover);
-}
-
-.btn-primary:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-  background-color: var(--color-primary-hover);
-}
+/* Botão primário: usar .btn-primary-global em styles.css */
 
 .btn-secondary {
   padding: 15px 30px;
@@ -154,11 +101,11 @@
     gap: 10px;
   }
 
-  .selecionar-generos-card {
+  .auth-card.auth-card-wide {
     padding: 25px;
   }
 
-  .header h1 {
+  .auth-card .header h1 {
     font-size: 24px;
   }
 }

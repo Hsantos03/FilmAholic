@@ -1,0 +1,84 @@
+.topbar-actions {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 10px;
+}
+
+.notifications-wrap {
+  position: relative;
+}
+
+.notifications-menu {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  min-width: 260px;
+  background: #0a0a0a;
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.45);
+  padding: 8px;
+  z-index: 1500;
+}
+
+.notifications-inner {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.notifications-title {
+  font-weight: 600;
+  padding: 6px 8px;
+  color: #fff;
+}
+
+.notification-item {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  padding: 8px;
+  border-radius: 8px;
+  text-decoration: none;
+  color: inherit;
+  transition: background 0.15s;
+}
+
+.notification-item:hover {
+  background: rgba(255,255,255,0.06);
+}
+
+.notification-poster {
+  width: 56px;
+  height: 84px;
+  object-fit: cover;
+  border-radius: 6px;
+  flex-shrink: 0;
+}
+
+.notification-meta {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  gap: 6px;
+}
+
+.notification-movie-title {
+  font-size: 13px;
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: #fff;
+}
+
+.notification-date {
+  font-size: 12px;
+  color: #aaa;
+}
+
+.notifications-empty {
+  padding: 12px;
+  color: #aaa;
+}

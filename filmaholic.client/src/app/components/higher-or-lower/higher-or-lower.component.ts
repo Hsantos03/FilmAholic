@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { FilmesService, Filme, RatingsDto, ActorDto } from '../../services/filmes.service';
 import { GameService, GameHistoryEntry, SaveResultResponse, GameStats } from '../../services/game.service';
+import { MenuService } from '../../services/menu.service';
 import { forkJoin, firstValueFrom } from 'rxjs';
 
 
@@ -68,8 +69,17 @@ export class HigherOrLowerComponent implements OnInit {
   constructor(
     private router: Router,
     private filmesService: FilmesService,
-    private gameService: GameService
+    private gameService: GameService,
+    public menuService: MenuService
   ) { }
+
+  toggleMenu(): void {
+    this.menuService.toggle();
+  }
+
+  goToDashboardDesafios(): void {
+    this.router.navigate(['/dashboard'], { queryParams: { openDesafios: '1' } });
+  }
 
   ngOnInit(): void {
     this.filmesService.getAll().subscribe({

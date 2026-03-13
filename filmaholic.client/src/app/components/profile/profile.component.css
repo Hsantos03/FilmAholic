@@ -1,3 +1,16 @@
+/* Topbar: mesmo estilo que outras páginas (estilos globais .cinema-map-topbar) */
+.profile-topbar {
+  margin-left: 0;
+  margin-right: 0;
+}
+
+/* Destaque do link Perfil na sidebar quando na página de perfil */
+.sidebar .sidebar-item.active {
+  background: rgba(255, 47, 109, 0.2);
+  color: #ff2f6d;
+  font-weight: 700;
+}
+
 /* Header */
 .profile-header {
   border-radius: 15px 15px 0 0;

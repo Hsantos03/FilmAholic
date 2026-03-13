@@ -1,5 +1,5 @@
-<div class="page-wrapper">
-  <div class="selecionar-generos-card">
+<div class="auth-page-wrapper">
+  <div class="auth-card auth-card-wide">
     <div class="header">
       <h1>Escolha os seus géneros favoritos</h1>
       <p style="color: #6c757d;">
@@ -45,7 +45,7 @@
       </button>
       <button
         type="button"
-        class="btn-primary"
+        class="btn-primary-global"
         (click)="salvarGeneros()"
         [disabled]="isLoading || generosSelecionados.length === 0">
         {{ isLoading ? 'A guardar...' : 'Guardar e Continuar' }}

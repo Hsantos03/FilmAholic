@@ -1,5 +1,5 @@
-<div class="page-wrapper">
-  <div class="register-card">
+<div class="auth-page-wrapper">
+  <div class="auth-card">
     <div class="header">
       <h1>Registo</h1>
       <p>Get started for free</p>
@@ -159,7 +159,7 @@
       <button type="submit"
               [disabled]="isLoading || !isPasswordValid"
               [style.opacity]="isLoading || !isPasswordValid ? 0.6 : 1"
-              class="btn-register">
+              class="btn-primary-global">
         {{ isLoading ? 'A processar...' : 'Criar Conta' }}
       </button>
 

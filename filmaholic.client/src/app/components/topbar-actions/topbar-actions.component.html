@@ -1,0 +1,36 @@
+<div class="topbar-actions">
+  <div class="notifications-wrap" #notificationsContainer>
+    <button type="button"
+            class="icon-btn"
+            (click)="toggleNotifications($event)"
+            aria-label="Notificações">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+        <path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.64-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.63 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z" />
+      </svg>
+    </button>
+    <div class="notifications-menu" *ngIf="isNotificationsOpen" role="menu">
+      <div *ngIf="upcomingMovies.length > 0; else noUpcoming" class="notifications-inner">
+        <div class="notifications-title">Próximas Estreias</div>
+        <a *ngFor="let m of upcomingMovies"
+           href="javascript:void(0)"
+           (click)="openNotificationMovie(m)"
+           class="notification-item"
+           role="menuitem">
+          <img [src]="posterOf(m)" [alt]="m.titulo" class="notification-poster" />
+          <div class="notification-meta">
+            <span class="notification-movie-title">{{ m.titulo }}</span>
+            <span class="notification-date">{{ releaseLabel(m) }}</span>
+          </div>
+        </a>
+      </div>
+      <ng-template #noUpcoming>
+        <div class="notifications-empty">Ainda sem próximas estreias.</div>
+      </ng-template>
+    </div>
+  </div>
+  <a class="icon-btn" routerLink="/profile" aria-label="Perfil">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+      <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
+    </svg>
+  </a>
+</div>
