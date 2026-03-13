@@ -83,7 +83,7 @@ export class CinemaMapComponent implements OnInit, AfterViewInit, OnDestroy {
     this.togglingId = id;
 
     this.http.post<{ cinemaId: string; isFavorito: boolean }>(
-      `${this.API}/favoritos/toggle`,
+      `${this.API}/cinemas-favoritos/toggle`,
       { cinemaId: id },
       { withCredentials: true }
     ).subscribe({
@@ -248,6 +248,11 @@ export class CinemaMapComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   get sortedCinemas(): CinemaVenue[] {
-    return [...this.cinemas].sort((a, b) => (a.distanceKm ?? 999) - (b.distanceKm ?? 999));
+    return [...this.cinemas].sort((a, b) => {
+      const aFav = this.isFavorito(a) ? 0 : 1;
+      const bFav = this.isFavorito(b) ? 0 : 1;
+      if (aFav !== bFav) return aFav - bFav;
+      return (a.distanceKm ?? 999) - (b.distanceKm ?? 999);
+    });
   }
 }
