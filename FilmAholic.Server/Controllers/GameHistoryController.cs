@@ -1,9 +1,10 @@
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Mvc;
-using System.Security.Claims;
 using FilmAholic.Server.Data;
 using FilmAholic.Server.Models;
+using Humanizer;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Security.Claims;
 
 namespace FilmAholic.Server.Controllers
 {
@@ -50,6 +51,7 @@ namespace FilmAholic.Server.Controllers
                 UtilizadorId = userId,
                 Score = dto.Score,
                 RoundsJson = dto.RoundsJson ?? string.Empty,
+                Category = dto.Category ?? "films",
                 DataCriacao = DateTime.UtcNow
             };
             _context.Set<GameHistory>().Add(entity);
@@ -103,6 +105,58 @@ namespace FilmAholic.Server.Controllers
             });
         }
 
+
+        // GET: api/game/history/leaderboard?category=films&top=10
+        [HttpGet("leaderboard")]
+        public async Task<IActionResult> GetLeaderboard(
+            [FromQuery] string category = "films",
+            [FromQuery] int top = 10)
+        {
+            var allHistory = await _context.GameHistories.ToListAsync();
+
+            var filtered = allHistory
+                .Where(h => (h.Category ?? "films") == category)
+                .GroupBy(h => h.UtilizadorId)
+                .Select(g => new
+                {
+                    UtilizadorId = g.Key,
+                    BestScore = g.Max(h => h.Score),
+                    TotalGames = g.Count(),
+                    LastPlayed = g.Max(h => h.DataCriacao)
+                })
+                .OrderByDescending(x => x.BestScore)
+                .ThenByDescending(x => x.LastPlayed)
+                .Take(top)
+                .ToList();
+
+            var userIds = filtered.Select(x => x.UtilizadorId).ToList();
+            var users = await _context.Users
+                .Where(u => userIds.Contains(u.Id))
+                .Select(u => new { u.Id, u.Nome, u.Sobrenome, u.FotoPerfilUrl, u.Nivel, u.XP })
+                .ToListAsync();
+
+            var result = filtered.Select((x, i) =>
+            {
+                var user = users.FirstOrDefault(u => u.Id == x.UtilizadorId);
+                var nomeCompleto = ((user?.Nome ?? "") + " " + (user?.Sobrenome ?? "")).Trim();
+                return new
+                {
+                    rank = i + 1,
+                    utilizadorId = x.UtilizadorId,
+                    userName = string.IsNullOrEmpty(nomeCompleto) ? "Anónimo" : nomeCompleto,
+                    fotoPerfilUrl = user?.FotoPerfilUrl,
+                    nivel = user?.Nivel ?? 1,
+                    xp = user?.XP ?? 0,
+                    bestScore = x.BestScore,
+                    totalGames = x.TotalGames,
+                    lastPlayed = x.LastPlayed
+                };
+            });
+
+            return Ok(result);
+        }
+
+
         private static int CalcularNivel(int xpTotal)
         {
             int nivel = 1;
@@ -147,5 +201,6 @@ namespace FilmAholic.Server.Controllers
     {
         public int Score { get; set; }
         public string? RoundsJson { get; set; }
+        public string? Category { get; set; }
     }
 }

@@ -16,5 +16,7 @@ namespace FilmAholic.Server.Models
         // JSON payload with details of rounds, e.g. [{ leftId:1, rightId:2, chosen:"left", correct:"left", leftRating:7.5, rightRating:6.2 }, ...]
         [Required]
         public string RoundsJson { get; set; } = string.Empty;
+
+        public string Category { get; set; } = "films";
     }
 }
