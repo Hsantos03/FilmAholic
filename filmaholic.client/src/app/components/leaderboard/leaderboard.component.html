@@ -1,0 +1,137 @@
+<!-- TOPBAR -->
+<header class="topbar">
+  <button class="back-btn" (click)="goBack()">
+    <span>←</span> Dashboard
+  </button>
+  <span class="brand-pill">🏆 FilmAholic</span>
+</header>
+
+<main class="lb-page">
+  <div class="bg-orb orb1"></div>
+  <div class="bg-orb orb2"></div>
+  <div class="bg-orb orb3"></div>
+
+  <div class="lb-container">
+
+    <!-- HEADER -->
+    <div class="lb-header">
+      <div class="lb-badge">RANKING GLOBAL</div>
+      <h1 class="lb-title">Leader<span class="title-accent">board</span></h1>
+      <p class="lb-desc">Os melhores jogadores da plataforma. Tens o que é preciso?</p>
+      <button class="play-btn" (click)="goToGame()">
+        Jogar agora <span class="btn-arrow">→</span>
+      </button>
+    </div>
+
+    <!-- TABS -->
+    <div class="tab-row">
+      <button class="tab-btn" [class.tab-active]="category === 'films'" (click)="category = 'films'">
+        🎬 Filmes
+      </button>
+      <button class="tab-btn" [class.tab-active]="category === 'actors'" (click)="category = 'actors'">
+        🎭 Atores
+      </button>
+    </div>
+
+    <!-- PODIUM -->
+    <div class="podium" *ngIf="!isLoading && activeBoard.length >= 1">
+
+      <!-- 2º lugar -->
+      <div class="podium-slot podium-2nd"
+           *ngIf="activeBoard.length >= 2"
+           [class.podium-me]="isCurrentUser(activeBoard[1])">
+        <div class="podium-avatar">
+          <img *ngIf="activeBoard[1].fotoPerfilUrl" [src]="activeBoard[1].fotoPerfilUrl" [alt]="activeBoard[1].userName" />
+          <span *ngIf="!activeBoard[1].fotoPerfilUrl">{{ avatarLetter(activeBoard[1].userName) }}</span>
+        </div>
+        <div class="podium-medal">🥈</div>
+        <div class="podium-name">{{ displayName(activeBoard[1].userName) }}</div>
+        <div class="podium-score">{{ activeBoard[1].bestScore }}</div>
+        <div class="podium-block podium-block-2"></div>
+      </div>
+
+      <!-- 1º lugar -->
+      <div class="podium-slot podium-1st" [class.podium-me]="isCurrentUser(activeBoard[0])">
+        <div class="podium-crown">👑</div>
+        <div class="podium-avatar podium-avatar-1st">
+          <img *ngIf="activeBoard[0].fotoPerfilUrl" [src]="activeBoard[0].fotoPerfilUrl" [alt]="activeBoard[0].userName" />
+          <span *ngIf="!activeBoard[0].fotoPerfilUrl">{{ avatarLetter(activeBoard[0].userName) }}</span>
+        </div>
+        <div class="podium-medal">🥇</div>
+        <div class="podium-name">{{ displayName(activeBoard[0].userName) }}</div>
+        <div class="podium-score">{{ activeBoard[0].bestScore }}</div>
+        <div class="podium-block podium-block-1"></div>
+      </div>
+
+      <!-- 3º lugar -->
+      <div class="podium-slot podium-3rd"
+           *ngIf="activeBoard.length >= 3"
+           [class.podium-me]="isCurrentUser(activeBoard[2])">
+        <div class="podium-avatar">
+          <img *ngIf="activeBoard[2].fotoPerfilUrl" [src]="activeBoard[2].fotoPerfilUrl" [alt]="activeBoard[2].userName" />
+          <span *ngIf="!activeBoard[2].fotoPerfilUrl">{{ avatarLetter(activeBoard[2].userName) }}</span>
+        </div>
+        <div class="podium-medal">🥉</div>
+        <div class="podium-name">{{ displayName(activeBoard[2].userName) }}</div>
+        <div class="podium-score">{{ activeBoard[2].bestScore }}</div>
+        <div class="podium-block podium-block-3"></div>
+      </div>
+    </div>
+
+    <!-- LISTA -->
+    <div class="lb-list">
+
+      <div class="lb-loading" *ngIf="isLoading">
+        <div class="spinner"></div>
+        <span>A carregar ranking…</span>
+      </div>
+
+      <div class="lb-empty" *ngIf="!isLoading && activeBoard.length === 0">
+        <div class="empty-icon">🎮</div>
+        <p>Ainda não há jogadores nesta categoria.</p>
+        <p class="empty-sub">Sê o primeiro a entrar no ranking!</p>
+      </div>
+
+      <div class="list-header" *ngIf="!isLoading && activeBoard.length > 3">
+        <span class="col-rank">Pos.</span>
+        <span class="col-player">Jogador</span>
+        <span class="col-score">Melhor Score</span>
+        <span class="col-games">Jogos</span>
+        <span class="col-level">Nível</span>
+      </div>
+
+      <div class="list-rows" *ngIf="!isLoading && activeBoard.length > 3">
+        <div class="list-row"
+             *ngFor="let entry of activeBoard.slice(3)"
+             [class.row-me]="isCurrentUser(entry)"
+             [style.animation-delay]="(entry.rank - 3) * 60 + 'ms'">
+
+          <span class="col-rank rank-num">{{ entry.rank }}</span>
+
+          <div class="col-player player-info">
+            <div class="player-avatar small-avatar">
+              <img *ngIf="entry.fotoPerfilUrl" [src]="entry.fotoPerfilUrl" [alt]="entry.userName" />
+              <span *ngIf="!entry.fotoPerfilUrl">{{ avatarLetter(entry.userName) }}</span>
+            </div>
+            <div class="player-details">
+              <span class="player-name">
+                {{ displayName(entry.userName) }}
+                <span class="you-tag" *ngIf="isCurrentUser(entry)">Tu</span>
+              </span>
+              <span class="player-xp">{{ entry.xp }} XP</span>
+            </div>
+          </div>
+
+          <span class="col-score score-val">{{ entry.bestScore }}</span>
+          <span class="col-games games-val">{{ entry.totalGames }}</span>
+          <span class="col-level level-val">Nv. {{ entry.nivel }}</span>
+        </div>
+      </div>
+
+      <div class="my-position" *ngIf="!isLoading && currentUserId && !currentUserInBoard">
+        <span class="my-pos-label">A tua posição ainda não está no top 10 — continua a jogar!</span>
+      </div>
+    </div>
+
+  </div>
+</main>

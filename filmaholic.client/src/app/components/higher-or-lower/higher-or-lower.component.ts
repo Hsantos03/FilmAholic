@@ -597,9 +597,12 @@ export class HigherOrLowerComponent implements OnInit {
   private persistHistory(): void {
     const roundsJson = JSON.stringify(this.rounds || []);
     const userId = localStorage.getItem('user_id');
+    const currentCategory = this.gameCategory ?? 'films';
+
     if (userId) {
-      this.gameService.saveResult(this.score, roundsJson).subscribe({
+      this.gameService.saveResult(this.score, roundsJson, currentCategory).subscribe({
         next: (res) => {
+          console.log('✅ [SUCESSO] Pontuação guardada na Base de Dados!', res);
           if (this.endStats) {
             this.endStats.xpGanho = res.xpGanho;
             this.endStats.xpTotal = res.xpTotal;
@@ -607,7 +610,8 @@ export class HigherOrLowerComponent implements OnInit {
             this.endStats.xpDiarioRestante = res.xpDiarioRestante;
           }
         },
-        error: () => {
+        error: (err) => {
+          console.error('❌ [ERRO] Falha ao gravar pontuação na API. A guardar localmente...', err);
           this.saveLocalHistory(this.score, roundsJson);
         }
       });

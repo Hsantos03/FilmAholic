@@ -25,6 +25,18 @@ export interface GameStats {
   totalJogos: number;
 }
 
+export interface LeaderboardEntry {
+  rank: number;
+  utilizadorId: string;
+  userName: string;
+  fotoPerfilUrl?: string;
+  nivel: number;
+  xp: number;
+  bestScore: number;
+  totalGames: number;
+  lastPlayed: string;
+}
+
 @Injectable({ providedIn: 'root' })
 export class GameService {
   private readonly apiBase = environment.apiBaseUrl || '';
@@ -36,12 +48,20 @@ export class GameService {
     return this.http.get<GameHistoryEntry[]>(this.apiUrl, { withCredentials: true });
   }
 
-  saveResult(score: number, roundsJson: string): Observable<SaveResultResponse> {
-    return this.http.post<SaveResultResponse>(this.apiUrl, { score, roundsJson }, { withCredentials: true });
+  saveResult(score: number, roundsJson: string, category: string): Observable<SaveResultResponse> {
+    return this.http.post<SaveResultResponse>(this.apiUrl, { score, roundsJson, category }, { withCredentials: true });
   }
 
   getStats(): Observable<GameStats> {
     const url = this.apiBase ? `${this.apiBase}/api/game/history/stats` : '/api/game/history/stats';
     return this.http.get<GameStats>(url, { withCredentials: true });
+  }
+
+  getLeaderboard(category: 'films' | 'actors', top: number = 10): Observable<LeaderboardEntry[]> {
+    const url = this.apiBase ? `${this.apiBase}/api/game/history/leaderboard` : '/api/game/history/leaderboard';
+    return this.http.get<LeaderboardEntry[]>(
+      `${url}?category=${category}&top=${top}`,
+      { withCredentials: true }
+    );
   }
 }
