@@ -425,7 +425,7 @@
                 <div class="bar-container">
                   <div class="bar user-bar"
                        [style.width.%]="getComparisonBarWidth(statsComparison.user.totalFilmes, statsComparison.global.mediaFilmesPorUtilizador)"
-                       [style.background]="getUserBarGradient()"></div>
+                         [style.--saber-color]="getUserBarColor()"></div>
                 </div>
                 <span class="bar-value">{{ statsComparison.user.totalFilmes }}</span>
               </div>
@@ -434,7 +434,7 @@
                 <div class="bar-container">
                   <div class="bar global-bar"
                        [style.width.%]="getGlobalBarWidth(statsComparison.user.totalFilmes, statsComparison.global.mediaFilmesPorUtilizador)"
-                       [style.background]="getGlobalBarGradient()"></div>
+                         [style.--saber-color]="getGlobalBarColor()"></div>
                 </div>
                 <span class="bar-value">{{ statsComparison.global.mediaFilmesPorUtilizador }}</span>
               </div>
@@ -454,7 +454,7 @@
                 <div class="bar-container">
                   <div class="bar user-bar"
                        [style.width.%]="getComparisonBarWidth(statsComparison.user.totalHoras, statsComparison.global.mediaHorasPorUtilizador)"
-                       [style.background]="getUserBarGradient()"></div>
+                         [style.--saber-color]="getUserBarColor()"></div>
                 </div>
                 <span class="bar-value">{{ statsComparison.user.totalHoras }}h</span>
               </div>
@@ -463,7 +463,7 @@
                 <div class="bar-container">
                   <div class="bar global-bar"
                        [style.width.%]="getGlobalBarWidth(statsComparison.user.totalHoras, statsComparison.global.mediaHorasPorUtilizador)"
-                       [style.background]="getGlobalBarGradient()"></div>
+                         [style.--saber-color]="getGlobalBarColor()"></div>
                 </div>
                 <span class="bar-value">{{ statsComparison.global.mediaHorasPorUtilizador }}h</span>
               </div>
@@ -716,14 +716,14 @@
                   <div class="chart-bars-pair">
                     <div class="chart-bar user-bar"
                          [style.height.%]="getBarHeight(m.total)"
-                         [style.background]="getUserBarGradient()"
+                         [style.--saber-color]="getUserBarColor()"
                          [attr.title]="m.total + ' filmes (Tu)'">
                       <div class="chart-bar-value">{{ m.total }}</div>
                     </div>
 
                     <div class="chart-bar global-bar"
                          [style.height.%]="getBarHeight(getGlobalAverageForMonth(m))"
-                         [style.background]="getGlobalBarGradient()"
+                         [style.--saber-color]="getGlobalBarColor()"
                          [attr.title]="getGlobalAverageForMonth(m).toFixed(1) + ' filmes (Média)'">
                       <div class="chart-bar-value">{{ getGlobalAverageForMonth(m).toFixed(1) }}</div>
                     </div>

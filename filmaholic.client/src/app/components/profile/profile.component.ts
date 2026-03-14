@@ -294,6 +294,14 @@ export class ProfileComponent implements OnInit {
     return palette[index % 3]; // use all three for pies
   }
 
+  getUserBarColor(): string {
+    return this.currentTheme.userColor;
+  }
+
+  getGlobalBarColor(): string {
+    return this.currentTheme.globalColor;
+  }
+
   getUserBarGradient(): string {
     const color = this.currentTheme.userColor;
     const lighterColor = this.adjustColorBrightness(color, 20);

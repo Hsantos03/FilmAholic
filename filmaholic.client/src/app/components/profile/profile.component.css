@@ -1136,26 +1136,85 @@
 
 .bar-container {
   flex: 1;
-  height: 12px;
-  background: rgba(255, 255, 255, 0.08);
+  height: 16px;
+  background: transparent;
   border-radius: 999px;
-  overflow: hidden;
+  position: relative;
+  overflow: visible;
 }
 
 .bar {
-  height: 100%;
+  height: 10px;
+  margin-left: 30px; /* space for lightsaber hilt */
   border-radius: 999px;
-  transition: width 0.5s ease;
+  position: relative;
+  top: 50%;
+  transform: translateY(-50%);
+  transition: width 0.5s ease, box-shadow 0.35s ease, background 0.35s ease;
   min-width: 4px;
+  background:
+    radial-gradient(circle at 0 50%, rgba(255, 255, 255, 0.95) 0, transparent 60%),
+    linear-gradient(
+      90deg,
+      rgba(255, 255, 255, 0.95),
+      var(--saber-color, #3b82f6),
+      rgba(255, 255, 255, 0.9)
+    );
+  box-shadow:
+    0 0 8px var(--saber-color, #3b82f6),
+    0 0 18px var(--saber-color, #3b82f6),
+    0 0 26px rgba(255, 255, 255, 0.95);
+  animation: lightsaber-waver-horizontal 1.5s ease-in-out infinite alternate;
 }
 
   .bar.user-bar {
-    background: linear-gradient(90deg, var(--accent-pink), #ff8a9d);
+    --saber-color: var(--accent-pink);
   }
 
   .bar.global-bar {
-    background: linear-gradient(90deg, #6366f1, #818cf8);
+    --saber-color: #6366f1;
   }
+
+.bar-container::before {
+  /* lightsaber hilt at the start of the bar */
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 26px;
+  height: 18px;
+  border-radius: 4px;
+  background:
+    linear-gradient(90deg, #111 0 6px, #444 6px 11px, #b3b3b3 11px 18px, #222 18px 26px);
+  box-shadow:
+    0 0 0 1px rgba(0, 0, 0, 0.95),
+    0 2px 4px rgba(0, 0, 0, 0.9);
+}
+
+@keyframes lightsaber-waver-horizontal {
+  0% {
+    box-shadow:
+      0 0 7px var(--saber-color, #3b82f6),
+      0 0 16px var(--saber-color, #3b82f6),
+      0 0 24px rgba(255, 255, 255, 0.9);
+    filter: brightness(1);
+  }
+  50% {
+    box-shadow:
+      0 0 11px var(--saber-color, #3b82f6),
+      0 0 24px var(--saber-color, #3b82f6),
+      0 0 32px rgba(255, 255, 255, 1);
+    filter: brightness(1.12);
+  }
+  100% {
+    box-shadow:
+      0 0 8px var(--saber-color, #3b82f6),
+      0 0 18px var(--saber-color, #3b82f6),
+      0 0 26px rgba(255, 255, 255, 0.95);
+    filter: brightness(0.96);
+  }
+}
 
 .bar-value {
   width: 45px;
@@ -1772,16 +1831,16 @@
 
 .chart-bars-pair {
   display: flex;
-  gap: 4px;
-  height: 140px;
-  align-items: end;
-  margin-bottom: 5px;
+  gap: 10px;
+  height: 150px;
+  align-items: flex-end;
+  margin-bottom: 6px;
 }
 
 .chart-bar {
-  flex: 1;
+  flex: 0 0 18px;
   min-height: 4px;
-  border-radius: 4px 4px 0 0;
+  border-radius: 6px 6px 0 0;
   position: relative;
   transition: all 0.3s ease;
   cursor: pointer;
@@ -1792,16 +1851,85 @@
 }
 
 .user-bar {
-  background: linear-gradient(135deg, var(--accent-pink), var(--accent-pink-hover));
+  --saber-color: var(--accent-pink);
+  background: transparent;
 }
 
 .global-bar {
-  background: linear-gradient(135deg, #6366f1, #818cf8);
+  --saber-color: #6366f1;
+  background: transparent;
 }
 
 .chart-bar:hover {
   transform: translateY(-2px);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+}
+
+.chart-bar::before {
+  /* lightsaber hilt */
+  content: "";
+  position: absolute;
+  bottom: -6px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 16px;
+  height: 14px;
+  border-radius: 4px;
+  background:
+    linear-gradient(90deg, #111 0 4px, #444 4px 7px, #999 7px 12px, #222 12px 16px);
+  box-shadow:
+    0 0 0 1px rgba(0, 0, 0, 0.9),
+    0 2px 4px rgba(0, 0, 0, 0.8);
+}
+
+.chart-bar::after {
+  /* lightsaber blade */
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: 8px;
+  transform: translateX(-50%);
+  width: 6px;
+  top: 4px;
+  border-radius: 6px 6px 0 0;
+  background:
+    radial-gradient(circle at 50% 100%, rgba(255, 255, 255, 0.75) 0, transparent 60%),
+    linear-gradient(
+      to top,
+      rgba(255, 255, 255, 0.9),
+      var(--saber-color, #3b82f6),
+      rgba(255, 255, 255, 0.9)
+    );
+  box-shadow:
+    0 0 8px var(--saber-color, #3b82f6),
+    0 0 18px var(--saber-color, #3b82f6),
+    0 0 28px rgba(255, 255, 255, 0.9);
+  opacity: 0.95;
+  animation: lightsaber-waver 1.4s ease-in-out infinite alternate;
+}
+
+@keyframes lightsaber-waver {
+  0% {
+    box-shadow:
+      0 0 7px var(--saber-color, #3b82f6),
+      0 0 16px var(--saber-color, #3b82f6),
+      0 0 26px rgba(255, 255, 255, 0.85);
+    transform: translateX(-50%) scaleX(1);
+  }
+  50% {
+    box-shadow:
+      0 0 10px var(--saber-color, #3b82f6),
+      0 0 24px var(--saber-color, #3b82f6),
+      0 0 34px rgba(255, 255, 255, 0.95);
+    transform: translateX(-49%) scaleX(1.06);
+  }
+  100% {
+    box-shadow:
+      0 0 8px var(--saber-color, #3b82f6),
+      0 0 20px var(--saber-color, #3b82f6),
+      0 0 30px rgba(255, 255, 255, 0.9);
+    transform: translateX(-51%) scaleX(0.98);
+  }
 }
 
 .chart-bar-value {
