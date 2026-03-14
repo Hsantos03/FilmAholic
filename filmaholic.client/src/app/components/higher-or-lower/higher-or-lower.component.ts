@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { FilmesService, Filme, RatingsDto, ActorDto } from '../../services/filmes.service';
 import { GameService, GameHistoryEntry, SaveResultResponse, GameStats } from '../../services/game.service';
 import { MenuService } from '../../services/menu.service';
@@ -14,6 +14,7 @@ import { forkJoin, firstValueFrom } from 'rxjs';
 export class HigherOrLowerComponent implements OnInit {
   isPlaying = false;
   showHistory = false;
+  showLeaderboard = false;
 
   films: Filme[] = [];
 
@@ -68,6 +69,7 @@ export class HigherOrLowerComponent implements OnInit {
 
   constructor(
     private router: Router,
+    private route: ActivatedRoute,
     private filmesService: FilmesService,
     private gameService: GameService,
     public menuService: MenuService
@@ -94,6 +96,18 @@ export class HigherOrLowerComponent implements OnInit {
 
     const saved = sessionStorage.getItem(this.sessionCategoryKey) as 'films' | 'actors' | null;
     if (saved) this.gameCategory = saved;
+
+    if (this.route.snapshot.queryParams['leaderboard'] === '1') {
+      this.showLeaderboard = true;
+    }
+  }
+
+  openLeaderboard(): void {
+    this.showLeaderboard = true;
+  }
+
+  closeLeaderboard(): void {
+    this.showLeaderboard = false;
   }
 
   startGame(category?: 'films' | 'actors'): void {

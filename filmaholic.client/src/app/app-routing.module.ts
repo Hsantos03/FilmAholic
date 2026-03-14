@@ -28,10 +28,10 @@ const routes: Routes = [
   { path: 'search', component: SearchResultsComponent },
   { path: 'movie-detail/:id', component: MoviePageComponent }, // nova rota para detalhes do filme
   { path: 'actor/:id', component: ActorDetailComponent }, // actor details page
-  { path: 'higher-or-lower', component: HigherOrLowerComponent }, // game page
+  { path: 'higher-or-lower', component: HigherOrLowerComponent }, // game page (inclui leaderboard)
   { path: 'cinema-movies', component: CinemaMoviesComponent }, // cinema movies page
   { path: 'cinemas-proximos', component: CinemaMapComponent }, // mapa de cinemas próximos
-  { path: 'leaderboard', component: LeaderboardComponent }, // leaderboard page
+  { path: 'leaderboard', component: LeaderboardComponent }, // redireciona para higher-or-lower?leaderboard=1 no ngOnInit
   { path: 'mapa-cinemas', redirectTo: 'cinemas-proximos', pathMatch: 'full' },
   { path: '', redirectTo: '/register', pathMatch: 'full' }
 ];

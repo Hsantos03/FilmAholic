@@ -54,6 +54,16 @@
   background-clip: text;
 }
 
+/* Quando embebido no Higher or Lower: topbar não fixa e menos padding */
+:host.embed-mode .topbar-embed {
+  position: relative;
+  top: auto;
+}
+:host.embed-mode .lb-page {
+  padding-top: 24px;
+  min-height: auto;
+}
+
 /* ─── PAGE ────────────────────────────────── */
 .lb-page {
   position: relative;

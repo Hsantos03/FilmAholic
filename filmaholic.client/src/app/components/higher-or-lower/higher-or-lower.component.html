@@ -63,7 +63,7 @@
   <div class="bg-orb orb3"></div>
 
   <!-- ============ MENU INICIAL ============ -->
-  <div class="menu-screen" *ngIf="!isPlaying && !showHistory && !showEndStats">
+  <div class="menu-screen" *ngIf="!isPlaying && !showHistory && !showEndStats && !showLeaderboard">
     <div class="menu-badge">MINI-GAME</div>
     <h1 class="menu-title">Higher<br><span class="title-accent">or Lower</span></h1>
 
@@ -98,6 +98,15 @@
     <button class="history-btn" (click)="openHistory()">
       <span>📜</span> Histórico
     </button>
+
+    <button class="history-btn leaderboard-btn" (click)="openLeaderboard()">
+      <span>🏆</span> Leaderboard
+    </button>
+  </div>
+
+  <!-- ============ LEADERBOARD (integrado) ============ -->
+  <div class="leaderboard-screen" *ngIf="showLeaderboard">
+    <app-leaderboard [embedMode]="true" (backToMenu)="closeLeaderboard()"></app-leaderboard>
   </div>
 
   <!-- ============ JOGO EM CURSO ============ -->
