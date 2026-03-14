@@ -13,40 +13,46 @@
   </div>
 
   <div class="sidebar-links">
-    <a class="sidebar-item" routerLink="/dashboard" (click)="menuService.close()">
+    <a class="sidebar-item" routerLink="/dashboard" routerLinkActive="active" (click)="menuService.close()">
       <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
         <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z" />
       </svg>
       <span>Início</span>
     </a>
-
-    <a class="sidebar-item" routerLink="/cinema-movies" (click)="menuService.close()">
+    <a class="sidebar-item" routerLink="/profile" routerLinkActive="active" (click)="menuService.close()">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" /></svg>
+      <span>Perfil</span>
+    </a>
+    <a class="sidebar-item" routerLink="/cinema-movies" routerLinkActive="active" (click)="menuService.close()">
       <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
         <path d="M18 4l2 4h-3l-2-4h-2l2 4h-3l-2-4H8l2 4H7L5 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V4h-4z" />
       </svg>
       <span>Filmes em Cartaz</span>
     </a>
-
-    <a class="sidebar-item" routerLink="/higher-or-lower" (click)="menuService.close()">
+    <a class="sidebar-item" routerLink="/higher-or-lower" routerLinkActive="active" (click)="menuService.close()">
       <span style="font-size:20px">🎮</span>
       <span>Higher or Lower</span>
     </a>
+    <a class="sidebar-item" routerLink="/leaderboard" routerLinkActive="active" (click)="menuService.close()">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+        <path d="M19 5h-2V3H7v2H5c-1.1 0-2 .9-2 2v1c0 2.55 1.92 4.63 4.39 4.94.63 1.5 1.98 2.63 3.61 2.96V17H9v2h6v-2h-2v-1.1c1.63-.33 2.98-1.46 3.61-2.96C19.08 12.63 21 10.55 21 8V7c0-1.1-.9-2-2-2zM5 8V7h2v3.82C5.84 10.4 5 9.3 5 8zm14 0c0 1.3-.84 2.4-2 2.82V7h2v1z" />
+      </svg>
+      <span>Leaderboard</span>
+    </a>
 
-    <button class="sidebar-item" (click)="openDesafios(); menuService.close()">
+    <button class="sidebar-item" (click)="goToDashboardDesafios(); menuService.close()">
       <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
         <path d="M12 2L14.09 8.26L21 9.27L16.5 13.14L17.82 20L12 16.77L6.18 20L7.5 13.14L3 9.27L9.91 8.26L12 2Z" />
       </svg>
       <span>Desafios Semanais</span>
     </button>
-
-    <a class="sidebar-item" routerLink="/cinemas-proximos" (click)="menuService.close()">
+    <a class="sidebar-item" routerLink="/cinemas-proximos" routerLinkActive="active" (click)="menuService.close()">
       <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
         <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z" />
       </svg>
       <span>Mapa de Cinemas</span>
     </a>
-
-    <a class="sidebar-item" routerLink="/comunidades" (click)="menuService.close()">
+    <a class="sidebar-item" routerLink="/comunidades" routerLinkActive="active" (click)="menuService.close()">
       <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
         <path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z" />
       </svg>
@@ -62,7 +68,7 @@
     </svg>
   </button>
 
-  <a class="brand" routerLink="/dashboard" aria-label="Go to dashboard">FilmAholic</a>
+  <a class="brand" routerLink="/dashboard" routerLinkActive="active" aria-label="Ir para início">FilmAholic</a>
 
   <div class="search" #searchContainer>
     <div class="search-pill" role="search">

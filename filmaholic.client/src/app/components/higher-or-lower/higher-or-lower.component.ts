@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { FilmesService, Filme, RatingsDto, ActorDto } from '../../services/filmes.service';
 import { GameService, GameHistoryEntry, SaveResultResponse, GameStats } from '../../services/game.service';
+import { MenuService } from '../../services/menu.service';
 import { forkJoin, firstValueFrom } from 'rxjs';
 
 
@@ -68,8 +69,17 @@ export class HigherOrLowerComponent implements OnInit {
   constructor(
     private router: Router,
     private filmesService: FilmesService,
-    private gameService: GameService
+    private gameService: GameService,
+    public menuService: MenuService
   ) { }
+
+  toggleMenu(): void {
+    this.menuService.toggle();
+  }
+
+  goToDashboardDesafios(): void {
+    this.router.navigate(['/dashboard'], { queryParams: { openDesafios: '1' } });
+  }
 
   ngOnInit(): void {
     this.filmesService.getAll().subscribe({
@@ -587,9 +597,12 @@ export class HigherOrLowerComponent implements OnInit {
   private persistHistory(): void {
     const roundsJson = JSON.stringify(this.rounds || []);
     const userId = localStorage.getItem('user_id');
+    const currentCategory = this.gameCategory ?? 'films';
+
     if (userId) {
-      this.gameService.saveResult(this.score, roundsJson).subscribe({
+      this.gameService.saveResult(this.score, roundsJson, currentCategory).subscribe({
         next: (res) => {
+          console.log('✅ [SUCESSO] Pontuação guardada na Base de Dados!', res);
           if (this.endStats) {
             this.endStats.xpGanho = res.xpGanho;
             this.endStats.xpTotal = res.xpTotal;
@@ -597,7 +610,8 @@ export class HigherOrLowerComponent implements OnInit {
             this.endStats.xpDiarioRestante = res.xpDiarioRestante;
           }
         },
-        error: () => {
+        error: (err) => {
+          console.error('❌ [ERRO] Falha ao gravar pontuação na API. A guardar localmente...', err);
           this.saveLocalHistory(this.score, roundsJson);
         }
       });

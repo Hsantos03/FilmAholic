@@ -1,6 +1,9 @@
-<header class="topbar">
+<header class="topbar topbar-simple">
   <button class="icon-btn" (click)="goBack()" aria-label="Back">&larr;</button>
-  <a class="brand" routerLink="/dashboard">FilmAholic</a>
+  <a class="brand" routerLink="/dashboard" routerLinkActive="active">FilmAholic</a>
+  <div class="top-actions">
+    <app-topbar-actions></app-topbar-actions>
+  </div>
 </header>
 
 <main class="content">
@@ -195,7 +198,7 @@
           <div *ngIf="isLoadingCast" class="ratings-loading">A carregar elenco…</div>
 
           <div *ngIf="!isLoadingCast && cast.length" class="cast-scroll">
-            <div class="cast-card" *ngFor="let a of cast">
+            <div class="cast-card" *ngFor="let a of cast" (click)="openActor(a)" role="button" tabindex="0">
               <img *ngIf="a.fotoUrl"
                    class="cast-photo"
                    [src]="a.fotoUrl"

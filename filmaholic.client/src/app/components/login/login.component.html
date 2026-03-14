@@ -1,5 +1,5 @@
-<div class="page-wrapper-login">
-  <div class="auth-card-login">
+<div class="auth-page-wrapper">
+  <div class="auth-card">
     <div class="header">
       <h1>Log In</h1>
       <p>Get started for free</p>
@@ -47,7 +47,7 @@
         <input type="password" name="password" [(ngModel)]="loginData.password" placeholder="Password" required>
       </div>
 
-      <button type="submit" class="btn-login-pink" [disabled]="isLoading">
+      <button type="submit" class="btn-primary-global" [disabled]="isLoading">
         {{ isLoading ? 'A processar...' : 'Log In' }}
       </button>
 

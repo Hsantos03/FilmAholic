@@ -21,120 +21,12 @@
   backdrop-filter: blur(10px);
 }
 
-.sidebar-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0,0,0,0.5);
-  backdrop-filter: blur(3px);
-  z-index: 1100;
+.topbar-simple {
+  grid-template-columns: 60px 160px 1fr;
 }
 
-.sidebar {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 280px;
-  height: 100vh;
-  background: #010B15;
-  border-right: 1px solid rgba(255,255,255,0.08);
-  z-index: 1200;
-  transform: translateX(-100%);
-  transition: transform 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-  display: flex;
-  flex-direction: column;
-  padding: 16px;
-}
-
-  .sidebar.open {
-    transform: translateX(0);
-  }
-
-.sidebar-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 28px;
-  padding-bottom: 16px;
-  border-bottom: 1px solid rgba(255,255,255,0.06);
-}
-
-.sidebar-brand {
-  font-size: 18px;
-  font-weight: 800;
-  color: #fff;
-}
-
-.sidebar-links {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.sidebar-item {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  padding: 12px 14px;
-  border-radius: 12px;
-  color: rgba(255,255,255,0.8);
-  text-decoration: none;
-  font-size: 15px;
-  font-weight: 500;
-  background: transparent;
-  border: none;
-  cursor: pointer;
-  width: 100%;
-  text-align: left;
-  font-family: inherit;
-  transition: background 0.15s ease, color 0.15s ease;
-}
-
-  .sidebar-item:hover {
-    background: rgba(255,255,255,0.07);
-    color: #fff;
-  }
-
-  .sidebar-item svg {
-    flex-shrink: 0;
-    opacity: 0.85;
-  }
-
-.brand {
-  font-size: 18px;
-  font-weight: 700;
-  letter-spacing: 0.3px;
-  opacity: 0.95;
-  white-space: nowrap;
-  color: #fff;
-  text-decoration: none;
-}
-
-.brand:hover {
-  color: #fff;
-  text-decoration: none;
-}
-
-.icon-btn {
-  height: 40px;
-  width: 40px;
-  border: none;
-  border-radius: 12px;
-  background: rgba(255,255,255,0.08);
-  color: #fff;
-  cursor: pointer;
-  display: grid;
-  place-items: center;
-  transition: 0.2s ease;
-}
-
-  .icon-btn:hover {
-    background: rgba(255,255,255,0.12);
-  }
-
-.top-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 10px;
+.topbar-simple .top-actions {
+  justify-self: end;
 }
 
 .search {

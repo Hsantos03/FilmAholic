@@ -12,53 +12,13 @@
 }
 
 
-/* ─── TOPBAR ──── */
-.topbar {
-  position: fixed;
+/* Topbar usa .cinema-map-topbar (estilos em styles.css). Apenas ajuste para esta página. */
+.hol-topbar {
+  margin-left: 0;
+  margin-right: 0;
+  position: sticky;
   top: 0;
-  left: 0;
-  right: 0;
-  z-index: 100;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 14px 24px;
-  background: rgba(10,10,15,0.85);
-  backdrop-filter: blur(12px);
-  border-bottom: 1px solid rgba(255,255,255,0.05);
-}
-
-.back-btn {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  background: rgba(255,255,255,0.06);
-  border: 1px solid rgba(255,255,255,0.10);
-  color: #fff;
-  padding: 8px 14px;
-  border-radius: 10px;
-  cursor: pointer;
-  font-size: 14px;
-  font-weight: 600;
-  transition: all 0.2s;
-}
-
-  .back-btn:hover {
-    background: rgba(255,255,255,0.12);
-    transform: translateX(-2px);
-  }
-
-.back-arrow {
-  font-size: 16px;
-}
-
-.brand-pill {
-  font-size: 14px;
-  font-weight: 700;
-  background: linear-gradient(135deg, #ff2f6d, #ff6b35);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  z-index: 200;
 }
 
 /* ─── PAGE ──── */

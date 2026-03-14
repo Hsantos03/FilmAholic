@@ -710,4 +710,10 @@ export class MoviePageComponent implements OnInit, OnDestroy {
       complete: () => { this.isLoadingCast = false; }
     });
   }
+
+  openActor(a: CastMemberDto): void {
+    const personId = a?.id;
+    if (!personId) return;
+    this.router.navigate(['/actor', personId]);
+  }
 }

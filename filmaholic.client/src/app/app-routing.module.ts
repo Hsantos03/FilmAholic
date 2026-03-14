@@ -13,6 +13,8 @@ import { MoviePageComponent } from './components/movie-page/movie-page.component
 import { HigherOrLowerComponent } from './components/higher-or-lower/higher-or-lower.component';
 import { CinemaMoviesComponent } from './components/cinema-movies/cinema-movies.component';
 import { CinemaMapComponent } from './components/cinema-map/cinema-map.component';
+import { ActorDetailComponent } from './components/actor-detail/actor-detail.component';
+import { LeaderboardComponent } from './components/leaderboard/leaderboard.component';
 
 const routes: Routes = [
   { path: 'register', component: RegisterComponent },
@@ -24,12 +26,14 @@ const routes: Routes = [
   { path: 'dashboard', component: DashboardComponent },
   { path: 'profile', component: ProfileComponent },
   { path: 'search', component: SearchResultsComponent },
-  { path: 'movie-detail/:id', component: MoviePageComponent }, // new route
+  { path: 'movie-detail/:id', component: MoviePageComponent }, // nova rota para detalhes do filme
+  { path: 'actor/:id', component: ActorDetailComponent }, // actor details page
   { path: 'higher-or-lower', component: HigherOrLowerComponent }, // game page
   { path: 'cinema-movies', component: CinemaMoviesComponent }, // cinema movies page
-  { path: 'cinemas-proximos', component: CinemaMapComponent }, // mapa de cinemas próximos (FR40)
+  { path: 'cinemas-proximos', component: CinemaMapComponent }, // mapa de cinemas próximos
+  { path: 'leaderboard', component: LeaderboardComponent }, // leaderboard page
   { path: 'mapa-cinemas', redirectTo: 'cinemas-proximos', pathMatch: 'full' },
-  { path: '', redirectTo: '/register', pathMatch: 'full' } // Rota inicial
+  { path: '', redirectTo: '/register', pathMatch: 'full' }
 ];
 
 @NgModule({

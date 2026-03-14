@@ -39,6 +39,10 @@ namespace FilmAholic.Server.Migrations
                     TopFilmes = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     TopAtores = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     XP = table.Column<int>(type: "int", nullable: false),
+                    Nivel = table.Column<int>(type: "int", nullable: false),
+                    XPDiario = table.Column<int>(type: "int", nullable: false),
+                    CinemasFavoritos = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    UltimoResetDiario = table.Column<DateTime>(type: "datetime2", nullable: true),
                     Bio = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     DataCriacao = table.Column<DateTime>(type: "datetime2", nullable: false),
                     UserName = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
@@ -108,7 +112,8 @@ namespace FilmAholic.Server.Migrations
                     UtilizadorId = table.Column<string>(type: "nvarchar(450)", nullable: false),
                     DataCriacao = table.Column<DateTime>(type: "datetime2", nullable: false),
                     Score = table.Column<int>(type: "int", nullable: false),
-                    RoundsJson = table.Column<string>(type: "nvarchar(max)", nullable: false)
+                    RoundsJson = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Category = table.Column<string>(type: "nvarchar(max)", nullable: false)
                 },
                 constraints: table =>
                 {

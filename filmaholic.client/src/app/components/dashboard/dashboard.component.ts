@@ -1,5 +1,6 @@
 import { Component, OnInit, OnDestroy, ElementRef, ViewChild } from '@angular/core';
-import { Router } from '@angular/router';
+import { Router, ActivatedRoute } from '@angular/router';
+import { take } from 'rxjs/operators';
 import { Subject, Subscription, forkJoin, of } from 'rxjs';
 import { debounceTime, filter, switchMap, catchError } from 'rxjs/operators';
 import { DesafiosService } from '../../services/desafios.service';
@@ -76,11 +77,18 @@ export class DashboardComponent implements OnInit, OnDestroy {
     private atoresService: AtoresService,
     private profileService: ProfileService,
     private router: Router,
+    private route: ActivatedRoute,
     public menuService: MenuService
   ) { }
 
   ngOnInit(): void {
     this.userName = localStorage.getItem('user_nome') || 'Utilizador';
+    this.route.queryParams.pipe(take(1)).subscribe(params => {
+      if (params['openDesafios'] === '1') {
+        this.openDesafios();
+        this.router.navigate([], { queryParams: { openDesafios: null }, queryParamsHandling: 'merge', replaceUrl: true });
+      }
+    });
     this.loadMovies();
     this.loadAtores();
     this.updateVisibleCount();
@@ -612,6 +620,10 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
   fotoAtor(a: PopularActor): string {
     return a?.fotoUrl || 'https://via.placeholder.com/300x300?text=Actor';
+  }
+
+  openActor(a: PopularActor): void {
+    if (a?.id != null) this.router.navigate(['/actor', a.id]);
   }
 
   posterOf(f: Filme | SearchResultItem): string {
