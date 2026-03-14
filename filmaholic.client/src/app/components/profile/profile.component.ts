@@ -9,6 +9,7 @@ import { FavoritesService, FavoritosDTO } from '../../services/favorites.service
 import { environment } from '../../../environments/environment';
 
 type StatsPeriod = 'all' | '7d' | '30d' | '3m' | '12m';
+type GraphTheme = 'default' | 'dark' | 'force';
 
 interface GraphSettings {
   showGenreBar: boolean;   // Filmes por duração
@@ -17,13 +18,7 @@ interface GraphSettings {
   showPeriodPie: boolean;  // Distribuição por período
   showMonthlyChart: boolean;
   showGenrePercentages: boolean;
-  userColor: string;
-  globalColor: string;
-  chartColor1: string;
-  chartColor2: string;
-  chartColor3: string;
-  chartColor4: string;
-  chartColor5: string;
+  theme: GraphTheme;
 }
 
 @Component({
@@ -118,13 +113,7 @@ export class ProfileComponent implements OnInit {
     showPeriodPie: true,
     showMonthlyChart: true,
     showGenrePercentages: true,
-    userColor: '#ff2f6d',
-    globalColor: '#6366f1',
-    chartColor1: '#ff2f6d',
-    chartColor2: '#6366f1',
-    chartColor3: '#22c55e',
-    chartColor4: '#eab308',
-    chartColor5: '#ec4899'
+    theme: 'default'
   };
 
   private readonly defaultGraphSettings: GraphSettings = {
@@ -134,16 +123,28 @@ export class ProfileComponent implements OnInit {
     showPeriodPie: true,
     showMonthlyChart: true,
     showGenrePercentages: true,
-    userColor: '#ff2f6d',
-    globalColor: '#6366f1',
-    chartColor1: '#ff2f6d',
-    chartColor2: '#6366f1',
-    chartColor3: '#22c55e',
-    chartColor4: '#eab308',
-    chartColor5: '#ec4899'
+    theme: 'default'
   };
 
   private readonly GRAPH_SETTINGS_KEY = 'filmaholic_graph_settings';
+
+  private readonly GRAPH_THEMES: Record<GraphTheme, { userColor: string; globalColor: string; chart: [string, string, string] }> = {
+    default: {
+      userColor: '#ff2f6d',
+      globalColor: '#6366f1',
+      chart: ['#ff2f6d', '#6366f1', '#22c55e']
+    },
+    dark: {
+      userColor: '#f97316',
+      globalColor: '#0ea5e9',
+      chart: ['#0f172a', '#334155', '#4338ca']
+    },
+    force: {
+      userColor: '#3b82f6', // blue saber
+      globalColor: '#22c55e', // green saber
+      chart: ['#3b82f6', '#22c55e', '#ef4444'] // blue, green, red
+    }
+  };
 
   constructor(
     private http: HttpClient,
@@ -247,7 +248,9 @@ export class ProfileComponent implements OnInit {
     this.saveGraphSettings();
   }
 
-  updateGraphColors(): void {
+  selectGraphTheme(theme: GraphTheme): void {
+    if (this.graphSettings.theme === theme) return;
+    this.graphSettings.theme = theme;
     this.saveGraphSettings();
   }
 
@@ -277,28 +280,28 @@ export class ProfileComponent implements OnInit {
     }
   }
 
-  getCustomChartColor(index: number): string {
-    const baseColors = [
-      this.graphSettings.chartColor1,
-      this.graphSettings.chartColor2,
-      this.graphSettings.chartColor3,
-      this.graphSettings.chartColor4,
-      this.graphSettings.chartColor5,
-      '#14b8a6',
-      '#f97316',
-      '#8b5cf6'
-    ];
-    return baseColors[index % baseColors.length];
+  private get currentTheme() {
+    return this.GRAPH_THEMES[this.graphSettings.theme] ?? this.GRAPH_THEMES['default'];
+  }
+
+  getBarChartColor(index: number): string {
+    const palette = this.currentTheme.chart;
+    return palette[index % 2]; // alternate between first two colors
+  }
+
+  getPieChartColor(index: number): string {
+    const palette = this.currentTheme.chart;
+    return palette[index % 3]; // use all three for pies
   }
 
   getUserBarGradient(): string {
-    const color = this.graphSettings.userColor;
+    const color = this.currentTheme.userColor;
     const lighterColor = this.adjustColorBrightness(color, 20);
     return `linear-gradient(135deg, ${color}, ${lighterColor})`;
   }
 
   getGlobalBarGradient(): string {
-    const color = this.graphSettings.globalColor;
+    const color = this.currentTheme.globalColor;
     const lighterColor = this.adjustColorBrightness(color, 20);
     return `linear-gradient(135deg, ${color}, ${lighterColor})`;
   }

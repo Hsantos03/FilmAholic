@@ -12,7 +12,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace FilmAholic.Server.Migrations
 {
     [DbContext(typeof(FilmAholicDbContext))]
-    [Migration("20260307122008_FilmaholicMigration")]
+    [Migration("20260314120616_FilmaholicMigration")]
     partial class FilmaholicMigration
     {
         /// <inheritdoc />
@@ -176,6 +176,10 @@ namespace FilmAholic.Server.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
+                    b.Property<string>("Category")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<DateTime>("DataCriacao")
                         .HasColumnType("datetime2");
 
@@ -324,6 +328,10 @@ namespace FilmAholic.Server.Migrations
                     b.Property<string>("CapaUrl")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<string>("CinemasFavoritos")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("ConcurrencyStamp")
                         .IsConcurrencyToken()
                         .HasColumnType("nvarchar(max)");
@@ -352,6 +360,9 @@ namespace FilmAholic.Server.Migrations
 
                     b.Property<DateTimeOffset?>("LockoutEnd")
                         .HasColumnType("datetimeoffset");
+
+                    b.Property<int>("Nivel")
+                        .HasColumnType("int");
 
                     b.Property<string>("Nome")
                         .IsRequired()
@@ -392,11 +403,17 @@ namespace FilmAholic.Server.Migrations
                     b.Property<bool>("TwoFactorEnabled")
                         .HasColumnType("bit");
 
+                    b.Property<DateTime?>("UltimoResetDiario")
+                        .HasColumnType("datetime2");
+
                     b.Property<string>("UserName")
                         .HasMaxLength(256)
                         .HasColumnType("nvarchar(256)");
 
                     b.Property<int>("XP")
+                        .HasColumnType("int");
+
+                    b.Property<int>("XPDiario")
                         .HasColumnType("int");
 
                     b.HasKey("Id");
