@@ -690,7 +690,7 @@
               <div class="period-waffle-grid" role="img" aria-label="Distribuição por período em waffle">
                 <div class="period-waffle-cell"
                      *ngFor="let cell of periodWaffleCells"
-                     [style.background]="getBarChartColor(cell.i)"
+                     [style.--chair-color]="getBarChartColor(cell.i)"
                      [attr.title]="cell.label">
                 </div>
               </div>

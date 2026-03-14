@@ -1985,12 +1985,36 @@
 .period-dot {
   position: absolute;
   top: 50%;
-  width: 16px;
-  height: 16px;
-  border-radius: 50%;
+  width: 22px;
+  height: 22px;
   transform: translate(-50%, -50%);
-  border: 2px solid rgba(5, 10, 15, 0.85);
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.35);
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 50% 50%, rgba(10, 10, 10, 1) 0, rgba(10, 10, 10, 1) 6px, transparent 6px),
+    radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.2) 0, transparent 45%);
+  border: 2px solid rgba(0, 0, 0, 0.95);
+  box-shadow:
+    0 0 0 2px rgba(0, 0, 0, 1),
+    0 4px 10px rgba(0, 0, 0, 0.7);
+  overflow: hidden;
+  animation: film-bobbin-rotate 5s linear infinite;
+}
+
+.period-dot::before,
+.period-dot::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 70%;
+  height: 3px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.18);
+  transform: translate(-50%, -50%) rotate(0deg);
+}
+
+.period-dot::after {
+  transform: translate(-50%, -50%) rotate(90deg);
 }
 
 .period-value {
@@ -2019,13 +2043,61 @@
 }
 
 .period-waffle-cell {
-  border-radius: 3px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  position: relative;
+  border-radius: 0;
+  border: none;
+  background: transparent;
+  box-shadow: none;
   transition: transform 0.15s ease, opacity 0.15s ease;
-  opacity: 0.95;
+  opacity: 0.98;
 }
 
-  .period-waffle-cell:hover {
-    transform: scale(1.15);
-    opacity: 1;
-  }
+.period-waffle-cell:hover {
+  transform: translateY(-1px) scale(1.08);
+  opacity: 1;
+}
+
+.period-waffle-cell::before {
+  /* popcorn bucket */
+  content: "";
+  position: absolute;
+  left: 3px;
+  right: 3px;
+  bottom: 0;
+  top: 4px;
+  border-radius: 3px 3px 2px 2px;
+  background-image:
+    linear-gradient(
+      135deg,
+      rgba(0, 0, 0, 0.35),
+      rgba(255, 255, 255, 0.1)
+    ),
+    repeating-linear-gradient(
+      90deg,
+      var(--chair-color, #e11d48) 0 3px,
+      var(--chair-color, #e11d48) 3px 5px,
+      #fef2f2 5px 8px,
+      #fef2f2 8px 10px
+    );
+  background-blend-mode: overlay;
+  box-shadow:
+    0 -1px 0 rgba(0, 0, 0, 0.85),
+    0 1px 2px rgba(0, 0, 0, 0.9);
+}
+
+.period-waffle-cell::after {
+  /* popcorn top */
+  content: "";
+  position: absolute;
+  left: 3px;
+  right: 3px;
+  top: 0;
+  height: 7px;
+  border-radius: 6px 6px 4px 4px;
+  background:
+    radial-gradient(circle at 4px 6px, #fef9c3 0, #fef9c3 2px, transparent 2px),
+    radial-gradient(circle at 50% 5px, #fefce8 0, #fefce8 3px, transparent 3px),
+    radial-gradient(circle at calc(100% - 4px) 6px, #fef9c3 0, #fef9c3 2px, transparent 2px);
+  box-shadow:
+    0 1px 0 rgba(0, 0, 0, 0.4);
+}
