@@ -302,6 +302,14 @@ export class ProfileComponent implements OnInit {
     return this.currentTheme.globalColor;
   }
 
+  getPeriodChartColor(index: number): string {
+    const palette = this.currentTheme.chart;
+    const base = palette[index % palette.length];
+    const cycle = Math.floor(index / palette.length) % 2;
+    const shift = cycle === 0 ? 18 : -18;
+    return this.adjustColorBrightness(base, shift);
+  }
+
   getUserBarGradient(): string {
     const color = this.currentTheme.userColor;
     const lighterColor = this.adjustColorBrightness(color, 20);

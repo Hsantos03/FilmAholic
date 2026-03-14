@@ -1136,85 +1136,19 @@
 
 .bar-container {
   flex: 1;
-  height: 16px;
-  background: transparent;
+  height: 12px;
+  background: rgba(255, 255, 255, 0.08);
   border-radius: 999px;
-  position: relative;
-  overflow: visible;
+  overflow: hidden;
 }
 
 .bar {
-  height: 10px;
-  margin-left: 30px; /* space for lightsaber hilt */
+  height: 100%;
   border-radius: 999px;
-  position: relative;
-  top: 50%;
-  transform: translateY(-50%);
-  transition: width 0.5s ease, box-shadow 0.35s ease, background 0.35s ease;
+  transition: width 0.5s ease;
   min-width: 4px;
-  background:
-    radial-gradient(circle at 0 50%, rgba(255, 255, 255, 0.95) 0, transparent 60%),
-    linear-gradient(
-      90deg,
-      rgba(255, 255, 255, 0.95),
-      var(--saber-color, #3b82f6),
-      rgba(255, 255, 255, 0.9)
-    );
-  box-shadow:
-    0 0 8px var(--saber-color, #3b82f6),
-    0 0 18px var(--saber-color, #3b82f6),
-    0 0 26px rgba(255, 255, 255, 0.95);
-  animation: lightsaber-waver-horizontal 1.5s ease-in-out infinite alternate;
 }
 
-  .bar.user-bar {
-    --saber-color: var(--accent-pink);
-  }
-
-  .bar.global-bar {
-    --saber-color: #6366f1;
-  }
-
-.bar-container::before {
-  /* lightsaber hilt at the start of the bar */
-  content: "";
-  position: absolute;
-  left: 0;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 26px;
-  height: 18px;
-  border-radius: 4px;
-  background:
-    linear-gradient(90deg, #111 0 6px, #444 6px 11px, #b3b3b3 11px 18px, #222 18px 26px);
-  box-shadow:
-    0 0 0 1px rgba(0, 0, 0, 0.95),
-    0 2px 4px rgba(0, 0, 0, 0.9);
-}
-
-@keyframes lightsaber-waver-horizontal {
-  0% {
-    box-shadow:
-      0 0 7px var(--saber-color, #3b82f6),
-      0 0 16px var(--saber-color, #3b82f6),
-      0 0 24px rgba(255, 255, 255, 0.9);
-    filter: brightness(1);
-  }
-  50% {
-    box-shadow:
-      0 0 11px var(--saber-color, #3b82f6),
-      0 0 24px var(--saber-color, #3b82f6),
-      0 0 32px rgba(255, 255, 255, 1);
-    filter: brightness(1.12);
-  }
-  100% {
-    box-shadow:
-      0 0 8px var(--saber-color, #3b82f6),
-      0 0 18px var(--saber-color, #3b82f6),
-      0 0 26px rgba(255, 255, 255, 0.95);
-    filter: brightness(0.96);
-  }
-}
 
 .bar-value {
   width: 45px;
@@ -1739,7 +1673,7 @@
 .chart-bar-track {
   flex: 1;
   height: 20px;
-  background: transparent;
+  background: rgba(255, 255, 255, 0.06);
   border-radius: 999px;
   overflow: hidden;
 }

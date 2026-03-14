@@ -425,7 +425,7 @@
                 <div class="bar-container">
                   <div class="bar user-bar"
                        [style.width.%]="getComparisonBarWidth(statsComparison.user.totalFilmes, statsComparison.global.mediaFilmesPorUtilizador)"
-                         [style.--saber-color]="getUserBarColor()"></div>
+                         [style.background]="getUserBarGradient()"></div>
                 </div>
                 <span class="bar-value">{{ statsComparison.user.totalFilmes }}</span>
               </div>
@@ -434,7 +434,7 @@
                 <div class="bar-container">
                   <div class="bar global-bar"
                        [style.width.%]="getGlobalBarWidth(statsComparison.user.totalFilmes, statsComparison.global.mediaFilmesPorUtilizador)"
-                         [style.--saber-color]="getGlobalBarColor()"></div>
+                         [style.background]="getGlobalBarGradient()"></div>
                 </div>
                 <span class="bar-value">{{ statsComparison.global.mediaFilmesPorUtilizador }}</span>
               </div>
@@ -454,7 +454,7 @@
                 <div class="bar-container">
                   <div class="bar user-bar"
                        [style.width.%]="getComparisonBarWidth(statsComparison.user.totalHoras, statsComparison.global.mediaHorasPorUtilizador)"
-                         [style.--saber-color]="getUserBarColor()"></div>
+                         [style.background]="getUserBarGradient()"></div>
                 </div>
                 <span class="bar-value">{{ statsComparison.user.totalHoras }}h</span>
               </div>
@@ -463,7 +463,7 @@
                 <div class="bar-container">
                   <div class="bar global-bar"
                        [style.width.%]="getGlobalBarWidth(statsComparison.user.totalHoras, statsComparison.global.mediaHorasPorUtilizador)"
-                         [style.--saber-color]="getGlobalBarColor()"></div>
+                         [style.background]="getGlobalBarGradient()"></div>
                 </div>
                 <span class="bar-value">{{ statsComparison.global.mediaHorasPorUtilizador }}h</span>
               </div>
@@ -621,10 +621,9 @@
                   </small>
                 </span>
                 <div class="chart-bar-track">
-                  <div class="film-bobbin" aria-hidden="true"></div>
-                  <div class="chart-bar-fill film-strip-bar"
+                  <div class="chart-bar-fill"
                        [style.width.%]="chartBarWidthDuracao(d.total)"
-                       [style.--film-color]="getBarChartColor(i)"></div>
+                       [style.background]="getBarChartColor(i)"></div>
                 </div>
                 <span class="chart-bar-value">{{ d.total }}</span>
               </div>
@@ -690,14 +689,14 @@
               <div class="period-waffle-grid" role="img" aria-label="Distribuição por período em waffle">
                 <div class="period-waffle-cell"
                      *ngFor="let cell of periodWaffleCells"
-                     [style.--chair-color]="getBarChartColor(cell.i)"
+                     [style.--chair-color]="getPeriodChartColor(cell.i)"
                      [attr.title]="cell.label">
                 </div>
               </div>
 
               <div class="chart-pie-legend">
                 <span *ngFor="let d of chartData.porIntervaloAnos; let i = index" class="chart-legend-item">
-                  <i [style.background]="getBarChartColor(i)"></i>
+                  <i [style.background]="getPeriodChartColor(i)"></i>
                   {{ d.label }} — {{ intervaloAnosPercent(d.total) | number:'1.0-0' }}% ({{ d.total }})
                 </span>
               </div>
