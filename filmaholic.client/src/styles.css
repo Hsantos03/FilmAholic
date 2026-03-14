@@ -8,50 +8,41 @@
   --color-primary-hover: #d81b60;
   --color-primary-light: #ff6b9d;
   --color-primary-dark: #944d65;
-  
   /* Cores SecundÃƒÂ¡rias - Azul */
   --color-secondary: #007bff;
   --color-secondary-hover: #0056b3;
-  
   /* Cores de Fundo */
   --bg-dark: #000;
-  --bg-dark-secondary: #1c1c1c;
+  --bg-dark-secondary: 5c4f4f5d;
   --bg-card: rgba(5, 10, 15, 0.95);
   --bg-input: #0a1118;
   --bg-input-hover: #0f1a25;
-  
   /* Cores de Borda */
   --border-dark: #1a2a3a;
   --border-light: rgba(255, 255, 255, 0.1);
-  
   /* Cores de Texto */
   --text-primary: #fff;
   --text-secondary: #ddd;
   --text-muted: #aaa;
   --text-disabled: #6c757d;
-  
   /* Sombras e Efeitos */
   --shadow-primary: 0px 0px 25px rgba(233, 30, 99, 0.4);
   --shadow-primary-strong: 0px 0px 15px rgba(233, 30, 99, 0.5);
   --shadow-blue: 0px 0px 25px rgba(0, 123, 255, 0.4);
-  
   /* Bordas e Raio */
   --border-radius: 15px;
   --border-radius-sm: 8px;
   --border-radius-md: 10px;
   --border-radius-lg: 20px;
-  
   /* EspaÃƒÂ§amentos */
   --spacing-xs: 4px;
   --spacing-sm: 8px;
   --spacing-md: 15px;
   --spacing-lg: 20px;
   --spacing-xl: 30px;
-  
   /* TransiÃ§Ãµes */
   --transition: all 0.3s ease;
   --transition-fast: all 0.2s ease;
-
   /* Accent / Perfil / Cartões (reutilizar em profile, etc.) */
   --accent-pink: #FF4081;
   --accent-pink-hover: #F50057;

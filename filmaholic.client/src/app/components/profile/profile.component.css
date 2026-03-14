@@ -1149,13 +1149,6 @@
   min-width: 4px;
 }
 
-  .bar.user-bar {
-    background: linear-gradient(90deg, var(--accent-pink), #ff8a9d);
-  }
-
-  .bar.global-bar {
-    background: linear-gradient(90deg, #6366f1, #818cf8);
-  }
 
 .bar-value {
   width: 45px;
@@ -1468,6 +1461,55 @@
   font-weight: 500;
 }
 
+/* Theme options inside graph customize */
+.theme-options {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.theme-option {
+  width: 100%;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 10px;
+  padding: 10px 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  color: #fff;
+  font-size: 13px;
+  transition: all 0.2s ease;
+}
+
+.theme-option:hover {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.18);
+}
+
+.theme-option.selected {
+  border-color: var(--accent-pink);
+  box-shadow: 0 0 0 1px rgba(255, 64, 129, 0.5);
+  background: rgba(255, 64, 129, 0.14);
+}
+
+.theme-option-title {
+  font-weight: 600;
+}
+
+.theme-swatches {
+  display: flex;
+  gap: 4px;
+}
+
+.theme-swatch {
+  width: 14px;
+  height: 14px;
+  border-radius: 4px;
+  border: 1px solid rgba(0, 0, 0, 0.6);
+}
+
 /* Toggle Switch */
 .toggle-switch {
   position: relative;
@@ -1631,7 +1673,7 @@
 .chart-bar-track {
   flex: 1;
   height: 20px;
-  background: transparent;
+  background: rgba(255, 255, 255, 0.06);
   border-radius: 999px;
   overflow: hidden;
 }
@@ -1723,16 +1765,16 @@
 
 .chart-bars-pair {
   display: flex;
-  gap: 4px;
-  height: 140px;
-  align-items: end;
-  margin-bottom: 5px;
+  gap: 10px;
+  height: 150px;
+  align-items: flex-end;
+  margin-bottom: 6px;
 }
 
 .chart-bar {
-  flex: 1;
+  flex: 0 0 18px;
   min-height: 4px;
-  border-radius: 4px 4px 0 0;
+  border-radius: 6px 6px 0 0;
   position: relative;
   transition: all 0.3s ease;
   cursor: pointer;
@@ -1743,16 +1785,85 @@
 }
 
 .user-bar {
-  background: linear-gradient(135deg, var(--accent-pink), var(--accent-pink-hover));
+  --saber-color: var(--accent-pink);
+  background: transparent;
 }
 
 .global-bar {
-  background: linear-gradient(135deg, #6366f1, #818cf8);
+  --saber-color: #6366f1;
+  background: transparent;
 }
 
 .chart-bar:hover {
   transform: translateY(-2px);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+}
+
+.chart-bar::before {
+  /* lightsaber hilt */
+  content: "";
+  position: absolute;
+  bottom: -6px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 16px;
+  height: 14px;
+  border-radius: 4px;
+  background:
+    linear-gradient(90deg, #111 0 4px, #444 4px 7px, #999 7px 12px, #222 12px 16px);
+  box-shadow:
+    0 0 0 1px rgba(0, 0, 0, 0.9),
+    0 2px 4px rgba(0, 0, 0, 0.8);
+}
+
+.chart-bar::after {
+  /* lightsaber blade */
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: 8px;
+  transform: translateX(-50%);
+  width: 6px;
+  top: 4px;
+  border-radius: 6px 6px 0 0;
+  background:
+    radial-gradient(circle at 50% 100%, rgba(255, 255, 255, 0.75) 0, transparent 60%),
+    linear-gradient(
+      to top,
+      rgba(255, 255, 255, 0.9),
+      var(--saber-color, #3b82f6),
+      rgba(255, 255, 255, 0.9)
+    );
+  box-shadow:
+    0 0 8px var(--saber-color, #3b82f6),
+    0 0 18px var(--saber-color, #3b82f6),
+    0 0 28px rgba(255, 255, 255, 0.9);
+  opacity: 0.95;
+  animation: lightsaber-waver 1.4s ease-in-out infinite alternate;
+}
+
+@keyframes lightsaber-waver {
+  0% {
+    box-shadow:
+      0 0 7px var(--saber-color, #3b82f6),
+      0 0 16px var(--saber-color, #3b82f6),
+      0 0 26px rgba(255, 255, 255, 0.85);
+    transform: translateX(-50%) scaleX(1);
+  }
+  50% {
+    box-shadow:
+      0 0 10px var(--saber-color, #3b82f6),
+      0 0 24px var(--saber-color, #3b82f6),
+      0 0 34px rgba(255, 255, 255, 0.95);
+    transform: translateX(-49%) scaleX(1.06);
+  }
+  100% {
+    box-shadow:
+      0 0 8px var(--saber-color, #3b82f6),
+      0 0 20px var(--saber-color, #3b82f6),
+      0 0 30px rgba(255, 255, 255, 0.9);
+    transform: translateX(-51%) scaleX(0.98);
+  }
 }
 
 .chart-bar-value {
@@ -1936,12 +2047,36 @@
 .period-dot {
   position: absolute;
   top: 50%;
-  width: 16px;
-  height: 16px;
-  border-radius: 50%;
+  width: 22px;
+  height: 22px;
   transform: translate(-50%, -50%);
-  border: 2px solid rgba(5, 10, 15, 0.85);
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.35);
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 50% 50%, rgba(10, 10, 10, 1) 0, rgba(10, 10, 10, 1) 6px, transparent 6px),
+    radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.2) 0, transparent 45%);
+  border: 2px solid rgba(0, 0, 0, 0.95);
+  box-shadow:
+    0 0 0 2px rgba(0, 0, 0, 1),
+    0 4px 10px rgba(0, 0, 0, 0.7);
+  overflow: hidden;
+  animation: film-bobbin-rotate 5s linear infinite;
+}
+
+.period-dot::before,
+.period-dot::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 70%;
+  height: 3px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.18);
+  transform: translate(-50%, -50%) rotate(0deg);
+}
+
+.period-dot::after {
+  transform: translate(-50%, -50%) rotate(90deg);
 }
 
 .period-value {
@@ -1970,13 +2105,61 @@
 }
 
 .period-waffle-cell {
-  border-radius: 3px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  position: relative;
+  border-radius: 0;
+  border: none;
+  background: transparent;
+  box-shadow: none;
   transition: transform 0.15s ease, opacity 0.15s ease;
-  opacity: 0.95;
+  opacity: 0.98;
 }
 
-  .period-waffle-cell:hover {
-    transform: scale(1.15);
-    opacity: 1;
-  }
+.period-waffle-cell:hover {
+  transform: translateY(-1px) scale(1.08);
+  opacity: 1;
+}
+
+.period-waffle-cell::before {
+  /* popcorn bucket */
+  content: "";
+  position: absolute;
+  left: 3px;
+  right: 3px;
+  bottom: 0;
+  top: 4px;
+  border-radius: 3px 3px 2px 2px;
+  background-image:
+    linear-gradient(
+      135deg,
+      rgba(0, 0, 0, 0.35),
+      rgba(255, 255, 255, 0.1)
+    ),
+    repeating-linear-gradient(
+      90deg,
+      var(--chair-color, #e11d48) 0 3px,
+      var(--chair-color, #e11d48) 3px 5px,
+      #fef2f2 5px 8px,
+      #fef2f2 8px 10px
+    );
+  background-blend-mode: overlay;
+  box-shadow:
+    0 -1px 0 rgba(0, 0, 0, 0.85),
+    0 1px 2px rgba(0, 0, 0, 0.9);
+}
+
+.period-waffle-cell::after {
+  /* popcorn top */
+  content: "";
+  position: absolute;
+  left: 3px;
+  right: 3px;
+  top: 0;
+  height: 7px;
+  border-radius: 6px 6px 4px 4px;
+  background:
+    radial-gradient(circle at 4px 6px, #fef9c3 0, #fef9c3 2px, transparent 2px),
+    radial-gradient(circle at 50% 5px, #fefce8 0, #fefce8 3px, transparent 3px),
+    radial-gradient(circle at calc(100% - 4px) 6px, #fef9c3 0, #fef9c3 2px, transparent 2px);
+  box-shadow:
+    0 1px 0 rgba(0, 0, 0, 0.4);
+}

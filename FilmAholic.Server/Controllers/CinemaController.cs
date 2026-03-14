@@ -1,4 +1,7 @@
 using FilmAholic.Server.Data;
+using FilmAholic.Server.DTOs;
+using FilmAholic.Server.Models;
+using FilmAholic.Server.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -21,30 +24,54 @@ namespace FilmAholic.Server.Controllers
             _configuration = configuration;
             _httpClient = httpClientFactory.CreateClient();
             _context = context;
-        }    
+        }
 
         [HttpGet("em-cartaz")]
         public async Task<IActionResult> GetFilmesEmCartaz()
         {
-            try
+            var today = DateTime.UtcNow.Date;
+            var cached = await _context.CinemaMovieCache
+                .Where(x => x.DataCache >= today)
+                .ToListAsync();
+
+            if (cached.Any())
             {
-                var nosMovies = await ScrapeCinemaNos();
-                var cinemaCityMovies = await ScrapeCinemaCity();
-                var enriched = await EnrichWithTmdb(cinemaCityMovies);
-                foreach (var m in enriched) m.Cinema = "Cinema City";
-
-                var allMovies = nosMovies.Concat(enriched).ToList();
-
-                if (allMovies.Count == 0)
-                    return Ok(GetMockCinemaMovies());
-
-                return Ok(allMovies);
+                return Ok(cached.Select(m => new
+                {
+                    titulo = m.Titulo,
+                    poster = m.Poster,
+                    genero = m.Genero,
+                    duracao = m.Duracao,
+                    classificacao = m.Classificacao,
+                    link = m.Link,
+                    cinema = m.Cinema
+                }));
             }
-            catch (Exception ex)
+
+            // Cache vazia — aguarda até 30s que o BackgroundService termine
+            for (int i = 0; i < 6; i++)
             {
-                Console.WriteLine($"Scraping failed: {ex.Message}");
-                return Ok(GetMockCinemaMovies());
+                await Task.Delay(5000);
+                var retry = await _context.CinemaMovieCache
+                    .Where(x => x.DataCache >= today)
+                    .ToListAsync();
+
+                if (retry.Any())
+                {
+                    return Ok(retry.Select(m => new
+                    {
+                        titulo = m.Titulo,
+                        poster = m.Poster,
+                        genero = m.Genero,
+                        duracao = m.Duracao,
+                        classificacao = m.Classificacao,
+                        link = m.Link,
+                        cinema = m.Cinema
+                    }));
+                }
             }
+
+            return Ok(new List<object>());
         }
 
         /// <summary>Lista de cinemas com nome, morada e coordenadas para o mapa de cinemas próximos.</summary>
@@ -303,271 +330,7 @@ namespace FilmAholic.Server.Controllers
             }
 
             return NotFound();
-        }
-
-        private async Task<List<CinemaMovieDto>> EnrichWithTmdb(List<CinemaMovieDto> movies)
-        {
-            var apiKey = _configuration["ExternalApis:TmdbApiKey"];
-            var anoAtual = DateTime.Now.Year;
-
-            var suffixes = new[] {
-                " - 2D ATMOS", " - 3D ATMOS", " - 2D", " - 3D",
-                " 2D ATMOS", " 3D ATMOS", " 2D", " 3D",
-                " ATMOS", " VP - 2D", " VP", " IMAX"
-            };
-
-            foreach (var movie in movies)
-            {
-                try
-                {
-                    var tituloLimpo = movie.Titulo.Trim();
-                    foreach (var suffix in suffixes)
-                        if (tituloLimpo.EndsWith(suffix, StringComparison.OrdinalIgnoreCase))
-                            tituloLimpo = tituloLimpo[..^suffix.Length].Trim();
-
-                    movie.Titulo = tituloLimpo;
-
-                    JsonElement results = default;
-
-                    foreach (var ano in new[] { anoAtual, anoAtual - 1, 0 })
-                    {
-                        var url = ano > 0
-                            ? $"https://api.themoviedb.org/3/search/movie?api_key={apiKey}&query={Uri.EscapeDataString(tituloLimpo)}&language=pt-PT&year={ano}"
-                            : $"https://api.themoviedb.org/3/search/movie?api_key={apiKey}&query={Uri.EscapeDataString(tituloLimpo)}&language=pt-PT";
-
-                        var response = await _httpClient.GetAsync(url);
-                        if (!response.IsSuccessStatusCode) continue;
-
-                        var json = await response.Content.ReadAsStringAsync();
-                        var data = JsonSerializer.Deserialize<JsonElement>(json);
-                        results = data.GetProperty("results");
-                        if (results.GetArrayLength() > 0) break;
-                    }
-
-                    if (results.GetArrayLength() == 0) continue;
-
-                    var tituloNorm = tituloLimpo.ToLower().Trim();
-                    JsonElement best = results[0];
-
-                    for (int i = 0; i < results.GetArrayLength(); i++)
-                    {
-                        var r = results[i];
-                        var ptTitle = r.TryGetProperty("title", out var t) ? t.GetString()?.ToLower().Trim() : "";
-                        var origTitle = r.TryGetProperty("original_title", out var ot) ? ot.GetString()?.ToLower().Trim() : "";
-                        if (ptTitle == tituloNorm || origTitle == tituloNorm) { best = r; break; }
-                    }
-
-                    var tmdbId = best.GetProperty("id").GetInt32();
-
-                    var detailsResponse = await _httpClient.GetAsync(
-                        $"https://api.themoviedb.org/3/movie/{tmdbId}?api_key={apiKey}&language=pt-PT");
-
-                    if (!detailsResponse.IsSuccessStatusCode) continue;
-
-                    var detailsJson = await detailsResponse.Content.ReadAsStringAsync();
-                    var details = JsonSerializer.Deserialize<JsonElement>(detailsJson);
-
-                    if (details.TryGetProperty("poster_path", out var poster) && poster.GetString() != null)
-                        movie.Poster = $"https://image.tmdb.org/t/p/w500{poster.GetString()}";
-
-                    if (details.TryGetProperty("runtime", out var runtime) && runtime.GetInt32() > 0)
-                    {
-                        var mins = runtime.GetInt32();
-                        movie.Duracao = $"{mins / 60}h {mins % 60}min";
-                    }
-
-                    if (details.TryGetProperty("genres", out var genres) && genres.GetArrayLength() > 0)
-                    {
-                        var genreNames = new List<string>();
-                        foreach (var g in genres.EnumerateArray())
-                            if (g.TryGetProperty("name", out var gName))
-                                genreNames.Add(gName.GetString() ?? "");
-                        movie.Genero = string.Join(", ", genreNames);
-                    }
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine($"Erro ao enriquecer filme {movie.Titulo}: {ex.Message}");
-                }
-            }
-
-            return movies
-                    .GroupBy(m => m.Titulo.ToLower().Trim())
-                    .Select(g => g.First())
-                    .ToList();
-        }
-
-        private async Task<List<CinemaMovieDto>> ScrapeCinemaNos()
-        {
-            using var playwright = await Playwright.CreateAsync();
-            await using var browser = await playwright.Chromium.LaunchAsync(new() { Headless = true });
-            var page = await browser.NewPageAsync();
-
-            await page.GotoAsync("https://www.cinemas.nos.pt/filmes", new()
-            {
-                WaitUntil = WaitUntilState.NetworkIdle,
-                Timeout = 30000
-            });
-            await page.WaitForTimeoutAsync(3000);
-
-            var cards = await page.QuerySelectorAllAsync(".movie-card");
-            var movies = new List<CinemaMovieDto>();
-
-            for (int i = 0; i < cards.Count; i++)
-            {
-                try
-                {
-                    var card = cards[i];
-
-                    var titulo = await card.EvalOnSelectorAsync<string>(".movie-card__title", "el => el.innerText") ?? "";
-                    var genero = await card.EvalOnSelectorAsync<string>(".movie-card__genre", "el => el.innerText") ?? "";
-                    var info = await card.EvalOnSelectorAsync<string>(".movie-card__info", "el => el.innerText") ?? "";
-                    var imgSrc = await card.EvalOnSelectorAsync<string>(".movie-card__image", "el => el.getAttribute('src')") ?? "";
-                    var link = await card.EvalOnSelectorAsync<string>(".movie-card__link", "el => el.getAttribute('href')") ?? "";
-
-                    var infoParts = info.Split(" - ");
-                    var classificacao = infoParts.Length > 0 ? infoParts[0].Trim() : "";
-                    var duracao = infoParts.Length > 1 ? infoParts[1].Trim() : "";
-
-                    if (!string.IsNullOrEmpty(titulo))
-                    {
-                        movies.Add(new CinemaMovieDto
-                        {
-                            Id = $"nos-{i}",
-                            Titulo = titulo.Trim(),
-                            Poster = imgSrc.StartsWith("//") ? "https:" + imgSrc : imgSrc,
-                            Cinema = "Cinema NOS",
-                            Horarios = new List<string>(),
-                            Genero = genero.Trim(),
-                            Duracao = duracao,
-                            Classificacao = classificacao,
-                            Idioma = "Legendado",
-                            Sala = "",
-                            Link = link
-                        });
-                    }
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine($"Erro no card {i}: {ex.Message}");
-                }
-            }
-
-            return movies;
-        }
-
-
-        private async Task<List<CinemaMovieDto>> ScrapeCinemaCity()
-        {
-            var movies = new List<CinemaMovieDto>();
-            try
-            {
-                using var playwright = await Playwright.CreateAsync();
-                await using var browser = await playwright.Chromium.LaunchAsync(new() { Headless = true });
-                var page = await browser.NewPageAsync();
-                await page.GotoAsync("https://www.cinemacity.pt/", new() { Timeout = 30000 });
-                await page.WaitForSelectorAsync(".flip-container", new() { Timeout = 15000 });
-
-                var cards = await page.QuerySelectorAllAsync(".flip-container");
-                foreach (var card in cards)
-                {
-                    try
-                    {
-                        var titulo = await card.EvalOnSelectorAsync<string>(".title", "el => el.textContent");
-                        var poster = await card.EvalOnSelectorAsync<string>(".front img", "el => el.src");
-                        var link = await card.EvalOnSelectorAsync<string>(".front a", "el => el.href");
-
-                        var duracaoText = "";
-                        var duracaoEl = await card.QuerySelectorAsync(".back .text p:nth-child(4)");
-                        if (duracaoEl != null)
-                        {
-                            var text = await duracaoEl.TextContentAsync();
-                            var match = System.Text.RegularExpressions.Regex.Match(text ?? "", @"\d+");
-                            if (match.Success)
-                            {
-                                var mins = int.Parse(match.Value);
-                                duracaoText = $"{mins / 60}h {mins % 60}min";
-                            }
-                        }
-
-                        var classificacao = "";
-                        var classEl = await card.QuerySelectorAsync(".back .text p:nth-child(3)");
-                        if (classEl != null)
-                        {
-                            var text = await classEl.TextContentAsync();
-                            classificacao = text?.Replace("Rating:", "").Trim() ?? "";
-                        }
-
-                        movies.Add(new CinemaMovieDto
-                        {
-                            Titulo = titulo?.Trim() ?? "",
-                            Poster = poster ?? "",
-                            Link = link ?? "",
-                            Cinema = "Cinema City",
-                            Duracao = duracaoText,
-                            Classificacao = classificacao,
-                            Genero = ""
-                        });
-                    }
-                    catch { }
-                }
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Erro ao fazer scraping do Cinema City: {ex.Message}");
-            }
-            return movies;
-        }
-
-        private List<CinemaMovieDto> GetMockCinemaMovies()
-        {
-            return new List<CinemaMovieDto>
-            {
-                new()
-                {
-                    Id = "nos-1",
-                    Titulo = "Duna: Parte Dois",
-                    Poster = "https://image.tmdb.org/t/p/w500/d5NXSklWG3bVgiQ9dYBHWd2Kvbe.jpg",
-                    Cinema = "Cinema NOS",
-                    Horarios = new List<string> { "14:30", "17:45", "21:00", "23:30" },
-                    Genero = "Ficção Científica",
-                    Duracao = "2h 46min",
-                    Classificacao = "M/12",
-                    Idioma = "Legendado",
-                    Sala = "Sala 1 - 3D",
-                    Link = "https://www.cinemas.nos.pt/filmes/duna-parte-dois"
-                },
-                new()
-                {
-                    Id = "nos-2",
-                    Titulo = "Oppenheimer",
-                    Poster = "https://image.tmdb.org/t/p/w500/8Gxv8gSFCU0XGDykEGv7zR1sZ2T.jpg",
-                    Cinema = "Cinema NOS",
-                    Horarios = new List<string> { "15:00", "18:30", "22:00" },
-                    Genero = "Drama/História",
-                    Duracao = "3h 0min",
-                    Classificacao = "M/16",
-                    Idioma = "Legendado",
-                    Sala = "Sala IMAX",
-                    Link = "https://www.cinemas.nos.pt/filmes/oppenheimer"
-                },
-                new()
-                {
-                    Id = "nos-3",
-                    Titulo = "Guardiões da Galáxia Vol. 3",
-                    Poster = "https://image.tmdb.org/t/p/w500/r2J02Z2OpNTctfOSN1Ydgii51I3.jpg",
-                    Cinema = "Cinema NOS",
-                    Horarios = new List<string> { "13:15", "16:20", "19:30", "22:40" },
-                    Genero = "Aventura/Comédia",
-                    Duracao = "2h 30min",
-                    Classificacao = "M/12",
-                    Idioma = "Dublado",
-                    Sala = "Sala 4",
-                    Link = "https://www.cinemas.nos.pt/filmes/guardioes-da-galaxia-vol-3"
-                }
-            };
-        }
-
+        } 
 
         // GET: api/Profile/cinemas-favoritos
         [Authorize]

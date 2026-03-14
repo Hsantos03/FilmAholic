@@ -23,6 +23,8 @@ public class FilmAholicDbContext : IdentityDbContext<Utilizador>
     // NEW: Game history
     public DbSet<GameHistory> GameHistories => Set<GameHistory>();
 
+    public DbSet<CinemaMovieCache> CinemaMovieCache => Set<CinemaMovieCache>();
+
     protected override void OnModelCreating(ModelBuilder builder)
     {
         builder.Entity<UserMovie>()
@@ -110,6 +112,25 @@ public class FilmAholicDbContext : IdentityDbContext<Utilizador>
             gh.Property(x => x.RoundsJson).IsRequired();
             gh.HasIndex(x => x.UtilizadorId);
             gh.ToTable("GameHistories");
+        });
+
+        // Configure CinemaMovieCache
+        builder.Entity<CinemaMovieCache>(e =>
+        {
+            e.HasKey(x => x.Id);
+            e.Property(x => x.Titulo).HasMaxLength(500);
+            e.Property(x => x.Cinema).HasMaxLength(100);
+            e.Property(x => x.MovieId).HasMaxLength(100);
+            e.Property(x => x.Poster).HasMaxLength(1000);
+            e.Property(x => x.HorariosJson).HasMaxLength(2000);
+            e.Property(x => x.Genero).HasMaxLength(100);
+            e.Property(x => x.Duracao).HasMaxLength(50);
+            e.Property(x => x.Classificacao).HasMaxLength(50);
+            e.Property(x => x.Idioma).HasMaxLength(50);
+            e.Property(x => x.Sala).HasMaxLength(100);
+            e.Property(x => x.Link).HasMaxLength(1000);
+            e.HasIndex(x => x.DataCache);
+            e.ToTable("CinemaMovieCache");
         });
     }
 }
