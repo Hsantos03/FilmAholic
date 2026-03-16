@@ -7,3 +7,11 @@ node_modules/
 dist/
 *.user
 *.suo
+
+# Playwright: sessões de autenticação geradas em runtime (nunca commitar)
+filmaholic.client/.auth/
+# Playwright: relatórios e traces gerados pelos testes
+filmaholic.client/playwright-report/
+filmaholic.client/test-results/
+# Build artifacts do Angular/MSBuild
+filmaholic.client/obj/
