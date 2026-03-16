@@ -73,12 +73,13 @@
       </button>
 
       <input type="text"
+             data-testid="search-input"
              [(ngModel)]="searchTerm"
              (keyup.enter)="doSearch()"
              placeholder="Pesquisar filmes..."
              aria-label="Pesquisar" />
 
-      <button class="pill-icon right" type="button" aria-label="Pesquisar" (click)="doSearch()">
+      <button class="pill-icon right" type="button" aria-label="Pesquisar" data-testid="search-btn" (click)="doSearch()">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
           <path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z" />
         </svg>
@@ -148,19 +149,20 @@
       </div>
     </div>
 
-    <div *ngIf="isLoading" class="state">A pesquisar&hellip;</div>
-    <div *ngIf="error" class="state error">{{ error }}</div>
+    <div *ngIf="isLoading" data-testid="loading-state" class="state">A pesquisar&hellip;</div>
+    <div *ngIf="error" data-testid="error-state" class="state error">{{ error }}</div>
 
-    <div *ngIf="!isLoading && results.length === 0 && !error && actorResults.length === 0" class="empty">
+    <div *ngIf="!isLoading && results.length === 0 && !error && actorResults.length === 0" data-testid="empty-state" class="empty">
       Nao foram encontrados resultados para "{{ query }}"
     </div>
 
     <!-- Secção Atores -->
-    <section class="search-section" *ngIf="actorResults.length > 0">
+    <section class="search-section" data-testid="actors-section" *ngIf="actorResults.length > 0">
       <h3 class="section-title">Atores</h3>
       <div class="actors-row">
         <button type="button"
                 class="actor-card"
+                data-testid="actor-card"
                 *ngFor="let a of actorResults"
                 (click)="selectActor(a)"
                 [class.selected]="selectedActor?.id === a.id">
@@ -192,10 +194,11 @@
     </section>
 
     <!-- Secção Filmes -->
-    <section class="search-section" *ngIf="results.length">
+    <section class="search-section" data-testid="movies-section" *ngIf="results.length">
       <h3 class="section-title" *ngIf="actorResults.length">Filmes</h3>
       <div class="results-grid">
         <div class="result-card"
+             data-testid="movie-card"
              *ngFor="let r of sortedResults"
              (click)="openResult(r)"
              [class.loading]="isLoading">

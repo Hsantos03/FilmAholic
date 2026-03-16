@@ -7,8 +7,8 @@
 </header>
 
 <main class="content">
-  <div *ngIf="isLoading" class="state">A carregar filme…</div>
-  <div *ngIf="error" class="state error">{{ error }}</div>
+  <div *ngIf="isLoading" data-testid="movie-loading" class="state">A carregar filme…</div>
+  <div *ngIf="error" data-testid="movie-error" class="state error">{{ error }}</div>
 
   <div *ngIf="filme as f" class="movie-page-inner">
     <div class="movie-card">
@@ -39,14 +39,15 @@
       <section class="info-col centered">
 
         <!-- TÍTULO -->
-        <h1 class="movie-title">{{ f.titulo }}</h1>
+        <h1 class="movie-title" data-testid="movie-title">{{ f.titulo }}</h1>
         <div class="movie-sub">
           {{ f.ano ? f.ano + ' · ' : '' }}{{ f.genero }} · {{ f.duracao | formatDuration }}
         </div>
 
         <!-- AÇÕES -->
-        <div class="actions-row">
+        <div class="actions-row" data-testid="movie-actions">
           <button class="btn ghost"
+                  data-testid="btn-watch-later"
                   [class.active]="inWatchLater"
                   [attr.aria-pressed]="inWatchLater"
                   (click)="addQueroVer()"
@@ -56,6 +57,7 @@
           </button>
 
           <button class="btn primary"
+                  data-testid="btn-watched"
                   [class.active]="inWatched"
                   [attr.aria-pressed]="inWatched"
                   (click)="addJaVi()"
@@ -65,6 +67,7 @@
           </button>
 
           <button class="btn favorite"
+                  data-testid="btn-favorite"
                   [class.active]="isFavorite"
                   [attr.aria-pressed]="isFavorite"
                   (click)="toggleFavorite()"
