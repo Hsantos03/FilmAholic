@@ -40,14 +40,14 @@
 
     <form (ngSubmit)="onLogin()">
       <div class="input-group">
-        <input type="email" name="email" [(ngModel)]="loginData.email" placeholder="Email" required>
+        <input type="email" name="email" [(ngModel)]="loginData.email" placeholder="Email" required data-testid="email-input">
       </div>
 
       <div class="input-group">
-        <input type="password" name="password" [(ngModel)]="loginData.password" placeholder="Password" required>
+        <input type="password" name="password" [(ngModel)]="loginData.password" placeholder="Password" required data-testid="password-input">
       </div>
 
-      <button type="submit" class="btn-primary-global" [disabled]="isLoading">
+      <button type="submit" class="btn-primary-global" [disabled]="isLoading" data-testid="login-btn">
         {{ isLoading ? 'A processar...' : 'Log In' }}
       </button>
 

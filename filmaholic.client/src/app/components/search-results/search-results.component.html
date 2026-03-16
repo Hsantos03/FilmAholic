@@ -156,14 +156,15 @@
     </div>
 
     <!-- Secção Atores -->
-    <section class="search-section" *ngIf="actorResults.length > 0">
+    <section class="search-section" *ngIf="actorResults.length > 0" data-testid="actors-section">
       <h3 class="section-title">Atores</h3>
       <div class="actors-row">
         <button type="button"
                 class="actor-card"
                 *ngFor="let a of actorResults"
                 (click)="selectActor(a)"
-                [class.selected]="selectedActor?.id === a.id">
+                [class.selected]="selectedActor?.id === a.id"
+                data-testid="actor-card">
           <img *ngIf="a.fotoUrl" class="actor-thumb" [src]="a.fotoUrl" [alt]="a.nome" />
           <div *ngIf="!a.fotoUrl" class="actor-no-photo">{{ a.nome }}</div>
           <span class="actor-name">{{ a.nome }}</span>
@@ -192,13 +193,14 @@
     </section>
 
     <!-- Secção Filmes -->
-    <section class="search-section" *ngIf="results.length">
+    <section class="search-section" *ngIf="results.length" data-testid="movies-section">
       <h3 class="section-title" *ngIf="actorResults.length">Filmes</h3>
       <div class="results-grid">
         <div class="result-card"
              *ngFor="let r of sortedResults"
              (click)="openResult(r)"
-             [class.loading]="isLoading">
+             [class.loading]="isLoading"
+             data-testid="result-card">
 
           <img *ngIf="r.posterUrl"
                class="result-thumb"
