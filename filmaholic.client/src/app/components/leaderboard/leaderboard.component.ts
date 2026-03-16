@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, EventEmitter, HostBinding, Input, OnInit, Output } from '@angular/core';
 import { Router } from '@angular/router';
 import { GameService, LeaderboardEntry } from '../../services/game.service';
 
@@ -8,6 +8,11 @@ import { GameService, LeaderboardEntry } from '../../services/game.service';
   styleUrls: ['./leaderboard.component.css']
 })
 export class LeaderboardComponent implements OnInit {
+
+  /** Quando true, está embebido no Higher or Lower: esconde topbar e "Jogar agora", mostra Voltar que emite backToMenu */
+  @Input() embedMode = false;
+  @Output() backToMenu = new EventEmitter<void>();
+  @HostBinding('class.embed-mode') get isEmbedMode(): boolean { return this.embedMode; }
 
   private _category: 'films' | 'actors' = 'films';
 
@@ -25,7 +30,12 @@ export class LeaderboardComponent implements OnInit {
   ) { }
 
   ngOnInit(): void {
-    this.loadBoth();
+    if (this.embedMode) {
+      this.loadBoth();
+      return;
+    }
+    // Rota standalone /leaderboard: redirecionar para Higher or Lower com leaderboard aberto
+    this.router.navigate(['/higher-or-lower'], { queryParams: { leaderboard: '1' }, replaceUrl: true });
   }
 
   loadBoth(): void {
@@ -89,10 +99,18 @@ export class LeaderboardComponent implements OnInit {
   }
 
   goBack(): void {
-    this.router.navigate(['/dashboard']);
+    if (this.embedMode) {
+      this.backToMenu.emit();
+    } else {
+      this.router.navigate(['/dashboard']);
+    }
   }
 
   goToGame(): void {
-    this.router.navigate(['/higher-or-lower']);
+    if (this.embedMode) {
+      this.backToMenu.emit();
+    } else {
+      this.router.navigate(['/higher-or-lower']);
+    }
   }
 }

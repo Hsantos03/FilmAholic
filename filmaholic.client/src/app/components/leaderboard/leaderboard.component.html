@@ -1,9 +1,16 @@
-<!-- TOPBAR -->
-<header class="topbar">
+<!-- TOPBAR (só quando não está embebido no Higher or Lower) -->
+<header class="topbar" *ngIf="!embedMode">
   <button class="back-btn" (click)="goBack()">
     <span>←</span> Dashboard
   </button>
   <span class="brand-pill">🏆 FilmAholic</span>
+</header>
+<!-- Barra mínima quando embebido -->
+<header class="topbar topbar-embed" *ngIf="embedMode">
+  <button class="back-btn" (click)="goBack()">
+    <span>←</span> Voltar
+  </button>
+  <span class="brand-pill">🏆 Leaderboard</span>
 </header>
 
 <main class="lb-page">
@@ -18,7 +25,7 @@
       <div class="lb-badge">RANKING GLOBAL</div>
       <h1 class="lb-title">Leader<span class="title-accent">board</span></h1>
       <p class="lb-desc">Os melhores jogadores da plataforma. Tens o que é preciso?</p>
-      <button class="play-btn" (click)="goToGame()">
+      <button class="play-btn" *ngIf="!embedMode" (click)="goToGame()">
         Jogar agora <span class="btn-arrow">→</span>
       </button>
     </div>

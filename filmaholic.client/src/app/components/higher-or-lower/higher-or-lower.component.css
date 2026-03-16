@@ -698,6 +698,18 @@
   margin-top: 8px;
 }
 
+/* ─── LEADERBOARD (integrado) ──── */
+.leaderboard-screen {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  animation: fadeUp 0.4s ease both;
+}
+
+.leaderboard-screen app-leaderboard {
+  display: block;
+}
+
 /* ─── HISTÓRICO ──── */
 .history-screen {
   position: relative;
