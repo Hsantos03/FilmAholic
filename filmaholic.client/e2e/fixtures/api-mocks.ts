@@ -18,7 +18,7 @@ export const MOCK_MOVIES = [
     titulo: 'Inception',
     duracao: 148,
     genero: 'Ficção Científica',
-    posterUrl: null as string | null,
+    posterUrl: null,
     tmdbId: '27205',
     ano: 2010,
   },
@@ -27,7 +27,7 @@ export const MOCK_MOVIES = [
     titulo: 'The Dark Knight',
     duracao: 152,
     genero: 'Ação',
-    posterUrl: null as string | null,
+    posterUrl: null,
     tmdbId: '155',
     ano: 2008,
   },
@@ -57,22 +57,22 @@ export const MOCK_TMDB_SEARCH_RESPONSE = {
 };
 
 export const MOCK_ACTORS = [
-  { id: 6193, nome: 'Leonardo DiCaprio', fotoUrl: null as string | null },
-  { id: 287, nome: 'Brad Pitt', fotoUrl: null as string | null },
+  { id: 6193, nome: 'Leonardo DiCaprio', fotoUrl: null },
+  { id: 287, nome: 'Brad Pitt', fotoUrl: null },
 ];
 
 export const MOCK_ACTOR_MOVIES = [
   {
     id: 27205,
     titulo: 'Inception',
-    posterUrl: null as string | null,
+    posterUrl: null,
     personagem: 'Cobb',
     dataLancamento: '2010-07-16',
   },
   {
     id: 49026,
     titulo: 'The Dark Knight Rises',
-    posterUrl: null as string | null,
+    posterUrl: null,
     personagem: 'Bane',
     dataLancamento: '2012-07-20',
   },
@@ -89,7 +89,7 @@ export const MOCK_MOVIE_DETAIL: Record<string, unknown> = {
 };
 
 export const MOCK_FAVORITES_EMPTY = { filmes: [] as number[], atores: [] as string[] };
-export const MOCK_FAVORITES_WITH_MOVIE = { filmes: [1], atores: [] as string[] };
+export const MOCK_FAVORITES_WITH_MOVIE = { filmes: [1] as number[], atores: [] as string[] };
 
 // ---------------------------------------------------------------------------
 // Route helpers
