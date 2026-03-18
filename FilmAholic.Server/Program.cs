@@ -212,4 +212,17 @@ await using (var scope = app.Services.CreateAsyncScope())
     }
 }
 
+if (!app.Environment.IsDevelopment())
+{
+    try
+    {
+        Microsoft.Playwright.Program.Main(new[] { "install", "chromium" });
+    }
+    catch (Exception ex)
+    {
+        var logger = app.Services.GetRequiredService<ILogger<Program>>();
+        logger.LogWarning(ex, "Não foi possível instalar o Playwright Chromium.");
+    }
+}
+
 app.Run();

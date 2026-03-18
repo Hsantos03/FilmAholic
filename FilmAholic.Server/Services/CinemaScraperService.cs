@@ -53,7 +53,19 @@ public class CinemaScraperService : ICinemaScraperService
     private async Task<List<CinemaMovieDto>> ScrapeNosAsync()
     {
         using var playwright = await Playwright.CreateAsync();
-        await using var browser = await playwright.Chromium.LaunchAsync(new() { Headless = true });
+        await using var browser = await playwright.Chromium.LaunchAsync(new()
+        {
+            Headless = true,
+            Args = new[]
+            {
+                "--no-sandbox",
+                "--disable-setuid-sandbox",
+                "--disable-dev-shm-usage",
+                "--disable-gpu",
+                "--no-zygote",
+                "--single-process"
+            }
+        });
         var page = await browser.NewPageAsync();
 
         await page.GotoAsync("https://www.cinemas.nos.pt/filmes", new()
@@ -110,7 +122,19 @@ public class CinemaScraperService : ICinemaScraperService
         try
         {
             using var playwright = await Playwright.CreateAsync();
-            await using var browser = await playwright.Chromium.LaunchAsync(new() { Headless = true });
+            await using var browser = await playwright.Chromium.LaunchAsync(new()
+            {
+                Headless = true,
+                Args = new[]
+                {
+                    "--no-sandbox",
+                    "--disable-setuid-sandbox",
+                    "--disable-dev-shm-usage",
+                    "--disable-gpu",
+                    "--no-zygote",
+                    "--single-process"
+                }
+            });
             var page = await browser.NewPageAsync();
 
             await page.GotoAsync("https://www.cinemacity.pt/", new() { Timeout = 30000 });
