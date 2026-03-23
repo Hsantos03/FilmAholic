@@ -75,7 +75,7 @@ export class ProfileComponent implements OnInit {
   editBio = '';
   editFotoPerfilUrl: string | null = null;
   editCapaUrl: string | null = null;
-
+  
   isEditingCapa = false;
   isEditingAvatar = false;
 
@@ -749,7 +749,7 @@ export class ProfileComponent implements OnInit {
   removeFromLists(filmeId: number): void {
     const filme = this.catalogo.find(f => f.id === filmeId);
     if (!filme) return;
-
+    
     const userMovie = [...this.watchLater, ...this.watched].find(
       x => x?.filme?.titulo === filme.titulo || x?.filme?.Titulo === filme.titulo
     );
@@ -820,17 +820,17 @@ export class ProfileComponent implements OnInit {
   inWatchLater(filmeId: number): boolean {
     const filme = this.catalogo.find(f => f.id === filmeId);
     if (!filme) return false;
-
-    return this.watchLater?.some(x => x?.filme?.titulo === filme.titulo ||
-      x?.filme?.Titulo === filme.titulo);
+    
+    return this.watchLater?.some(x => x?.filme?.titulo === filme.titulo || 
+                                      x?.filme?.Titulo === filme.titulo);
   }
 
   inWatched(filmeId: number): boolean {
     const filme = this.catalogo.find(f => f.id === filmeId);
     if (!filme) return false;
-
-    return this.watched?.some(x => x?.filme?.titulo === filme.titulo ||
-      x?.filme?.Titulo === filme.titulo);
+    
+    return this.watched?.some(x => x?.filme?.titulo === filme.titulo || 
+                                   x?.filme?.Titulo === filme.titulo);
   }
 
   loadFavorites(): void {
@@ -968,8 +968,8 @@ export class ProfileComponent implements OnInit {
     this.http
       .put<any>(
         `${this.apiBase}/${encodeURIComponent(userId)}`,
-        {
-          userName: this.userName,
+        { 
+          userName: this.userName, 
           bio: this.bio
         },
         { withCredentials: true }
@@ -1148,12 +1148,12 @@ export class ProfileComponent implements OnInit {
         case '7days': {
           const cutoff = Date.now() - 7 * 24 * 60 * 60 * 1000;
           return list.filter(m => (parseDate(m)?.getTime() ?? 0) >= cutoff)
-            .sort((a, b) => (parseDate(b)?.getTime() ?? 0) - (parseDate(a)?.getTime() ?? 0));
+                     .sort((a, b) => (parseDate(b)?.getTime() ?? 0) - (parseDate(a)?.getTime() ?? 0));
         }
         case '30days': {
           const cutoff = Date.now() - 30 * 24 * 60 * 60 * 1000;
           return list.filter(m => (parseDate(m)?.getTime() ?? 0) >= cutoff)
-            .sort((a, b) => (parseDate(b)?.getTime() ?? 0) - (parseDate(a)?.getTime() ?? 0));
+                     .sort((a, b) => (parseDate(b)?.getTime() ?? 0) - (parseDate(a)?.getTime() ?? 0));
         }
         case 'all':
         default:
@@ -1206,7 +1206,7 @@ export class ProfileComponent implements OnInit {
     if (event.dataTransfer) {
       event.dataTransfer.dropEffect = 'move';
     }
-
+    
     const target = event.currentTarget as HTMLElement;
     const index = parseInt(target.getAttribute('data-index') || '0', 10);
     this.dragOverIndex = index;
@@ -1255,7 +1255,7 @@ export class ProfileComponent implements OnInit {
     if (event.dataTransfer) {
       event.dataTransfer.dropEffect = 'move';
     }
-
+    
     const target = event.currentTarget as HTMLElement;
     const index = parseInt(target.getAttribute('data-index') || '0', 10);
     this.dragOverActorIndex = index;

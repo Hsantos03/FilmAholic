@@ -3,8 +3,15 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { FilmesService, Filme, RatingsDto, ActorDto } from '../../services/filmes.service';
 import { GameService, GameHistoryEntry, SaveResultResponse, GameStats } from '../../services/game.service';
 import { MenuService } from '../../services/menu.service';
-import { forkJoin, firstValueFrom } from 'rxjs';
+import { firstValueFrom } from 'rxjs';
 
+export type GameDifficulty = 'easy' | 'medium' | 'hard';
+
+interface FilmDifficultyRules {
+  minRatingGap: number;
+  maxRatingGap: number | null;
+  minVoteCount: number;
+}
 
 @Component({
   selector: 'app-higher-or-lower',
@@ -33,6 +40,10 @@ export class HigherOrLowerComponent implements OnInit {
   gameCategory: 'films' | 'actors' | null = null;
   private readonly sessionCategoryKey = 'hol_category';
 
+  /** Fácil = ratings mais distantes + filmes mais votados / atores mais populares; Difícil = ratings mais próximos + menos conhecidos */
+  gameDifficulty: GameDifficulty = 'medium';
+  private readonly sessionDifficultyKey = 'hol_difficulty';
+
   private audioCtx: AudioContext | null = null;
   flashClass: string = '';
 
@@ -46,6 +57,13 @@ export class HigherOrLowerComponent implements OnInit {
   localHistoryKey = 'hol_local_history';
 
   private readonly minRatingThreshold = 3;
+
+  /** Ratings em cache para o modo filmes — evita dezenas de GET /ratings por ronda e pré-carregamento lento */
+  private holRatingsCache = new Map<number, RatingsDto | null>();
+
+  private holActivePool: Filme[] = [];
+
+  private holUsedFilmPairKeys = new Set<string>();
 
   showResults = false;
   resultWinner: 'left' | 'right' | 'either' | null = null;
@@ -97,6 +115,11 @@ export class HigherOrLowerComponent implements OnInit {
     const saved = sessionStorage.getItem(this.sessionCategoryKey) as 'films' | 'actors' | null;
     if (saved) this.gameCategory = saved;
 
+    const savedDiff = sessionStorage.getItem(this.sessionDifficultyKey) as GameDifficulty | null;
+    if (savedDiff === 'easy' || savedDiff === 'medium' || savedDiff === 'hard') {
+      this.gameDifficulty = savedDiff;
+    }
+
     if (this.route.snapshot.queryParams['leaderboard'] === '1') {
       this.showLeaderboard = true;
     }
@@ -110,6 +133,47 @@ export class HigherOrLowerComponent implements OnInit {
     this.showLeaderboard = false;
   }
 
+  setDifficulty(d: GameDifficulty): void {
+    this.gameDifficulty = d;
+    sessionStorage.setItem(this.sessionDifficultyKey, d);
+  }
+
+  difficultyLabel(): string {
+    switch (this.gameDifficulty) {
+      case 'easy': return 'Fácil';
+      case 'hard': return 'Difícil';
+      default: return 'Médio';
+    }
+  }
+
+  private getFilmDifficultyRules(): FilmDifficultyRules {
+    switch (this.gameDifficulty) {
+      case 'easy':
+        return { minRatingGap: 0.95, maxRatingGap: null, minVoteCount: 280 };
+      case 'hard':
+        return { minRatingGap: 0.02, maxRatingGap: 0.58, minVoteCount: 0 };
+      default:
+        return { minRatingGap: 0.32, maxRatingGap: null, minVoteCount: 45 };
+    }
+  }
+
+  /** Iguais contam como “either” no jogo — aceites em qualquer dificuldade */
+  private ratingGapMatchesDifficulty(a: number, b: number, rules: FilmDifficultyRules): boolean {
+    if (Math.abs(a - b) < 1e-9) return true;
+    const d = Math.abs(a - b);
+    if (d + 1e-9 < rules.minRatingGap) return false;
+    if (rules.maxRatingGap != null && d - 1e-9 > rules.maxRatingGap) return false;
+    return true;
+  }
+
+  private relaxFilmRules(rules: FilmDifficultyRules, wave: number): FilmDifficultyRules {
+    if (wave <= 0) return { ...rules };
+    if (wave === 1) {
+      return { ...rules, minVoteCount: 0 };
+    }
+    return { minRatingGap: 0.01, maxRatingGap: null, minVoteCount: 0 };
+  }
+
   startGame(category?: 'films' | 'actors'): void {
     if (category) {
       this.gameCategory = category;
@@ -118,6 +182,7 @@ export class HigherOrLowerComponent implements OnInit {
       const saved = sessionStorage.getItem(this.sessionCategoryKey) as 'films' | 'actors' | null;
       this.gameCategory = saved ?? 'films';
     }
+    sessionStorage.setItem(this.sessionDifficultyKey, this.gameDifficulty);
 
     // reset
     this.isPlaying = true;
@@ -131,6 +196,9 @@ export class HigherOrLowerComponent implements OnInit {
     this.resultWinner = null;
     this.chosenSide = null;
     this.nextPair = undefined;
+    this.holRatingsCache.clear();
+    this.holActivePool = [];
+    this.holUsedFilmPairKeys.clear();
 
     if (this.gameCategory === 'actors') {
       this.startRound();
@@ -141,6 +209,9 @@ export class HigherOrLowerComponent implements OnInit {
       this.filmesService.getAll().subscribe({
         next: (f) => {
           this.films = f || [];
+          this.holRatingsCache.clear();
+          this.holActivePool = [];
+          this.holUsedFilmPairKeys.clear();
           this.startRound();
         },
         error: () => {
@@ -174,132 +245,241 @@ export class HigherOrLowerComponent implements OnInit {
 
     this.isLoadingPair = true;
 
-    let leftCandidate = await this.fetchRandomTmdbMovieWithMinRating(12, this.minRatingThreshold);
-    let rightCandidate = await this.fetchRandomTmdbMovieWithMinRating(12, this.minRatingThreshold);
+    await this.warmHolRatingsCache();
 
-    let tries = 0;
-    while (leftCandidate && rightCandidate && leftCandidate.movie.id === rightCandidate.movie.id && tries < 6) {
-      rightCandidate = await this.fetchRandomTmdbMovieWithMinRating(8, this.minRatingThreshold);
-      tries++;
-    }
-
-    if (leftCandidate && rightCandidate) {
-      this.leftFilm = leftCandidate.movie;
-      this.rightFilm = rightCandidate.movie;
-      this.leftRating = leftCandidate.rating ?? 0;
-      this.rightRating = rightCandidate.rating ?? 0;
-
-      const leftObs = this.filmesService.getRatings(this.leftFilm?.id ?? 0);
-      const rightObs = this.filmesService.getRatings(this.rightFilm?.id ?? 0);
-
-      forkJoin([leftObs, rightObs]).subscribe({
-        next: (vals: [RatingsDto, RatingsDto]) => {
-          const l = vals[0];
-          const r = vals[1];
-          this.leftRating = (l?.tmdbVoteAverage ?? this.leftRating ?? 0) as number;
-          this.rightRating = (r?.tmdbVoteAverage ?? this.rightRating ?? 0) as number;
-
-          if (this.leftRating == null) this.leftRating = 0;
-          if (this.rightRating == null) this.rightRating = 0;
-        },
-        error: () => {
-          this.leftRating = this.leftRating ?? 0;
-          this.rightRating = this.rightRating ?? 0;
-        },
-        complete: () => {
-          this.isLoadingPair = false;
-        }
-      });
-
+    const picked = this.selectFilmPairForRoundSync();
+    if (!picked) {
+      this.isPlaying = false;
+      this.isLoadingPair = false;
       return;
     }
 
-    const localPair = await this.getTwoLocalFilmsWithMinRating(this.minRatingThreshold, 20);
-    if (localPair) {
-      this.leftFilm = localPair.left;
-      this.rightFilm = localPair.right;
-    } else {
-      const candidates = this.films.filter(f => this.hasCover(f));
-      if (!candidates || candidates.length < 2) {
-        if (!this.films || this.films.length < 2) {
-          this.isPlaying = false;
-          this.isLoadingPair = false;
-          return;
-        }
+    this.leftFilm = picked.left;
+    this.rightFilm = picked.right;
+    this.leftRating = picked.leftRating;
+    this.rightRating = picked.rightRating;
+    this.isLoadingPair = false;
+  }
 
-        let i = Math.floor(Math.random() * this.films.length);
-        let j = Math.floor(Math.random() * this.films.length);
-        const maxTries = 10;
-        let tries2 = 0;
-        while (j === i && tries2 < maxTries) {
-          j = Math.floor(Math.random() * this.films.length);
-          tries2++;
-        }
+  /** Embaralha cópia (Fisher–Yates) para cada jogo usar um subconjunto diferente de até 100 filmes */
+  private shuffleFilmesForHol<T extends Filme>(arr: T[]): T[] {
+    const a = [...arr];
+    for (let i = a.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
+  }
 
-        this.leftFilm = this.films[i];
-        this.rightFilm = this.films[j];
-      } else {
-        let i = Math.floor(Math.random() * candidates.length);
-        let j = Math.floor(Math.random() * candidates.length);
-        const maxTries = 10;
-        let tries3 = 0;
-        while (j === i && tries3 < maxTries) {
-          j = Math.floor(Math.random() * candidates.length);
-          tries3++;
-        }
+  /** Carrega ratings de até 100 filmes com poster (escolhidos aleatoriamente a cada novo jogo) em paralelo */
+  private async warmHolRatingsCache(): Promise<void> {
+    const withCover = (this.films || []).filter(f => this.hasCover(f));
+    const candidates = this.shuffleFilmesForHol(withCover).slice(0, 100);
+    this.holActivePool = candidates;
+    const missing = candidates.filter(f => !this.holRatingsCache.has(f.id));
+    if (missing.length === 0) return;
 
-        this.leftFilm = candidates[i];
-        this.rightFilm = candidates[j];
+    const chunkSize = 20;
+    for (let i = 0; i < missing.length; i += chunkSize) {
+      const slice = missing.slice(i, i + chunkSize);
+      await Promise.all(
+        slice.map(async (f) => {
+          try {
+            const r = await firstValueFrom(this.filmesService.getRatings(f.id));
+            this.holRatingsCache.set(f.id, r ?? null);
+          } catch {
+            this.holRatingsCache.set(f.id, null);
+          }
+        })
+      );
+    }
+  }
+
+  private holFilmPairKey(idA: number, idB: number): string {
+    const a = Math.min(idA, idB);
+    const b = Math.max(idA, idB);
+    return `${a}-${b}`;
+  }
+
+  private holIsFilmPairUsed(leftId: number, rightId: number): boolean {
+    return this.holUsedFilmPairKeys.has(this.holFilmPairKey(leftId, rightId));
+  }
+
+  private holRegisterFilmPairUsed(leftId: number, rightId: number): void {
+    this.holUsedFilmPairKeys.add(this.holFilmPairKey(leftId, rightId));
+  }
+
+  /** Filmes deste jogo (lote embaralhado) ou, em fallback, todos com capa que já têm entrada no cache */
+  private getHolFilmCandidates(): Filme[] {
+    const pool = this.holActivePool.filter(f => this.hasCover(f));
+    if (pool.length > 0) return pool;
+    return (this.films || []).filter(f => this.hasCover(f) && this.holRatingsCache.has(f.id));
+  }
+
+  /** Usa apenas cache (já aquecido em startRound) — sem HTTP por tentativa */
+  private selectFilmPairForRoundSync(): { left: Filme; right: Filme; leftRating: number; rightRating: number } | undefined {
+    const pick = (excludeUsedPairs: boolean): { left: Filme; right: Filme; leftRating: number; rightRating: number } | undefined => {
+      const baseRules = this.getFilmDifficultyRules();
+      const attemptsRand = excludeUsedPairs ? 14 : 10;
+      const attemptsLocal = excludeUsedPairs ? 22 : 14;
+      for (let wave = 0; wave < 3; wave++) {
+        const rules = this.relaxFilmRules(baseRules, wave);
+        const pair = this.tryPickRandomFilmPairFromCache(rules, attemptsRand, excludeUsedPairs);
+        if (pair) return pair;
+        const local = this.tryPickLocalFilmPairFromCache(rules, attemptsLocal, excludeUsedPairs);
+        if (local) return local;
+      }
+      return this.fallbackRandomFilmPairAnySync(excludeUsedPairs);
+    };
+    const fresh = pick(true);
+    if (fresh) return fresh;
+    return pick(false);
+  }
+
+  private tryPickRandomFilmPairFromCache(
+    rules: FilmDifficultyRules,
+    attempts: number,
+    excludeUsedPairs: boolean
+  ): { left: Filme; right: Filme; leftRating: number; rightRating: number } | undefined {
+    for (let t = 0; t < attempts; t++) {
+      const leftCandidate = this.pickRandomLocalFilmFromCache(12, this.minRatingThreshold, rules.minVoteCount);
+      const rightCandidate = this.pickRandomLocalFilmFromCache(12, this.minRatingThreshold, rules.minVoteCount);
+      if (!leftCandidate || !rightCandidate) continue;
+      if (leftCandidate.movie.id === rightCandidate.movie.id) continue;
+      if (!this.ratingGapMatchesDifficulty(leftCandidate.rating, rightCandidate.rating, rules)) continue;
+      if (excludeUsedPairs && this.holIsFilmPairUsed(leftCandidate.movie.id, rightCandidate.movie.id)) continue;
+      return {
+        left: leftCandidate.movie,
+        right: rightCandidate.movie,
+        leftRating: leftCandidate.rating,
+        rightRating: rightCandidate.rating
+      };
+    }
+    return undefined;
+  }
+
+  private tryPickLocalFilmPairFromCache(
+    rules: FilmDifficultyRules,
+    maxAttempts: number,
+    excludeUsedPairs: boolean
+  ): { left: Filme; right: Filme; leftRating: number; rightRating: number } | undefined {
+    const candidates = this.getHolFilmCandidates();
+    if (candidates.length < 2) return undefined;
+
+    for (let attempt = 0; attempt < maxAttempts; attempt++) {
+      let i = Math.floor(Math.random() * candidates.length);
+      let j = Math.floor(Math.random() * candidates.length);
+      let inner = 0;
+      while (j === i && inner < 8) {
+        j = Math.floor(Math.random() * candidates.length);
+        inner++;
+      }
+      if (i === j) continue;
+
+      const leftCandidate = candidates[i];
+      const rightCandidate = candidates[j];
+      const leftRatings = this.holRatingsCache.get(leftCandidate.id);
+      const rightRatings = this.holRatingsCache.get(rightCandidate.id);
+      if (leftRatings == null || rightRatings == null) continue;
+
+      const leftVote = leftRatings.tmdbVoteAverage ?? 0;
+      const rightVote = rightRatings.tmdbVoteAverage ?? 0;
+      const leftVc = leftRatings.tmdbVoteCount ?? 0;
+      const rightVc = rightRatings.tmdbVoteCount ?? 0;
+      if (leftVote <= this.minRatingThreshold || rightVote <= this.minRatingThreshold) continue;
+      if (rules.minVoteCount > 0) {
+        if ((leftVc ?? 0) < rules.minVoteCount || (rightVc ?? 0) < rules.minVoteCount) continue;
+      }
+      if (!this.ratingGapMatchesDifficulty(leftVote, rightVote, rules)) continue;
+      if (excludeUsedPairs && this.holIsFilmPairUsed(leftCandidate.id, rightCandidate.id)) continue;
+      return {
+        left: leftCandidate,
+        right: rightCandidate,
+        leftRating: leftVote,
+        rightRating: rightVote
+      };
+    }
+    return undefined;
+  }
+
+  private fallbackRandomFilmPairAnySync(excludeUsedPairs: boolean): { left: Filme; right: Filme; leftRating: number; rightRating: number } | undefined {
+    for (let outer = 0; outer < 12; outer++) {
+      let leftCandidate = this.pickRandomLocalFilmFromCache(14, this.minRatingThreshold, 0);
+      let rightCandidate = this.pickRandomLocalFilmFromCache(14, this.minRatingThreshold, 0);
+      let tries = 0;
+      while (leftCandidate && rightCandidate && leftCandidate.movie.id === rightCandidate.movie.id && tries < 8) {
+        rightCandidate = this.pickRandomLocalFilmFromCache(10, this.minRatingThreshold, 0);
+        tries++;
+      }
+      if (leftCandidate && rightCandidate) {
+        if (excludeUsedPairs && this.holIsFilmPairUsed(leftCandidate.movie.id, rightCandidate.movie.id)) continue;
+        return {
+          left: leftCandidate.movie,
+          right: rightCandidate.movie,
+          leftRating: leftCandidate.rating,
+          rightRating: rightCandidate.rating
+        };
       }
     }
 
-    const leftObs = this.filmesService.getRatings(this.leftFilm?.id ?? 0);
-    const rightObs = this.filmesService.getRatings(this.rightFilm?.id ?? 0);
-
-    forkJoin([leftObs, rightObs]).subscribe({
-      next: (vals: [RatingsDto, RatingsDto]) => {
-        const l = vals[0];
-        const r = vals[1];
-        this.leftRating = (l?.tmdbVoteAverage ?? 0) as number;
-        this.rightRating = (r?.tmdbVoteAverage ?? 0) as number;
-
-        if (this.leftRating == null) this.leftRating = 0;
-        if (this.rightRating == null) this.rightRating = 0;
-      },
-      error: () => {
-        this.leftRating = 0;
-        this.rightRating = 0;
-      },
-      complete: () => {
-        this.isLoadingPair = false;
+    const localPair = this.getTwoLocalFilmsWithMinRatingFromCache(this.minRatingThreshold, 24, excludeUsedPairs);
+    if (localPair) {
+      const lr = this.holRatingsCache.get(localPair.left.id);
+      const rr = this.holRatingsCache.get(localPair.right.id);
+      if (lr != null && rr != null) {
+        return {
+          left: localPair.left,
+          right: localPair.right,
+          leftRating: lr.tmdbVoteAverage ?? 0,
+          rightRating: rr.tmdbVoteAverage ?? 0
+        };
       }
-    });
+    }
+
+    const candidates = this.getHolFilmCandidates();
+    if (!candidates || candidates.length < 2) {
+      return undefined;
+    }
+
+    for (let t = 0; t < 16; t++) {
+      let i = Math.floor(Math.random() * candidates.length);
+      let j = Math.floor(Math.random() * candidates.length);
+      let tries3 = 0;
+      while (j === i && tries3 < 10) {
+        j = Math.floor(Math.random() * candidates.length);
+        tries3++;
+      }
+      const left = candidates[i];
+      const right = candidates[j];
+      const lr = this.holRatingsCache.get(left.id);
+      const rr = this.holRatingsCache.get(right.id);
+      if (lr == null || rr == null) continue;
+      if (excludeUsedPairs && this.holIsFilmPairUsed(left.id, right.id)) continue;
+      return { left, right, leftRating: lr.tmdbVoteAverage ?? 0, rightRating: rr.tmdbVoteAverage ?? 0 };
+    }
+    return undefined;
   }
 
-  // Try to fetch a random TMDb movie by calling GET /api/filmes/{id} and verify its rating is above threshold and it has a cover.
-  private async fetchRandomTmdbMovieWithMinRating(maxAttempts: number = 8, minRating: number = 3): Promise<{ movie: Filme; rating: number } | undefined> {
-    const minId = 1;
-    const maxIdRange = 1000000;
-    for (let attempt = 0; attempt < maxAttempts; attempt++) {
-      const randomTmdbId = Math.floor(Math.random() * maxIdRange) + minId;
-      try {
-        const movie = await firstValueFrom(this.filmesService.getById(randomTmdbId));
-        if (!movie) continue;
+  private pickRandomLocalFilmFromCache(
+    maxAttempts: number,
+    minRating: number,
+    minVoteCount: number
+  ): { movie: Filme; rating: number; voteCount: number } | undefined {
+    const candidates = this.getHolFilmCandidates();
+    if (candidates.length === 0) return undefined;
 
-        if (!this.hasCover(movie)) continue;
+    const n = candidates.length;
+    const tries = Math.min(Math.max(maxAttempts, 10), 28);
+    for (let attempt = 0; attempt < tries; attempt++) {
+      const movie = candidates[Math.floor(Math.random() * n)];
+      const ratings = this.holRatingsCache.get(movie.id);
+      if (ratings == null) continue;
 
-        try {
-          const ratings = await firstValueFrom(this.filmesService.getRatings(movie.id));
-          const vote = ratings?.tmdbVoteAverage ?? 0;
-          if (vote > minRating) {
-            return { movie, rating: vote };
-          }
-        } catch {
-          continue;
-        }
-      } catch {
-        continue;
-      }
+      const vote = ratings.tmdbVoteAverage ?? 0;
+      const vc = ratings.tmdbVoteCount ?? 0;
+      if (vote <= minRating) continue;
+      if (minVoteCount > 0 && (vc ?? 0) < minVoteCount) continue;
+      return { movie, rating: vote, voteCount: vc ?? 0 };
     }
 
     return undefined;
@@ -318,7 +498,7 @@ export class HigherOrLowerComponent implements OnInit {
 
     if (!this.actors || this.actors.length < 2) {
       try {
-        const loaded = await firstValueFrom(this.filmesService.getPopularActors(50));
+        const loaded = await firstValueFrom(this.filmesService.getPopularActors(100));
         this.actors = loaded || [];
       } catch { this.actors = []; }
     }
@@ -334,36 +514,96 @@ export class HigherOrLowerComponent implements OnInit {
     const prevLeftId = (this.leftActor as ActorDto | undefined)?.id;
     const prevRightId = (this.rightActor as ActorDto | undefined)?.id;
 
-    let i: number, j: number, attempts = 0;
-    do {
-      i = Math.floor(Math.random() * this.actors.length);
-      j = Math.floor(Math.random() * this.actors.length);
-      attempts++;
-    } while (
-      attempts < 20 && (
-        i === j ||
-        (this.actors[i].id === prevLeftId && this.actors[j].id === prevRightId)
-      )
-    );
+    const sorted = [...this.actors].sort((a, b) => b.popularidade - a.popularidade);
+    let pool = this.actorPoolForDifficulty(sorted);
+    if (pool.length < 2) pool = sorted;
 
-    this.leftActor = this.actors[i];
-    this.rightActor = this.actors[j];
+    const pick = this.pickActorPairFromPool(pool, prevLeftId, prevRightId);
+    this.leftActor = pick.left;
+    this.rightActor = pick.right;
     this.leftActorPopularity = this.leftActor.popularidade;
     this.rightActorPopularity = this.rightActor.popularidade;
     this.isLoadingPair = false;
   }
 
-  // Try to find two distinct local films with rating > minRating and having covers. Tries up to maxAttempts.
-  private async getTwoLocalFilmsWithMinRating(minRating: number = 3, maxAttempts: number = 20): Promise<{ left: Filme; right: Filme } | undefined> {
-    if (!this.films || this.films.length < 2) return undefined;
+  /** Atores mais populares no topo da lista → Fácil usa o topo, Difícil a cauda. */
+  private actorPoolForDifficulty(sorted: ActorDto[]): ActorDto[] {
+    const n = sorted.length;
+    if (n < 2) return sorted;
+    switch (this.gameDifficulty) {
+      case 'easy':
+        return sorted.slice(0, Math.max(2, Math.ceil(n * 0.38)));
+      case 'hard':
+        return sorted.slice(Math.max(0, Math.floor(n * 0.35)), n);
+      default:
+        const lo = Math.floor(n * 0.1);
+        const hi = Math.max(lo + 2, Math.floor(n * 0.72));
+        return sorted.slice(lo, hi);
+    }
+  }
 
-    // work on candidates that have covers
-    const candidates = this.films.filter(f => this.hasCover(f));
-    if (!candidates || candidates.length < 2) return undefined;
+  /**
+   * Fácil: grande diferença de popularidade (mais óbvio).
+   * Difícil: tenta pares com popularidade próxima; se não conseguir, aceita qualquer um do pool.
+   */
+  private pickActorPairFromPool(
+    pool: ActorDto[],
+    prevLeftId?: number,
+    prevRightId?: number
+  ): { left: ActorDto; right: ActorDto } {
+    const minGapEasy = 9;
+    const minGapMedium = 4;
+    const maxGapHard = 9;
+
+    const tryPick = (predicate: (d: number) => boolean, maxAttempts: number): { i: number; j: number } | null => {
+      for (let a = 0; a < maxAttempts; a++) {
+        let i = Math.floor(Math.random() * pool.length);
+        let j = Math.floor(Math.random() * pool.length);
+        if (i === j) continue;
+        if (pool[i].id === prevLeftId && pool[j].id === prevRightId) continue;
+        const d = Math.abs(pool[i].popularidade - pool[j].popularidade);
+        if (predicate(d)) return { i, j };
+      }
+      return null;
+    };
+
+    let idx: { i: number; j: number } | null = null;
+
+    if (this.gameDifficulty === 'easy') {
+      idx = tryPick(d => d >= minGapEasy, 28);
+      if (!idx) idx = tryPick(d => d >= minGapMedium, 22);
+    } else if (this.gameDifficulty === 'hard') {
+      idx = tryPick(d => d > 0.05 && d <= maxGapHard, 36);
+      if (!idx) idx = tryPick(() => true, 18);
+    } else {
+      idx = tryPick(d => d >= minGapMedium, 28);
+      if (!idx) idx = tryPick(() => true, 18);
+    }
+
+    if (!idx) {
+      let i = 0;
+      let j = 1;
+      if (pool.length >= 2) {
+        i = Math.floor(Math.random() * pool.length);
+        j = (i + 1) % pool.length;
+      }
+      idx = { i, j };
+    }
+
+    return { left: pool[idx.i], right: pool[idx.j] };
+  }
+
+  /** Usa holRatingsCache (só leitura) */
+  private getTwoLocalFilmsWithMinRatingFromCache(
+    minRating: number = 3,
+    maxAttempts: number = 20,
+    excludeUsedPairs: boolean = false
+  ): { left: Filme; right: Filme } | undefined {
+    const candidates = this.getHolFilmCandidates();
+    if (candidates.length < 2) return undefined;
 
     const triedIndexes = new Set<number>();
     for (let attempt = 0; attempt < maxAttempts; attempt++) {
-      // pick left
       let i = Math.floor(Math.random() * candidates.length);
       while (triedIndexes.has(i) && triedIndexes.size < candidates.length) {
         i = Math.floor(Math.random() * candidates.length);
@@ -371,32 +611,26 @@ export class HigherOrLowerComponent implements OnInit {
 
       triedIndexes.add(i);
       const leftCandidate = candidates[i];
-      try {
-        const leftRatings = await firstValueFrom(this.filmesService.getRatings(leftCandidate.id));
-        const leftVote = leftRatings?.tmdbVoteAverage ?? 0;
-        if (leftVote <= minRating) continue;
+      const leftRatings = this.holRatingsCache.get(leftCandidate.id);
+      if (leftRatings == null) continue;
+      const leftVote = leftRatings.tmdbVoteAverage ?? 0;
+      if (leftVote <= minRating) continue;
 
-        // pick right different from left
-        let j = Math.floor(Math.random() * candidates.length);
-        let innerTries = 0;
-        while (j === i && innerTries < 6) {
-          j = Math.floor(Math.random() * candidates.length);
-          innerTries++;
-        }
-
-        const rightCandidate = candidates[j];
-        try {
-          const rightRatings = await firstValueFrom(this.filmesService.getRatings(rightCandidate.id));
-          const rightVote = rightRatings?.tmdbVoteAverage ?? 0;
-          if (rightVote <= minRating) continue;
-
-          return { left: leftCandidate, right: rightCandidate };
-        } catch {
-          continue;
-        }
-      } catch {
-        continue;
+      let j = Math.floor(Math.random() * candidates.length);
+      let innerTries = 0;
+      while (j === i && innerTries < 6) {
+        j = Math.floor(Math.random() * candidates.length);
+        innerTries++;
       }
+
+      const rightCandidate = candidates[j];
+      const rightRatings = this.holRatingsCache.get(rightCandidate.id);
+      if (rightRatings == null) continue;
+      const rightVote = rightRatings.tmdbVoteAverage ?? 0;
+      if (rightVote <= minRating) continue;
+      if (excludeUsedPairs && this.holIsFilmPairUsed(leftCandidate.id, rightCandidate.id)) continue;
+
+      return { left: leftCandidate, right: rightCandidate };
     }
 
     return undefined;
@@ -444,58 +678,9 @@ export class HigherOrLowerComponent implements OnInit {
     return true;
   }
 
-  private async preloadNextPair(): Promise<{ left: Filme; right: Filme; leftRating: number; rightRating: number } | undefined> {
+  private preloadNextPairSync(): { left: Filme; right: Filme; leftRating: number; rightRating: number } | undefined {
     try {
-      let leftCandidate = await this.fetchRandomTmdbMovieWithMinRating(8, this.minRatingThreshold);
-      let rightCandidate = await this.fetchRandomTmdbMovieWithMinRating(8, this.minRatingThreshold);
-
-      let tries = 0;
-      while (leftCandidate && rightCandidate && leftCandidate.movie.id === rightCandidate.movie.id && tries < 6) {
-        rightCandidate = await this.fetchRandomTmdbMovieWithMinRating(6, this.minRatingThreshold);
-        tries++;
-      }
-
-      if (leftCandidate && rightCandidate) {
-        return {
-          left: leftCandidate.movie,
-          right: rightCandidate.movie,
-          leftRating: leftCandidate.rating ?? 0,
-          rightRating: rightCandidate.rating ?? 0
-        };
-      }
-
-      const localPair = await this.getTwoLocalFilmsWithMinRating(this.minRatingThreshold, 12);
-      if (localPair) {
-        const leftRatings = await firstValueFrom(this.filmesService.getRatings(localPair.left.id));
-        const rightRatings = await firstValueFrom(this.filmesService.getRatings(localPair.right.id));
-        const l = leftRatings?.tmdbVoteAverage ?? 0;
-        const r = rightRatings?.tmdbVoteAverage ?? 0;
-        return { left: localPair.left, right: localPair.right, leftRating: l, rightRating: r };
-      }
-
-      const candidates = (this.films || []).filter(f => this.hasCover(f));
-      if (candidates.length >= 2) {
-        let i = Math.floor(Math.random() * candidates.length);
-        let j = Math.floor(Math.random() * candidates.length);
-        let tries2 = 0;
-        while (j === i && tries2 < 8) {
-          j = Math.floor(Math.random() * candidates.length);
-          tries2++;
-        }
-
-        const left = candidates[i];
-        const right = candidates[j];
-        const leftRatings = await firstValueFrom(this.filmesService.getRatings(left.id));
-        const rightRatings = await firstValueFrom(this.filmesService.getRatings(right.id));
-        return {
-          left,
-          right,
-          leftRating: leftRatings?.tmdbVoteAverage ?? 0,
-          rightRating: rightRatings?.tmdbVoteAverage ?? 0
-        };
-      }
-
-      return undefined;
+      return this.selectFilmPairForRoundSync();
     } catch {
       return undefined;
     }
@@ -503,6 +688,10 @@ export class HigherOrLowerComponent implements OnInit {
 
   choose(side: 'left' | 'right'): void {
     if (this.isLoadingPair || this.notifier) return;
+
+    if (this.gameCategory !== 'actors' && this.leftFilm && this.rightFilm) {
+      this.holRegisterFilmPairUsed(this.leftFilm.id, this.rightFilm.id);
+    }
 
     let left: number;
     let right: number;
@@ -551,10 +740,8 @@ export class HigherOrLowerComponent implements OnInit {
     }
 
     this.nextPair = undefined;
-    this.preloadNextPair().then(p => {
-      this.nextPair = p;
-    }).catch(() => {
-      this.nextPair = undefined;
+    queueMicrotask(() => {
+      this.nextPair = this.preloadNextPairSync();
     });
 
     setTimeout(() => {

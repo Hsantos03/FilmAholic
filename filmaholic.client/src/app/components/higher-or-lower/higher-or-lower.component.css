@@ -158,11 +158,27 @@
   transition: all 0.3s;
 }
 
+.menu-sub {
+  margin: 12px 0 4px;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.35);
+  align-self: flex-start;
+}
+
 /* ─── CATEGORY BUTTONS ──── */
 .category-row {
   display: flex;
   gap: 12px;
   margin: 4px 0;
+}
+
+.category-row.difficulty-row {
+  flex-wrap: wrap;
+  justify-content: center;
+  max-width: 380px;
 }
 
 .cat-btn {
@@ -202,6 +218,20 @@
   font-size: 13px;
   font-weight: 700;
   letter-spacing: 0.5px;
+}
+
+.cat-btn-compact {
+  min-width: 100px;
+  padding: 12px 10px;
+}
+
+.cat-hint {
+  font-size: 10px;
+  font-weight: 600;
+  color: rgba(255,255,255,0.38);
+  text-align: center;
+  line-height: 1.25;
+  max-width: 108px;
 }
 
 /* ─── BUTTONS ─── */
@@ -286,6 +316,7 @@
   align-items: center;
   justify-content: space-between;
   gap: 12px;
+  flex-wrap: wrap;
 }
 
 .quit-btn {
@@ -343,6 +374,17 @@
   .round-chip strong {
     color: #fff;
   }
+
+.difficulty-chip {
+  background: rgba(255, 193, 7, 0.12);
+  border: 1px solid rgba(255, 193, 7, 0.35);
+  border-radius: 10px;
+  padding: 8px 12px;
+  font-size: 12px;
+  font-weight: 800;
+  color: #fcd34d;
+  letter-spacing: 0.5px;
+}
 
 /* ─── LOADING ─── */
 .loading-state {

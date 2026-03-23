@@ -24,7 +24,7 @@ namespace FilmAholic.Server.Controllers
             _configuration = configuration;
             _httpClient = httpClientFactory.CreateClient();
             _context = context;
-        }
+        }    
 
         [HttpGet("em-cartaz")]
         public async Task<IActionResult> GetFilmesEmCartaz()
@@ -330,7 +330,7 @@ namespace FilmAholic.Server.Controllers
             }
 
             return NotFound();
-        } 
+        }
 
         // GET: api/Profile/cinemas-favoritos
         [Authorize]

@@ -90,6 +90,31 @@
       </button>
     </div>
 
+    <p class="menu-sub">Dificuldade</p>
+    <div class="category-row difficulty-row">
+      <button type="button" class="cat-btn cat-btn-compact"
+              [class.cat-active]="gameDifficulty === 'easy'"
+              (click)="setDifficulty('easy')">
+        <span class="cat-icon">🌟</span>
+        <span class="cat-label">Fácil</span>
+        <span class="cat-hint">Gap maior · mais conhecidos</span>
+      </button>
+      <button type="button" class="cat-btn cat-btn-compact"
+              [class.cat-active]="gameDifficulty === 'medium'"
+              (click)="setDifficulty('medium')">
+        <span class="cat-icon">⚖️</span>
+        <span class="cat-label">Médio</span>
+        <span class="cat-hint">Equilibrado</span>
+      </button>
+      <button type="button" class="cat-btn cat-btn-compact"
+              [class.cat-active]="gameDifficulty === 'hard'"
+              (click)="setDifficulty('hard')">
+        <span class="cat-icon">🔥</span>
+        <span class="cat-label">Difícil</span>
+        <span class="cat-hint">Ratings próximos</span>
+      </button>
+    </div>
+
     <button class="start-btn" (click)="startGame(gameCategory ?? 'films')">
       <span>Iniciar Jogo</span>
       <span class="btn-arrow">→</span>
@@ -123,6 +148,9 @@
       </div>
       <div class="round-chip">
         Ronda <strong>{{ rounds.length + 1 }}</strong>
+      </div>
+      <div class="difficulty-chip" [attr.title]="'Dificuldade: ' + difficultyLabel()">
+        {{ difficultyLabel() }}
       </div>
     </div>
 

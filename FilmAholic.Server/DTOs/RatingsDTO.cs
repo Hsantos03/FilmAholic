@@ -1,4 +1,4 @@
-﻿namespace FilmAholic.Server.DTOs
+namespace FilmAholic.Server.DTOs
 {
     public class RatingsDto
     {

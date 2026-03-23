@@ -56,7 +56,7 @@ namespace FilmAholic.Server.Controllers
             };
             _context.Set<GameHistory>().Add(entity);
 
-            // --- Lógica do XP ---
+            // --- LÃ³gica do XP ---
             var user = await _context.Users.FindAsync(userId);
             int xpGanho = 0;
 
@@ -143,7 +143,7 @@ namespace FilmAholic.Server.Controllers
                 {
                     rank = i + 1,
                     utilizadorId = x.UtilizadorId,
-                    userName = string.IsNullOrEmpty(nomeCompleto) ? "Anónimo" : nomeCompleto,
+                    userName = string.IsNullOrEmpty(nomeCompleto) ? "AnÃ³nimo" : nomeCompleto,
                     fotoPerfilUrl = user?.FotoPerfilUrl,
                     nivel = user?.Nivel ?? 1,
                     xp = user?.XP ?? 0,
