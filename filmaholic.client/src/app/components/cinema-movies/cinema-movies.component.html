@@ -175,7 +175,7 @@
                       <span class="closest-km" *ngIf="closest.distanceKm != null">· {{ closest.distanceKm }} km</span>
                     </div>
                     <div class="movie-actions">
-                      <a class="btn primary" [href]="movie.link" target="_blank" rel="noopener">Ver Sessões</a>
+                      <a class="btn primary" [href]="getSessionUrl(movie)" target="_blank" rel="noopener">Ver Sessões</a>
                       <button class="btn secondary" (click)="viewMovieDetails(movie)">Ver Detalhes</button>
                     </div>
                   </div>
@@ -202,7 +202,7 @@
                       <span class="closest-km" *ngIf="closest.distanceKm != null">· {{ closest.distanceKm }} km</span>
                     </div>
                     <div class="movie-actions">
-                      <a class="btn primary" [href]="movie.link" target="_blank" rel="noopener">Ver Sessões</a>
+                      <a class="btn primary" [href]="getSessionUrl(movie)" target="_blank" rel="noopener">Ver Sessões</a>
                       <button class="btn secondary" (click)="viewMovieDetails(movie)">Ver Detalhes</button>
                     </div>
                   </div>
@@ -251,7 +251,7 @@
                       <span class="closest-km" *ngIf="closest.distanceKm != null">· {{ closest.distanceKm }} km</span>
                     </div>
                     <div class="movie-actions">
-                      <a class="btn primary" [href]="movie.link" target="_blank" rel="noopener">Ver Sessões</a>
+                      <a class="btn primary" [href]="getSessionUrl(movie)" target="_blank" rel="noopener">Ver Sessões</a>
                       <button class="btn secondary" (click)="viewMovieDetails(movie)">Ver Detalhes</button>
                     </div>
                   </div>
@@ -278,7 +278,7 @@
                       <span class="closest-km" *ngIf="closest.distanceKm != null">· {{ closest.distanceKm }} km</span>
                     </div>
                     <div class="movie-actions">
-                      <a class="btn primary" [href]="movie.link" target="_blank" rel="noopener">Ver Sessões</a>
+                      <a class="btn primary" [href]="getSessionUrl(movie)" target="_blank" rel="noopener">Ver Sessões</a>
                       <button class="btn secondary" (click)="viewMovieDetails(movie)">Ver Detalhes</button>
                     </div>
                   </div>

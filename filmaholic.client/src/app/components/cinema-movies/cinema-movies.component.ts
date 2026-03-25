@@ -295,6 +295,15 @@ export class CinemaMoviesComponent implements OnInit, OnDestroy, AfterViewInit {
     else this.resumeTimeoutCineplace = timeout;
   }
 
+  getSessionUrl(movie: CinemaMovie): string {
+    if (movie.cinema === 'Cinema NOS') {
+      return 'https://www.cinemas.nos.pt/filmes';
+    } else if (movie.cinema === 'Cinema City') {
+      return 'https://www.cinemacity.pt/';
+    }
+    return movie.link || '#';
+  }
+
   viewMovieDetails(movie: CinemaMovie): void {
     this.movieNotFound = null;
     this.cinemaService.searchMovieByTitle(movie.titulo).subscribe({

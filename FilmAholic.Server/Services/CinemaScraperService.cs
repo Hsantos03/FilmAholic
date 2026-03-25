@@ -9,9 +9,15 @@ public class CinemaScraperService : ICinemaScraperService
     private readonly ILogger<CinemaScraperService> _logger;
     private readonly IHttpClientFactory _httpClientFactory;
 
-    // URLs fixas do Cinecartaz - representam toda a programação da cadeia
-    private const string URL_NOS = "https://cinecartaz.publico.pt/cinema/zon-lusomundo-colombo-17538";
-    private const string URL_CINEMA_CITY = "https://cinecartaz.publico.pt/cinema/cinemacity-campo-pequeno-169327";
+    // URLs fixas do Cinecartaz - usar cinemas mais completos para melhor cobertura
+    private static readonly string[] URLS_NOS = {
+        "https://cinecartaz.publico.pt/cinema/zon-lusomundo-almada-forum-62570",
+        "https://cinecartaz.publico.pt/cinema/zon-lusomundo-dolce-vita-coimbra-127505"
+    };
+    private static readonly string[] URLS_CINEMA_CITY = {
+        "https://cinecartaz.publico.pt/cinema/cinemacity-campo-pequeno-169327",
+        "https://cinecartaz.publico.pt/cinema/cinemacity-classic-alvalade-221112"
+    };
 
     public CinemaScraperService(
         ILogger<CinemaScraperService> logger,
@@ -25,29 +31,55 @@ public class CinemaScraperService : ICinemaScraperService
     {
         var results = new List<CinemaMovieDto>();
 
-        // Scrape NOS
-        try
+        // Scrape múltiplos cinemas NOS para melhor cobertura
+        var allNosMovies = new List<CinemaMovieDto>();
+        foreach (var nosUrl in URLS_NOS)
         {
-            var nos = await ScrapeWithRetryAsync(() => ScrapeCinecartazAsync(URL_NOS, "Cinema NOS"), "Cinema NOS", ct);
-            _logger.LogInformation("Cinema NOS: {Count} filmes", nos.Count);
-            results.AddRange(nos);
+            try
+            {
+                var nos = await ScrapeWithRetryAsync(() => ScrapeCinecartazAsync(nosUrl, "Cinema NOS"), $"Cinema NOS ({nosUrl.Split('-').Last()})", ct);
+                allNosMovies.AddRange(nos);
+                _logger.LogInformation("NOS {Url}: {Count} filmes", nosUrl.Split('-').Last(), nos.Count);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Erro ao fazer scrape do NOS {Url}", nosUrl);
+            }
         }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Erro ao fazer scrape do Cinema NOS.");
-        }
+        
+        // Remover duplicados NOS baseado no título
+        var uniqueNosMovies = allNosMovies
+            .GroupBy(m => m.Titulo.ToLower().Trim())
+            .Select(g => g.First())
+            .ToList();
+        
+        _logger.LogInformation("Cinema NOS total (únicos): {Count} filmes", uniqueNosMovies.Count);
+        results.AddRange(uniqueNosMovies);
 
-        // Scrape Cinema City
-        try
+        // Scrape múltiplos cinemas Cinema City para melhor cobertura
+        var allCityMovies = new List<CinemaMovieDto>();
+        foreach (var cityUrl in URLS_CINEMA_CITY)
         {
-            var city = await ScrapeWithRetryAsync(() => ScrapeCinecartazAsync(URL_CINEMA_CITY, "Cinema City"), "Cinema City", ct);
-            _logger.LogInformation("Cinema City: {Count} filmes", city.Count);
-            results.AddRange(city);
+            try
+            {
+                var city = await ScrapeWithRetryAsync(() => ScrapeCinecartazAsync(cityUrl, "Cinema City"), $"Cinema City ({cityUrl.Split('-').Last()})", ct);
+                allCityMovies.AddRange(city);
+                _logger.LogInformation("Cinema City {Url}: {Count} filmes", cityUrl.Split('-').Last(), city.Count);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Erro ao fazer scrape do Cinema City {Url}", cityUrl);
+            }
         }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Erro ao fazer scrape do Cinema City.");
-        }
+        
+        // Remover duplicados Cinema City baseado no título
+        var uniqueCityMovies = allCityMovies
+            .GroupBy(m => m.Titulo.ToLower().Trim())
+            .Select(g => g.First())
+            .ToList();
+        
+        _logger.LogInformation("Cinema City total (únicos): {Count} filmes", uniqueCityMovies.Count);
+        results.AddRange(uniqueCityMovies);
 
         return results;
     }
