@@ -1,0 +1,827 @@
+using System.Security.Claims;
+using FilmAholic.Server.Data;
+using FilmAholic.Server.Models;
+using FilmAholic.Server.Services;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+
+namespace FilmAholic.Server.Controllers
+{
+    [ApiController]
+    [Route("api/[controller]")]
+    public class NotificacoesController : ControllerBase
+    {
+        private const string TipoNovaEstreia = "NovaEstreia";
+        private readonly FilmAholicDbContext _context;
+        private readonly IMovieService _movieService;
+
+        public NotificacoesController(FilmAholicDbContext context, IMovieService movieService)
+        {
+            _context = context;
+            _movieService = movieService;
+        }
+
+        private string? GetUserId()
+        {
+            return User.FindFirstValue(ClaimTypes.NameIdentifier);
+        }
+
+        private static bool IsUpcoming(Filme f, DateTime nowUtc, DateTime endUtc, int maxAnoAhead)
+        {
+            if (f == null) return false;
+
+            if (f.ReleaseDate.HasValue)
+            {
+                var rd = f.ReleaseDate.Value;
+                // Comparar por data (date-only) para não “sumir” no mesmo dia por causa de timezone/horas.
+                var todayUtc = nowUtc.Date;
+                var endDateUtc = endUtc.Date;
+                var rdDate = rd.Date;
+                return rdDate >= todayUtc && rdDate <= endDateUtc;
+            }
+
+            if (f.Ano.HasValue)
+            {
+                var y = f.Ano.Value;
+                var nowYear = nowUtc.Year;
+                // Se só temos ano (sem releaseDate), consideramos também o ano corrente como “potencialmente futuro”.
+                // Caso contrário, para o 1º trimestre do ano (ex.: jan->mar), removemos filmes com Ano==anoAtual.
+                return y >= nowYear && y <= nowYear + maxAnoAhead;
+            }
+
+            return false;
+        }
+
+        private static DateTime SortKey(Filme f, DateTime nowUtc, int maxAnoAhead)
+        {
+            if (f.ReleaseDate.HasValue) return f.ReleaseDate.Value;
+            if (f.Ano.HasValue) return new DateTime(f.Ano.Value, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+            return new DateTime(nowUtc.Year + maxAnoAhead, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+        }
+
+        private bool GenreMatches(Filme f, List<string> favoriteGenres)
+        {
+            if (favoriteGenres == null || favoriteGenres.Count == 0) return false;
+            if (f == null) return false;
+
+        var generoText = f.Genero ?? string.Empty;
+
+        // Alguns filmes podem ter `Genero` em PT (TMDB pt-PT) e outros podem ter em EN (dependendo do idioma com que foi hidratado).
+        // Para o filtro do FR61, normalizamos e também fazemos fallback PT->EN para os géneros do teu sistema.
+        string Norm(string s)
+        {
+            if (s == null) return string.Empty;
+            var trimmed = s.Trim();
+            var formD = trimmed.Normalize(System.Text.NormalizationForm.FormD);
+            var sb = new System.Text.StringBuilder(formD.Length);
+            foreach (var ch in formD)
+            {
+                var uc = System.Globalization.CharUnicodeInfo.GetUnicodeCategory(ch);
+                if (uc != System.Globalization.UnicodeCategory.NonSpacingMark)
+                    sb.Append(ch);
+            }
+            return sb.ToString().ToLowerInvariant();
+        }
+
+        // PT -> possíveis nomes EN que o TMDB costuma devolver.
+        // Para evitar falhas por diferenças Unicode/acentos, fazemos lookup por "normalizado".
+        var genrePtToEn = new Dictionary<string, string[]>(StringComparer.OrdinalIgnoreCase)
+        {
+            ["Ação"] = ["Action"],
+            ["Aventura"] = ["Adventure"],
+            ["Comédia"] = ["Comedy"],
+            ["Crime"] = ["Crime"],
+            ["Drama"] = ["Drama"],
+            ["Fantasia"] = ["Fantasy"],
+            ["Ficção Científica"] = ["Science Fiction", "Sci-Fi"],
+            ["Horror"] = ["Horror"],
+            ["Mistério"] = ["Mystery"],
+            ["Romance"] = ["Romance"],
+            ["Thriller"] = ["Thriller"],
+            ["Animação"] = ["Animation", "Animated"],
+            ["Documentário"] = ["Documentary"],
+            ["Família"] = ["Family"],
+            ["Guerra"] = ["War"],
+            ["Western"] = ["Western"],
+        };
+
+        var genrePtNormToEnNorms = new Dictionary<string, List<string>>(StringComparer.OrdinalIgnoreCase);
+        foreach (var kvp in genrePtToEn)
+        {
+            var ptNorm = Norm(kvp.Key);
+            var enNorms = kvp.Value.Select(Norm).Where(x => !string.IsNullOrWhiteSpace(x)).ToList();
+            if (!string.IsNullOrWhiteSpace(ptNorm) && enNorms.Count > 0)
+                genrePtNormToEnNorms[ptNorm] = enNorms;
+        }
+
+        var generoNorm = Norm(generoText);
+
+        foreach (var g in favoriteGenres)
+        {
+            if (string.IsNullOrWhiteSpace(g)) continue;
+
+            var gNorm = Norm(g);
+            if (!string.IsNullOrEmpty(gNorm) && generoNorm.Contains(gNorm))
+                return true;
+
+            if (genrePtNormToEnNorms.TryGetValue(gNorm, out var enNorms))
+            {
+                foreach (var enNorm in enNorms)
+                {
+                    if (!string.IsNullOrEmpty(enNorm) && generoNorm.Contains(enNorm))
+                        return true;
+                }
+            }
+        }
+
+            return false;
+        }
+
+        /// <summary>
+        /// Retorna a lista de filmes para “NovaEstreia” já filtrada por géneros favoritos e histórico.
+        /// Também cria notificações em `Notificacoes` para os filmes elegíveis.
+        /// </summary>
+        [HttpGet("nova-estreia")]
+        public async Task<ActionResult<List<Filme>>> GetNovaEstreia(
+            [FromQuery] int limit = 5,
+            [FromQuery] int windowDays = 60,
+            [FromQuery] int maxAnoAhead = 2)
+        {
+            if (limit < 1) limit = 5;
+            if (limit > 10) limit = 10;
+            if (windowDays < 1) windowDays = 60;
+            if (maxAnoAhead < 0) maxAnoAhead = 0;
+
+            var userId = GetUserId();
+
+            var nowUtc = DateTime.UtcNow;
+            var endUtc = nowUtc.AddDays(windowDays);
+
+            // Sem user autenticado: não personaliza nem cria notificações.
+            if (string.IsNullOrWhiteSpace(userId))
+            {
+                var genericCandidates = await _context.Filmes
+                    .Where(f => (f.ReleaseDate.HasValue && f.ReleaseDate.Value > nowUtc && f.ReleaseDate.Value <= endUtc)
+                                || (f.ReleaseDate == null && f.Ano.HasValue && f.Ano.Value >= nowUtc.Year && f.Ano.Value <= nowUtc.Year + maxAnoAhead))
+                    .Take(250)
+                    .ToListAsync();
+
+                var sorted = genericCandidates
+                    .Where(f => IsUpcoming(f, nowUtc, endUtc, maxAnoAhead))
+                    .OrderBy(f => SortKey(f, nowUtc, maxAnoAhead))
+                    .Take(limit)
+                    .ToList();
+
+                return Ok(sorted);
+            }
+
+            var favoriteGenres = await _context.UtilizadorGeneros
+                .Where(ug => ug.UtilizadorId == userId)
+                .Select(ug => ug.Genero.Nome)
+                .ToListAsync();
+
+            favoriteGenres = favoriteGenres
+                .Select(x => x?.Trim() ?? string.Empty)
+                .Where(x => !string.IsNullOrWhiteSpace(x))
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .ToList();
+
+            // Se o utilizador não tem géneros favoritos, não geramos notificações “personalizadas”.
+            if (favoriteGenres.Count == 0)
+            {
+                return Ok(new List<Filme>());
+            }
+
+            // Se o utilizador selecionou "quase todos" os géneros, assumimos que não deve haver filtragem apertada.
+            var totalGenres = await _context.Generos.CountAsync();
+            // Permitimos 1 género "em falta" para não bloquear a lista por detalhes de persistência.
+            var applyGenreFilter = totalGenres > 0 && favoriteGenres.Count < Math.Max(1, totalGenres - 1);
+
+            var watchedIds = await _context.UserMovies
+                .Where(um => um.UtilizadorId == userId && um.JaViu)
+                .Select(um => um.FilmeId)
+                .ToListAsync();
+
+            var watchedSet = watchedIds.ToHashSet();
+
+            var candidates = await _context.Filmes
+                .Where(f => (f.ReleaseDate.HasValue && f.ReleaseDate.Value > nowUtc && f.ReleaseDate.Value <= endUtc)
+                            || (f.ReleaseDate == null && f.Ano.HasValue && f.Ano.Value >= nowUtc.Year && f.Ano.Value <= nowUtc.Year + maxAnoAhead))
+                .Take(400)
+                .ToListAsync();
+
+            // Fallback: se a BD praticamente não tem “estreias” dentro da janela,
+            // buscamos ao TMDB para conseguir ter notificações suficientes.
+            var fallbackThreshold = Math.Max(10, limit * 2);
+            if (candidates.Count < fallbackThreshold)
+            {
+                var upcomingFromTmdb = await _movieService.GetUpcomingMoviesAsync(page: 1, count: 60);
+                if (upcomingFromTmdb != null && upcomingFromTmdb.Any())
+                {
+                    var tmdbIds = upcomingFromTmdb
+                        .Select(x => x.TmdbId)
+                        .Where(x => !string.IsNullOrWhiteSpace(x))
+                        .Distinct(StringComparer.OrdinalIgnoreCase)
+                        .ToList();
+
+                    var existingTmdbIds = await _context.Filmes
+                        .Where(f => tmdbIds.Contains(f.TmdbId))
+                        .Select(f => f.TmdbId)
+                        .ToListAsync();
+
+                    var existingTmdbSet = existingTmdbIds.ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+                    foreach (var m in upcomingFromTmdb)
+                    {
+                        if (string.IsNullOrWhiteSpace(m.TmdbId)) continue;
+                        if (existingTmdbSet.Contains(m.TmdbId)) continue;
+                        m.Id = 0; // garantimos que EF trate como novo
+                        _context.Filmes.Add(m);
+                    }
+
+                    await _context.SaveChangesAsync();
+                }
+
+                // Recalcular candidatos após inserir novos filmes.
+                candidates = await _context.Filmes
+                    .Where(f => (f.ReleaseDate.HasValue && f.ReleaseDate.Value > nowUtc && f.ReleaseDate.Value <= endUtc)
+                                || (f.ReleaseDate == null && f.Ano.HasValue && f.Ano.Value >= nowUtc.Year && f.Ano.Value <= nowUtc.Year + maxAnoAhead))
+                    .Take(400)
+                    .ToListAsync();
+            }
+
+            var eligible = candidates
+                .Where(f => IsUpcoming(f, nowUtc, endUtc, maxAnoAhead))
+                .Where(f => !watchedSet.Contains(f.Id))
+                .Where(f => !applyGenreFilter || GenreMatches(f, favoriteGenres))
+                .OrderBy(f => SortKey(f, nowUtc, maxAnoAhead))
+                .ToList();
+
+            // Cria notificações NovaEstreia para os elegíveis (idempotente pelo índice único).
+            // Nota: se o utilizador já marcou como "lida" vários filmes mais próximos, precisamos de considerar
+            // mais candidatos para existirem sempre "não lidas" suficientes na janela.
+            var desiredCreateCount = Math.Min(Math.Max(limit * 20, 50), 200); // ex.: limit=5 => 100
+            var poolToConsider = eligible.Take(desiredCreateCount).ToList();
+            var poolIds = poolToConsider.Select(f => f.Id).ToList();
+
+            var alreadyExistingIds = await _context.Notificacoes
+                .Where(n => n.UtilizadorId == userId && n.Tipo == TipoNovaEstreia && poolIds.Contains(n.FilmeId))
+                .Select(n => n.FilmeId)
+                .ToListAsync();
+
+            var existingNotifSet = alreadyExistingIds.ToHashSet();
+            foreach (var f in poolToConsider)
+            {
+                if (existingNotifSet.Contains(f.Id)) continue;
+
+                _context.Notificacoes.Add(new Notificacao
+                {
+                    UtilizadorId = userId,
+                    FilmeId = f.Id,
+                    Tipo = TipoNovaEstreia,
+                    CriadaEm = nowUtc
+                });
+            }
+
+            await _context.SaveChangesAsync();
+
+            // Devolve só notificações não lidas, revalidando elegibilidade.
+            var unread = await _context.Notificacoes
+                .Where(n => n.UtilizadorId == userId && n.Tipo == TipoNovaEstreia && n.LidaEm == null)
+                .Include(n => n.Filme)
+                .ToListAsync();
+
+            var unreadMovies = unread
+                .Select(n => n.Filme)
+                .Where(f => f != null)
+                .Cast<Filme>()
+                .Where(f => IsUpcoming(f, nowUtc, endUtc, maxAnoAhead))
+                .Where(f => !watchedSet.Contains(f.Id))
+                // Respeitar o mesmo critério de filtragem usado na criação
+                .Where(f => !applyGenreFilter || GenreMatches(f, favoriteGenres))
+                .OrderBy(f => SortKey(f, nowUtc, maxAnoAhead))
+                .Take(limit)
+                .ToList();
+
+            return Ok(unreadMovies);
+        }
+
+        public class NovaEstreiaFeedDto
+        {
+            public List<Filme> Unread { get; set; } = new();
+            public List<Filme> Read { get; set; } = new();
+        }
+
+        public class LidosTmdbIdsDto
+        {
+            public List<int> LidosTmdbIds { get; set; } = new();
+        }
+
+        /// <summary>
+        /// Devolve quais TMDB ids (entre os pedidos) têm notificação NovaEstreia marcada como lida.
+        /// Usado pela lista “upcoming” TMDB na UI (filmes podem ainda não ter linha de notificação).
+        /// </summary>
+        [HttpGet("nova-estreia/lidos-tmdb-ids")]
+        public async Task<ActionResult<LidosTmdbIdsDto>> GetLidosTmdbIds([FromQuery] string? ids = null)
+        {
+            var userId = GetUserId();
+            if (string.IsNullOrWhiteSpace(userId))
+                return Unauthorized();
+
+            var tmdbIds = ParseTmdbIdList(ids, max: 120);
+            if (tmdbIds.Count == 0)
+                return Ok(new LidosTmdbIdsDto());
+
+            var tmdbStrSet = tmdbIds.Select(x => x.ToString()).ToHashSet(StringComparer.Ordinal);
+            var pairs = await _context.Filmes
+                .AsNoTracking()
+                .Where(f => f.TmdbId != null && tmdbStrSet.Contains(f.TmdbId))
+                .Select(f => new { f.Id, f.TmdbId })
+                .ToListAsync();
+
+            if (pairs.Count == 0)
+                return Ok(new LidosTmdbIdsDto());
+
+            var filmeIds = pairs.Select(p => p.Id).ToList();
+            var readFilmeIds = await _context.Notificacoes
+                .AsNoTracking()
+                .Where(n =>
+                    n.UtilizadorId == userId &&
+                    n.Tipo == TipoNovaEstreia &&
+                    n.LidaEm != null &&
+                    filmeIds.Contains(n.FilmeId))
+                .Select(n => n.FilmeId)
+                .ToListAsync();
+
+            var readSet = readFilmeIds.ToHashSet();
+            var lidos = new List<int>();
+            foreach (var p in pairs)
+            {
+                if (!readSet.Contains(p.Id)) continue;
+                if (int.TryParse(p.TmdbId, System.Globalization.NumberStyles.Integer, System.Globalization.CultureInfo.InvariantCulture, out var tid))
+                    lidos.Add(tid);
+            }
+
+            return Ok(new LidosTmdbIdsDto { LidosTmdbIds = lidos });
+        }
+
+        private static List<int> ParseTmdbIdList(string? csv, int max)
+        {
+            if (string.IsNullOrWhiteSpace(csv)) return new List<int>();
+            var parts = csv.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+            var r = new List<int>();
+            foreach (var p in parts)
+            {
+                if (r.Count >= max) break;
+                if (int.TryParse(p, System.Globalization.NumberStyles.Integer, System.Globalization.CultureInfo.InvariantCulture, out var x) && x > 0)
+                    r.Add(x);
+            }
+            return r.Distinct().ToList();
+        }
+
+        /// <summary>
+        /// Lista “Próximas estreias” para a campainha (TMDB), alinhada com FR61: géneros favoritos e filmes já vistos.
+        /// Sem autenticação → <see cref="UnauthorizedResult"/> (o cliente usa <c>/api/filmes/upcoming</c> como fallback).
+        /// </summary>
+        [HttpGet("proximas-estreias")]
+        public async Task<ActionResult<List<Filme>>> GetProximasEstreiasPersonalizadas(
+            [FromQuery] int page = 1,
+            [FromQuery] int count = 40,
+            [FromQuery] int windowDays = 180,
+            [FromQuery] int maxAnoAhead = 5)
+        {
+            if (page < 1) page = 1;
+            if (count < 1) count = 40;
+            count = Math.Min(count, 40);
+            if (windowDays < 1) windowDays = 180;
+            if (maxAnoAhead < 0) maxAnoAhead = 0;
+
+            var userId = GetUserId();
+            if (string.IsNullOrWhiteSpace(userId))
+                return Unauthorized();
+
+            var nowUtc = DateTime.UtcNow;
+            var endUtc = nowUtc.AddDays(windowDays);
+            var todayUtc = nowUtc.Date;
+
+            var rawList = await _movieService.GetUpcomingMoviesAccumulatedAsync(page, count, todayUtc, maxPagesToScan: 12);
+            var films = rawList ?? new List<Filme>();
+
+            var favoriteGenres = await _context.UtilizadorGeneros
+                .Where(ug => ug.UtilizadorId == userId)
+                .Select(ug => ug.Genero.Nome)
+                .ToListAsync();
+
+            favoriteGenres = favoriteGenres
+                .Select(x => x?.Trim() ?? string.Empty)
+                .Where(x => !string.IsNullOrWhiteSpace(x))
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .ToList();
+
+            var totalGenres = await _context.Generos.CountAsync();
+            var applyGenreFilter = favoriteGenres.Count > 0
+                && totalGenres > 0
+                && favoriteGenres.Count < Math.Max(1, totalGenres - 1);
+
+            var watchedIds = await _context.UserMovies
+                .Where(um => um.UtilizadorId == userId && um.JaViu)
+                .Select(um => um.FilmeId)
+                .ToListAsync();
+            var watchedSet = watchedIds.ToHashSet();
+
+            var tmdbNeedingDbId = films
+                .Where(f => f.Id <= 0 && !string.IsNullOrWhiteSpace(f.TmdbId))
+                .Select(f => f.TmdbId!)
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .ToList();
+
+            var tmdbToDbId = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+            if (tmdbNeedingDbId.Count > 0)
+            {
+                var rows = await _context.Filmes
+                    .AsNoTracking()
+                    .Where(f => f.TmdbId != null && tmdbNeedingDbId.Contains(f.TmdbId))
+                    .Select(f => new { TmdbId = f.TmdbId!, f.Id })
+                    .ToListAsync();
+                foreach (var r in rows)
+                {
+                    if (!tmdbToDbId.ContainsKey(r.TmdbId))
+                        tmdbToDbId[r.TmdbId] = r.Id;
+                }
+            }
+
+            bool IsWatched(Filme f)
+            {
+                if (f.Id > 0) return watchedSet.Contains(f.Id);
+                if (!string.IsNullOrWhiteSpace(f.TmdbId) && tmdbToDbId.TryGetValue(f.TmdbId, out var dbId))
+                    return watchedSet.Contains(dbId);
+                return false;
+            }
+
+            var filtered = films
+                .Where(f => IsUpcoming(f, nowUtc, endUtc, maxAnoAhead))
+                .Where(f => !IsWatched(f))
+                .Where(f => !applyGenreFilter || GenreMatches(f, favoriteGenres))
+                .OrderBy(f => SortKey(f, nowUtc, maxAnoAhead))
+                .ToList();
+
+            return Ok(filtered);
+        }
+
+        /// <summary>
+        /// Feed para a UI: devolve não lidas + lidas (últimas N) para o menu de notificações.
+        /// </summary>
+        [HttpGet("nova-estreia/feed")]
+        public async Task<ActionResult<NovaEstreiaFeedDto>> GetNovaEstreiaFeed(
+            [FromQuery] int unreadLimit = 5,
+            [FromQuery] int readLimit = 5,
+            [FromQuery] int windowDays = 180,
+            [FromQuery] int maxAnoAhead = 5)
+        {
+            if (unreadLimit < 0) unreadLimit = 0;
+            if (unreadLimit > 10) unreadLimit = 10;
+            if (readLimit < 0) readLimit = 0;
+            if (readLimit > 10) readLimit = 10;
+            if (windowDays < 1) windowDays = 180;
+            if (maxAnoAhead < 0) maxAnoAhead = 0;
+
+            var userId = GetUserId();
+            if (string.IsNullOrWhiteSpace(userId))
+                return Unauthorized();
+
+            var nowUtc = DateTime.UtcNow;
+            var endUtc = nowUtc.AddDays(windowDays);
+
+            var favoriteGenres = await _context.UtilizadorGeneros
+                .Where(ug => ug.UtilizadorId == userId)
+                .Select(ug => ug.Genero.Nome)
+                .ToListAsync();
+
+            favoriteGenres = favoriteGenres
+                .Select(x => x?.Trim() ?? string.Empty)
+                .Where(x => !string.IsNullOrWhiteSpace(x))
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .ToList();
+
+            var totalGenres = await _context.Generos.CountAsync();
+            var applyGenreFilter = totalGenres > 0 && favoriteGenres.Count < Math.Max(1, totalGenres - 1);
+
+            var watchedIds = await _context.UserMovies
+                .Where(um => um.UtilizadorId == userId && um.JaViu)
+                .Select(um => um.FilmeId)
+                .ToListAsync();
+            var watchedSet = watchedIds.ToHashSet();
+
+            // Garantir que há pelo menos notificações criadas para candidatos dentro da janela
+            _ = await GetNovaEstreia(unreadLimit == 0 ? 1 : unreadLimit, windowDays, maxAnoAhead);
+
+            var unreadNotifs = await _context.Notificacoes
+                .Where(n => n.UtilizadorId == userId && n.Tipo == TipoNovaEstreia && n.LidaEm == null)
+                .Include(n => n.Filme)
+                .ToListAsync();
+
+            var unreadMovies = unreadNotifs
+                .Select(n => n.Filme)
+                .Where(f => f != null)
+                .Cast<Filme>()
+                .Where(f => IsUpcoming(f, nowUtc, endUtc, maxAnoAhead))
+                .Where(f => !watchedSet.Contains(f.Id))
+                .Where(f => !applyGenreFilter || GenreMatches(f, favoriteGenres))
+                .OrderBy(f => SortKey(f, nowUtc, maxAnoAhead))
+                .Take(unreadLimit)
+                .ToList();
+
+            var readNotifs = await _context.Notificacoes
+                .Where(n => n.UtilizadorId == userId && n.Tipo == TipoNovaEstreia && n.LidaEm != null)
+                .Include(n => n.Filme)
+                .OrderByDescending(n => n.LidaEm)
+                .Take(40)
+                .ToListAsync();
+
+            var readMovies = readNotifs
+                .Select(n => n.Filme)
+                .Where(f => f != null)
+                .Cast<Filme>()
+                .Where(f => IsUpcoming(f, nowUtc, endUtc, maxAnoAhead))
+                .Where(f => !watchedSet.Contains(f.Id))
+                .Where(f => !applyGenreFilter || GenreMatches(f, favoriteGenres))
+                .Take(readLimit)
+                .ToList();
+
+            return Ok(new NovaEstreiaFeedDto
+            {
+                Unread = unreadMovies,
+                Read = readMovies
+            });
+        }
+
+        public class NovaEstreiaDebugDto
+        {
+            public string? UserId { get; set; }
+            public int Limit { get; set; }
+            public int WindowDays { get; set; }
+            public int MaxAnoAhead { get; set; }
+
+            public int? TotalGenres { get; set; }
+            public int FavoriteGenresCount { get; set; }
+            public bool ApplyGenreFilter { get; set; }
+
+            public int WatchedCount { get; set; }
+            public int CandidatesCount { get; set; }
+            public int EligibleCount { get; set; }
+            public int DesiredCreateCount { get; set; }
+            public int PoolToConsiderCount { get; set; }
+            public int UnreadNotificationsCount { get; set; }
+
+            public List<FilmePreviewDto> UnreadPreview { get; set; } = new();
+
+            public int ReadNotificationsCount { get; set; }
+            public List<FilmePreviewDto> ReadPreview { get; set; } = new();
+        }
+
+        public class FilmePreviewDto
+        {
+            public int FilmeId { get; set; }
+            public string? Titulo { get; set; }
+            public string? ReleaseDate { get; set; }
+            public int? Ano { get; set; }
+        }
+
+        /// <summary>
+        /// Endpoint de diagnóstico para perceber porque a lista devolvida fica pequena.
+        /// Não é usado pela UI.
+        /// </summary>
+        [HttpGet("nova-estreia/debug")]
+        public async Task<ActionResult<NovaEstreiaDebugDto>> DebugNovaEstreia(
+            [FromQuery] int limit = 5,
+            [FromQuery] int windowDays = 180,
+            [FromQuery] int maxAnoAhead = 5)
+        {
+            if (limit < 1) limit = 5;
+            if (limit > 10) limit = 10;
+            if (windowDays < 1) windowDays = 180;
+            if (maxAnoAhead < 0) maxAnoAhead = 0;
+
+            var nowUtc = DateTime.UtcNow;
+            var endUtc = nowUtc.AddDays(windowDays);
+            var userId = GetUserId();
+
+            var dto = new NovaEstreiaDebugDto
+            {
+                UserId = userId,
+                Limit = limit,
+                WindowDays = windowDays,
+                MaxAnoAhead = maxAnoAhead,
+            };
+
+            // Sem auth => "genérico"
+            if (string.IsNullOrWhiteSpace(userId))
+            {
+                var genericCandidates = await _context.Filmes
+                    .Where(f => (f.ReleaseDate.HasValue && f.ReleaseDate.Value > nowUtc && f.ReleaseDate.Value <= endUtc)
+                                || (f.ReleaseDate == null && f.Ano.HasValue && f.Ano.Value >= nowUtc.Year && f.Ano.Value <= nowUtc.Year + maxAnoAhead))
+                    .Take(250)
+                    .ToListAsync();
+
+                dto.CandidatesCount = genericCandidates.Count;
+                dto.EligibleCount = genericCandidates.Where(f => IsUpcoming(f, nowUtc, endUtc, maxAnoAhead)).Count();
+                return Ok(dto);
+            }
+
+            var favoriteGenres = await _context.UtilizadorGeneros
+                .Where(ug => ug.UtilizadorId == userId)
+                .Select(ug => ug.Genero.Nome)
+                .ToListAsync();
+
+            favoriteGenres = favoriteGenres
+                .Select(x => x?.Trim() ?? string.Empty)
+                .Where(x => !string.IsNullOrWhiteSpace(x))
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .ToList();
+
+            dto.FavoriteGenresCount = favoriteGenres.Count;
+            dto.TotalGenres = await _context.Generos.CountAsync();
+            dto.ApplyGenreFilter = dto.TotalGenres.HasValue && favoriteGenres.Count < Math.Max(1, dto.TotalGenres.Value - 1);
+
+            var watchedIds = await _context.UserMovies
+                .Where(um => um.UtilizadorId == userId && um.JaViu)
+                .Select(um => um.FilmeId)
+                .ToListAsync();
+
+            var watchedSet = watchedIds.ToHashSet();
+            dto.WatchedCount = watchedSet.Count;
+
+            var candidates = await _context.Filmes
+                .Where(f => (f.ReleaseDate.HasValue && f.ReleaseDate.Value > nowUtc && f.ReleaseDate.Value <= endUtc)
+                            || (f.ReleaseDate == null && f.Ano.HasValue && f.Ano.Value >= nowUtc.Year && f.Ano.Value <= nowUtc.Year + maxAnoAhead))
+                .Take(400)
+                .ToListAsync();
+
+            dto.CandidatesCount = candidates.Count;
+
+            // Fallback: se a BD praticamente não tem “estreias” dentro da janela,
+            // buscamos ao TMDB e inserimos na BD para permitir mais candidatos.
+            var fallbackThreshold = Math.Max(10, limit * 2);
+            if (candidates.Count < fallbackThreshold)
+            {
+                var upcomingFromTmdb = await _movieService.GetUpcomingMoviesAsync(page: 1, count: 60);
+                if (upcomingFromTmdb != null && upcomingFromTmdb.Any())
+                {
+                    var tmdbIds = upcomingFromTmdb
+                        .Select(x => x.TmdbId)
+                        .Where(x => !string.IsNullOrWhiteSpace(x))
+                        .Distinct(StringComparer.OrdinalIgnoreCase)
+                        .ToList();
+
+                    var existingTmdbIds = await _context.Filmes
+                        .Where(f => tmdbIds.Contains(f.TmdbId))
+                        .Select(f => f.TmdbId)
+                        .ToListAsync();
+
+                    var existingTmdbSet = existingTmdbIds.ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+                    foreach (var m in upcomingFromTmdb)
+                    {
+                        if (string.IsNullOrWhiteSpace(m.TmdbId)) continue;
+                        if (existingTmdbSet.Contains(m.TmdbId)) continue;
+                        m.Id = 0;
+                        _context.Filmes.Add(m);
+                    }
+
+                    await _context.SaveChangesAsync();
+                }
+
+                candidates = await _context.Filmes
+                    .Where(f => (f.ReleaseDate.HasValue && f.ReleaseDate.Value > nowUtc && f.ReleaseDate.Value <= endUtc)
+                                || (f.ReleaseDate == null && f.Ano.HasValue && f.Ano.Value >= nowUtc.Year && f.Ano.Value <= nowUtc.Year + maxAnoAhead))
+                    .Take(400)
+                    .ToListAsync();
+
+                dto.CandidatesCount = candidates.Count;
+            }
+
+            var eligible = candidates
+                .Where(f => IsUpcoming(f, nowUtc, endUtc, maxAnoAhead))
+                .Where(f => !watchedSet.Contains(f.Id))
+                .Where(f => !dto.ApplyGenreFilter || GenreMatches(f, favoriteGenres))
+                .ToList();
+
+            dto.EligibleCount = eligible.Count;
+
+            dto.DesiredCreateCount = Math.Min(Math.Max(limit * 20, 50), 200);
+            var poolToConsider = eligible.Take(dto.DesiredCreateCount).ToList();
+            dto.PoolToConsiderCount = poolToConsider.Count;
+
+            var poolIds = poolToConsider.Select(f => f.Id).ToList();
+
+            var alreadyExistingIds = await _context.Notificacoes
+                .Where(n => n.UtilizadorId == userId && n.Tipo == TipoNovaEstreia && poolIds.Contains(n.FilmeId))
+                .Select(n => n.FilmeId)
+                .ToListAsync();
+
+            var existingNotifSet = alreadyExistingIds.ToHashSet();
+            foreach (var f in poolToConsider)
+            {
+                if (existingNotifSet.Contains(f.Id)) continue;
+
+                _context.Notificacoes.Add(new Notificacao
+                {
+                    UtilizadorId = userId,
+                    FilmeId = f.Id,
+                    Tipo = TipoNovaEstreia,
+                    CriadaEm = nowUtc
+                });
+            }
+
+            await _context.SaveChangesAsync();
+
+            dto.UnreadNotificationsCount = await _context.Notificacoes
+                .Where(n => n.UtilizadorId == userId && n.Tipo == TipoNovaEstreia && n.LidaEm == null)
+                .CountAsync();
+
+            // Preview dos filmes que de facto seriam devolvidos pelo endpoint principal
+            // (isto explica quando o número de notificações “não lidas” diverge do que a UI mostra).
+            var unread = await _context.Notificacoes
+                .Where(n => n.UtilizadorId == userId && n.Tipo == TipoNovaEstreia && n.LidaEm == null)
+                .Include(n => n.Filme)
+                .ToListAsync();
+
+            var unreadMovies = unread
+                .Select(n => n.Filme)
+                .Where(f => f != null)
+                .Cast<Filme>()
+                .Where(f => IsUpcoming(f, nowUtc, endUtc, maxAnoAhead))
+                .Where(f => !watchedSet.Contains(f.Id))
+                .Where(f => !dto.ApplyGenreFilter || GenreMatches(f, favoriteGenres))
+                .OrderBy(f => SortKey(f, nowUtc, maxAnoAhead))
+                .Take(limit)
+                .ToList();
+
+            dto.UnreadPreview = unreadMovies.Select(f => new FilmePreviewDto
+            {
+                FilmeId = f.Id,
+                Titulo = f.Titulo,
+                ReleaseDate = f.ReleaseDate?.ToString("yyyy-MM-dd"),
+                Ano = f.Ano
+            }).ToList();
+
+            var read = await _context.Notificacoes
+                .Where(n => n.UtilizadorId == userId && n.Tipo == TipoNovaEstreia && n.LidaEm != null)
+                .Include(n => n.Filme)
+                .OrderByDescending(n => n.LidaEm)
+                .Take(10)
+                .ToListAsync();
+
+            dto.ReadNotificationsCount = read.Count;
+            dto.ReadPreview = read
+                .Select(n => n.Filme)
+                .Where(f => f != null)
+                .Cast<Filme>()
+                .Select(f => new FilmePreviewDto
+                {
+                    FilmeId = f.Id,
+                    Titulo = f.Titulo,
+                    ReleaseDate = f.ReleaseDate?.ToString("yyyy-MM-dd"),
+                    Ano = f.Ano
+                })
+                .ToList();
+
+            return Ok(dto);
+        }
+
+        [HttpPut("nova-estreia/{filmeId:int}/lida")]
+        public async Task<IActionResult> MarcarNovaEstreiaComoLida([FromRoute] int filmeId)
+        {
+            var userId = GetUserId();
+            if (string.IsNullOrWhiteSpace(userId))
+            {
+                return Unauthorized();
+            }
+
+            var nowUtc = DateTime.UtcNow;
+
+            var notif = await _context.Notificacoes
+                .FirstOrDefaultAsync(n => n.UtilizadorId == userId && n.FilmeId == filmeId && n.Tipo == TipoNovaEstreia);
+
+            if (notif == null)
+            {
+                _context.Notificacoes.Add(new Notificacao
+                {
+                    UtilizadorId = userId,
+                    FilmeId = filmeId,
+                    Tipo = TipoNovaEstreia,
+                    CriadaEm = nowUtc,
+                    LidaEm = nowUtc
+                });
+            }
+            else
+            {
+                notif.LidaEm = nowUtc;
+            }
+
+            await _context.SaveChangesAsync();
+            return NoContent();
+        }
+    }
+}
+
