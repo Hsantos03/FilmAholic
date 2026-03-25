@@ -22,10 +22,16 @@ export class CinemaMoviesComponent implements OnInit, OnDestroy, AfterViewInit {
 
   // ── CINEMAS PRÓXIMOS ──
   nearbyLoading = true;
-  nearbyCinemas: CinemaVenue[] = [];
+  nearbyCinemas: CinemaVenue[] = [];       // lista filtrada (mostrada no template)
+  private allCinemas: CinemaVenue[] = []; // lista completa para cálculos
   userPosition: { lat: number; lng: number } | null = null;
   geoError: string | null = null;
   favoritosIds: Set<string> = new Set();
+
+
+  // flags para coordenar geo + cinemas + favoritos
+  private geoDone = false;
+  private cinemasDone = false;
 
   @ViewChild('carouselNos') carouselNosRef!: ElementRef;
   @ViewChild('carouselCineplace') carouselCineplaceRef!: ElementRef;
@@ -52,8 +58,8 @@ export class CinemaMoviesComponent implements OnInit, OnDestroy, AfterViewInit {
 
   ngOnInit(): void {
     this.loadCinemaMovies();
-    this.loadNearbyCinemas();
     this.requestGeolocation();
+    this.loadFavoritosAndCinemas();
   }
 
   ngAfterViewInit(): void {
@@ -70,56 +76,126 @@ export class CinemaMoviesComponent implements OnInit, OnDestroy, AfterViewInit {
     if (this.resumeTimeoutCineplace) clearTimeout(this.resumeTimeoutCineplace);
   }
 
+  // ── CINEMAS + FAVORITOS ──
 
-
-
-
-  // ── CINEMAS PRÓXIMOS ──
-
-  private loadNearbyCinemas(): void {
-    this.cinemaService.getNearbyCinemas().subscribe({
-      next: (list) => {
-        this.nearbyCinemas = list || [];
-        if (this.userPosition) this.calculateDistances();
-        this.nearbyLoading = false;
-      },
-      error: () => { this.nearbyLoading = false; }
-    });
+  private loadFavoritosAndCinemas(): void {
+    this.http.get<string[]>('/api/cinema/cinemas-favoritos', { withCredentials: true })
+      .pipe(catchError(() => of([] as string[])))
+      .subscribe(ids => {
+        this.favoritosIds = new Set(ids);
+        this.cinemaService.getNearbyCinemas().subscribe({
+          next: (list) => {
+            this.allCinemas = list || [];
+            this.cinemasDone = true;
+            this.tryFilter();
+          },
+          error: () => {
+            this.cinemasDone = true;
+            this.nearbyLoading = false;
+          }
+        });
+      });
   }
 
   private requestGeolocation(): void {
     if (!navigator.geolocation) {
       this.geoError = 'O seu browser não suporta geolocalização.';
+      this.geoDone = true;
+      this.tryFilter();
       return;
     }
     navigator.geolocation.getCurrentPosition(
       (pos) => {
         this.userPosition = { lat: pos.coords.latitude, lng: pos.coords.longitude };
         this.geoError = null;
-        this.calculateDistances();
+        this.geoDone = true;
+        this.tryFilter();
       },
       (err) => {
         this.geoError = err.code === err.PERMISSION_DENIED
-          ? 'Localização não autorizada. A mostrar cinemas sem ordenação por proximidade.'
+          ? 'Localização não autorizada. A mostrar apenas favoritos e cinemas por defeito.'
           : 'Não foi possível obter a sua localização.';
+        this.geoDone = true;
+        this.tryFilter();
       },
       { enableHighAccuracy: true, timeout: 15000, maximumAge: 60000 }
     );
   }
 
+  private tryFilter(): void {
+    if (!this.geoDone || !this.cinemasDone) return;
+    if (this.userPosition) this.calculateDistances();
+    this.filterCinemas();
+    this.nearbyLoading = false;
+  }
+
   private calculateDistances(): void {
     if (!this.userPosition) return;
-    this.nearbyCinemas.forEach(c => {
+    this.allCinemas.forEach(c => {
       c.distanceKm = this.haversineKm(
         this.userPosition!.lat, this.userPosition!.lng,
         c.latitude, c.longitude
       );
     });
-    this.nearbyCinemas.sort((a, b) => (a.distanceKm ?? 999) - (b.distanceKm ?? 999));
+    this.allCinemas.sort((a, b) => (a.distanceKm ?? 999) - (b.distanceKm ?? 999));
+  }
+
+  isFavorito(c: CinemaVenue): boolean {
+    return [...this.favoritosIds].some(fav =>
+      fav === c.id ||
+      fav === c.nome ||
+      fav.toLowerCase().includes(c.nome.toLowerCase()) ||
+      c.nome.toLowerCase().includes(fav.toLowerCase())
+    );
+  }
+
+  isMaisProximo(c: CinemaVenue): boolean {
+    if (c.distanceKm == null || !this.allCinemas.length) return false;
+
+    const keyword = c.id?.startsWith('nos-') ? 'nos-' : (c.id?.startsWith('cc-') ? 'cc-' : null);
+    if (!keyword) return false;
+
+    const closest = this.allCinemas.find(x => x.id?.startsWith(keyword));
+
+    return closest?.id === c.id;
+  }
+
+  private filterCinemas(): void {
+
+    const favoritos = this.allCinemas.filter(c => this.isFavorito(c));
+
+    const closestNos = this.allCinemas.find(c =>
+      c.id?.startsWith('nos-') &&
+      !this.favoritosIds.has(c.id)
+    );
+
+    const closestCity = this.allCinemas.find(c =>
+      c.id?.startsWith('cc-') &&
+      !this.favoritosIds.has(c.id)
+    );
+
+    const result: CinemaVenue[] = [...favoritos];
+
+    if (closestNos && !result.some(c => c.id === closestNos.id)) {
+      result.push(closestNos);
+    }
+
+    if (closestCity && !result.some(c => c.id === closestCity.id)) {
+      result.push(closestCity);
+    }
+
+    this.nearbyCinemas = result.sort((a, b) => {
+      const aFav = this.isFavorito(a);
+      const bFav = this.isFavorito(b);
+
+      if (aFav && !bFav) return -1;
+      if (!aFav && bFav) return 1;
+
+      return (a.distanceKm ?? 999) - (b.distanceKm ?? 999);
+    });
   }
 
   private haversineKm(lat1: number, lon1: number, lat2: number, lon2: number): number {
-    const R = 6371;
     const dLat = (lat2 - lat1) * Math.PI / 180;
     const dLon = (lon2 - lon1) * Math.PI / 180;
     const a =
@@ -129,15 +205,11 @@ export class CinemaMoviesComponent implements OnInit, OnDestroy, AfterViewInit {
     return Math.round(6371 * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)) * 10) / 10;
   }
 
-  /** Retorna o cinema mais próximo que exibe determinado filme (por cadeia: NOS ou City) */
   closestCinemaForMovie(movie: CinemaMovie): CinemaVenue | null {
-    if (!this.nearbyCinemas.length) return null;
-    const isNos = movie.cinema === 'Cinema NOS';
-    const keyword = isNos ? 'nos' : 'cc';
-    const matching = this.nearbyCinemas.filter(c => c.id?.startsWith(keyword));
-    if (!matching.length) return this.nearbyCinemas[0];
-    // já estão ordenados por distância
-    return matching[0];
+    if (!this.allCinemas.length) return null;
+    const keyword = movie.cinema === 'Cinema NOS' ? 'nos-' : 'cc-';
+    const matching = this.allCinemas.filter(c => c.id?.startsWith(keyword));
+    return matching.length ? matching[0] : (this.allCinemas[0] ?? null);
   }
 
   // ── FILMES ──
@@ -162,6 +234,12 @@ export class CinemaMoviesComponent implements OnInit, OnDestroy, AfterViewInit {
     if (!movie.poster) return 'data:image/svg+xml;charset=UTF-8,%3Csvg xmlns%3D"http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg" width%3D"260" height%3D"390"%3E%3Crect fill%3D"%23222" width%3D"260" height%3D"390"%2F%3E%3Ctext fill%3D"%23666" font-size%3D"16" x%3D"50%25" y%3D"50%25" text-anchor%3D"middle"%3ESem Poster%3C%2Ftext%3E%3C%2Fsvg%3E';
     return movie.poster;
   }
+
+  navigateToCinema(_cinema: CinemaVenue): void {
+    this.router.navigate(['/cinemas-proximos']);
+  }
+
+  // ── CAROUSEL ──
 
   startAutoScroll(carousel: 'nos' | 'cineplace' | 'cinemacity'): void {
     this.stopAutoScroll(carousel);
@@ -188,7 +266,7 @@ export class CinemaMoviesComponent implements OnInit, OnDestroy, AfterViewInit {
   stopAutoScroll(carousel: 'nos' | 'cineplace' | 'cinemacity'): void {
     if (carousel === 'nos' && this.intervalNos) {
       clearInterval(this.intervalNos); this.intervalNos = null;
-    } else if (this.intervalCineplace) {
+    } else if (carousel !== 'nos' && this.intervalCineplace) {
       clearInterval(this.intervalCineplace); this.intervalCineplace = null;
     }
   }
@@ -236,9 +314,5 @@ export class CinemaMoviesComponent implements OnInit, OnDestroy, AfterViewInit {
     const h = Math.floor(mins / 60);
     const m = mins % 60;
     return h > 0 ? `${h}h ${m}min` : `${m}min`;
-  }
-
-  navigateToCinema(cinema: CinemaVenue): void {
-    this.router.navigate(['/cinemas-proximos']);
   }
 }

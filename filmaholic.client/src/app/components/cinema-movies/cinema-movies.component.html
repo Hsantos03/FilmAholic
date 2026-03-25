@@ -3,7 +3,7 @@
   <div class="bg-orb orb1"></div>
   <div class="bg-orb orb2"></div>
 
-  <!-- TOPBAR (menu + brand + notificações + perfil) -->
+  <!-- TOPBAR -->
   <header class="cinema-map-topbar">
     <button class="icon-btn" (click)="toggleMenu()" aria-label="Menu">
       <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
@@ -67,37 +67,52 @@
     <p class="hero-sub">A sua próxima sessão favorita está à sua espera.</p>
   </header>
 
-
-  <!-- ── CINEMAS PRÓXIMOS ── -->
+  <!-- ── OS TEUS CINEMAS ── -->
   <section class="nearby-section">
 
-    <!-- Sem localização -->
+    <!-- Aviso sem localização -->
     <div *ngIf="geoError" class="geo-warning">
       <span>📍</span> {{ geoError }}
     </div>
 
-    <!-- Loading cinemas -->
+    <!-- A carregar -->
     <div *ngIf="nearbyLoading" class="nearby-loading">
       <div class="loading-ring loading-ring-sm"></div>
       <span>A carregar cinemas…</span>
     </div>
 
-    <!-- Lista de cinemas -->
+    <!-- Lista filtrada: favoritos + mais próximo NOS + mais próximo City -->
     <div *ngIf="!nearbyLoading && nearbyCinemas.length > 0" class="nearby-wrap">
       <div class="nearby-header">
-        <span class="nearby-title">📍 Cinemas mais próximos</span>
-        <a routerLink="/cinemas-proximos" class="nearby-link">Ver mapa completo →</a>
+        <span class="nearby-title">📍 Os teus cinemas</span>
+        <a routerLink="/cinemas-proximos" class="nearby-link">Ver todos →</a>
       </div>
       <div class="nearby-scroll">
         <div *ngFor="let c of nearbyCinemas; let i = index"
              class="nearby-card"
+             [ngClass]="{'nearby-card-fav': isFavorito(c)}"
              (click)="navigateToCinema(c)"
-             title="{{ c.nome }}">
-          <div class="nearby-rank">{{ i + 1 }}</div>
+             [title]="c.nome"
+             style="position: relative;">
+
+          <!-- Badge de favorito -->
+          <div *ngIf="favoritosIds.has(c.id)" class="fav-badge">
+            ⭐ Favorito
+          </div>
+          <!-- Rank -->
+          <div class="nearby-rank">
+            <span *ngIf="isFavorito(c)">⭐</span>
+            <span *ngIf="!isFavorito(c)">{{ i + 1 }}</span>
+          </div>
           <div class="nearby-info">
             <strong class="nearby-name">{{ c.nome }}</strong>
             <span class="nearby-address">{{ c.morada }}</span>
           </div>
+
+          <div *ngIf="isMaisProximo(c)" style="display: flex; align-items: center; padding-right: 8px;">
+            <span class="badge-proximo">📍 Cinema mais perto</span>
+          </div>
+
           <div class="nearby-dist" *ngIf="c.distanceKm != null">
             <span class="nearby-dist-val">{{ c.distanceKm }}</span>
             <span class="nearby-dist-unit">km</span>
@@ -105,9 +120,10 @@
         </div>
       </div>
     </div>
+
   </section>
 
-  <!-- LOADING -->
+  <!-- LOADING filmes -->
   <div *ngIf="isLoading" class="state-loading">
     <div class="loading-ring"></div>
     <p>A carregar filmes em cartaz…</p>
@@ -139,6 +155,7 @@
              (mouseenter)="stopAutoScroll('nos')"
              (mouseleave)="startAutoScroll('nos')">
           <div class="carousel-wrapper" #carouselNos>
+            <!-- Primeira cópia -->
             <ng-container *ngFor="let movie of nosMovies">
               <div class="cinema-movie-card">
                 <img class="movie-poster" [src]="posterOf(movie)" [alt]="movie.titulo" />
@@ -165,6 +182,7 @@
                 </div>
               </div>
             </ng-container>
+            <!-- Segunda cópia (loop infinito) -->
             <ng-container *ngFor="let movie of nosMovies">
               <div class="cinema-movie-card">
                 <img class="movie-poster" [src]="posterOf(movie)" [alt]="movie.titulo" />
@@ -213,6 +231,7 @@
              (mouseenter)="stopAutoScroll('cinemacity')"
              (mouseleave)="startAutoScroll('cinemacity')">
           <div class="carousel-wrapper" #carouselCineplace>
+            <!-- Primeira cópia -->
             <ng-container *ngFor="let movie of cineplaceMovies">
               <div class="cinema-movie-card">
                 <img class="movie-poster" [src]="posterOf(movie)" [alt]="movie.titulo" />
@@ -239,6 +258,7 @@
                 </div>
               </div>
             </ng-container>
+            <!-- Segunda cópia (loop infinito) -->
             <ng-container *ngFor="let movie of cineplaceMovies">
               <div class="cinema-movie-card">
                 <img class="movie-poster" [src]="posterOf(movie)" [alt]="movie.titulo" />

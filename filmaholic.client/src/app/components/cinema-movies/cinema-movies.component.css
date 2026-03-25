@@ -428,9 +428,14 @@
   transition: background 0.2s, border-color 0.2s;
 }
 
-  .nearby-card:hover {
-    background: rgba(233,30,99,0.07);
-    border-color: rgba(233,30,99,0.2);
+.nearby-card-fav {
+  background: rgba(251,191,36,0.05);
+  border-color: rgba(251,191,36,0.2);
+}
+
+  .nearby-card-fav:hover {
+    background: rgba(251,191,36,0.1);
+    border-color: rgba(251,191,36,0.35);
   }
 
 .nearby-rank {
@@ -519,4 +524,29 @@
   color: #3b82f6;
   font-weight: 700;
   flex-shrink: 0;
+}
+
+.fav-badge {
+  position: absolute;
+  top: 6px;
+  right: 8px;
+  font-size: 10px;
+  font-weight: 700;
+  background: linear-gradient(135deg, #facc15, #f59e0b);
+  color: #000;
+  padding: 3px 7px;
+  border-radius: 6px;
+}
+
+.badge-proximo {
+  background: rgba(59, 130, 246, 0.15);
+  color: #3b82f6;
+  border: 1px solid rgba(59, 130, 246, 0.3);
+  font-size: 10px;
+  font-weight: 700;
+  padding: 4px 8px;
+  border-radius: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
 }
