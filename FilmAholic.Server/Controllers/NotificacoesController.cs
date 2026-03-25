@@ -59,80 +59,118 @@ namespace FilmAholic.Server.Controllers
             return new DateTime(nowUtc.Year + maxAnoAhead, 1, 1, 0, 0, 0, DateTimeKind.Utc);
         }
 
+        /// <summary>Nomes em PT da tabela <c>Generos</c> → id oficial de género no TMDB (movie).</summary>
+        private static readonly Dictionary<string, int> GeneroNomeParaTmdbId = new(StringComparer.OrdinalIgnoreCase)
+        {
+            ["Ação"] = 28,
+            ["Aventura"] = 12,
+            ["Comédia"] = 35,
+            ["Crime"] = 80,
+            ["Drama"] = 18,
+            ["Fantasia"] = 14,
+            ["Ficção Científica"] = 878,
+            ["Horror"] = 27,
+            ["Mistério"] = 9648,
+            ["Romance"] = 10749,
+            ["Thriller"] = 53,
+            ["Animação"] = 16,
+            ["Documentário"] = 99,
+            ["Família"] = 10751,
+            ["Guerra"] = 10752,
+            ["Western"] = 37,
+        };
+
         private bool GenreMatches(Filme f, List<string> favoriteGenres)
         {
             if (favoriteGenres == null || favoriteGenres.Count == 0) return false;
             if (f == null) return false;
 
-        var generoText = f.Genero ?? string.Empty;
+            var generoText = f.Genero ?? string.Empty;
 
-        // Alguns filmes podem ter `Genero` em PT (TMDB pt-PT) e outros podem ter em EN (dependendo do idioma com que foi hidratado).
-        // Para o filtro do FR61, normalizamos e também fazemos fallback PT->EN para os géneros do teu sistema.
-        string Norm(string s)
-        {
-            if (s == null) return string.Empty;
-            var trimmed = s.Trim();
-            var formD = trimmed.Normalize(System.Text.NormalizationForm.FormD);
-            var sb = new System.Text.StringBuilder(formD.Length);
-            foreach (var ch in formD)
+            static string Norm(string? s)
             {
-                var uc = System.Globalization.CharUnicodeInfo.GetUnicodeCategory(ch);
-                if (uc != System.Globalization.UnicodeCategory.NonSpacingMark)
-                    sb.Append(ch);
-            }
-            return sb.ToString().ToLowerInvariant();
-        }
-
-        // PT -> possíveis nomes EN que o TMDB costuma devolver.
-        // Para evitar falhas por diferenças Unicode/acentos, fazemos lookup por "normalizado".
-        var genrePtToEn = new Dictionary<string, string[]>(StringComparer.OrdinalIgnoreCase)
-        {
-            ["Ação"] = ["Action"],
-            ["Aventura"] = ["Adventure"],
-            ["Comédia"] = ["Comedy"],
-            ["Crime"] = ["Crime"],
-            ["Drama"] = ["Drama"],
-            ["Fantasia"] = ["Fantasy"],
-            ["Ficção Científica"] = ["Science Fiction", "Sci-Fi"],
-            ["Horror"] = ["Horror"],
-            ["Mistério"] = ["Mystery"],
-            ["Romance"] = ["Romance"],
-            ["Thriller"] = ["Thriller"],
-            ["Animação"] = ["Animation", "Animated"],
-            ["Documentário"] = ["Documentary"],
-            ["Família"] = ["Family"],
-            ["Guerra"] = ["War"],
-            ["Western"] = ["Western"],
-        };
-
-        var genrePtNormToEnNorms = new Dictionary<string, List<string>>(StringComparer.OrdinalIgnoreCase);
-        foreach (var kvp in genrePtToEn)
-        {
-            var ptNorm = Norm(kvp.Key);
-            var enNorms = kvp.Value.Select(Norm).Where(x => !string.IsNullOrWhiteSpace(x)).ToList();
-            if (!string.IsNullOrWhiteSpace(ptNorm) && enNorms.Count > 0)
-                genrePtNormToEnNorms[ptNorm] = enNorms;
-        }
-
-        var generoNorm = Norm(generoText);
-
-        foreach (var g in favoriteGenres)
-        {
-            if (string.IsNullOrWhiteSpace(g)) continue;
-
-            var gNorm = Norm(g);
-            if (!string.IsNullOrEmpty(gNorm) && generoNorm.Contains(gNorm))
-                return true;
-
-            if (genrePtNormToEnNorms.TryGetValue(gNorm, out var enNorms))
-            {
-                foreach (var enNorm in enNorms)
+                if (s == null) return string.Empty;
+                var trimmed = s.Trim();
+                var formD = trimmed.Normalize(System.Text.NormalizationForm.FormD);
+                var sb = new System.Text.StringBuilder(formD.Length);
+                foreach (var ch in formD)
                 {
-                    if (!string.IsNullOrEmpty(enNorm) && generoNorm.Contains(enNorm))
+                    var uc = System.Globalization.CharUnicodeInfo.GetUnicodeCategory(ch);
+                    if (uc != System.Globalization.UnicodeCategory.NonSpacingMark)
+                        sb.Append(ch);
+                }
+                return sb.ToString().ToLowerInvariant();
+            }
+
+            var genrePtToEn = new Dictionary<string, string[]>(StringComparer.OrdinalIgnoreCase)
+            {
+                ["Ação"] = ["Action"],
+                ["Aventura"] = ["Adventure"],
+                ["Comédia"] = ["Comedy"],
+                ["Crime"] = ["Crime"],
+                ["Drama"] = ["Drama"],
+                ["Fantasia"] = ["Fantasy"],
+                ["Ficção Científica"] = ["Science Fiction", "Sci-Fi"],
+                ["Horror"] = ["Horror"],
+                ["Mistério"] = ["Mystery"],
+                ["Romance"] = ["Romance"],
+                ["Thriller"] = ["Thriller"],
+                ["Animação"] = ["Animation", "Animated"],
+                ["Documentário"] = ["Documentary"],
+                ["Família"] = ["Family"],
+                ["Guerra"] = ["War"],
+                ["Western"] = ["Western"],
+            };
+
+            var genrePtNormToEnNorms = new Dictionary<string, List<string>>(StringComparer.OrdinalIgnoreCase);
+            foreach (var kvp in genrePtToEn)
+            {
+                var ptNorm = Norm(kvp.Key);
+                var enNorms = kvp.Value.Select(Norm).Where(x => !string.IsNullOrWhiteSpace(x)).ToList();
+                if (!string.IsNullOrWhiteSpace(ptNorm) && enNorms.Count > 0)
+                    genrePtNormToEnNorms[ptNorm] = enNorms;
+            }
+
+            var favoriteTmdbIds = new HashSet<int>();
+            foreach (var g in favoriteGenres)
+            {
+                if (string.IsNullOrWhiteSpace(g)) continue;
+                if (GeneroNomeParaTmdbId.TryGetValue(g.Trim(), out var tid))
+                    favoriteTmdbIds.Add(tid);
+            }
+
+            if (f.TmdbGenreIds is { Count: > 0 } filmIds && favoriteTmdbIds.Count > 0)
+            {
+                foreach (var id in filmIds)
+                {
+                    if (favoriteTmdbIds.Contains(id))
                         return true;
                 }
             }
-        }
+
+            var tokens = generoText
+                .Split(new[] { ',', '/', '|', '&' }, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                .Select(Norm)
+                .Where(t => t.Length > 0)
+                .ToHashSet();
+
+            foreach (var g in favoriteGenres)
+            {
+                if (string.IsNullOrWhiteSpace(g)) continue;
+
+                var gNorm = Norm(g);
+                if (tokens.Contains(gNorm))
+                    return true;
+
+                if (genrePtNormToEnNorms.TryGetValue(gNorm, out var enNorms))
+                {
+                    foreach (var enNorm in enNorms)
+                    {
+                        if (!string.IsNullOrEmpty(enNorm) && tokens.Contains(enNorm))
+                            return true;
+                    }
+                }
+            }
 
             return false;
         }
@@ -380,15 +418,17 @@ namespace FilmAholic.Server.Controllers
         }
 
         /// <summary>
-        /// Lista “Próximas estreias” para a campainha (TMDB), alinhada com FR61: géneros favoritos e filmes já vistos.
+        /// Lista “Próximas estreias” para a campainha (TMDB): opcionalmente filtrada pelos géneros favoritos do utilizador e exclui filmes já vistos.
         /// Sem autenticação → <see cref="UnauthorizedResult"/> (o cliente usa <c>/api/filmes/upcoming</c> como fallback).
         /// </summary>
+        /// <param name="filtrarPorGeneros">Se <c>true</c> (defeito), aplica <see cref="GenreMatches"/> quando existem géneros favoritos na BD. Se <c>false</c>, upcoming completo (só exclui já vistos).</param>
         [HttpGet("proximas-estreias")]
         public async Task<ActionResult<List<Filme>>> GetProximasEstreiasPersonalizadas(
             [FromQuery] int page = 1,
             [FromQuery] int count = 40,
             [FromQuery] int windowDays = 180,
-            [FromQuery] int maxAnoAhead = 5)
+            [FromQuery] int maxAnoAhead = 5,
+            [FromQuery] bool filtrarPorGeneros = true)
         {
             if (page < 1) page = 1;
             if (count < 1) count = 40;
@@ -418,10 +458,9 @@ namespace FilmAholic.Server.Controllers
                 .Distinct(StringComparer.OrdinalIgnoreCase)
                 .ToList();
 
-            var totalGenres = await _context.Generos.CountAsync();
-            var applyGenreFilter = favoriteGenres.Count > 0
-                && totalGenres > 0
-                && favoriteGenres.Count < Math.Max(1, totalGenres - 1);
+            // Com filtrarPorGeneros=true, aplicamos sempre que existam géneros favoritos na BD.
+            // (A antiga regra "quase todos os géneros = sem filtro" fazia "Os meus géneros" igual a "Todos".)
+            var applyGenreFilter = filtrarPorGeneros && favoriteGenres.Count > 0;
 
             var watchedIds = await _context.UserMovies
                 .Where(um => um.UtilizadorId == userId && um.JaViu)

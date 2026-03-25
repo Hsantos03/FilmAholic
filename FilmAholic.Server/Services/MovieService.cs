@@ -1,6 +1,7 @@
 using FilmAholic.Server.Data;
 using FilmAholic.Server.DTOs;
 using FilmAholic.Server.Models;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.EntityFrameworkCore;
 using System.Globalization;
 using System.Net.Http;
@@ -14,6 +15,7 @@ public class MovieService : IMovieService
     private readonly FilmAholicDbContext _context;
     private readonly ILogger<MovieService> _logger;
     private readonly IConfiguration _configuration;
+    private readonly IMemoryCache _cache;
 
     private readonly string _tmdbApiKey;
     private readonly string _tmdbBaseUrl = "https://api.themoviedb.org/3";
@@ -24,12 +26,14 @@ public class MovieService : IMovieService
         IHttpClientFactory httpClientFactory,
         FilmAholicDbContext context,
         ILogger<MovieService> logger,
-        IConfiguration configuration)
+        IConfiguration configuration,
+        IMemoryCache cache)
     {
         _httpClientFactory = httpClientFactory;
         _context = context;
         _logger = logger;
         _configuration = configuration;
+        _cache = cache;
 
         _tmdbApiKey = _configuration["ExternalApis:TmdbApiKey"] ?? "";
         _omdbApiKey = _configuration["ExternalApis:OmdbApiKey"] ?? "";
@@ -323,6 +327,11 @@ public class MovieService : IMovieService
             filme.Genero = "Unknown";
         }
 
+        if (tmdbMoviePt.Genres != null && tmdbMoviePt.Genres.Count > 0)
+            filme.TmdbGenreIds = tmdbMoviePt.Genres.Select(g => g.Id).Distinct().ToList();
+        else if (tmdbMovieEn.GenreIds is { Count: > 0 })
+            filme.TmdbGenreIds = tmdbMovieEn.GenreIds.Distinct().ToList();
+
         if (filme.Duracao == 0 && omdbMovie != null && !string.IsNullOrEmpty(omdbMovie.Runtime))
         {
             var runtimeStr = omdbMovie.Runtime.Replace(" min", "").Trim();
@@ -404,6 +413,13 @@ public class MovieService : IMovieService
 
     public async Task<List<Filme>> GetUpcomingMoviesAsync(int page = 1, int count = 20)
     {
+        var cacheHours = Math.Max(1, _configuration.GetValue<int>("TmdbUpcomingCacheHours", 24));
+        var todayUtc = DateTime.UtcNow.Date;
+        var cacheKey = $"tmdb-upcoming:{page}:{count}:{todayUtc:yyyy-MM-dd}";
+
+        if (_cache.TryGetValue(cacheKey, out List<Filme>? cached) && cached != null)
+            return cached;
+
         if (string.IsNullOrEmpty(_tmdbApiKey))
         {
             _logger.LogWarning("TMDb API key is not configured. Cannot fetch upcoming movies.");
@@ -417,7 +433,10 @@ public class MovieService : IMovieService
                 return new List<Filme>();
 
             // Hydrate completo (PT para géneros/sinopse + EN para título, e OMDb quando disponível).
-            return await HydrateTmdbResultsToFilmesAsync(result.Results, count, "upcoming list");
+            var hydrated = await HydrateTmdbResultsToFilmesAsync(result.Results, count, "upcoming list");
+
+            _cache.Set(cacheKey, hydrated, TimeSpan.FromHours(cacheHours));
+            return hydrated;
         }
         catch (Exception ex)
         {
@@ -432,6 +451,13 @@ public class MovieService : IMovieService
         DateTime minReleaseDateUtc,
         int maxPagesToScan = 12)
     {
+        var cacheHours = Math.Max(1, _configuration.GetValue<int>("TmdbUpcomingCacheHours", 24));
+        var minDay = minReleaseDateUtc.Date;
+        var cacheKey = $"tmdb-upcoming-acc:{startPage}:{desiredCount}:{minDay:yyyy-MM-dd}:{maxPagesToScan}";
+
+        if (_cache.TryGetValue(cacheKey, out List<Filme>? cached) && cached != null)
+            return cached;
+
         if (string.IsNullOrEmpty(_tmdbApiKey))
         {
             _logger.LogWarning("TMDb API key is not configured. Cannot fetch upcoming movies.");
@@ -442,8 +468,6 @@ public class MovieService : IMovieService
         if (desiredCount < 1) return new List<Filme>();
 
         maxPagesToScan = Math.Clamp(maxPagesToScan, 1, 30);
-
-        var minDay = minReleaseDateUtc.Date;
         var aggregated = new List<Filme>();
         var seenTmdb = new HashSet<string>(StringComparer.Ordinal);
         var pagesScanned = 0;
@@ -492,10 +516,13 @@ public class MovieService : IMovieService
             _logger.LogError(ex, "Error accumulating upcoming movies from TMDb");
         }
 
-        return aggregated
+        var result = aggregated
             .OrderBy(f => f.ReleaseDate ?? new DateTime(f.Ano ?? (minDay.Year + 10), 1, 1, 0, 0, 0, DateTimeKind.Utc))
             .Take(desiredCount)
             .ToList();
+
+        _cache.Set(cacheKey, result, TimeSpan.FromHours(cacheHours));
+        return result;
     }
 
     private async Task<TmdbSearchResponse?> FetchTmdbUpcomingPageAsync(int page)
@@ -665,7 +692,10 @@ public class MovieService : IMovieService
                         Titulo = tmdbMovie.Title,
                         PosterUrl = TmdbPosterW500Url(tmdbMovie.PosterPath),
                         Duracao = 0,
-                        Genero = "Unknown"
+                        Genero = "Unknown",
+                        TmdbGenreIds = tmdbMovie.GenreIds is { Count: > 0 }
+                            ? tmdbMovie.GenreIds.Distinct().ToList()
+                            : new List<int>()
                     });
                     continue;
                 }

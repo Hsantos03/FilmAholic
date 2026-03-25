@@ -76,6 +76,12 @@ export class DashboardComponent implements OnInit, OnDestroy {
   upcomingUnreadPage = 0;
   upcomingReadPage = 0;
 
+  /** Com sessão (cookie): filtrar lista pelos géneros favoritos (visível no menu). */
+  filtrarEstreiasPorGeneros = true;
+
+  /** Definido pelo servidor: último carregamento foi com sessão em /proximas-estreias. */
+  proximasEstreiasSessaoAtiva = false;
+
   private onResizeBound = () => this.updateVisibleCount();
   private onDocumentClickBound = (e: MouseEvent) => this.onDocumentClick(e);
 
@@ -403,6 +409,19 @@ export class DashboardComponent implements OnInit, OnDestroy {
     return (this.upcomingTmdb?.length ?? 0) > 0;
   }
 
+  public get showEstreiasGenreFilter(): boolean {
+    return this.proximasEstreiasSessaoAtiva;
+  }
+
+  public setEstreiasGenreFilter(apenasGenerosFavoritos: boolean, e: MouseEvent): void {
+    e.stopPropagation();
+    if (this.filtrarEstreiasPorGeneros === apenasGenerosFavoritos) return;
+    this.filtrarEstreiasPorGeneros = apenasGenerosFavoritos;
+    this.upcomingUnreadPage = 0;
+    this.upcomingReadPage = 0;
+    this.loadUpcomingFromTmdb();
+  }
+
   private isUpcomingRead(m: Filme): boolean {
     const t = Number(m.tmdbId);
     return !!m.tmdbId && !isNaN(t) && this.readTmdbIds.has(t);
@@ -506,18 +525,37 @@ export class DashboardComponent implements OnInit, OnDestroy {
   }
 
   private loadUpcomingFromTmdb(): void {
-    this.filmesService.getUpcoming(1, 40).subscribe({
-      next: (list) => {
-        this.upcomingTmdb = list || [];
-        this.syncReadTmdbFromServer();
-        this.clampUpcomingPages();
-        this.loadUpcomingDetails();
-      },
-      error: () => {
-        this.upcomingTmdb = [];
-        this.readTmdbIds = new Set();
-      }
-    });
+    const onNext = (list: Filme[] | null) => {
+      this.upcomingTmdb = list || [];
+      this.syncReadTmdbFromServer();
+      this.clampUpcomingPages();
+      this.loadUpcomingDetails();
+    };
+    const onErr = () => {
+      this.upcomingTmdb = [];
+      this.readTmdbIds = new Set();
+    };
+
+    this.notificacoesService
+      .getProximasEstreiasPersonalizadas({
+        page: 1,
+        count: 40,
+        filtrarPorGeneros: this.filtrarEstreiasPorGeneros
+      })
+      .pipe(
+        tap(() => {
+          this.proximasEstreiasSessaoAtiva = true;
+        }),
+        catchError((err) => {
+          if (err?.status === 401) {
+            this.proximasEstreiasSessaoAtiva = false;
+          } else {
+            this.proximasEstreiasSessaoAtiva = true;
+          }
+          return this.filmesService.getUpcoming(1, 40);
+        })
+      )
+      .subscribe({ next: onNext, error: onErr });
   }
 
   private loadUpcomingDetails(): void {

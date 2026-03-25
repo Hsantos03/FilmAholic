@@ -42,13 +42,16 @@ export class NotificacoesService {
     count?: number;
     windowDays?: number;
     maxAnoAhead?: number;
-  }): Observable<import('./filmes.service').Filme[]> {
+    /** Default true: só estreias que coincidem com géneros favoritos (regra FR61). */
+    filtrarPorGeneros?: boolean;
+  }): Observable<Filme[]> {
     const o = options ?? {};
     let params = new HttpParams();
     if (o.page != null) params = params.set('page', String(o.page));
     if (o.count != null) params = params.set('count', String(o.count));
     if (o.windowDays != null) params = params.set('windowDays', String(o.windowDays));
     if (o.maxAnoAhead != null) params = params.set('maxAnoAhead', String(o.maxAnoAhead));
+    if (o.filtrarPorGeneros === false) params = params.set('filtrarPorGeneros', 'false');
     return this.http.get<Filme[]>(`${this.apiUrl}/proximas-estreias`, {
       params,
       withCredentials: true

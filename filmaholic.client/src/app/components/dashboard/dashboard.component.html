@@ -76,7 +76,21 @@
              style="position: absolute; top: calc(100% + 8px); right: 0; min-width:260px; background: #0a0a0a; border: 1px solid rgba(255,255,255,0.06); border-radius:8px; box-shadow: 0 8px 24px rgba(0,0,0,0.45); padding:8px; z-index:1500;">
 
           <div *ngIf="hasUpcomingList; else noUpcoming" style="display:flex; flex-direction:column; gap:8px;">
-            <div class="dash-notif-section-title">Próximas estreias (TMDB)</div>
+            <div class="dash-notif-section-title">Próximas estreias</div>
+            <div *ngIf="showEstreiasGenreFilter"
+                 class="dash-notif-genre-filter"
+                 (click)="$event.stopPropagation()"
+                 role="group"
+                 aria-label="Filtrar por géneros">
+              <button type="button"
+                      class="dash-notif-genre-filter-btn"
+                      [class.dash-notif-genre-filter-btn--active]="filtrarEstreiasPorGeneros"
+                      (click)="setEstreiasGenreFilter(true, $event)">Os meus géneros</button>
+              <button type="button"
+                      class="dash-notif-genre-filter-btn"
+                      [class.dash-notif-genre-filter-btn--active]="!filtrarEstreiasPorGeneros"
+                      (click)="setEstreiasGenreFilter(false, $event)">Todos</button>
+            </div>
 
             <ng-container *ngIf="upcomingUnreadAll.length > 0; else dashAllReadOrEmpty">
               <div *ngFor="let m of upcomingUnreadPaged"

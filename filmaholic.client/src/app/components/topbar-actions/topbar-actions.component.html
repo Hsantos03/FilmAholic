@@ -10,7 +10,21 @@
     </button>
     <div class="notifications-menu" *ngIf="isNotificationsOpen" role="menu">
       <div *ngIf="hasUpcomingList; else noUpcoming" class="notifications-inner">
-        <div class="notifications-title">Próximas estreias (TMDB)</div>
+        <div class="notifications-title">Próximas estreias</div>
+        <div *ngIf="showEstreiasGenreFilter"
+             class="notif-genre-filter"
+             (click)="$event.stopPropagation()"
+             role="group"
+             aria-label="Filtrar por géneros">
+          <button type="button"
+                  class="notif-genre-filter-btn"
+                  [class.notif-genre-filter-btn--active]="filtrarEstreiasPorGeneros"
+                  (click)="setEstreiasGenreFilter(true, $event)">Os meus géneros</button>
+          <button type="button"
+                  class="notif-genre-filter-btn"
+                  [class.notif-genre-filter-btn--active]="!filtrarEstreiasPorGeneros"
+                  (click)="setEstreiasGenreFilter(false, $event)">Todos</button>
+        </div>
 
         <ng-container *ngIf="upcomingUnreadAll.length > 0; else allReadOrEmpty">
           <div *ngFor="let m of upcomingUnreadPaged"

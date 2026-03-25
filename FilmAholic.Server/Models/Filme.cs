@@ -1,3 +1,5 @@
+using System.ComponentModel.DataAnnotations.Schema;
+
 namespace FilmAholic.Server.Models;
 
 public class Filme
@@ -12,4 +14,8 @@ public class Filme
 
     // New: full release date when available
     public DateTime? ReleaseDate { get; set; }
+
+    /// <summary>Géneros TMDB (lista / detalhe). Não persistido na BD; usado para filtrar estreias por géneros favoritos.</summary>
+    [NotMapped]
+    public List<int> TmdbGenreIds { get; set; } = new();
 }
