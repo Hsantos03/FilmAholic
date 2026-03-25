@@ -5,7 +5,6 @@ using FilmAholic.Server.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Playwright;
 using System.Security.Claims;
 using System.Text.Json;
 
