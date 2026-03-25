@@ -45,7 +45,7 @@
   background: #AE8191;
   border: 1px solid rgba(255,255,255,0.10);
   display: grid;
-  grid-template-columns: 46px 1fr 46px;
+  grid-template-columns: 1fr 46px;
   align-items: center;
   overflow: hidden;
 }

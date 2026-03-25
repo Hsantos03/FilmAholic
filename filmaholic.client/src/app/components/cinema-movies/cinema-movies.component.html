@@ -67,6 +67,46 @@
     <p class="hero-sub">A sua próxima sessão favorita está à sua espera.</p>
   </header>
 
+
+  <!-- ── CINEMAS PRÓXIMOS ── -->
+  <section class="nearby-section">
+
+    <!-- Sem localização -->
+    <div *ngIf="geoError" class="geo-warning">
+      <span>📍</span> {{ geoError }}
+    </div>
+
+    <!-- Loading cinemas -->
+    <div *ngIf="nearbyLoading" class="nearby-loading">
+      <div class="loading-ring loading-ring-sm"></div>
+      <span>A carregar cinemas…</span>
+    </div>
+
+    <!-- Lista de cinemas -->
+    <div *ngIf="!nearbyLoading && nearbyCinemas.length > 0" class="nearby-wrap">
+      <div class="nearby-header">
+        <span class="nearby-title">📍 Cinemas mais próximos</span>
+        <a routerLink="/cinemas-proximos" class="nearby-link">Ver mapa completo →</a>
+      </div>
+      <div class="nearby-scroll">
+        <div *ngFor="let c of nearbyCinemas; let i = index"
+             class="nearby-card"
+             (click)="navigateToCinema(c)"
+             title="{{ c.nome }}">
+          <div class="nearby-rank">{{ i + 1 }}</div>
+          <div class="nearby-info">
+            <strong class="nearby-name">{{ c.nome }}</strong>
+            <span class="nearby-address">{{ c.morada }}</span>
+          </div>
+          <div class="nearby-dist" *ngIf="c.distanceKm != null">
+            <span class="nearby-dist-val">{{ c.distanceKm }}</span>
+            <span class="nearby-dist-unit">km</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
   <!-- LOADING -->
   <div *ngIf="isLoading" class="state-loading">
     <div class="loading-ring"></div>
@@ -112,6 +152,11 @@
                   </div>
                   <div class="overlay-bottom">
                     <span class="duration">{{ formatDuration(movie.duracao) }}</span>
+                    <div class="closest-cinema" *ngIf="closestCinemaForMovie(movie) as closest">
+                      <span class="closest-icon">📍</span>
+                      <span class="closest-name">{{ closest.nome }}</span>
+                      <span class="closest-km" *ngIf="closest.distanceKm != null">· {{ closest.distanceKm }} km</span>
+                    </div>
                     <div class="movie-actions">
                       <a class="btn primary" [href]="movie.link" target="_blank" rel="noopener">Ver Sessões</a>
                       <button class="btn secondary" (click)="viewMovieDetails(movie)">Ver Detalhes</button>
@@ -133,6 +178,11 @@
                   </div>
                   <div class="overlay-bottom">
                     <span class="duration">{{ formatDuration(movie.duracao) }}</span>
+                    <div class="closest-cinema" *ngIf="closestCinemaForMovie(movie) as closest">
+                      <span class="closest-icon">📍</span>
+                      <span class="closest-name">{{ closest.nome }}</span>
+                      <span class="closest-km" *ngIf="closest.distanceKm != null">· {{ closest.distanceKm }} km</span>
+                    </div>
                     <div class="movie-actions">
                       <a class="btn primary" [href]="movie.link" target="_blank" rel="noopener">Ver Sessões</a>
                       <button class="btn secondary" (click)="viewMovieDetails(movie)">Ver Detalhes</button>
@@ -176,6 +226,11 @@
                   </div>
                   <div class="overlay-bottom">
                     <span class="duration">{{ formatDuration(movie.duracao) }}</span>
+                    <div class="closest-cinema" *ngIf="closestCinemaForMovie(movie) as closest">
+                      <span class="closest-icon">📍</span>
+                      <span class="closest-name">{{ closest.nome }}</span>
+                      <span class="closest-km" *ngIf="closest.distanceKm != null">· {{ closest.distanceKm }} km</span>
+                    </div>
                     <div class="movie-actions">
                       <a class="btn primary" [href]="movie.link" target="_blank" rel="noopener">Ver Sessões</a>
                       <button class="btn secondary" (click)="viewMovieDetails(movie)">Ver Detalhes</button>
@@ -197,6 +252,11 @@
                   </div>
                   <div class="overlay-bottom">
                     <span class="duration">{{ formatDuration(movie.duracao) }}</span>
+                    <div class="closest-cinema" *ngIf="closestCinemaForMovie(movie) as closest">
+                      <span class="closest-icon">📍</span>
+                      <span class="closest-name">{{ closest.nome }}</span>
+                      <span class="closest-km" *ngIf="closest.distanceKm != null">· {{ closest.distanceKm }} km</span>
+                    </div>
                     <div class="movie-actions">
                       <a class="btn primary" [href]="movie.link" target="_blank" rel="noopener">Ver Sessões</a>
                       <button class="btn secondary" (click)="viewMovieDetails(movie)">Ver Detalhes</button>

@@ -325,3 +325,198 @@
     flex: 0 0 150px;
   }
 }
+
+
+/* ─── CINEMAS PRÓXIMOS ─── */
+.nearby-section {
+  position: relative;
+  z-index: 1;
+  max-width: 1300px;
+  margin: 0 auto 2rem;
+  animation: fadeUp 0.4s ease both;
+}
+
+.geo-warning {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  background: rgba(251,191,36,0.08);
+  border: 1px solid rgba(251,191,36,0.25);
+  border-radius: 12px;
+  color: rgba(255,255,255,0.7);
+  font-size: 13px;
+  margin-bottom: 12px;
+}
+
+.nearby-loading {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: rgba(255,255,255,0.4);
+  font-size: 13px;
+  padding: 8px 4px;
+}
+
+.loading-ring-sm {
+  width: 18px !important;
+  height: 18px !important;
+  border-width: 2px !important;
+}
+
+.nearby-wrap {
+  background: rgba(255,255,255,0.02);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 16px;
+  padding: 14px 16px;
+}
+
+.nearby-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.nearby-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: rgba(255,255,255,0.6);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.nearby-link {
+  font-size: 12px;
+  font-weight: 600;
+  color: #e91e63;
+  text-decoration: none;
+  transition: color 0.2s;
+}
+
+  .nearby-link:hover {
+    color: #f48fb1;
+  }
+
+.nearby-scroll {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 220px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+  .nearby-scroll::-webkit-scrollbar {
+    width: 4px;
+  }
+
+  .nearby-scroll::-webkit-scrollbar-thumb {
+    background: rgba(255,255,255,0.12);
+    border-radius: 4px;
+  }
+
+.nearby-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: rgba(255,255,255,0.02);
+  border: 1px solid rgba(255,255,255,0.04);
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s;
+}
+
+  .nearby-card:hover {
+    background: rgba(233,30,99,0.07);
+    border-color: rgba(233,30,99,0.2);
+  }
+
+.nearby-rank {
+  font-size: 12px;
+  font-weight: 800;
+  color: rgba(255,255,255,0.2);
+  min-width: 18px;
+  text-align: center;
+}
+
+.nearby-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.nearby-name {
+  font-size: 13px;
+  font-weight: 700;
+  color: #fff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.nearby-address {
+  font-size: 11px;
+  color: rgba(255,255,255,0.35);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.nearby-dist {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  flex-shrink: 0;
+}
+
+.nearby-dist-val {
+  font-size: 16px;
+  font-weight: 800;
+  color: #3b82f6;
+  line-height: 1;
+}
+
+.nearby-dist-unit {
+  font-size: 10px;
+  font-weight: 700;
+  color: rgba(59,130,246,0.6);
+  letter-spacing: 0.5px;
+}
+
+/* Badge cinema mais próximo no card do filme */
+.closest-cinema {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.72rem;
+  color: rgba(255,255,255,0.65);
+  background: rgba(0,0,0,0.35);
+  border-radius: 6px;
+  padding: 3px 7px;
+  backdrop-filter: blur(4px);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.closest-icon {
+  font-size: 0.8rem;
+}
+
+.closest-name {
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 130px;
+}
+
+.closest-km {
+  color: #3b82f6;
+  font-weight: 700;
+  flex-shrink: 0;
+}
