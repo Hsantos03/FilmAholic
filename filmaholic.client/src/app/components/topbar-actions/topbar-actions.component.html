@@ -9,19 +9,64 @@
       </svg>
     </button>
     <div class="notifications-menu" *ngIf="isNotificationsOpen" role="menu">
-      <div *ngIf="upcomingMovies.length > 0; else noUpcoming" class="notifications-inner">
-        <div class="notifications-title">Próximas Estreias</div>
-        <a *ngFor="let m of upcomingMovies"
-           href="javascript:void(0)"
-           (click)="openNotificationMovie(m)"
-           class="notification-item"
-           role="menuitem">
-          <img [src]="posterOf(m)" [alt]="m.titulo" class="notification-poster" />
-          <div class="notification-meta">
-            <span class="notification-movie-title">{{ m.titulo }}</span>
-            <span class="notification-date">{{ releaseLabel(m) }}</span>
+      <div *ngIf="hasUpcomingList; else noUpcoming" class="notifications-inner">
+        <div class="notifications-title">Próximas estreias (TMDB)</div>
+
+        <ng-container *ngIf="upcomingUnreadAll.length > 0; else allReadOrEmpty">
+          <div *ngFor="let m of upcomingUnreadPaged"
+               class="notification-item"
+               (click)="openNotificationMovie(m)"
+               role="menuitem">
+            <img [src]="posterOf(m)" [alt]="m.titulo" class="notification-poster" (error)="onPosterBroken($event)" />
+            <div class="notification-meta">
+              <span class="notification-movie-title">{{ m.titulo }}</span>
+              <span class="notification-date">{{ releaseLabel(m) }}</span>
+            </div>
+            <button type="button"
+                    class="notification-mark-read"
+                    (click)="marcarComoLida($event, m)"
+                    aria-label="Marcar como vista">✓</button>
           </div>
-        </a>
+          <div *ngIf="upcomingUnreadPagerVisible" class="notif-pager">
+            <button type="button"
+                    class="notif-pager-btn"
+                    (click)="prevUnreadPage($event)"
+                    [disabled]="upcomingUnreadPage === 0">‹</button>
+            <span class="notif-pager-label">{{ upcomingUnreadPageLabel }}</span>
+            <button type="button"
+                    class="notif-pager-btn"
+                    (click)="nextUnreadPage($event)"
+                    [disabled]="upcomingUnreadPage >= upcomingUnreadLastPage">›</button>
+          </div>
+        </ng-container>
+        <ng-template #allReadOrEmpty>
+          <div *ngIf="upcomingReadAll.length === 0" class="notifications-empty" style="padding-top:0;">Nada por mostrar nesta lista.</div>
+        </ng-template>
+
+        <ng-container *ngIf="upcomingReadAll.length > 0">
+          <div class="notifications-title" style="margin-top:10px; padding-top:8px; border-top:1px solid rgba(255,255,255,0.08);">Já vistas</div>
+          <div *ngFor="let m of upcomingReadPaged"
+               class="notification-item read"
+               (click)="openNotificationMovie(m)"
+               role="menuitem">
+            <img [src]="posterOf(m)" [alt]="m.titulo" class="notification-poster" (error)="onPosterBroken($event)" />
+            <div class="notification-meta">
+              <span class="notification-movie-title">{{ m.titulo }}</span>
+              <span class="notification-date">{{ releaseLabel(m) }}</span>
+            </div>
+          </div>
+          <div *ngIf="upcomingReadPagerVisible" class="notif-pager">
+            <button type="button"
+                    class="notif-pager-btn"
+                    (click)="prevReadPage($event)"
+                    [disabled]="upcomingReadPage === 0">‹</button>
+            <span class="notif-pager-label">{{ upcomingReadPageLabel }}</span>
+            <button type="button"
+                    class="notif-pager-btn"
+                    (click)="nextReadPage($event)"
+                    [disabled]="upcomingReadPage >= upcomingReadLastPage">›</button>
+          </div>
+        </ng-container>
       </div>
       <ng-template #noUpcoming>
         <div class="notifications-empty">Ainda sem próximas estreias.</div>

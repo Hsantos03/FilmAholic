@@ -75,19 +75,62 @@
              role="menu"
              style="position: absolute; top: calc(100% + 8px); right: 0; min-width:260px; background: #0a0a0a; border: 1px solid rgba(255,255,255,0.06); border-radius:8px; box-shadow: 0 8px 24px rgba(0,0,0,0.45); padding:8px; z-index:1500;">
 
-          <div *ngIf="upcomingMovies.length > 0; else noUpcoming" style="display:flex; flex-direction:column; gap:8px;">
-            <div style="font-weight:600; padding:6px 8px; color:#fff;">Próximas Estreias</div>
+          <div *ngIf="hasUpcomingList; else noUpcoming" style="display:flex; flex-direction:column; gap:8px;">
+            <div class="dash-notif-section-title">Próximas estreias (TMDB)</div>
 
-            <a *ngFor="let m of upcomingMovies"
-               href="javascript:void(0)"
-               (click)="openNotificationMovie(m)"
-               style="display:flex; gap:10px; align-items:center; padding:8px; border-radius:8px; text-decoration:none; color:inherit;">
-              <img [src]="posterOf(m)" [alt]="m.titulo" style="width:56px; height:84px; object-fit:cover; border-radius:6px; flex-shrink:0;" />
-              <div style="display:flex; flex-direction:column; min-width:0;">
-                <div style="font-size:13px; font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ m.titulo }}</div>
-                <div style="font-size:12px; color:#aaa; margin-top:6px;">{{ releaseLabel(m) }}</div>
+            <ng-container *ngIf="upcomingUnreadAll.length > 0; else dashAllReadOrEmpty">
+              <div *ngFor="let m of upcomingUnreadPaged"
+                   class="dash-notif-row"
+                   (click)="openNotificationMovie(m)">
+                <img [src]="posterOf(m)" [alt]="m.titulo" style="width:56px; height:84px; object-fit:cover; border-radius:6px; flex-shrink:0;" (error)="onPosterBroken($event)" />
+                <div style="display:flex; flex-direction:column; min-width:0;">
+                  <div style="font-size:13px; font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ m.titulo }}</div>
+                  <div style="font-size:12px; color:#aaa; margin-top:6px;">{{ releaseLabel(m) }}</div>
+                </div>
+                <button type="button"
+                        class="dash-notif-mark"
+                        (click)="marcarComoLida($event, m)"
+                        aria-label="Marcar como vista">✓</button>
               </div>
-            </a>
+              <div *ngIf="upcomingUnreadPagerVisible" class="dash-notif-pager">
+                <button type="button"
+                        class="dash-notif-pager-btn"
+                        (click)="prevUnreadPage($event)"
+                        [disabled]="upcomingUnreadPage === 0">‹</button>
+                <span class="dash-notif-pager-label">{{ upcomingUnreadPageLabel }}</span>
+                <button type="button"
+                        class="dash-notif-pager-btn"
+                        (click)="nextUnreadPage($event)"
+                        [disabled]="upcomingUnreadPage >= upcomingUnreadLastPage">›</button>
+              </div>
+            </ng-container>
+            <ng-template #dashAllReadOrEmpty>
+              <div *ngIf="upcomingReadAll.length === 0" style="padding:8px 12px; color:#aaa;">Nada por mostrar nesta lista.</div>
+            </ng-template>
+
+            <ng-container *ngIf="upcomingReadAll.length > 0">
+              <div class="dash-notif-section-title dash-notif-divider">Já vistas</div>
+              <div *ngFor="let m of upcomingReadPaged"
+                   class="dash-notif-row is-read"
+                   (click)="openNotificationMovie(m)">
+                <img [src]="posterOf(m)" [alt]="m.titulo" style="width:56px; height:84px; object-fit:cover; border-radius:6px; flex-shrink:0;" (error)="onPosterBroken($event)" />
+                <div style="display:flex; flex-direction:column; min-width:0;">
+                  <div style="font-size:13px; font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ m.titulo }}</div>
+                  <div style="font-size:12px; color:#aaa; margin-top:6px;">{{ releaseLabel(m) }}</div>
+                </div>
+              </div>
+              <div *ngIf="upcomingReadPagerVisible" class="dash-notif-pager">
+                <button type="button"
+                        class="dash-notif-pager-btn"
+                        (click)="prevReadPage($event)"
+                        [disabled]="upcomingReadPage === 0">‹</button>
+                <span class="dash-notif-pager-label">{{ upcomingReadPageLabel }}</span>
+                <button type="button"
+                        class="dash-notif-pager-btn"
+                        (click)="nextReadPage($event)"
+                        [disabled]="upcomingReadPage >= upcomingReadLastPage">›</button>
+              </div>
+            </ng-container>
           </div>
 
           <ng-template #noUpcoming>

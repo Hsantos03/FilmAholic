@@ -96,6 +96,74 @@ namespace FilmAholic.Server.Controllers
             }
         }
 
+        /// <summary>
+        /// TMDB: lista de próximos lançamentos (paginação do TMDB).
+        /// </summary>
+        [HttpGet("upcoming")]
+        public async Task<IActionResult> GetUpcoming([FromQuery] int page = 1, [FromQuery] int count = 20)
+        {
+            if (page < 1) page = 1;
+            if (count < 1) count = 20;
+            count = Math.Min(count, 40);
+
+            try
+            {
+                var todayUtc = DateTime.UtcNow.Date;
+
+                // Uma página TMDB tem ~20 títulos; muitos podem já ter estreado — percorremos páginas até encher `count`.
+                var list = await _movieService.GetUpcomingMoviesAccumulatedAsync(page, count, todayUtc, maxPagesToScan: 12);
+
+                return Ok(list ?? new List<Models.Filme>());
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { error = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { error = "Erro ao obter upcoming do TMDB.", details = ex.Message });
+            }
+        }
+
+        /// <summary>
+        /// Filmes “clássicos” via TMDB: <c>discover</c> (pré-2000 por defeito, nota + mín. votos) ou <c>top_rated</c>.
+        /// </summary>
+        /// <param name="fonte"><c>discover</c> (default) ou <c>top_rated</c></param>
+        /// <param name="ateData">Só para discover: data limite de estreia (yyyy-MM-dd). Default 1999-12-31.</param>
+        /// <param name="minVotos">Só para discover: vote_count.gte no TMDB (default 500).</param>
+        [HttpGet("classicos")]
+        public async Task<IActionResult> GetClassicos(
+            [FromQuery] string fonte = "discover",
+            [FromQuery] int page = 1,
+            [FromQuery] int count = 20,
+            [FromQuery] string? ateData = null,
+            [FromQuery] int minVotos = 500)
+        {
+            if (page < 1) page = 1;
+            if (count < 1) count = 20;
+            count = Math.Min(count, 40);
+
+            try
+            {
+                var key = fonte.Trim().ToLowerInvariant().Replace("-", "_");
+                List<Models.Filme> list = key switch
+                {
+                    "top_rated" or "toprated" => await _movieService.GetTopRatedMoviesAsync(page, count),
+                    _ => await _movieService.GetClassicDiscoverMoviesAsync(page, count, ateData, minVotos)
+                };
+
+                return Ok(list);
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { error = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { error = "Erro ao obter filmes clássicos.", details = ex.Message });
+            }
+        }
+
         [HttpGet("{id:int}")]
         public async Task<IActionResult> GetById(int id)
         {

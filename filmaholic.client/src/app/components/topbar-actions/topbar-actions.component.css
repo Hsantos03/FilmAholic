@@ -43,10 +43,71 @@
   text-decoration: none;
   color: inherit;
   transition: background 0.15s;
+  cursor: pointer;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .notification-item:hover {
   background: rgba(255,255,255,0.06);
+}
+
+.notification-item.read {
+  opacity: 0.72;
+}
+
+.notification-mark-read {
+  margin-left: auto;
+  flex-shrink: 0;
+  min-width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: 6px;
+  background: rgba(255,255,255,0.08);
+  color: #9bea9b;
+  cursor: pointer;
+  font-size: 14px;
+  line-height: 1;
+}
+
+.notification-mark-read:hover {
+  background: rgba(255,255,255,0.14);
+}
+
+.notif-pager {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 6px 4px 2px;
+}
+
+.notif-pager-btn {
+  min-width: 32px;
+  height: 28px;
+  border: none;
+  border-radius: 6px;
+  background: rgba(255,255,255,0.08);
+  color: #fff;
+  cursor: pointer;
+  font-size: 16px;
+  line-height: 1;
+}
+
+.notif-pager-btn:hover:not(:disabled) {
+  background: rgba(255,255,255,0.14);
+}
+
+.notif-pager-btn:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.notif-pager-label {
+  font-size: 12px;
+  color: #aaa;
+  min-width: 3.2em;
+  text-align: center;
 }
 
 .notification-poster {

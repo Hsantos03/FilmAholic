@@ -7,6 +7,7 @@ namespace FilmAholic.Server.Data;
 public class FilmAholicDbContext : IdentityDbContext<Utilizador>
 {
     public DbSet<UserMovie> UserMovies { get; set; }
+    public DbSet<Notificacao> Notificacoes => Set<Notificacao>();
 
     public FilmAholicDbContext(DbContextOptions<FilmAholicDbContext> options) : base(options) { }
     public DbSet<Comments> Comments { get; set; }
@@ -110,6 +111,19 @@ public class FilmAholicDbContext : IdentityDbContext<Utilizador>
             gh.Property(x => x.RoundsJson).IsRequired();
             gh.HasIndex(x => x.UtilizadorId);
             gh.ToTable("GameHistories");
+        });
+
+        // Configure Notificacoes (NovaEstreia, etc.)
+        builder.Entity<Notificacao>(e =>
+        {
+            e.ToTable("Notificacoes");
+            e.HasKey(x => x.Id);
+            e.Property(x => x.Tipo).HasMaxLength(50).IsRequired();
+
+            e.HasOne(x => x.Filme)
+                .WithMany()
+                .HasForeignKey(x => x.FilmeId)
+                .OnDelete(DeleteBehavior.Cascade);
         });
     }
 }

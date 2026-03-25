@@ -76,6 +76,18 @@ export class FilmesService {
     return this.http.get<Filme>(`${this.apiUrl}/${id}`);
   }
 
+  /** Ordenação por data de estreia (lista upcoming / notificações). */
+  sortFilmesByReleaseAsc(filmes: Filme[]): Filme[] {
+    const rank = (f: Filme) => {
+      if (f.releaseDate) {
+        const t = new Date(f.releaseDate).getTime();
+        if (!isNaN(t)) return t;
+      }
+      return (f.ano ?? 9999) * 10000;
+    };
+    return [...filmes].sort((a, b) => rank(a) - rank(b));
+  }
+
   getTrailer(id: number): Observable<string | null> {
     return this.http.get<{ url: string }>(`https://localhost:7277/api/filmes/${id}/trailer`).pipe(
       map(res => res.url),
@@ -88,6 +100,37 @@ export class FilmesService {
       .set('query', query)
       .set('page', page.toString());
     return this.http.get<TmdbSearchResponse>(`${this.apiUrl}/search`, { params });
+  }
+
+  /**
+   * TMDB: discover (clássicos por data + nota + min votos) ou top_rated.
+   * @param fonte 'discover' | 'top_rated'
+   */
+  getClassicos(options?: {
+    fonte?: 'discover' | 'top_rated';
+    page?: number;
+    count?: number;
+    /** yyyy-MM-dd, só discover */
+    ateData?: string;
+    /** vote_count.gte TMDB, só discover */
+    minVotos?: number;
+  }): Observable<Filme[]> {
+    let params = new HttpParams();
+    const o = options ?? {};
+    if (o.fonte) params = params.set('fonte', o.fonte);
+    if (o.page != null) params = params.set('page', String(o.page));
+    if (o.count != null) params = params.set('count', String(o.count));
+    if (o.ateData) params = params.set('ateData', o.ateData);
+    if (o.minVotos != null) params = params.set('minVotos', String(o.minVotos));
+    return this.http.get<Filme[]>(`${this.apiUrl}/classicos`, { params });
+  }
+
+  /** TMDB /movie/upcoming via backend, paginado */
+  getUpcoming(page: number = 1, count: number = 20): Observable<Filme[]> {
+    const params = new HttpParams()
+      .set('page', String(page))
+      .set('count', String(count));
+    return this.http.get<Filme[]>(`${this.apiUrl}/upcoming`, { params });
   }
 
   getMovieFromTmdb(tmdbId: number): Observable<Filme> {

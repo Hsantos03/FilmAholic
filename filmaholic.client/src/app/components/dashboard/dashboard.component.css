@@ -751,3 +751,88 @@
     height: 180px;
   }
 }
+
+/* Campainha: lista TMDB upcoming */
+.dash-notif-section-title {
+  font-weight: 600;
+  padding: 6px 8px;
+  color: #fff;
+  font-size: 13px;
+}
+
+.dash-notif-section-title.dash-notif-divider {
+  margin-top: 10px;
+  padding-top: 8px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.dash-notif-row {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  padding: 8px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.dash-notif-row:hover {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.dash-notif-row.is-read {
+  opacity: 0.72;
+}
+
+.dash-notif-mark {
+  margin-left: auto;
+  flex-shrink: 0;
+  min-width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.08);
+  color: #9bea9b;
+  cursor: pointer;
+  font-size: 14px;
+  line-height: 1;
+}
+
+.dash-notif-mark:hover {
+  background: rgba(255, 255, 255, 0.14);
+}
+
+.dash-notif-pager {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 6px 4px 2px;
+}
+
+.dash-notif-pager-btn {
+  min-width: 32px;
+  height: 28px;
+  border: none;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
+  cursor: pointer;
+  font-size: 16px;
+  line-height: 1;
+}
+
+.dash-notif-pager-btn:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.14);
+}
+
+.dash-notif-pager-btn:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.dash-notif-pager-label {
+  font-size: 12px;
+  color: #aaa;
+  min-width: 3.2em;
+  text-align: center;
+}
