@@ -8,6 +8,7 @@ public class FilmAholicDbContext : IdentityDbContext<Utilizador>
 {
     public DbSet<UserMovie> UserMovies { get; set; }
     public DbSet<Notificacao> Notificacoes => Set<Notificacao>();
+    public DbSet<PreferenciasNotificacao> PreferenciasNotificacao => Set<PreferenciasNotificacao>();
 
     public FilmAholicDbContext(DbContextOptions<FilmAholicDbContext> options) : base(options) { }
     public DbSet<Comments> Comments { get; set; }
@@ -123,6 +124,20 @@ public class FilmAholicDbContext : IdentityDbContext<Utilizador>
             e.HasOne(x => x.Filme)
                 .WithMany()
                 .HasForeignKey(x => x.FilmeId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        builder.Entity<PreferenciasNotificacao>(e =>
+        {
+            e.ToTable("PreferenciasNotificacao");
+            e.HasKey(x => x.Id);
+            e.Property(x => x.NovaEstreiaFrequencia).HasMaxLength(20).IsRequired();
+            e.HasIndex(x => x.UtilizadorId).IsUnique();
+            e.Property(x => x.AtualizadaEm).IsRequired();
+
+            e.HasOne(x => x.Utilizador)
+                .WithMany()
+                .HasForeignKey(x => x.UtilizadorId)
                 .OnDelete(DeleteBehavior.Cascade);
         });
     }

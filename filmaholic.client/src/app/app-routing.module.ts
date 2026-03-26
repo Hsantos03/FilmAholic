@@ -14,6 +14,7 @@ import { HigherOrLowerComponent } from './components/higher-or-lower/higher-or-l
 import { CinemaMoviesComponent } from './components/cinema-movies/cinema-movies.component';
 import { CinemaMapComponent } from './components/cinema-map/cinema-map.component';
 import { ActorDetailComponent } from './components/actor-detail/actor-detail.component';
+import { NotificacoesConfigComponent } from './components/notificacoes-config/notificacoes-config.component';
 
 const routes: Routes = [
   { path: 'register', component: RegisterComponent },
@@ -30,6 +31,7 @@ const routes: Routes = [
   { path: 'higher-or-lower', component: HigherOrLowerComponent }, // game page
   { path: 'cinema-movies', component: CinemaMoviesComponent }, // cinema movies page
   { path: 'cinemas-proximos', component: CinemaMapComponent }, // mapa de cinemas próximos (FR40)
+  { path: 'definicoes-notificacoes', component: NotificacoesConfigComponent },
   // Alias para compatibilidade com links antigos
   { path: 'mapa-cinemas', redirectTo: 'cinemas-proximos', pathMatch: 'full' },
   { path: '', redirectTo: '/register', pathMatch: 'full' } // Rota inicial

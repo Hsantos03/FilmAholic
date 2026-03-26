@@ -1,0 +1,50 @@
+<div class="page">
+  <header class="topbar topbar-simple">
+    <button class="icon-btn" (click)="toggleMenu()" aria-label="Menu">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+        <path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z" />
+      </svg>
+    </button>
+
+    <a class="brand" routerLink="/dashboard" routerLinkActive="active" aria-label="Go to dashboard">FilmAholic</a>
+
+    <div class="top-actions">
+      <app-topbar-actions></app-topbar-actions>
+    </div>
+  </header>
+
+  <main class="notif-config-wrap">
+    <section class="notif-config-card">
+      <h2>Definições de Notificação</h2>
+      <p class="subtitle">Configura os tipos e a frequência das notificações que queres receber.</p>
+
+      <div *ngIf="isLoading" class="status">A carregar preferências...</div>
+      <div *ngIf="error" class="status error">{{ error }}</div>
+      <div *ngIf="success" class="status success">{{ success }}</div>
+
+      <div *ngIf="!isLoading" class="form">
+        <div class="row">
+          <label class="switch-row">
+            <input type="checkbox" [(ngModel)]="prefs.novaEstreiaAtiva" />
+            <span>Receber notificações de novas estreias</span>
+          </label>
+        </div>
+
+        <div class="row">
+          <label for="freq">Frequência</label>
+          <select
+            id="freq"
+            [(ngModel)]="prefs.novaEstreiaFrequencia"
+            [disabled]="!prefs.novaEstreiaAtiva">
+            <option *ngFor="let f of frequencias" [ngValue]="f">{{ f }}</option>
+          </select>
+        </div>
+
+        <button class="save-btn" type="button" [disabled]="isSaving" (click)="guardar()">
+          {{ isSaving ? 'A guardar...' : 'Guardar preferências' }}
+        </button>
+      </div>
+    </section>
+  </main>
+</div>
+

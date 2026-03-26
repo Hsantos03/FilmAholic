@@ -24,6 +24,7 @@ import { HigherOrLowerComponent } from './components/higher-or-lower/higher-or-l
 import { CinemaMapComponent } from './components/cinema-map/cinema-map.component';
 import { ActorDetailComponent } from './components/actor-detail/actor-detail.component';
 import { TopbarActionsComponent } from './components/topbar-actions/topbar-actions.component';
+import { NotificacoesConfigComponent } from './components/notificacoes-config/notificacoes-config.component';
 
 
 registerLocaleData(localePt);
@@ -46,7 +47,8 @@ registerLocaleData(localePt);
     CinemaMapComponent,
     ActorDetailComponent,
     HigherOrLowerComponent,
-    TopbarActionsComponent
+    TopbarActionsComponent,
+    NotificacoesConfigComponent
   ],
   imports: [
     BrowserModule,

@@ -6,6 +6,11 @@ import { of } from 'rxjs';
 import { environment } from '../../environments/environment';
 import { Filme } from './filmes.service';
 
+export interface PreferenciasNotificacaoDto {
+  novaEstreiaAtiva: boolean;
+  novaEstreiaFrequencia: 'Imediata' | 'Diaria' | 'Semanal';
+}
+
 @Injectable({ providedIn: 'root' })
 export class NotificacoesService {
   private readonly apiBase = environment.apiBaseUrl || '';
@@ -54,6 +59,18 @@ export class NotificacoesService {
     if (o.filtrarPorGeneros === false) params = params.set('filtrarPorGeneros', 'false');
     return this.http.get<Filme[]>(`${this.apiUrl}/proximas-estreias`, {
       params,
+      withCredentials: true
+    });
+  }
+
+  getPreferenciasNotificacao(): Observable<PreferenciasNotificacaoDto> {
+    return this.http.get<PreferenciasNotificacaoDto>(`${this.apiUrl}/preferencias-notificacao`, {
+      withCredentials: true
+    });
+  }
+
+  atualizarPreferenciasNotificacao(dto: PreferenciasNotificacaoDto): Observable<void> {
+    return this.http.put<void>(`${this.apiUrl}/preferencias-notificacao`, dto, {
       withCredentials: true
     });
   }

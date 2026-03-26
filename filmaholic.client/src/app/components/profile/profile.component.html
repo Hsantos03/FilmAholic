@@ -89,6 +89,7 @@
       <ul class="menu">
         <li class="menu-item" [class.active]="activeSection === 'overview'" (click)="showOverview()">Preferências</li>
         <li class="menu-item" [class.active]="activeSection === 'statistics'" (click)="showStatistics()">Estatísticas</li>
+        <li class="menu-item" (click)="goToNotificacoesSettings()">Definições de notificações</li>
         <li>Conquistas</li>
         <li class="logout" (click)="logout()">Terminar sessão</li>
         <li class="logout" (click)="openDeleteConfirm()">Apagar conta</li>

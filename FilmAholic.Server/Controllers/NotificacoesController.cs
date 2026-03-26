@@ -12,6 +12,7 @@ namespace FilmAholic.Server.Controllers
     public class NotificacoesController : ControllerBase
     {
         private const string TipoNovaEstreia = "NovaEstreia";
+        private static readonly string[] FrequenciasPermitidas = ["Imediata", "Diaria", "Semanal"];
         private readonly FilmAholicDbContext _context;
         private readonly IMovieService _movieService;
 
@@ -24,6 +25,51 @@ namespace FilmAholic.Server.Controllers
         private string? GetUserId()
         {
             return User.FindFirstValue(ClaimTypes.NameIdentifier);
+        }
+
+        private async Task<PreferenciasNotificacao> GetOrCreatePreferenciasNotificacaoAsync(string userId)
+        {
+            var prefs = await _context.PreferenciasNotificacao
+                .FirstOrDefaultAsync(x => x.UtilizadorId == userId);
+
+            if (prefs != null) return prefs;
+
+            prefs = new PreferenciasNotificacao
+            {
+                UtilizadorId = userId,
+                NovaEstreiaAtiva = true,
+                NovaEstreiaFrequencia = "Diaria",
+                AtualizadaEm = DateTime.UtcNow
+            };
+
+            _context.PreferenciasNotificacao.Add(prefs);
+            await _context.SaveChangesAsync();
+            return prefs;
+        }
+
+        private static TimeSpan GetFrequencyInterval(string? frequencia)
+        {
+            return (frequencia ?? string.Empty).Trim().ToLowerInvariant() switch
+            {
+                "imediata" => TimeSpan.Zero,
+                "semanal" => TimeSpan.FromDays(7),
+                _ => TimeSpan.FromDays(1), // default: Diaria
+            };
+        }
+
+        private async Task<bool> CanGenerateNovaEstreiaAsync(string userId, PreferenciasNotificacao prefs, DateTime nowUtc)
+        {
+            if (!prefs.NovaEstreiaAtiva) return false;
+
+            var interval = GetFrequencyInterval(prefs.NovaEstreiaFrequencia);
+            if (interval == TimeSpan.Zero) return true; // Imediata
+
+            var lastCreatedAt = await _context.Notificacoes
+                .Where(n => n.UtilizadorId == userId && n.Tipo == TipoNovaEstreia)
+                .MaxAsync(n => (DateTime?)n.CriadaEm);
+
+            if (!lastCreatedAt.HasValue) return true;
+            return nowUtc - lastCreatedAt.Value >= interval;
         }
 
         private static bool IsUpcoming(Filme f, DateTime nowUtc, DateTime endUtc, int maxAnoAhead)
@@ -213,6 +259,12 @@ namespace FilmAholic.Server.Controllers
                 return Ok(sorted);
             }
 
+            var prefs = await GetOrCreatePreferenciasNotificacaoAsync(userId);
+            if (!prefs.NovaEstreiaAtiva)
+            {
+                return Ok(new List<Filme>());
+            }
+
             var favoriteGenres = await _context.UtilizadorGeneros
                 .Where(ug => ug.UtilizadorId == userId)
                 .Select(ug => ug.Genero.Nome)
@@ -298,30 +350,33 @@ namespace FilmAholic.Server.Controllers
             // Cria notificações NovaEstreia para os elegíveis (idempotente pelo índice único).
             // Nota: se o utilizador já marcou como "lida" vários filmes mais próximos, precisamos de considerar
             // mais candidatos para existirem sempre "não lidas" suficientes na janela.
-            var desiredCreateCount = Math.Min(Math.Max(limit * 20, 50), 200); // ex.: limit=5 => 100
-            var poolToConsider = eligible.Take(desiredCreateCount).ToList();
-            var poolIds = poolToConsider.Select(f => f.Id).ToList();
-
-            var alreadyExistingIds = await _context.Notificacoes
-                .Where(n => n.UtilizadorId == userId && n.Tipo == TipoNovaEstreia && poolIds.Contains(n.FilmeId))
-                .Select(n => n.FilmeId)
-                .ToListAsync();
-
-            var existingNotifSet = alreadyExistingIds.ToHashSet();
-            foreach (var f in poolToConsider)
+            if (await CanGenerateNovaEstreiaAsync(userId, prefs, nowUtc))
             {
-                if (existingNotifSet.Contains(f.Id)) continue;
+                var desiredCreateCount = Math.Min(Math.Max(limit * 20, 50), 200); // ex.: limit=5 => 100
+                var poolToConsider = eligible.Take(desiredCreateCount).ToList();
+                var poolIds = poolToConsider.Select(f => f.Id).ToList();
 
-                _context.Notificacoes.Add(new Notificacao
+                var alreadyExistingIds = await _context.Notificacoes
+                    .Where(n => n.UtilizadorId == userId && n.Tipo == TipoNovaEstreia && poolIds.Contains(n.FilmeId))
+                    .Select(n => n.FilmeId)
+                    .ToListAsync();
+
+                var existingNotifSet = alreadyExistingIds.ToHashSet();
+                foreach (var f in poolToConsider)
                 {
-                    UtilizadorId = userId,
-                    FilmeId = f.Id,
-                    Tipo = TipoNovaEstreia,
-                    CriadaEm = nowUtc
-                });
-            }
+                    if (existingNotifSet.Contains(f.Id)) continue;
 
-            await _context.SaveChangesAsync();
+                    _context.Notificacoes.Add(new Notificacao
+                    {
+                        UtilizadorId = userId,
+                        FilmeId = f.Id,
+                        Tipo = TipoNovaEstreia,
+                        CriadaEm = nowUtc
+                    });
+                }
+
+                await _context.SaveChangesAsync();
+            }
 
             // Devolve só notificações não lidas, revalidando elegibilidade.
             var unread = await _context.Notificacoes
@@ -440,6 +495,10 @@ namespace FilmAholic.Server.Controllers
             if (string.IsNullOrWhiteSpace(userId))
                 return Unauthorized();
 
+            var prefs = await GetOrCreatePreferenciasNotificacaoAsync(userId);
+            if (!prefs.NovaEstreiaAtiva)
+                return Ok(new List<Filme>());
+
             var nowUtc = DateTime.UtcNow;
             var endUtc = nowUtc.AddDays(windowDays);
             var todayUtc = nowUtc.Date;
@@ -527,6 +586,12 @@ namespace FilmAholic.Server.Controllers
             var userId = GetUserId();
             if (string.IsNullOrWhiteSpace(userId))
                 return Unauthorized();
+
+            var prefs = await GetOrCreatePreferenciasNotificacaoAsync(userId);
+            if (!prefs.NovaEstreiaAtiva)
+            {
+                return Ok(new NovaEstreiaFeedDto());
+            }
 
             var nowUtc = DateTime.UtcNow;
             var endUtc = nowUtc.AddDays(windowDays);
@@ -667,6 +732,16 @@ namespace FilmAholic.Server.Controllers
                 return Ok(dto);
             }
 
+            var prefs = await GetOrCreatePreferenciasNotificacaoAsync(userId);
+            if (!prefs.NovaEstreiaAtiva)
+            {
+                dto.CandidatesCount = 0;
+                dto.EligibleCount = 0;
+                dto.UnreadNotificationsCount = 0;
+                dto.ReadNotificationsCount = 0;
+                return Ok(dto);
+            }
+
             var favoriteGenres = await _context.UtilizadorGeneros
                 .Where(ug => ug.UtilizadorId == userId)
                 .Select(ug => ug.Genero.Nome)
@@ -751,28 +826,30 @@ namespace FilmAholic.Server.Controllers
             var poolToConsider = eligible.Take(dto.DesiredCreateCount).ToList();
             dto.PoolToConsiderCount = poolToConsider.Count;
 
-            var poolIds = poolToConsider.Select(f => f.Id).ToList();
-
-            var alreadyExistingIds = await _context.Notificacoes
-                .Where(n => n.UtilizadorId == userId && n.Tipo == TipoNovaEstreia && poolIds.Contains(n.FilmeId))
-                .Select(n => n.FilmeId)
-                .ToListAsync();
-
-            var existingNotifSet = alreadyExistingIds.ToHashSet();
-            foreach (var f in poolToConsider)
+            if (await CanGenerateNovaEstreiaAsync(userId, prefs, nowUtc))
             {
-                if (existingNotifSet.Contains(f.Id)) continue;
+                var poolIds = poolToConsider.Select(f => f.Id).ToList();
+                var alreadyExistingIds = await _context.Notificacoes
+                    .Where(n => n.UtilizadorId == userId && n.Tipo == TipoNovaEstreia && poolIds.Contains(n.FilmeId))
+                    .Select(n => n.FilmeId)
+                    .ToListAsync();
 
-                _context.Notificacoes.Add(new Notificacao
+                var existingNotifSet = alreadyExistingIds.ToHashSet();
+                foreach (var f in poolToConsider)
                 {
-                    UtilizadorId = userId,
-                    FilmeId = f.Id,
-                    Tipo = TipoNovaEstreia,
-                    CriadaEm = nowUtc
-                });
-            }
+                    if (existingNotifSet.Contains(f.Id)) continue;
 
-            await _context.SaveChangesAsync();
+                    _context.Notificacoes.Add(new Notificacao
+                    {
+                        UtilizadorId = userId,
+                        FilmeId = f.Id,
+                        Tipo = TipoNovaEstreia,
+                        CriadaEm = nowUtc
+                    });
+                }
+
+                await _context.SaveChangesAsync();
+            }
 
             dto.UnreadNotificationsCount = await _context.Notificacoes
                 .Where(n => n.UtilizadorId == userId && n.Tipo == TipoNovaEstreia && n.LidaEm == null)
@@ -857,6 +934,53 @@ namespace FilmAholic.Server.Controllers
             {
                 notif.LidaEm = nowUtc;
             }
+
+            await _context.SaveChangesAsync();
+            return NoContent();
+        }
+
+        public class PreferenciasNotificacaoDto
+        {
+            public bool NovaEstreiaAtiva { get; set; } = true;
+            public string NovaEstreiaFrequencia { get; set; } = "Diaria";
+        }
+
+        [HttpGet("preferencias-notificacao")]
+        public async Task<ActionResult<PreferenciasNotificacaoDto>> GetPreferenciasNotificacao()
+        {
+            var userId = GetUserId();
+            if (string.IsNullOrWhiteSpace(userId))
+                return Unauthorized();
+
+            var prefs = await GetOrCreatePreferenciasNotificacaoAsync(userId);
+            return Ok(new PreferenciasNotificacaoDto
+            {
+                NovaEstreiaAtiva = prefs.NovaEstreiaAtiva,
+                NovaEstreiaFrequencia = prefs.NovaEstreiaFrequencia
+            });
+        }
+
+        [HttpPut("preferencias-notificacao")]
+        public async Task<IActionResult> PutPreferenciasNotificacao([FromBody] PreferenciasNotificacaoDto dto)
+        {
+            var userId = GetUserId();
+            if (string.IsNullOrWhiteSpace(userId))
+                return Unauthorized();
+
+            var freq = (dto.NovaEstreiaFrequencia ?? string.Empty).Trim();
+            if (!FrequenciasPermitidas.Contains(freq, StringComparer.OrdinalIgnoreCase))
+            {
+                return BadRequest(new
+                {
+                    message = "Frequência inválida.",
+                    allowed = FrequenciasPermitidas
+                });
+            }
+
+            var prefs = await GetOrCreatePreferenciasNotificacaoAsync(userId);
+            prefs.NovaEstreiaAtiva = dto.NovaEstreiaAtiva;
+            prefs.NovaEstreiaFrequencia = freq;
+            prefs.AtualizadaEm = DateTime.UtcNow;
 
             await _context.SaveChangesAsync();
             return NoContent();
