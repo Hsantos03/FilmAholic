@@ -1,6 +1,7 @@
 using FilmAholic.Server.Data;
 using FilmAholic.Server.Services;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace FilmAholic.Server.Controllers;
 

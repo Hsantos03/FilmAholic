@@ -154,6 +154,7 @@ public class ActorSearchResultDto
     public int Id { get; set; }
     public string Nome { get; set; } = "";
     public string FotoUrl { get; set; } = "";
+    public double Popularidade { get; set; }
 }
 
 /// <summary>API response: movie in "movies by actor" list</summary>
