@@ -31,7 +31,7 @@
         </div>
 
         <div class="row">
-          <label for="freq">Frequência</label>
+          <label for="freq">Frequência (estreias)</label>
           <select
             id="freq"
             [(ngModel)]="prefs.novaEstreiaFrequencia"
@@ -39,6 +39,26 @@
             <option *ngFor="let f of frequencias" [ngValue]="f">{{ f }}</option>
           </select>
         </div>
+
+        <div class="row row-divider"></div>
+
+        <div class="row">
+          <label class="switch-row">
+            <input type="checkbox" [(ngModel)]="prefs.resumoEstatisticasAtiva" />
+            <span>Receber resumo periódico das minhas estatísticas e da comunidade</span>
+          </label>
+        </div>
+
+        <div class="row">
+          <label for="freqResumo">Frequência (resumo)</label>
+          <select
+            id="freqResumo"
+            [(ngModel)]="prefs.resumoEstatisticasFrequencia"
+            [disabled]="!prefs.resumoEstatisticasAtiva">
+            <option *ngFor="let f of frequenciasResumo" [ngValue]="f">{{ f }}</option>
+          </select>
+        </div>
+        <p class="hint">O resumo só é gerado se tiveres atividade recente (filmes marcados como vistos).</p>
 
         <button class="save-btn" type="button" [disabled]="isSaving" (click)="guardar()">
           {{ isSaving ? 'A guardar...' : 'Guardar preferências' }}

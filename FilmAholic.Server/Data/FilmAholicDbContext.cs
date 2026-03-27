@@ -114,17 +114,25 @@ public class FilmAholicDbContext : IdentityDbContext<Utilizador>
             gh.ToTable("GameHistories");
         });
 
-        // Configure Notificacoes (NovaEstreia, etc.)
+        // Configure Notificacoes (NovaEstreia, ResumoEstatisticas, etc.)
         builder.Entity<Notificacao>(e =>
         {
             e.ToTable("Notificacoes");
             e.HasKey(x => x.Id);
-            e.Property(x => x.Tipo).HasMaxLength(50).IsRequired();
+            e.Property(x => x.Tipo).HasMaxLength(64).IsRequired();
+            e.Property(x => x.Corpo).HasMaxLength(4000);
+            e.Property(x => x.FilmeId).IsRequired(false);
 
             e.HasOne(x => x.Filme)
                 .WithMany()
                 .HasForeignKey(x => x.FilmeId)
+                .IsRequired(false)
                 .OnDelete(DeleteBehavior.Cascade);
+
+            // Idempotência NovaEstreia: um par (utilizador, filme, tipo). ResumoEstatisticas usa FilmeId nulo → várias linhas permitidas.
+            e.HasIndex(x => new { x.UtilizadorId, x.FilmeId, x.Tipo })
+                .IsUnique()
+                .HasFilter("[FilmeId] IS NOT NULL");
         });
 
         builder.Entity<PreferenciasNotificacao>(e =>
@@ -132,6 +140,7 @@ public class FilmAholicDbContext : IdentityDbContext<Utilizador>
             e.ToTable("PreferenciasNotificacao");
             e.HasKey(x => x.Id);
             e.Property(x => x.NovaEstreiaFrequencia).HasMaxLength(20).IsRequired();
+            e.Property(x => x.ResumoEstatisticasFrequencia).HasMaxLength(20).IsRequired();
             e.HasIndex(x => x.UtilizadorId).IsUnique();
             e.Property(x => x.AtualizadaEm).IsRequired();
 

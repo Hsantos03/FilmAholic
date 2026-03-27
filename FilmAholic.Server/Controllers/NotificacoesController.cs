@@ -1,4 +1,5 @@
 using System.Security.Claims;
+using System.Text.Json;
 using FilmAholic.Server.Data;
 using FilmAholic.Server.Models;
 using FilmAholic.Server.Services;
@@ -12,7 +13,9 @@ namespace FilmAholic.Server.Controllers
     public class NotificacoesController : ControllerBase
     {
         private const string TipoNovaEstreia = "NovaEstreia";
+        private const string TipoResumoEstatisticas = "ResumoEstatisticas";
         private static readonly string[] FrequenciasPermitidas = ["Imediata", "Diaria", "Semanal"];
+        private static readonly string[] ResumoFrequenciasPermitidas = ["Diaria", "Semanal"];
         private readonly FilmAholicDbContext _context;
         private readonly IMovieService _movieService;
 
@@ -39,6 +42,8 @@ namespace FilmAholic.Server.Controllers
                 UtilizadorId = userId,
                 NovaEstreiaAtiva = true,
                 NovaEstreiaFrequencia = "Diaria",
+                ResumoEstatisticasAtiva = true,
+                ResumoEstatisticasFrequencia = "Semanal",
                 AtualizadaEm = DateTime.UtcNow
             };
 
@@ -357,8 +362,8 @@ namespace FilmAholic.Server.Controllers
                 var poolIds = poolToConsider.Select(f => f.Id).ToList();
 
                 var alreadyExistingIds = await _context.Notificacoes
-                    .Where(n => n.UtilizadorId == userId && n.Tipo == TipoNovaEstreia && poolIds.Contains(n.FilmeId))
-                    .Select(n => n.FilmeId)
+                    .Where(n => n.UtilizadorId == userId && n.Tipo == TipoNovaEstreia && n.FilmeId != null && poolIds.Contains(n.FilmeId.Value))
+                    .Select(n => n.FilmeId!.Value)
                     .ToListAsync();
 
                 var existingNotifSet = alreadyExistingIds.ToHashSet();
@@ -442,8 +447,9 @@ namespace FilmAholic.Server.Controllers
                     n.UtilizadorId == userId &&
                     n.Tipo == TipoNovaEstreia &&
                     n.LidaEm != null &&
-                    filmeIds.Contains(n.FilmeId))
-                .Select(n => n.FilmeId)
+                    n.FilmeId != null &&
+                    filmeIds.Contains(n.FilmeId.Value))
+                .Select(n => n.FilmeId!.Value)
                 .ToListAsync();
 
             var readSet = readFilmeIds.ToHashSet();
@@ -830,8 +836,8 @@ namespace FilmAholic.Server.Controllers
             {
                 var poolIds = poolToConsider.Select(f => f.Id).ToList();
                 var alreadyExistingIds = await _context.Notificacoes
-                    .Where(n => n.UtilizadorId == userId && n.Tipo == TipoNovaEstreia && poolIds.Contains(n.FilmeId))
-                    .Select(n => n.FilmeId)
+                    .Where(n => n.UtilizadorId == userId && n.Tipo == TipoNovaEstreia && n.FilmeId != null && poolIds.Contains(n.FilmeId.Value))
+                    .Select(n => n.FilmeId!.Value)
                     .ToListAsync();
 
                 var existingNotifSet = alreadyExistingIds.ToHashSet();
@@ -943,7 +949,30 @@ namespace FilmAholic.Server.Controllers
         {
             public bool NovaEstreiaAtiva { get; set; } = true;
             public string NovaEstreiaFrequencia { get; set; } = "Diaria";
+            /// <summary>Null se o cliente não enviou o campo (mantém valor na BD).</summary>
+            public bool? ResumoEstatisticasAtiva { get; set; }
+            /// <summary>Null ou vazio: mantém frequência na BD.</summary>
+            public string? ResumoEstatisticasFrequencia { get; set; }
         }
+
+        public class ResumoEstatisticasFeedItemDto
+        {
+            public int Id { get; set; }
+            public DateTime CriadaEm { get; set; }
+            public DateTime? LidaEm { get; set; }
+            public ResumoEstatisticasCorpoDto? Corpo { get; set; }
+        }
+
+        public class ResumoEstatisticasFeedDto
+        {
+            public List<ResumoEstatisticasFeedItemDto> Unread { get; set; } = new();
+            public List<ResumoEstatisticasFeedItemDto> Read { get; set; } = new();
+        }
+
+        private static readonly JsonSerializerOptions ResumoJsonOpts = new()
+        {
+            PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+        };
 
         [HttpGet("preferencias-notificacao")]
         public async Task<ActionResult<PreferenciasNotificacaoDto>> GetPreferenciasNotificacao()
@@ -956,7 +985,11 @@ namespace FilmAholic.Server.Controllers
             return Ok(new PreferenciasNotificacaoDto
             {
                 NovaEstreiaAtiva = prefs.NovaEstreiaAtiva,
-                NovaEstreiaFrequencia = prefs.NovaEstreiaFrequencia
+                NovaEstreiaFrequencia = prefs.NovaEstreiaFrequencia,
+                ResumoEstatisticasAtiva = prefs.ResumoEstatisticasAtiva,
+                ResumoEstatisticasFrequencia = string.IsNullOrWhiteSpace(prefs.ResumoEstatisticasFrequencia)
+                    ? "Semanal"
+                    : prefs.ResumoEstatisticasFrequencia
             });
         }
 
@@ -972,16 +1005,115 @@ namespace FilmAholic.Server.Controllers
             {
                 return BadRequest(new
                 {
-                    message = "Frequência inválida.",
+                    message = "Frequência inválida (novas estreias).",
                     allowed = FrequenciasPermitidas
+                });
+            }
+
+            var freqResumoRaw = (dto.ResumoEstatisticasFrequencia ?? string.Empty).Trim();
+            if (!string.IsNullOrEmpty(freqResumoRaw) &&
+                !ResumoFrequenciasPermitidas.Contains(freqResumoRaw, StringComparer.OrdinalIgnoreCase))
+            {
+                return BadRequest(new
+                {
+                    message = "Frequência inválida (resumo de estatísticas).",
+                    allowed = ResumoFrequenciasPermitidas
                 });
             }
 
             var prefs = await GetOrCreatePreferenciasNotificacaoAsync(userId);
             prefs.NovaEstreiaAtiva = dto.NovaEstreiaAtiva;
             prefs.NovaEstreiaFrequencia = freq;
+            if (dto.ResumoEstatisticasAtiva.HasValue)
+                prefs.ResumoEstatisticasAtiva = dto.ResumoEstatisticasAtiva.Value;
+            if (!string.IsNullOrEmpty(freqResumoRaw))
+                prefs.ResumoEstatisticasFrequencia = freqResumoRaw;
             prefs.AtualizadaEm = DateTime.UtcNow;
 
+            await _context.SaveChangesAsync();
+            return NoContent();
+        }
+
+        /// <summary>Feed FR70: resumos periódicos de estatísticas (lidas / não lidas).</summary>
+        [HttpGet("resumo-estatisticas/feed")]
+        public async Task<ActionResult<ResumoEstatisticasFeedDto>> GetResumoEstatisticasFeed(
+            [FromQuery] int unreadLimit = 5,
+            [FromQuery] int readLimit = 5)
+        {
+            if (unreadLimit < 0) unreadLimit = 0;
+            if (unreadLimit > 20) unreadLimit = 20;
+            if (readLimit < 0) readLimit = 0;
+            if (readLimit > 20) readLimit = 20;
+
+            var userId = GetUserId();
+            if (string.IsNullOrWhiteSpace(userId))
+                return Unauthorized();
+
+            var prefs = await GetOrCreatePreferenciasNotificacaoAsync(userId);
+            if (!prefs.ResumoEstatisticasAtiva)
+                return Ok(new ResumoEstatisticasFeedDto());
+
+            static ResumoEstatisticasCorpoDto? ParseCorpo(string? raw)
+            {
+                if (string.IsNullOrWhiteSpace(raw)) return null;
+                try
+                {
+                    return JsonSerializer.Deserialize<ResumoEstatisticasCorpoDto>(raw, ResumoJsonOpts);
+                }
+                catch
+                {
+                    return null;
+                }
+            }
+
+            var unread = await _context.Notificacoes
+                .AsNoTracking()
+                .Where(n => n.UtilizadorId == userId && n.Tipo == TipoResumoEstatisticas && n.LidaEm == null)
+                .OrderByDescending(n => n.CriadaEm)
+                .Take(unreadLimit)
+                .ToListAsync();
+
+            var read = await _context.Notificacoes
+                .AsNoTracking()
+                .Where(n => n.UtilizadorId == userId && n.Tipo == TipoResumoEstatisticas && n.LidaEm != null)
+                .OrderByDescending(n => n.LidaEm)
+                .Take(readLimit)
+                .ToListAsync();
+
+            return Ok(new ResumoEstatisticasFeedDto
+            {
+                Unread = unread.Select(n => new ResumoEstatisticasFeedItemDto
+                {
+                    Id = n.Id,
+                    CriadaEm = n.CriadaEm,
+                    LidaEm = n.LidaEm,
+                    Corpo = ParseCorpo(n.Corpo)
+                }).ToList(),
+                Read = read.Select(n => new ResumoEstatisticasFeedItemDto
+                {
+                    Id = n.Id,
+                    CriadaEm = n.CriadaEm,
+                    LidaEm = n.LidaEm,
+                    Corpo = ParseCorpo(n.Corpo)
+                }).ToList()
+            });
+        }
+
+        [HttpPut("resumo-estatisticas/{id:int}/lida")]
+        public async Task<IActionResult> MarcarResumoEstatisticasComoLida([FromRoute] int id)
+        {
+            var userId = GetUserId();
+            if (string.IsNullOrWhiteSpace(userId))
+                return Unauthorized();
+
+            var nowUtc = DateTime.UtcNow;
+            var notif = await _context.Notificacoes
+                .FirstOrDefaultAsync(n => n.Id == id && n.UtilizadorId == userId && n.Tipo == TipoResumoEstatisticas);
+
+            if (notif == null)
+                return NotFound();
+
+            notif.LidaEm = nowUtc;
             await _context.SaveChangesAsync();
             return NoContent();
         }

@@ -4,6 +4,7 @@ using FilmAholic.Server.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace FilmAholic.Server.Migrations
 {
     [DbContext(typeof(FilmAholicDbContext))]
-    partial class FilmAholicDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260327174811_Fr70PeriodicStatsNotifications")]
+    partial class Fr70PeriodicStatsNotifications
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -275,9 +278,7 @@ namespace FilmAholic.Server.Migrations
 
                     b.HasIndex("FilmeId");
 
-                    b.HasIndex("UtilizadorId", "FilmeId", "Tipo")
-                        .IsUnique()
-                        .HasFilter("[FilmeId] IS NOT NULL");
+                    b.HasIndex("UtilizadorId");
 
                     b.ToTable("Notificacoes", (string)null);
                 });

@@ -9,6 +9,47 @@
       </svg>
     </button>
     <div class="notifications-menu" *ngIf="isNotificationsOpen" role="menu">
+      <div *ngIf="hasResumoItems" class="notif-resumo-section" (click)="$event.stopPropagation()">
+        <div class="notifications-title">Resumo de estatísticas</div>
+        <div *ngFor="let it of resumoFeed.unread" class="resumo-card resumo-card--unread">
+          <div class="resumo-card-body">
+            <p *ngIf="it.corpo" class="resumo-line">
+              Tempo total: <strong>{{ it.corpo.tempoTotalHoras }} h</strong>
+            </p>
+            <p *ngIf="resumoGenerosLabel(it)" class="resumo-line resumo-line--muted">
+              Géneros mais vistos: {{ resumoGenerosLabel(it) }}
+            </p>
+            <p *ngIf="it.corpo?.filmeMaisVistoSemanaPlataforma as fc" class="resumo-line resumo-line--muted">
+              Filme da semana na plataforma:
+              <button type="button" class="resumo-link" (click)="openResumoCommunityMovie($event, fc)">{{ fc.titulo }}</button>
+              <span class="resumo-count">({{ fc.marcacoesNaSemana }} marcações)</span>
+            </p>
+          </div>
+          <button
+            type="button"
+            class="notification-mark-read"
+            (click)="marcarResumoLida($event, it)"
+            aria-label="Marcar resumo como lido">✓</button>
+        </div>
+        <ng-container *ngIf="resumoFeed.read?.length">
+          <div class="notifications-title resumo-subtitle">Resumos anteriores</div>
+          <div *ngFor="let it of resumoFeed.read" class="resumo-card resumo-card--read">
+            <div class="resumo-card-body">
+              <p *ngIf="it.corpo" class="resumo-line">
+                Tempo total: <strong>{{ it.corpo.tempoTotalHoras }} h</strong>
+              </p>
+              <p *ngIf="resumoGenerosLabel(it)" class="resumo-line resumo-line--muted">
+                Géneros: {{ resumoGenerosLabel(it) }}
+              </p>
+              <p *ngIf="it.corpo?.filmeMaisVistoSemanaPlataforma as fc" class="resumo-line resumo-line--muted">
+                Filme da semana:
+                <button type="button" class="resumo-link" (click)="openResumoCommunityMovie($event, fc)">{{ fc.titulo }}</button>
+              </p>
+            </div>
+          </div>
+        </ng-container>
+      </div>
+
       <div *ngIf="hasUpcomingList; else noUpcoming" class="notifications-inner">
         <div class="notifications-title">Próximas estreias</div>
         <div *ngIf="showEstreiasGenreFilter"
@@ -83,7 +124,8 @@
         </ng-container>
       </div>
       <ng-template #noUpcoming>
-        <div class="notifications-empty">Ainda sem próximas estreias.</div>
+        <div *ngIf="!hasResumoItems" class="notifications-empty">Ainda sem próximas estreias.</div>
+        <div *ngIf="hasResumoItems" class="notifications-empty notifications-empty--sub">Sem estreias nesta lista.</div>
       </ng-template>
     </div>
   </div>

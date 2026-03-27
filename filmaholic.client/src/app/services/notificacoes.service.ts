@@ -9,6 +9,37 @@ import { Filme } from './filmes.service';
 export interface PreferenciasNotificacaoDto {
   novaEstreiaAtiva: boolean;
   novaEstreiaFrequencia: 'Imediata' | 'Diaria' | 'Semanal';
+  resumoEstatisticasAtiva: boolean;
+  resumoEstatisticasFrequencia: 'Diaria' | 'Semanal';
+}
+
+export interface ResumoGeneroContagemDto {
+  nome: string;
+  filmes: number;
+}
+
+export interface ResumoFilmeComunidadeDto {
+  filmeId: number;
+  titulo: string;
+  marcacoesNaSemana: number;
+}
+
+export interface ResumoEstatisticasCorpoDto {
+  tempoTotalHoras: number;
+  generosMaisVistos: ResumoGeneroContagemDto[];
+  filmeMaisVistoSemanaPlataforma?: ResumoFilmeComunidadeDto | null;
+}
+
+export interface ResumoEstatisticasFeedItemDto {
+  id: number;
+  criadaEm: string;
+  lidaEm?: string | null;
+  corpo: ResumoEstatisticasCorpoDto | null;
+}
+
+export interface ResumoEstatisticasFeedDto {
+  unread: ResumoEstatisticasFeedItemDto[];
+  read: ResumoEstatisticasFeedItemDto[];
 }
 
 @Injectable({ providedIn: 'root' })
@@ -73,5 +104,20 @@ export class NotificacoesService {
     return this.http.put<void>(`${this.apiUrl}/preferencias-notificacao`, dto, {
       withCredentials: true
     });
+  }
+
+  getResumoEstatisticasFeed(options?: { unreadLimit?: number; readLimit?: number }): Observable<ResumoEstatisticasFeedDto> {
+    const o = options ?? {};
+    let params = new HttpParams();
+    if (o.unreadLimit != null) params = params.set('unreadLimit', String(o.unreadLimit));
+    if (o.readLimit != null) params = params.set('readLimit', String(o.readLimit));
+    return this.http.get<ResumoEstatisticasFeedDto>(`${this.apiUrl}/resumo-estatisticas/feed`, {
+      params,
+      withCredentials: true
+    });
+  }
+
+  marcarResumoEstatisticasComoLida(id: number): Observable<void> {
+    return this.http.put<void>(`${this.apiUrl}/resumo-estatisticas/${id}/lida`, {}, { withCredentials: true });
   }
 }

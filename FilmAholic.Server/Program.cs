@@ -99,6 +99,10 @@ builder.Services.AddScoped<IMovieService, MovieService>();
 builder.Services.AddMemoryCache();
 builder.Services.AddHostedService<TmdbUpcomingPreloadService>();
 
+builder.Services.Configure<PeriodicStatsNotificationOptions>(
+    builder.Configuration.GetSection("PeriodicStatsNotifications"));
+builder.Services.AddHostedService<PeriodicStatsNotificationService>();
+
 builder.Services.AddCors(options => {
     options.AddPolicy("AllowAngular",
         policy => policy.WithOrigins("http://localhost:4200", "https://localhost:50905", "http://localhost:50905", "https://localhost:7277", "http://localhost:7277")

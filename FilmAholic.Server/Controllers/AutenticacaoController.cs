@@ -61,6 +61,8 @@ namespace FilmAholic.Server.Controllers
                     UtilizadorId = user.Id,
                     NovaEstreiaAtiva = true,
                     NovaEstreiaFrequencia = "Diaria",
+                    ResumoEstatisticasAtiva = true,
+                    ResumoEstatisticasFrequencia = "Semanal",
                     AtualizadaEm = DateTime.UtcNow
                 });
                 await _context.SaveChangesAsync();

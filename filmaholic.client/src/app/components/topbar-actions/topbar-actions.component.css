@@ -9,11 +9,83 @@
   position: relative;
 }
 
+.notif-resumo-section {
+  padding-bottom: 6px;
+  margin-bottom: 6px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.resumo-subtitle {
+  margin-top: 10px !important;
+  padding-top: 8px !important;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  opacity: 0.85;
+}
+
+.resumo-card {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  padding: 8px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.04);
+  margin-bottom: 6px;
+}
+
+.resumo-card--read {
+  opacity: 0.75;
+}
+
+.resumo-card-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.resumo-line {
+  margin: 0 0 6px;
+  font-size: 12px;
+  color: #e6e6e6;
+  line-height: 1.35;
+}
+
+.resumo-line:last-child {
+  margin-bottom: 0;
+}
+
+.resumo-line--muted {
+  color: #9a9a9a;
+  font-size: 11px;
+}
+
+.resumo-link {
+  display: inline;
+  padding: 0;
+  margin: 0;
+  border: none;
+  background: none;
+  color: #7ec8ff;
+  cursor: pointer;
+  font: inherit;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.resumo-link:hover {
+  color: #b9ddff;
+}
+
+.resumo-count {
+  color: #888;
+}
+
 .notifications-menu {
   position: absolute;
   top: calc(100% + 8px);
   right: 0;
-  min-width: 260px;
+  min-width: 300px;
+  max-width: 340px;
   background: #0a0a0a;
   border: 1px solid rgba(255,255,255,0.06);
   border-radius: 8px;
@@ -174,4 +246,10 @@
 .notifications-empty {
   padding: 12px;
   color: #aaa;
+}
+
+.notifications-empty--sub {
+  padding-top: 4px;
+  font-size: 12px;
+  opacity: 0.85;
 }

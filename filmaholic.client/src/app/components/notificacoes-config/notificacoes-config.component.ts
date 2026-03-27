@@ -16,7 +16,9 @@ export class NotificacoesConfigComponent implements OnInit {
 
   prefs: PreferenciasNotificacaoDto = {
     novaEstreiaAtiva: true,
-    novaEstreiaFrequencia: 'Diaria'
+    novaEstreiaFrequencia: 'Diaria',
+    resumoEstatisticasAtiva: true,
+    resumoEstatisticasFrequencia: 'Semanal'
   };
 
   readonly frequencias: Array<PreferenciasNotificacaoDto['novaEstreiaFrequencia']> = [
@@ -24,6 +26,8 @@ export class NotificacoesConfigComponent implements OnInit {
     'Diaria',
     'Semanal'
   ];
+
+  readonly frequenciasResumo: Array<PreferenciasNotificacaoDto['resumoEstatisticasFrequencia']> = ['Diaria', 'Semanal'];
 
   constructor(
     private notificacoesService: NotificacoesService,
@@ -52,7 +56,9 @@ export class NotificacoesConfigComponent implements OnInit {
       next: (res) => {
         this.prefs = {
           novaEstreiaAtiva: !!res?.novaEstreiaAtiva,
-          novaEstreiaFrequencia: (res?.novaEstreiaFrequencia as any) || 'Diaria'
+          novaEstreiaFrequencia: (res?.novaEstreiaFrequencia as any) || 'Diaria',
+          resumoEstatisticasAtiva: res?.resumoEstatisticasAtiva !== false,
+          resumoEstatisticasFrequencia: (res?.resumoEstatisticasFrequencia as any) || 'Semanal'
         };
         this.isLoading = false;
       },

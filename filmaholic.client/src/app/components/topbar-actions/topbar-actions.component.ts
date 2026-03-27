@@ -3,7 +3,12 @@ import { Router } from '@angular/router';
 import { forkJoin, of } from 'rxjs';
 import { catchError, switchMap, tap } from 'rxjs/operators';
 import { FilmesService, Filme } from '../../services/filmes.service';
-import { NotificacoesService } from '../../services/notificacoes.service';
+import {
+  NotificacoesService,
+  ResumoEstatisticasFeedDto,
+  ResumoEstatisticasFeedItemDto,
+  ResumoFilmeComunidadeDto
+} from '../../services/notificacoes.service';
 
 @Component({
   selector: 'app-topbar-actions',
@@ -31,6 +36,8 @@ export class TopbarActionsComponent implements OnInit, OnDestroy {
   /** Definido pelo servidor: último carregamento de próximas estreias foi com sessão autenticada. */
   proximasEstreiasSessaoAtiva = false;
 
+  resumoFeed: ResumoEstatisticasFeedDto = { unread: [], read: [] };
+
   constructor(
     private filmesService: FilmesService,
     private notificacoesService: NotificacoesService,
@@ -56,8 +63,58 @@ export class TopbarActionsComponent implements OnInit, OnDestroy {
     if (this.isNotificationsOpen) {
       this.upcomingUnreadPage = 0;
       this.upcomingReadPage = 0;
+      this.loadResumoFeed();
       this.loadUpcomingFromTmdb();
     }
+  }
+
+  get hasResumoItems(): boolean {
+    const u = this.resumoFeed?.unread?.length ?? 0;
+    const r = this.resumoFeed?.read?.length ?? 0;
+    return u + r > 0;
+  }
+
+  private loadResumoFeed(): void {
+    this.notificacoesService.getResumoEstatisticasFeed({ unreadLimit: 5, readLimit: 4 }).subscribe({
+      next: (dto) => {
+        this.resumoFeed = dto ?? { unread: [], read: [] };
+        this.cdr.markForCheck();
+      },
+      error: () => {
+        this.resumoFeed = { unread: [], read: [] };
+      }
+    });
+  }
+
+  marcarResumoLida(e: MouseEvent, item: ResumoEstatisticasFeedItemDto): void {
+    e.preventDefault();
+    e.stopPropagation();
+    this.notificacoesService.marcarResumoEstatisticasComoLida(item.id).subscribe({
+      next: () => {
+        this.resumoFeed = {
+          unread: (this.resumoFeed.unread ?? []).filter((x) => x.id !== item.id),
+          read: [
+            { ...item, lidaEm: new Date().toISOString() },
+            ...(this.resumoFeed.read ?? []).filter((x) => x.id !== item.id)
+          ].slice(0, 8)
+        };
+        this.cdr.markForCheck();
+      }
+    });
+  }
+
+  openResumoCommunityMovie(e: MouseEvent, f: ResumoFilmeComunidadeDto): void {
+    e.preventDefault();
+    e.stopPropagation();
+    this.isNotificationsOpen = false;
+    const id = f?.filmeId;
+    if (id && !isNaN(id)) this.router.navigate(['/movie-detail', id]);
+  }
+
+  resumoGenerosLabel(item: ResumoEstatisticasFeedItemDto): string {
+    const list = item.corpo?.generosMaisVistos ?? [];
+    if (!list.length) return '';
+    return list.map((g) => `${g.nome} (${g.filmes})`).join(', ');
   }
 
   get hasUpcomingList(): boolean {

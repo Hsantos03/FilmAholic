@@ -68,6 +68,18 @@
   cursor: pointer;
 }
 
+.row-divider {
+  margin: 6px 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.hint {
+  margin: -4px 0 0;
+  font-size: 12px;
+  color: #888;
+  line-height: 1.4;
+}
+
 select {
   background: #171717;
   color: #fff;
