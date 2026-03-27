@@ -22,14 +22,14 @@ export class CinemaMoviesComponent implements OnInit, OnDestroy, AfterViewInit {
 
   // ── CINEMAS PRÓXIMOS ──
   nearbyLoading = true;
-  nearbyCinemas: CinemaVenue[] = [];       // lista filtrada (mostrada no template)
-  private allCinemas: CinemaVenue[] = []; // lista completa para cálculos
+  nearbyCinemas: CinemaVenue[] = [];
+  private allCinemas: CinemaVenue[] = [];
   userPosition: { lat: number; lng: number } | null = null;
   geoError: string | null = null;
   favoritosIds: Set<string> = new Set();
 
 
-  // flags para coordenar geo + cinemas + favoritos
+  // Localização + cinemas loading flags
   private geoDone = false;
   private cinemasDone = false;
 

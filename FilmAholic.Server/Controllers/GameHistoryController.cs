@@ -182,7 +182,14 @@ namespace FilmAholic.Server.Controllers
                 .ToListAsync();
 
             if (!history.Any())
-                return Ok(new { melhorSequencia = 0, mediapontos = 0.0, totalJogos = 0 });
+            {
+                return Ok(new
+                {
+                    melhorSequencia = 0,
+                    mediaPontos = 0.0,
+                    totalJogos = 0
+                });
+            }
 
             var totalJogos = history.Count;
             var mediaPontos = history.Average(h => h.Score);

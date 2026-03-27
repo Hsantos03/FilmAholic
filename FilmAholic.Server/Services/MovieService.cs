@@ -479,7 +479,6 @@ public class MovieService : IMovieService
                 return new List<PopularActorDto>();
             }
 
-            // embaralha para n�o dar sempre os mesmos pares
             var rng = new Random();
             var shuffled = allPeople
                 .Where(p => !string.IsNullOrEmpty(p.ProfilePath))
