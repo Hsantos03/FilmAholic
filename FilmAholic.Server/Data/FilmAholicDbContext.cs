@@ -25,6 +25,11 @@ public class FilmAholicDbContext : IdentityDbContext<Utilizador>
 
     public DbSet<CinemaMovieCache> CinemaMovieCache => Set<CinemaMovieCache>();
 
+    // NEW: Comunidades feature
+    public DbSet<Comunidade> Comunidades => Set<Comunidade>();
+    public DbSet<ComunidadeMembro> ComunidadeMembros => Set<ComunidadeMembro>();
+    public DbSet<ComunidadePost> ComunidadePosts => Set<ComunidadePost>();
+
     protected override void OnModelCreating(ModelBuilder builder)
     {
         builder.Entity<UserMovie>()
@@ -131,6 +136,63 @@ public class FilmAholicDbContext : IdentityDbContext<Utilizador>
             e.Property(x => x.Link).HasMaxLength(1000);
             e.HasIndex(x => x.DataCache);
             e.ToTable("CinemaMovieCache");
+        });
+
+        // NEW: Comunidade mapping
+        builder.Entity<Comunidade>(e =>
+        {
+            e.HasKey(c => c.Id);
+            e.Property(c => c.Nome).IsRequired().HasMaxLength(200);
+            e.Property(c => c.Descricao).HasMaxLength(2000);
+            e.Property(c => c.DataCriacao).HasDefaultValueSql("CURRENT_TIMESTAMP");
+            e.HasIndex(c => c.Nome).IsUnique();
+            e.HasMany(c => c.Membros)
+             .WithOne(m => m.Comunidade)
+             .HasForeignKey(m => m.ComunidadeId)
+             .OnDelete(DeleteBehavior.Cascade);
+            e.HasMany(c => c.Posts)
+             .WithOne(p => p.Comunidade)
+             .HasForeignKey(p => p.ComunidadeId)
+             .OnDelete(DeleteBehavior.Cascade);
+            e.ToTable("Comunidades");
+        });
+
+        // NEW: ComunidadeMembro mapping
+        builder.Entity<ComunidadeMembro>(e =>
+        {
+            e.HasKey(m => m.Id);
+            e.HasIndex(m => new { m.UtilizadorId, m.ComunidadeId }).IsUnique();
+            e.Property(m => m.Role).IsRequired().HasMaxLength(50);
+            e.Property(m => m.Status).IsRequired().HasMaxLength(50);
+            e.Property(m => m.DataEntrada).HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+            // FK to Utilizador; if user removed, cascade to remove membership
+            e.HasOne(m => m.Utilizador)
+             .WithMany()
+             .HasForeignKey(m => m.UtilizadorId)
+             .OnDelete(DeleteBehavior.Cascade);
+
+            e.ToTable("ComunidadeMembros");
+        });
+
+        // NEW: ComunidadePost mapping
+        builder.Entity<ComunidadePost>(e =>
+        {
+            e.HasKey(p => p.Id);
+            e.Property(p => p.Titulo).IsRequired().HasMaxLength(300);
+            e.Property(p => p.Conteudo).IsRequired().HasMaxLength(5000);
+            e.Property(p => p.ImagemUrl).HasMaxLength(1000);
+            e.Property(p => p.DataCriacao).HasDefaultValueSql("CURRENT_TIMESTAMP");
+            e.Property(p => p.DataAtualizacao).HasDefaultValueSql("CURRENT_TIMESTAMP");
+            e.HasIndex(p => p.ComunidadeId);
+
+            // allow posts to remain if user deleted; keep UtilizadorId nullable and set FK to SetNull
+            e.HasOne(p => p.Utilizador)
+             .WithMany()
+             .HasForeignKey(p => p.UtilizadorId)
+             .OnDelete(DeleteBehavior.SetNull);
+
+            e.ToTable("ComunidadePosts");
         });
     }
 }
