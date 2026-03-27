@@ -90,6 +90,22 @@ namespace FilmAholic.Server.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "Comunidades",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    Nome = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: false),
+                    Descricao = table.Column<string>(type: "nvarchar(2000)", maxLength: 2000, nullable: true),
+                    CreatedById = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    DataCriacao = table.Column<DateTime>(type: "datetime2", nullable: false, defaultValueSql: "CURRENT_TIMESTAMP")
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Comunidades", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "Desafios",
                 columns: table => new
                 {
@@ -259,6 +275,66 @@ namespace FilmAholic.Server.Migrations
                         name: "FK_AspNetUserTokens_AspNetUsers_UserId",
                         column: x => x.UserId,
                         principalTable: "AspNetUsers",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "ComunidadeMembros",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    ComunidadeId = table.Column<int>(type: "int", nullable: false),
+                    UtilizadorId = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    Role = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
+                    Status = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
+                    DataEntrada = table.Column<DateTime>(type: "datetime2", nullable: false, defaultValueSql: "CURRENT_TIMESTAMP")
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_ComunidadeMembros", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_ComunidadeMembros_AspNetUsers_UtilizadorId",
+                        column: x => x.UtilizadorId,
+                        principalTable: "AspNetUsers",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_ComunidadeMembros_Comunidades_ComunidadeId",
+                        column: x => x.ComunidadeId,
+                        principalTable: "Comunidades",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "ComunidadePosts",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    ComunidadeId = table.Column<int>(type: "int", nullable: false),
+                    UtilizadorId = table.Column<string>(type: "nvarchar(450)", nullable: true),
+                    Titulo = table.Column<string>(type: "nvarchar(300)", maxLength: 300, nullable: false),
+                    Conteudo = table.Column<string>(type: "nvarchar(max)", maxLength: 5000, nullable: false),
+                    ImagemUrl = table.Column<string>(type: "nvarchar(1000)", maxLength: 1000, nullable: true),
+                    DataCriacao = table.Column<DateTime>(type: "datetime2", nullable: false, defaultValueSql: "CURRENT_TIMESTAMP"),
+                    DataAtualizacao = table.Column<DateTime>(type: "datetime2", nullable: true, defaultValueSql: "CURRENT_TIMESTAMP")
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_ComunidadePosts", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_ComunidadePosts_AspNetUsers_UtilizadorId",
+                        column: x => x.UtilizadorId,
+                        principalTable: "AspNetUsers",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.SetNull);
+                    table.ForeignKey(
+                        name: "FK_ComunidadePosts_Comunidades_ComunidadeId",
+                        column: x => x.ComunidadeId,
+                        principalTable: "Comunidades",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                 });
@@ -468,6 +544,33 @@ namespace FilmAholic.Server.Migrations
                 unique: true);
 
             migrationBuilder.CreateIndex(
+                name: "IX_ComunidadeMembros_ComunidadeId",
+                table: "ComunidadeMembros",
+                column: "ComunidadeId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ComunidadeMembros_UtilizadorId_ComunidadeId",
+                table: "ComunidadeMembros",
+                columns: new[] { "UtilizadorId", "ComunidadeId" },
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ComunidadePosts_ComunidadeId",
+                table: "ComunidadePosts",
+                column: "ComunidadeId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ComunidadePosts_UtilizadorId",
+                table: "ComunidadePosts",
+                column: "UtilizadorId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Comunidades_Nome",
+                table: "Comunidades",
+                column: "Nome",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Desafios_Ativo",
                 table: "Desafios",
                 column: "Ativo");
@@ -536,6 +639,12 @@ namespace FilmAholic.Server.Migrations
                 name: "CommentVotes");
 
             migrationBuilder.DropTable(
+                name: "ComunidadeMembros");
+
+            migrationBuilder.DropTable(
+                name: "ComunidadePosts");
+
+            migrationBuilder.DropTable(
                 name: "GameHistories");
 
             migrationBuilder.DropTable(
@@ -555,6 +664,9 @@ namespace FilmAholic.Server.Migrations
 
             migrationBuilder.DropTable(
                 name: "Comments");
+
+            migrationBuilder.DropTable(
+                name: "Comunidades");
 
             migrationBuilder.DropTable(
                 name: "Desafios");

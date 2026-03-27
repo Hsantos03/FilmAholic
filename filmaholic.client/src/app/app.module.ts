@@ -25,7 +25,9 @@ import { CinemaMapComponent } from './components/cinema-map/cinema-map.component
 import { ActorDetailComponent } from './components/actor-detail/actor-detail.component';
 import { TopbarActionsComponent } from './components/topbar-actions/topbar-actions.component';
 import { LeaderboardComponent } from './components/leaderboard/leaderboard.component';
-
+import { ComunidadesComponent } from './components/comunidades/comunidades.component';
+import { ComunidadeDetalheComponent } from './components/comunidade-detalhe/comunidade-detalhe.component';
+import { ComunidadesService } from './services/comunidades.service';
 
 registerLocaleData(localePt);
 
@@ -48,7 +50,9 @@ registerLocaleData(localePt);
     ActorDetailComponent,
     HigherOrLowerComponent,
     TopbarActionsComponent,
-    LeaderboardComponent
+    LeaderboardComponent,
+    ComunidadesComponent,
+    ComunidadeDetalheComponent
   ],
   imports: [
     BrowserModule,
@@ -57,7 +61,7 @@ registerLocaleData(localePt);
     FormsModule,
     AppRoutingModule
   ],
-  providers: [{provide: LOCALE_ID, useValue: 'pt-PT'}],
+  providers: [{provide: LOCALE_ID, useValue: 'pt-PT'}, ComunidadesService],
   bootstrap: [AppComponent]
 })
 export class AppModule { }

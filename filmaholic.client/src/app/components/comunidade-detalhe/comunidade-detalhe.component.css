@@ -1,0 +1,43 @@
+.page.comunidade-detalhe {
+  padding: 16px;
+}
+
+.back-btn {
+  margin-bottom: 12px;
+  background: transparent;
+  border: none;
+  color: #ccc;
+  cursor: pointer;
+}
+
+.comunidade-card {
+  background: #0b0b0b;
+  border: 1px solid rgba(255,255,255,0.04);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.banner {
+  height: 220px;
+  background-size: cover;
+  background-position: center;
+}
+
+.content {
+  padding: 16px;
+}
+
+.meta {
+  color: #9aa0a6;
+  margin-bottom: 12px;
+}
+
+.descricao {
+  color: #d0d0d0;
+  margin-bottom: 16px;
+}
+
+.actions {
+  display:flex;
+  gap:8px;
+}
