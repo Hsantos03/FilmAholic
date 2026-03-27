@@ -4,9 +4,11 @@ import { Router } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
 import { MenuService } from '../../services/menu.service';
 import { UserMoviesService, StatsComparison, StatsCharts, ChartDataPoint } from '../../services/user-movies.service';
-import { Filme, FilmesService } from '../../services/filmes.service';
+import { Filme, FilmesService, ActorDto } from '../../services/filmes.service';
 import { FavoritesService, FavoritosDTO } from '../../services/favorites.service';
 import { environment } from '../../../environments/environment';
+import { Subject, of } from 'rxjs';
+import { debounceTime, distinctUntilChanged, switchMap } from 'rxjs/operators';
 
 type StatsPeriod = 'all' | '7d' | '30d' | '3m' | '12m';
 type GraphTheme = 'default' | 'dark' | 'force';
@@ -59,10 +61,19 @@ export class ProfileComponent implements OnInit {
   readonly TOP_10 = 10;
 
   favoritosFilmes: number[] = [];
-  favoritosAtores: string[] = [];
+  favoritosAtores: ActorDto[] = []; // Changed from string[] to ActorDto[]
   novoAtor = '';
   isSavingFavorites = false;
   showAllFavoritesModal = false;
+
+  // Actor search functionality
+  actorSuggestions: ActorDto[] = [];
+  showSuggestions = false;
+  private actorSearchTerms = new Subject<string>();
+  private isSelectingActor = false; // Flag to prevent blur from hiding during click
+  private lastSelectedActor: ActorDto | null = null; // Track last selected actor
+  actorErrorMessage = ''; // Error message for invalid actors
+  private readonly ACTOR_CACHE_KEY = 'filmaholic_actor_cache'; // localStorage key for actor data
 
   draggedIndex: number | null = null;
   dragOverIndex: number | null = null;
@@ -177,6 +188,32 @@ export class ProfileComponent implements OnInit {
       .subscribe(() => {
         this.loadFavorites();
       });
+
+    // Setup actor search functionality
+    this.actorSearchTerms.pipe(
+      debounceTime(300),
+      distinctUntilChanged(),
+      switchMap(term => {
+        if (term.length < 2) return of([]);
+        return this.filmesService.searchActors(term);
+      })
+    ).subscribe({
+      next: (results) => {
+        // 1. Filtrar lixo: só atores com foto e popularidade mínima (ex: 2.0)
+        // 2. Ordenar pelos mais populares primeiro
+        // 3. Cortar para mostrar apenas os primeiros 4
+        this.actorSuggestions = results
+          .filter(actor => actor.fotoUrl !== null && actor.fotoUrl !== undefined)
+          .sort((a, b) => b.popularidade - a.popularidade)
+          .slice(0, 4);
+
+        this.showSuggestions = this.actorSuggestions.length > 0;
+      },
+      error: (err) => {
+        this.actorSuggestions = [];
+        this.showSuggestions = false;
+      }
+    });
 
     if (!userId) {
       console.warn('No user_id in localStorage — using fallback values.');
@@ -839,7 +876,25 @@ export class ProfileComponent implements OnInit {
         const filmes = fav?.filmes ?? (fav as any)?.Filmes ?? [];
         const atores = fav?.atores ?? (fav as any)?.Atores ?? [];
         this.favoritosFilmes = Array.isArray(filmes) ? filmes : [];
-        this.favoritosAtores = Array.isArray(atores) ? atores : [];
+        
+        // Convert string array to ActorDto array using cached data
+        this.favoritosAtores = Array.isArray(atores) ? atores.map((nome: any) => {
+          const actorName = typeof nome === 'string' ? nome : nome.nome || '';
+          const cachedActor = this.getCachedActor(actorName);
+          
+          if (cachedActor) {
+            return cachedActor;
+          }
+          
+          // Fallback for actors without cached data
+          return {
+            id: typeof nome === 'object' ? nome.id || 0 : 0,
+            nome: actorName,
+            fotoUrl: typeof nome === 'object' ? nome.fotoUrl || '' : '',
+            popularidade: typeof nome === 'object' ? nome.popularidade || 0 : 0
+          };
+        }) : [];
+        
         this.ensureCatalogoHasFavorites();
       },
       error: () => {
@@ -897,21 +952,98 @@ export class ProfileComponent implements OnInit {
   }
 
   addAtorFavorito(): void {
-    const nome = (this.novoAtor || '').trim();
-    if (!nome) return;
-    if (this.favoritosAtores.includes(nome)) {
-      this.novoAtor = '';
+    // Clear previous error message
+    this.actorErrorMessage = '';
+    
+    if (!this.lastSelectedActor) {
+      this.actorErrorMessage = 'Por favor, selecione um ator da lista de sugestões.';
+      setTimeout(() => this.actorErrorMessage = '', 3000);
       return;
     }
-    if (this.favoritosAtores.length >= this.MAX_FAVORITES) return;
+    
+    const actor = this.lastSelectedActor;
+    if (this.favoritosAtores.some(a => a.nome === actor.nome)) {
+      this.actorErrorMessage = 'Este ator já está na sua lista de favoritos.';
+      setTimeout(() => this.actorErrorMessage = '', 3000);
+      this.novoAtor = '';
+      this.lastSelectedActor = null;
+      return;
+    }
+    if (this.favoritosAtores.length >= this.MAX_FAVORITES) {
+      this.actorErrorMessage = 'Atingiu o limite máximo de atores favoritos.';
+      setTimeout(() => this.actorErrorMessage = '', 3000);
+      return;
+    }
 
-    this.favoritosAtores.push(nome);
+    this.favoritosAtores.push(actor);
     this.novoAtor = '';
+    this.lastSelectedActor = null;
     this.saveFavorites();
   }
 
-  removeAtorFavorito(nome: string): void {
-    this.favoritosAtores = this.favoritosAtores.filter(a => a !== nome);
+  onActorSearch(term: string): void {
+    this.actorSearchTerms.next(term);
+    if (term.length < 2) {
+      this.showSuggestions = false;
+      this.actorSuggestions = [];
+    }
+  }
+
+  selectActor(actor: ActorDto): void {
+    this.isSelectingActor = true;
+    this.lastSelectedActor = actor; // Track the selected actor
+    
+    // Cache the actor data to persist images
+    this.cacheActorData(actor);
+    
+    this.novoAtor = actor.nome;
+    this.addAtorFavorito(); // Adiciona à lista
+    // Hide immediately when actor is selected
+    this.showSuggestions = false;
+    this.actorSuggestions = [];
+    setTimeout(() => {
+      this.isSelectingActor = false;
+    }, 100);
+  }
+
+  hideSuggestionsWithDelay(): void {
+    // Only hide if not in the middle of selecting an actor
+    if (this.isSelectingActor) return;
+    
+    setTimeout(() => {
+      if (!this.isSelectingActor) {
+        this.showSuggestions = false;
+      }
+    }, 300);
+  }
+
+  // Actor data caching methods
+  private cacheActorData(actor: ActorDto): void {
+    try {
+      const cache = this.getActorCache();
+      cache[actor.nome] = actor;
+      localStorage.setItem(this.ACTOR_CACHE_KEY, JSON.stringify(cache));
+    } catch (error) {
+      // Silently fail caching, don't break the app
+    }
+  }
+
+  private getActorCache(): { [key: string]: ActorDto } {
+    try {
+      const cached = localStorage.getItem(this.ACTOR_CACHE_KEY);
+      return cached ? JSON.parse(cached) : {};
+    } catch (error) {
+      return {};
+    }
+  }
+
+  private getCachedActor(nome: string): ActorDto | null {
+    const cache = this.getActorCache();
+    return cache[nome] || null;
+  }
+
+  removeAtorFavorito(actor: ActorDto): void {
+    this.favoritosAtores = this.favoritosAtores.filter(a => a.nome !== actor.nome);
     this.saveFavorites();
   }
 
@@ -920,7 +1052,7 @@ export class ProfileComponent implements OnInit {
 
     const dto: FavoritosDTO = {
       filmes: this.favoritosFilmes,
-      atores: this.favoritosAtores
+      atores: this.favoritosAtores.map(actor => actor.nome) // Convert to string array for API
     };
 
     this.favoritesService.saveFavorites(dto).subscribe({
@@ -943,7 +1075,7 @@ export class ProfileComponent implements OnInit {
       .filter((x): x is Filme => !!x);
   }
 
-  get favoritosAtoresTop10(): string[] {
+  get favoritosAtoresTop10(): ActorDto[] {
     return this.favoritosAtores.slice(0, this.TOP_10);
   }
 

@@ -120,4 +120,10 @@ export class FilmesService {
     const atoresUrl = this.apiBase ? `${this.apiBase}/api/atores` : '/api/atores';
     return this.http.get<ActorDto[]>(`${atoresUrl}/popular`, { params });
   }
+
+  searchActors(query: string): Observable<ActorDto[]> {
+    const params = new HttpParams().set('query', query);
+    const atoresUrl = this.apiBase ? `${this.apiBase}/api/atores` : '/api/atores';
+    return this.http.get<ActorDto[]>(`${atoresUrl}/search`, { params });
+  }
 }

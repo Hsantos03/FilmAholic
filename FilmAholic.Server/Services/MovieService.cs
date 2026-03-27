@@ -679,7 +679,8 @@ public class MovieService : IMovieService
                     Nome = p.Name,
                     FotoUrl = string.IsNullOrEmpty(p.ProfilePath)
                         ? ""
-                        : $"https://image.tmdb.org/t/p/w185{p.ProfilePath}"
+                        : $"https://image.tmdb.org/t/p/w185{p.ProfilePath}",
+                    Popularidade = p.Popularity
                 })
                 .ToList();
         }
