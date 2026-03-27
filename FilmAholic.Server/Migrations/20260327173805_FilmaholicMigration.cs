@@ -66,6 +66,30 @@ namespace FilmAholic.Server.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "CinemaMovieCache",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    MovieId = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
+                    Titulo = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: false),
+                    Poster = table.Column<string>(type: "nvarchar(1000)", maxLength: 1000, nullable: false),
+                    Cinema = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
+                    HorariosJson = table.Column<string>(type: "nvarchar(2000)", maxLength: 2000, nullable: false),
+                    Genero = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
+                    Duracao = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
+                    Classificacao = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
+                    Idioma = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
+                    Sala = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
+                    Link = table.Column<string>(type: "nvarchar(1000)", maxLength: 1000, nullable: false),
+                    DataCache = table.Column<DateTime>(type: "datetime2", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_CinemaMovieCache", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "Desafios",
                 columns: table => new
                 {
@@ -428,6 +452,11 @@ namespace FilmAholic.Server.Migrations
                 filter: "[NormalizedUserName] IS NOT NULL");
 
             migrationBuilder.CreateIndex(
+                name: "IX_CinemaMovieCache_DataCache",
+                table: "CinemaMovieCache",
+                column: "DataCache");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Comments_FilmeId",
                 table: "Comments",
                 column: "FilmeId");
@@ -499,6 +528,9 @@ namespace FilmAholic.Server.Migrations
 
             migrationBuilder.DropTable(
                 name: "AspNetUserTokens");
+
+            migrationBuilder.DropTable(
+                name: "CinemaMovieCache");
 
             migrationBuilder.DropTable(
                 name: "CommentVotes");
