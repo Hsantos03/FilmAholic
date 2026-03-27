@@ -16,6 +16,8 @@ export class ComunidadesComponent implements OnInit {
   showCreateModal = false;
   newNome = '';
   newDescricao = '';
+  bannerFile: File | null = null;
+  bannerPreview: string | null = null;
   isCreating = false;
   createError = '';
 
@@ -45,12 +47,26 @@ export class ComunidadesComponent implements OnInit {
     this.createError = '';
     this.newNome = '';
     this.newDescricao = '';
+    this.bannerFile = null;
+    this.bannerPreview = null;
     this.showCreateModal = true;
   }
 
   closeCreate(): void {
     this.showCreateModal = false;
     this.isCreating = false;
+  }
+
+  onBannerSelected(ev: any): void {
+    const f: File = ev?.target?.files?.[0];
+    this.bannerFile = f || null;
+    if (this.bannerPreview) {
+      URL.revokeObjectURL(this.bannerPreview);
+      this.bannerPreview = null;
+    }
+    if (this.bannerFile) {
+      this.bannerPreview = URL.createObjectURL(this.bannerFile);
+    }
   }
 
   createCommunity(): void {
@@ -60,25 +76,34 @@ export class ComunidadesComponent implements OnInit {
       return;
     }
 
+    const fd = new FormData();
+    fd.append('nome', this.newNome.trim());
+    fd.append('descricao', this.newDescricao?.trim() || '');
+    if (this.bannerFile) fd.append('banner', this.bannerFile, this.bannerFile.name);
+
     this.isCreating = true;
-    this.service.create({ nome: this.newNome.trim(), descricao: this.newDescricao?.trim() || null })
-      .subscribe({
-        next: (created) => {
-          this.isCreating = false;
-          this.showCreateModal = false;
-          // refresh list (optimistic add)
-          this.comunidades.unshift(created);
-        },
-        error: (err) => {
-          console.error(err);
-          this.createError = 'Falha ao criar comunidade.';
-          this.isCreating = false;
+    this.service.create(fd).subscribe({
+      next: (created) => {
+        this.isCreating = false;
+        this.showCreateModal = false;
+        if (created?.id) {
+          // navigate to the community page
+          this.router.navigate(['/comunidades', created.id]);
+        } else {
+          // optimistic: add to list and stay on page
+          if (created) this.comunidades.unshift(created);
         }
-      });
+      },
+      error: (err) => {
+        console.error(err);
+        this.createError = 'Falha ao criar comunidade.';
+        this.isCreating = false;
+      }
+    });
   }
 
   goToCommunity(c: ComunidadeDto): void {
-    // Placeholder: navigate to a community page route (not implemented)
+    if (!c || !c.id) return;
     this.router.navigate(['/comunidades', c.id]);
   }
 }

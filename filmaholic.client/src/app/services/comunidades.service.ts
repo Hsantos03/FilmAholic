@@ -10,6 +10,7 @@ export interface ComunidadeDto {
   descricao?: string | null;
   dataCriacao?: string;
   membrosCount?: number;
+  bannerUrl?: string | null;
 }
 
 @Injectable({
@@ -27,7 +28,14 @@ export class ComunidadesService {
     );
   }
 
-  create(dto: { nome: string; descricao?: string | null }): Observable<ComunidadeDto> {
-    return this.http.post<ComunidadeDto>(this.apiUrl, dto, { withCredentials: true });
+  getById(id: number | string): Observable<ComunidadeDto | null> {
+    return this.http.get<ComunidadeDto>(`${this.apiUrl}/${id}`).pipe(
+      catchError(() => of(null))
+    );
+  }
+
+  // Create using FormData (supports banner upload)
+  create(formData: FormData): Observable<ComunidadeDto> {
+    return this.http.post<ComunidadeDto>(this.apiUrl, formData, { withCredentials: true });
   }
 }

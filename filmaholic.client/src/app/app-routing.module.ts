@@ -16,6 +16,7 @@ import { CinemaMapComponent } from './components/cinema-map/cinema-map.component
 import { ActorDetailComponent } from './components/actor-detail/actor-detail.component';
 import { LeaderboardComponent } from './components/leaderboard/leaderboard.component';
 import { ComunidadesComponent } from './components/comunidades/comunidades.component';
+import { ComunidadeDetalheComponent } from './components/comunidade-detalhe/comunidade-detalhe.component';
 
 const routes: Routes = [
   { path: 'register', component: RegisterComponent },
@@ -34,6 +35,7 @@ const routes: Routes = [
   { path: 'cinemas-proximos', component: CinemaMapComponent },
   { path: 'leaderboard', component: LeaderboardComponent },
   { path: 'comunidades', component: ComunidadesComponent },
+  { path: 'comunidades/:id', component: ComunidadeDetalheComponent }, // detail route
   { path: 'mapa-cinemas', redirectTo: 'cinemas-proximos', pathMatch: 'full' },
   { path: '', redirectTo: '/register', pathMatch: 'full' }
 ];

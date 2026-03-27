@@ -11,6 +11,7 @@
 
   <div class="grid" *ngIf="!isLoading && comunidades.length">
     <article class="card" *ngFor="let c of comunidades" (click)="goToCommunity(c)" role="button" tabindex="0">
+      <div class="card-banner" *ngIf="c.bannerUrl" [style.background-image]="'url(' + c.bannerUrl + ')'"></div>
       <div class="card-body">
         <div class="card-title">{{ c.nome }}</div>
         <div class="card-desc">{{ c.descricao || 'Sem descrição' }}</div>
@@ -38,6 +39,13 @@
 
         <label for="descricao">Descrição</label>
         <textarea id="descricao" name="descricao" rows="4" [(ngModel)]="newDescricao"></textarea>
+
+        <label for="banner">Banner (imagem)</label>
+        <input id="banner" name="banner" type="file" accept="image/*" (change)="onBannerSelected($event)" />
+
+        <div *ngIf="bannerPreview" class="banner-preview">
+          <img [src]="bannerPreview" alt="Pré-visualização do banner" />
+        </div>
 
         <div *ngIf="createError" class="form-error">{{ createError }}</div>
 
