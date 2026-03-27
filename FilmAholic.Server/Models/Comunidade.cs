@@ -1,4 +1,3 @@
-FilmAholic.Server\Models\Comunidade.cs
 using System;
 using System.Collections.Generic;
 

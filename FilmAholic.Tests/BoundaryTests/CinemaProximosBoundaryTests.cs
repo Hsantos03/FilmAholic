@@ -118,6 +118,71 @@ namespace FilmAholic.Tests.BoundaryTests
             Assert.True(result is NotFoundResult || result is BadRequestResult);
         }
 
+        [Fact]
+        public void GetCinemasProximos_FirstAndLastItems_AreValid()
+        {
+            var result = _controller.GetCinemasProximos();
+            var ok = Assert.IsType<OkObjectResult>(result);
+            var cinemas = Assert.IsAssignableFrom<List<CinemaController.CinemaVenueDto>>(ok.Value);
+
+            var first = cinemas.First();
+            var last = cinemas.Last();
+
+            Assert.False(string.IsNullOrWhiteSpace(first.Id));
+            Assert.False(string.IsNullOrWhiteSpace(last.Id));
+        }
+
+        [Fact]
+        public void GetCinemasProximos_NoDuplicateIds()
+        {
+            var result = _controller.GetCinemasProximos();
+            var ok = Assert.IsType<OkObjectResult>(result);
+            var cinemas = Assert.IsAssignableFrom<IEnumerable<CinemaController.CinemaVenueDto>>(ok.Value);
+
+            var duplicateIds = cinemas
+                .GroupBy(c => c.Id)
+                .Where(g => g.Count() > 1)
+                .ToList();
+
+            Assert.Empty(duplicateIds);
+        }
+
+        [Fact]
+        public void GetCinemasProximos_Count_IsCorrect()
+        {
+            var result = _controller.GetCinemasProximos();
+            var ok = Assert.IsType<OkObjectResult>(result);
+            var cinemas = Assert.IsAssignableFrom<IEnumerable<CinemaController.CinemaVenueDto>>(ok.Value);
+
+            Assert.Equal(33, cinemas.Count());
+        }
+
+        [Fact]
+        public void GetCinemasProximos_AllIds_NotEmpty()
+        {
+            var cinemas = GetCinemas();
+            Assert.All(cinemas, c => Assert.False(string.IsNullOrWhiteSpace(c.Id)));
+        }
+
+        [Fact]
+        public void GetCinemasProximos_Coordinates_AreValid()
+        {
+            var cinemas = GetCinemas();
+
+            foreach (var c in cinemas)
+            {
+                Assert.InRange(c.Latitude, -90, 90);
+                Assert.InRange(c.Longitude, -180, 180);
+            }
+        }
+
+        private List<CinemaController.CinemaVenueDto> GetCinemas()
+        {
+            var result = _controller.GetCinemasProximos();
+            var ok = (OkObjectResult)result;
+            return ((IEnumerable<CinemaController.CinemaVenueDto>)ok.Value).ToList();
+        }
+
         public void Dispose() => _context.Dispose();
     }
 }
