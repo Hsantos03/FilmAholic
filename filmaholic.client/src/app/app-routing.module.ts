@@ -15,6 +15,7 @@ import { CinemaMoviesComponent } from './components/cinema-movies/cinema-movies.
 import { CinemaMapComponent } from './components/cinema-map/cinema-map.component';
 import { ActorDetailComponent } from './components/actor-detail/actor-detail.component';
 import { LeaderboardComponent } from './components/leaderboard/leaderboard.component';
+import { ComunidadesComponent } from './components/comunidades/comunidades.component';
 
 const routes: Routes = [
   { path: 'register', component: RegisterComponent },
@@ -26,12 +27,13 @@ const routes: Routes = [
   { path: 'dashboard', component: DashboardComponent },
   { path: 'profile', component: ProfileComponent },
   { path: 'search', component: SearchResultsComponent },
-  { path: 'movie-detail/:id', component: MoviePageComponent }, // nova rota para detalhes do filme
-  { path: 'actor/:id', component: ActorDetailComponent }, // actor details page
-  { path: 'higher-or-lower', component: HigherOrLowerComponent }, // game page (inclui leaderboard)
-  { path: 'cinema-movies', component: CinemaMoviesComponent }, // cinema movies page
-  { path: 'cinemas-proximos', component: CinemaMapComponent }, // mapa de cinemas próximos
-  { path: 'leaderboard', component: LeaderboardComponent }, // redireciona para higher-or-lower?leaderboard=1 no ngOnInit
+  { path: 'movie-detail/:id', component: MoviePageComponent },
+  { path: 'actor/:id', component: ActorDetailComponent },
+  { path: 'higher-or-lower', component: HigherOrLowerComponent },
+  { path: 'cinema-movies', component: CinemaMoviesComponent },
+  { path: 'cinemas-proximos', component: CinemaMapComponent },
+  { path: 'leaderboard', component: LeaderboardComponent },
+  { path: 'comunidades', component: ComunidadesComponent },
   { path: 'mapa-cinemas', redirectTo: 'cinemas-proximos', pathMatch: 'full' },
   { path: '', redirectTo: '/register', pathMatch: 'full' }
 ];

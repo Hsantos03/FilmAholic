@@ -1,4 +1,3 @@
-FilmAholic.Server\Models\ComunidadePost.cs
 using System;
 
 namespace FilmAholic.Server.Models;

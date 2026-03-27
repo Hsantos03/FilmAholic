@@ -1,0 +1,53 @@
+<div class="page comunidades-page">
+  <header class="comunidades-header">
+    <h1>Comunidades</h1>
+    <div class="actions">
+      <button class="primary-btn" (click)="openCreate()">Criar Comunidade</button>
+    </div>
+  </header>
+
+  <div class="state" *ngIf="isLoading">A carregar comunidades…</div>
+  <div class="state error" *ngIf="!isLoading && error">{{ error }}</div>
+
+  <div class="grid" *ngIf="!isLoading && comunidades.length">
+    <article class="card" *ngFor="let c of comunidades" (click)="goToCommunity(c)" role="button" tabindex="0">
+      <div class="card-body">
+        <div class="card-title">{{ c.nome }}</div>
+        <div class="card-desc">{{ c.descricao || 'Sem descrição' }}</div>
+      </div>
+      <div class="card-meta">
+        <span class="members">{{ c.membrosCount ?? 0 }} membros</span>
+        <span class="created" *ngIf="c.dataCriacao">Criada: {{ c.dataCriacao | date:'shortDate' }}</span>
+      </div>
+    </article>
+  </div>
+
+  <div *ngIf="!isLoading && !comunidades.length" class="empty">
+    Ainda não há comunidades. Seja o primeiro a criar uma!
+  </div>
+
+  <!-- Create modal -->
+  <div class="modal-overlay" *ngIf="showCreateModal" (click)="closeCreate()">
+    <div class="modal-box" (click)="$event.stopPropagation()">
+      <button class="modal-close" (click)="closeCreate()">&times;</button>
+      <h3>Criar nova comunidade</h3>
+
+      <form (submit)="createCommunity(); $event.preventDefault();">
+        <label for="nome">Nome</label>
+        <input id="nome" name="nome" type="text" [(ngModel)]="newNome" required />
+
+        <label for="descricao">Descrição</label>
+        <textarea id="descricao" name="descricao" rows="4" [(ngModel)]="newDescricao"></textarea>
+
+        <div *ngIf="createError" class="form-error">{{ createError }}</div>
+
+        <div class="modal-actions">
+          <button type="button" class="cancel-btn" (click)="closeCreate()" [disabled]="isCreating">Cancelar</button>
+          <button type="button" class="save-btn" (click)="createCommunity()" [disabled]="isCreating">
+            {{ isCreating ? 'A criar…' : 'Criar' }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>

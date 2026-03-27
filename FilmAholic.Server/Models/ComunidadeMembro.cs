@@ -1,4 +1,3 @@
-FilmAholic.Server\Models\ComunidadeMembro.cs
 using System;
 
 namespace FilmAholic.Server.Models;

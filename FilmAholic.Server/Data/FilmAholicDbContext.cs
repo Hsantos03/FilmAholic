@@ -25,7 +25,6 @@ public class FilmAholicDbContext : IdentityDbContext<Utilizador>
 
     public DbSet<CinemaMovieCache> CinemaMovieCache => Set<CinemaMovieCache>();
 
-    // NEW: Comunidades feature
     public DbSet<Comunidade> Comunidades => Set<Comunidade>();
     public DbSet<ComunidadeMembro> ComunidadeMembros => Set<ComunidadeMembro>();
     public DbSet<ComunidadePost> ComunidadePosts => Set<ComunidadePost>();

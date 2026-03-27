@@ -25,7 +25,7 @@ import { CinemaMapComponent } from './components/cinema-map/cinema-map.component
 import { ActorDetailComponent } from './components/actor-detail/actor-detail.component';
 import { TopbarActionsComponent } from './components/topbar-actions/topbar-actions.component';
 import { LeaderboardComponent } from './components/leaderboard/leaderboard.component';
-
+import { ComunidadesComponent } from './components/comunidades/comunidades.component';
 
 registerLocaleData(localePt);
 
@@ -48,7 +48,8 @@ registerLocaleData(localePt);
     ActorDetailComponent,
     HigherOrLowerComponent,
     TopbarActionsComponent,
-    LeaderboardComponent
+    LeaderboardComponent,
+    ComunidadesComponent
   ],
   imports: [
     BrowserModule,
