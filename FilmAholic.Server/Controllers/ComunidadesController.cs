@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using System.Security.Claims;
 using FilmAholic.Server.Data;
+using FilmAholic.Server.DTOs;
 using FilmAholic.Server.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Hosting;
@@ -95,7 +96,7 @@ namespace FilmAholic.Server.Controllers
         // Create (requires authenticated user)
         [Authorize]
         [HttpPost]
-        [RequestSizeLimit(10_000_000)] // atÈ ~10MB
+        [RequestSizeLimit(10_000_000)] // atù ~10MB
         public async Task<IActionResult> Create([FromForm] ComunidadeCreateForm form)
         {
             if (string.IsNullOrWhiteSpace(form.Nome))
@@ -230,14 +231,14 @@ namespace FilmAholic.Server.Controllers
             return Ok(posts);
         }
 
-        // POST criar publicaÁ„o (apenas membros)
+        // POST criar publicaùùo (apenas membros)
         [Authorize]
         [HttpPost("{id:int}/posts")]
         [RequestSizeLimit(10_000_000)]
         public async Task<IActionResult> CreatePost(int id, [FromForm] PostCreateForm form)
         {
             if (string.IsNullOrWhiteSpace(form.Titulo) || string.IsNullOrWhiteSpace(form.Conteudo))
-                return BadRequest(new { message = "TÌtulo e conte˙do s„o obrigatÛrios." });
+                return BadRequest(new { message = "Tùtulo e conteùdo sùo obrigatùrios." });
 
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue("sub");
 
@@ -299,7 +300,7 @@ namespace FilmAholic.Server.Controllers
             });
         }
 
-        // POST juntar-se ‡ comunidade
+        // POST juntar-se ù comunidade
         [Authorize]
         [HttpPost("{id:int}/juntar")]
         public async Task<IActionResult> Juntar(int id)
@@ -309,7 +310,7 @@ namespace FilmAholic.Server.Controllers
             var jaExiste = await _context.ComunidadeMembros
                 .AnyAsync(m => m.ComunidadeId == id && m.UtilizadorId == userId);
 
-            if (jaExiste) return Conflict(new { message = "J· Ès membro desta comunidade." });
+            if (jaExiste) return Conflict(new { message = "Jù ùs membro desta comunidade." });
 
             _context.ComunidadeMembros.Add(new ComunidadeMembro
             {
@@ -339,6 +340,106 @@ namespace FilmAholic.Server.Controllers
             _context.ComunidadeMembros.Remove(membro);
             await _context.SaveChangesAsync();
             return Ok();
+        }
+
+        /// <summary>FR68 ó Filmes mais vistos por outros membros das tuas comunidades (exclui filmes que j· marcaste como vistos).</summary>
+        [Authorize]
+        [HttpGet("sugestoes-filmes")]
+        public async Task<IActionResult> GetSugestoesFilmesComunidade([FromQuery] int limit = 24)
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue("sub");
+            if (string.IsNullOrEmpty(userId))
+                return Unauthorized();
+
+            if (limit < 1) limit = 1;
+            if (limit > 60) limit = 60;
+
+            var minhasComunidades = await _context.ComunidadeMembros
+                .AsNoTracking()
+                .Where(m => m.UtilizadorId == userId && m.Status == "Ativo")
+                .Select(m => m.ComunidadeId)
+                .Distinct()
+                .ToListAsync();
+
+            if (minhasComunidades.Count == 0)
+                return Ok(Array.Empty<SugestaoFilmeComunidadeDto>());
+
+            var filmesJaVistos = await _context.UserMovies
+                .AsNoTracking()
+                .Where(um => um.UtilizadorId == userId && um.JaViu)
+                .Select(um => um.FilmeId)
+                .ToListAsync();
+
+            var acumulado = new List<(int FilmeId, int ComunidadeId, string ComunidadeNome, int MembrosQueViram)>();
+
+            foreach (var cid in minhasComunidades)
+            {
+                var comunidadeNome = await _context.Comunidades
+                    .AsNoTracking()
+                    .Where(c => c.Id == cid)
+                    .Select(c => c.Nome)
+                    .FirstOrDefaultAsync();
+
+                if (string.IsNullOrEmpty(comunidadeNome))
+                    continue;
+
+                var outrosMembros = await _context.ComunidadeMembros
+                    .AsNoTracking()
+                    .Where(m => m.ComunidadeId == cid && m.UtilizadorId != userId && m.Status == "Ativo")
+                    .Select(m => m.UtilizadorId)
+                    .ToListAsync();
+
+                if (outrosMembros.Count == 0)
+                    continue;
+
+                var grupos = await _context.UserMovies
+                    .AsNoTracking()
+                    .Where(um => um.JaViu && outrosMembros.Contains(um.UtilizadorId))
+                    .Where(um => !filmesJaVistos.Contains(um.FilmeId))
+                    .GroupBy(um => um.FilmeId)
+                    .Select(g => new { FilmeId = g.Key, Cnt = g.Select(x => x.UtilizadorId).Distinct().Count() })
+                    .OrderByDescending(x => x.Cnt)
+                    .Take(12)
+                    .ToListAsync();
+
+                foreach (var g in grupos)
+                    acumulado.Add((g.FilmeId, cid, comunidadeNome, g.Cnt));
+            }
+
+            var ordenado = acumulado
+                .OrderByDescending(x => x.MembrosQueViram)
+                .ThenBy(x => x.ComunidadeNome)
+                .Take(limit)
+                .ToList();
+
+            var idsFilmes = ordenado.Select(x => x.FilmeId).Distinct().ToList();
+            var filmes = await _context.Filmes
+                .AsNoTracking()
+                .Where(f => idsFilmes.Contains(f.Id))
+                .ToDictionaryAsync(f => f.Id);
+
+            var resultado = new List<SugestaoFilmeComunidadeDto>();
+            foreach (var row in ordenado)
+            {
+                if (!filmes.TryGetValue(row.FilmeId, out var f))
+                    continue;
+
+                resultado.Add(new SugestaoFilmeComunidadeDto
+                {
+                    FilmeId = f.Id,
+                    Titulo = f.Titulo,
+                    Genero = f.Genero,
+                    PosterUrl = f.PosterUrl,
+                    Duracao = f.Duracao,
+                    Ano = f.Ano,
+                    ReleaseDate = f.ReleaseDate,
+                    ComunidadeId = row.ComunidadeId,
+                    ComunidadeNome = row.ComunidadeNome,
+                    MembrosQueViram = row.MembrosQueViram
+                });
+            }
+
+            return Ok(resultado);
         }
 
         // DTOs
