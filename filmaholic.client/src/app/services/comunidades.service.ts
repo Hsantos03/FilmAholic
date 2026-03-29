@@ -11,6 +11,7 @@ export interface ComunidadeDto {
   dataCriacao?: string;
   membrosCount?: number;
   bannerUrl?: string | null;
+  iconUrl?: string | null;
 }
 
 export interface MembroDto {
@@ -54,6 +55,11 @@ export class ComunidadesService {
     return this.http.post<ComunidadeDto>(this.apiUrl, formData, { withCredentials: true });
   }
 
+  /** Editar uma comunidade (apenas o Admin pode chamar este método). */
+  update(id: number, formData: FormData): Observable<ComunidadeDto> {
+    return this.http.put<ComunidadeDto>(`${this.apiUrl}/${id}`, formData, { withCredentials: true });
+  }
+
   getMembros(id: number): Observable<MembroDto[]> {
     return this.http.get<MembroDto[]>(`${this.apiUrl}/${id}/membros`).pipe(
       catchError(() => of([]))
@@ -76,6 +82,10 @@ export class ComunidadesService {
 
   juntar(id: number): Observable<any> {
     return this.http.post(`${this.apiUrl}/${id}/juntar`, {}, { withCredentials: true });
+  }
+
+  deleteComunidade(id: number): Observable<any> {
+    return this.http.delete(`${this.apiUrl}/${id}`, { withCredentials: true });
   }
 
   sair(id: number): Observable<any> {

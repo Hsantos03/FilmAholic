@@ -17,7 +17,6 @@ export class ComunidadeDetalheComponent implements OnInit, OnDestroy {
   isLoading = false;
   error = '';
 
-  // abas
   activeTab: 'posts' | 'membros' = 'posts';
 
   // novo post
@@ -29,14 +28,27 @@ export class ComunidadeDetalheComponent implements OnInit, OnDestroy {
   imagemFile: File | null = null;
   imagemPreview: string | null = null;
 
-  // Ordenação
   sortOrder: 'desc' | 'asc' = 'desc';
 
-  // membro
   isMembro = false;
+  isAdmin = false;
   isJuntando = false;
 
+  // ── Edição ───
+  showEditModal = false;
+  editNome = '';
+  editDescricao = '';
+  editBannerFile: File | null = null;
+  editBannerPreview: string | null = null;
+  editIconFile: File | null = null;
+  editIconPreview: string | null = null;
+  isSavingEdit = false;
+  editError = '';
 
+  // ── Modal de confirmação de apagar ─────
+  showDeleteModal = false;
+  isDeleting = false;
+  deleteError = '';
 
   private comunidadeId!: number;
   private sub?: Subscription;
@@ -80,7 +92,9 @@ export class ComunidadeDetalheComponent implements OnInit, OnDestroy {
       next: (list) => {
         this.membros = list;
         const currentUserId = localStorage.getItem('user_id');
-        this.isMembro = list.some(m => m.utilizadorId === currentUserId);
+        const membro = list.find(m => m.utilizadorId === currentUserId);
+        this.isMembro = !!membro;
+        this.isAdmin = membro?.role === 'Admin';
       }
     });
   }
@@ -108,6 +122,7 @@ export class ComunidadeDetalheComponent implements OnInit, OnDestroy {
     this.service.sair(this.comunidadeId).subscribe({
       next: () => {
         this.isMembro = false;
+        this.isAdmin = false;
         if (this.comunidade) this.comunidade.membrosCount = Math.max(0, (this.comunidade.membrosCount ?? 1) - 1);
         this.loadMembros();
       }
@@ -117,13 +132,8 @@ export class ComunidadeDetalheComponent implements OnInit, OnDestroy {
   onImagemSelected(ev: any): void {
     const f: File = ev?.target?.files?.[0];
     this.imagemFile = f || null;
-    if (this.imagemPreview) {
-      URL.revokeObjectURL(this.imagemPreview);
-      this.imagemPreview = null;
-    }
-    if (this.imagemFile) {
-      this.imagemPreview = URL.createObjectURL(this.imagemFile);
-    }
+    if (this.imagemPreview) { URL.revokeObjectURL(this.imagemPreview); this.imagemPreview = null; }
+    if (this.imagemFile) this.imagemPreview = URL.createObjectURL(this.imagemFile);
   }
 
   submitPost(): void {
@@ -155,8 +165,99 @@ export class ComunidadeDetalheComponent implements OnInit, OnDestroy {
     });
   }
 
+  // ── Editar comunidade ────
+
+  openEditModal(): void {
+    if (!this.comunidade) return;
+    this.editNome = this.comunidade.nome;
+    this.editDescricao = this.comunidade.descricao ?? '';
+    this.editBannerFile = null;
+    this.editBannerPreview = null;
+    this.editIconFile = null;
+    this.editIconPreview = null;
+    this.editError = '';
+    this.showEditModal = true;
+  }
+
+  closeEditModal(): void {
+    this.showEditModal = false;
+    this.isSavingEdit = false;
+  }
+
+  onEditBannerSelected(ev: any): void {
+    const f: File = ev?.target?.files?.[0];
+    this.editBannerFile = f || null;
+    if (this.editBannerPreview) { URL.revokeObjectURL(this.editBannerPreview); this.editBannerPreview = null; }
+    if (this.editBannerFile) this.editBannerPreview = URL.createObjectURL(this.editBannerFile);
+  }
+
+  onEditIconSelected(ev: any): void {
+    const f: File = ev?.target?.files?.[0];
+    this.editIconFile = f || null;
+    if (this.editIconPreview) { URL.revokeObjectURL(this.editIconPreview); this.editIconPreview = null; }
+    if (this.editIconFile) this.editIconPreview = URL.createObjectURL(this.editIconFile);
+  }
+
+  saveEdit(): void {
+    this.editError = '';
+    if (!this.editNome.trim()) {
+      this.editError = 'O nome da comunidade é obrigatório.';
+      return;
+    }
+
+    const fd = new FormData();
+    fd.append('nome', this.editNome.trim());
+    fd.append('descricao', this.editDescricao?.trim() ?? '');
+    if (this.editBannerFile) fd.append('banner', this.editBannerFile, this.editBannerFile.name);
+    if (this.editIconFile) fd.append('icon', this.editIconFile, this.editIconFile.name);
+
+    this.isSavingEdit = true;
+    this.service.update(this.comunidadeId, fd).subscribe({
+      next: (updated) => {
+        this.comunidade = { ...this.comunidade, ...updated };
+        this.isSavingEdit = false;
+        this.showEditModal = false;
+      },
+      error: (err) => {
+        const msg = err?.error?.message;
+        this.editError = msg || 'Erro ao guardar alterações.';
+        this.isSavingEdit = false;
+      }
+    });
+  }
+
+  // ── Apagar comunidade ───
+
+  openDeleteModal(): void {
+    this.deleteError = '';
+    this.showDeleteModal = true;
+  }
+
+  closeDeleteModal(): void {
+    this.showDeleteModal = false;
+    this.isDeleting = false;
+  }
+
+  confirmDelete(): void {
+    this.isDeleting = true;
+    this.deleteError = '';
+    this.service.deleteComunidade(this.comunidadeId).subscribe({
+      next: () => {
+        this.router.navigate(['/comunidades']);
+      },
+      error: (err) => {
+        const msg = err?.error?.message;
+        this.deleteError = msg || 'Erro ao apagar comunidade.';
+        this.isDeleting = false;
+      }
+    });
+  }
+
+
   goBack(): void { this.router.navigate(['/comunidades']); }
+
   goToDashboardDesafios(): void { this.router.navigate(['/dashboard'], { queryParams: { openDesafios: '1' } }); }
+
   initialLetra(nome: string | undefined): string {
     const t = (nome || '?').trim();
     return t.length ? t.charAt(0).toUpperCase() : '?';

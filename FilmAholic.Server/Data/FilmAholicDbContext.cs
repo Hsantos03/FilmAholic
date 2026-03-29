@@ -142,6 +142,7 @@ public class FilmAholicDbContext : IdentityDbContext<Utilizador>
             e.Property(c => c.Nome).IsRequired().HasMaxLength(200);
             e.Property(c => c.Descricao).HasMaxLength(2000);
             e.Property(c => c.BannerFileName).HasMaxLength(512);
+            e.Property(c => c.IconFileName).HasMaxLength(512);
             e.Property(c => c.DataCriacao).HasDefaultValueSql("CURRENT_TIMESTAMP");
             e.HasIndex(c => c.Nome).IsUnique();
             e.HasMany(c => c.Membros)

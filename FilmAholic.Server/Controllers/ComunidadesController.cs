@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
@@ -37,7 +37,49 @@ namespace FilmAholic.Server.Controllers
             return $"{baseUrl}/uploads/comunidades/{fileName}";
         }
 
-        // Public list
+        private static string? IconUrlFromFileName(string? fileName, string baseUrl)
+        {
+            if (string.IsNullOrWhiteSpace(fileName)) return null;
+            return $"{baseUrl}/uploads/comunidades/icons/{fileName}";
+        }
+
+        // ─── Helper: guardar imagem num directório ────
+        private async Task<string?> SaveImageAsync(IFormFile? file, string subFolder)
+        {
+            if (file == null || file.Length == 0) return null;
+
+            var uploadsRoot = _env.WebRootPath;
+            if (string.IsNullOrEmpty(uploadsRoot))
+                uploadsRoot = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot");
+
+            var targetDir = Path.Combine(uploadsRoot, "uploads", subFolder);
+            if (!Directory.Exists(targetDir)) Directory.CreateDirectory(targetDir);
+
+            var ext = Path.GetExtension(file.FileName);
+            var safeName = $"{Guid.NewGuid():N}{ext}";
+            var filePath = Path.Combine(targetDir, safeName);
+
+            await using (var stream = System.IO.File.Create(filePath))
+                await file.CopyToAsync(stream);
+
+            return safeName;
+        }
+
+        // ─── Helper: apagar ficheiro de imagem ───
+        private void DeleteImageFile(string? fileName, string subFolder)
+        {
+            if (string.IsNullOrWhiteSpace(fileName)) return;
+
+            var uploadsRoot = _env.WebRootPath;
+            if (string.IsNullOrEmpty(uploadsRoot))
+                uploadsRoot = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot");
+
+            var filePath = Path.Combine(uploadsRoot, "uploads", subFolder, fileName);
+            if (System.IO.File.Exists(filePath))
+                System.IO.File.Delete(filePath);
+        }
+
+        // ─── Public list ────
         [HttpGet]
         public async Task<IActionResult> GetAll()
         {
@@ -51,6 +93,7 @@ namespace FilmAholic.Server.Controllers
                     c.Descricao,
                     c.DataCriacao,
                     c.BannerFileName,
+                    c.IconFileName,
                     MembrosCount = _context.ComunidadeMembros.Count(m => m.ComunidadeId == c.Id)
                 })
                 .ToListAsync();
@@ -62,13 +105,14 @@ namespace FilmAholic.Server.Controllers
                 Descricao = x.Descricao,
                 DataCriacao = x.DataCriacao,
                 MembrosCount = x.MembrosCount,
-                BannerUrl = BannerUrlFromFileName(x.BannerFileName, baseUrl)
+                BannerUrl = BannerUrlFromFileName(x.BannerFileName, baseUrl),
+                IconUrl = IconUrlFromFileName(x.IconFileName, baseUrl)
             }).ToList();
 
             return Ok(list);
         }
 
-        // Public detail
+        // ─── Public detail ────
         [HttpGet("{id:int}")]
         public async Task<IActionResult> GetById(int id)
         {
@@ -86,55 +130,38 @@ namespace FilmAholic.Server.Controllers
                 Descricao = c.Descricao,
                 DataCriacao = c.DataCriacao,
                 MembrosCount = await _context.ComunidadeMembros.CountAsync(m => m.ComunidadeId == c.Id),
-                BannerUrl = BannerUrlFromFileName(c.BannerFileName, baseUrl)
+                BannerUrl = BannerUrlFromFileName(c.BannerFileName, baseUrl),
+                IconUrl = IconUrlFromFileName(c.IconFileName, baseUrl)
             };
 
             return Ok(dto);
         }
 
-        // Create (requires authenticated user)
+        // ─── Create (requires authenticated user) ────
         [Authorize]
         [HttpPost]
-        [RequestSizeLimit(10_000_000)] // at� ~10MB
+        [RequestSizeLimit(10_000_000)]
         public async Task<IActionResult> Create([FromForm] ComunidadeCreateForm form)
         {
             if (string.IsNullOrWhiteSpace(form.Nome))
-                return BadRequest(new { message = "Nome   obrigat rio." });
+                return BadRequest(new { message = "Nome obrigatório." });
 
             try
             {
                 var exists = await _context.Comunidades.AnyAsync(c => c.Nome.ToLower() == form.Nome.Trim().ToLower());
-                if (exists) return Conflict(new { message = "J  existe uma comunidade com esse nome." });
+                if (exists) return Conflict(new { message = "Já existe uma comunidade com esse nome." });
 
                 var userId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue("sub");
 
-                string? bannerFileName = null;
-                if (form.Banner != null && form.Banner.Length > 0)
-                {
-                    var uploadsRoot = _env.WebRootPath;
-                    if (string.IsNullOrEmpty(uploadsRoot))
-                        uploadsRoot = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot");
-
-                    var targetDir = Path.Combine(uploadsRoot, "uploads", "comunidades");
-                    if (!Directory.Exists(targetDir)) Directory.CreateDirectory(targetDir);
-
-                    var ext = Path.GetExtension(form.Banner.FileName);
-                    var safeName = $"{Guid.NewGuid():N}{ext}";
-                    var filePath = Path.Combine(targetDir, safeName);
-
-                    await using (var stream = System.IO.File.Create(filePath))
-                    {
-                        await form.Banner.CopyToAsync(stream);
-                    }
-
-                    bannerFileName = safeName;
-                }
+                var bannerFileName = await SaveImageAsync(form.Banner, "comunidades");
+                var iconFileName = await SaveImageAsync(form.Icon, "comunidades/icons");
 
                 var entity = new Comunidade
                 {
                     Nome = form.Nome.Trim(),
                     Descricao = string.IsNullOrWhiteSpace(form.Descricao) ? null : form.Descricao.Trim(),
                     BannerFileName = bannerFileName,
+                    IconFileName = iconFileName,
                     CreatedById = userId,
                     DataCriacao = DateTime.UtcNow
                 };
@@ -164,7 +191,8 @@ namespace FilmAholic.Server.Controllers
                     Descricao = entity.Descricao,
                     DataCriacao = entity.DataCriacao,
                     MembrosCount = await _context.ComunidadeMembros.CountAsync(m => m.ComunidadeId == entity.Id),
-                    BannerUrl = BannerUrlFromFileName(entity.BannerFileName, baseUrl)
+                    BannerUrl = BannerUrlFromFileName(entity.BannerFileName, baseUrl),
+                    IconUrl = IconUrlFromFileName(entity.IconFileName, baseUrl)
                 };
 
                 return CreatedAtAction(nameof(GetById), new { id = entity.Id }, dto);
@@ -181,7 +209,64 @@ namespace FilmAholic.Server.Controllers
             }
         }
 
-        // GET membros da comunidade
+        // ─── UPDATE (apenas o Admin/criador da comunidade) ────
+        [Authorize]
+        [HttpPut("{id:int}")]
+        [RequestSizeLimit(10_000_000)]
+        public async Task<IActionResult> Update(int id, [FromForm] ComunidadeUpdateForm form)
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue("sub");
+
+            // Verificar se o utilizador é Admin desta comunidade
+            var isAdmin = await _context.ComunidadeMembros
+                .AnyAsync(m => m.ComunidadeId == id && m.UtilizadorId == userId && m.Role == "Admin");
+
+            if (!isAdmin) return Forbid();
+
+            var comunidade = await _context.Comunidades.FirstOrDefaultAsync(c => c.Id == id);
+            if (comunidade == null) return NotFound();
+
+            if (string.IsNullOrWhiteSpace(form.Nome))
+                return BadRequest(new { message = "O nome é obrigatório." });
+
+            var nomeEmUso = await _context.Comunidades
+                .AnyAsync(c => c.Id != id && c.Nome.ToLower() == form.Nome.Trim().ToLower());
+            if (nomeEmUso)
+                return Conflict(new { message = "Já existe outra comunidade com esse nome." });
+
+            comunidade.Nome = form.Nome.Trim();
+            comunidade.Descricao = string.IsNullOrWhiteSpace(form.Descricao) ? null : form.Descricao.Trim();
+
+            if (form.Banner != null && form.Banner.Length > 0)
+            {
+                DeleteImageFile(comunidade.BannerFileName, "comunidades");
+                comunidade.BannerFileName = await SaveImageAsync(form.Banner, "comunidades");
+            }
+            
+            if (form.Icon != null && form.Icon.Length > 0)
+            {
+                DeleteImageFile(comunidade.IconFileName, "comunidades/icons");
+                comunidade.IconFileName = await SaveImageAsync(form.Icon, "comunidades/icons");
+            }
+
+            await _context.SaveChangesAsync();
+
+            var baseUrl = PublicBaseUrl();
+            var dto = new ComunidadeDto
+            {
+                Id = comunidade.Id,
+                Nome = comunidade.Nome,
+                Descricao = comunidade.Descricao,
+                DataCriacao = comunidade.DataCriacao,
+                MembrosCount = await _context.ComunidadeMembros.CountAsync(m => m.ComunidadeId == comunidade.Id),
+                BannerUrl = BannerUrlFromFileName(comunidade.BannerFileName, baseUrl),
+                IconUrl = IconUrlFromFileName(comunidade.IconFileName, baseUrl)
+            };
+
+            return Ok(dto);
+        }
+
+        // ─── GET membros da comunidade ─────
         [HttpGet("{id:int}/membros")]
         public async Task<IActionResult> GetMembros(int id)
         {
@@ -203,7 +288,7 @@ namespace FilmAholic.Server.Controllers
             return Ok(membros);
         }
 
-        // GET posts da comunidade
+        // ─── GET posts da comunidade ───
         [HttpGet("{id:int}/posts")]
         public async Task<IActionResult> GetPosts(int id)
         {
@@ -230,14 +315,14 @@ namespace FilmAholic.Server.Controllers
             return Ok(posts);
         }
 
-        // POST criar publica��o (apenas membros)
+        // ─── POST criar publicação (apenas membros) ───
         [Authorize]
         [HttpPost("{id:int}/posts")]
         [RequestSizeLimit(10_000_000)]
         public async Task<IActionResult> CreatePost(int id, [FromForm] PostCreateForm form)
         {
             if (string.IsNullOrWhiteSpace(form.Titulo) || string.IsNullOrWhiteSpace(form.Conteudo))
-                return BadRequest(new { message = "T�tulo e conte�do s�o obrigat�rios." });
+                return BadRequest(new { message = "Título e conteúdo são obrigatórios." });
 
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue("sub");
 
@@ -246,28 +331,7 @@ namespace FilmAholic.Server.Controllers
 
             if (!isMembro) return Forbid();
 
-            // Guardar imagem se existir
-            string? imagemFileName = null;
-            if (form.Imagem != null && form.Imagem.Length > 0)
-            {
-                var uploadsRoot = _env.WebRootPath;
-                if (string.IsNullOrEmpty(uploadsRoot))
-                    uploadsRoot = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot");
-
-                var targetDir = Path.Combine(uploadsRoot, "uploads", "posts");
-                if (!Directory.Exists(targetDir)) Directory.CreateDirectory(targetDir);
-
-                var ext = Path.GetExtension(form.Imagem.FileName);
-                var safeName = $"{Guid.NewGuid():N}{ext}";
-                var filePath = Path.Combine(targetDir, safeName);
-
-                await using (var stream = System.IO.File.Create(filePath))
-                {
-                    await form.Imagem.CopyToAsync(stream);
-                }
-
-                imagemFileName = safeName;
-            }
+            var imagemFileName = await SaveImageAsync(form.Imagem, "posts");
 
             var post = new ComunidadePost
             {
@@ -299,7 +363,7 @@ namespace FilmAholic.Server.Controllers
             });
         }
 
-        // POST juntar-se � comunidade
+        // ─── POST juntar-se à comunidade ────
         [Authorize]
         [HttpPost("{id:int}/juntar")]
         public async Task<IActionResult> Juntar(int id)
@@ -309,7 +373,7 @@ namespace FilmAholic.Server.Controllers
             var jaExiste = await _context.ComunidadeMembros
                 .AnyAsync(m => m.ComunidadeId == id && m.UtilizadorId == userId);
 
-            if (jaExiste) return Conflict(new { message = "J� �s membro desta comunidade." });
+            if (jaExiste) return Conflict(new { message = "Já és membro desta comunidade." });
 
             _context.ComunidadeMembros.Add(new ComunidadeMembro
             {
@@ -324,7 +388,7 @@ namespace FilmAholic.Server.Controllers
             return Ok();
         }
 
-        // DELETE sair da comunidade
+        // ─── DELETE sair da comunidade ────
         [Authorize]
         [HttpDelete("{id:int}/sair")]
         public async Task<IActionResult> Sair(int id)
@@ -341,7 +405,33 @@ namespace FilmAholic.Server.Controllers
             return Ok();
         }
 
-        // DTOs
+        // ─── DELETE apagar comunidade (apenas o Admin/criador) ────
+        [Authorize]
+        [HttpDelete("{id:int}")]
+        public async Task<IActionResult> Delete(int id)
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue("sub");
+
+            // Só o Admin da comunidade pode apagar a comunidade
+            var isAdmin = await _context.ComunidadeMembros
+                .AnyAsync(m => m.ComunidadeId == id && m.UtilizadorId == userId && m.Role == "Admin");
+
+            if (!isAdmin) return Forbid();
+
+            var comunidade = await _context.Comunidades.FirstOrDefaultAsync(c => c.Id == id);
+            if (comunidade == null) return NotFound();
+
+            DeleteImageFile(comunidade.BannerFileName, "comunidades");
+            DeleteImageFile(comunidade.IconFileName, "comunidades/icons");
+
+            _context.Comunidades.Remove(comunidade);
+            await _context.SaveChangesAsync();
+
+            return Ok(new { message = "Comunidade apagada com sucesso." });
+        }
+
+        // ─── DTOs & Forms ───
+
         public class MembroDto
         {
             public string? UtilizadorId { get; set; }
@@ -367,7 +457,6 @@ namespace FilmAholic.Server.Controllers
             public IFormFile? Imagem { get; set; }
         }
 
-        // Simple DTOs / Form binding classes
         public class ComunidadeDto
         {
             public int Id { get; set; }
@@ -376,6 +465,7 @@ namespace FilmAholic.Server.Controllers
             public DateTime DataCriacao { get; set; }
             public int MembrosCount { get; set; }
             public string? BannerUrl { get; set; }
+            public string? IconUrl { get; set; }
         }
 
         public class ComunidadeCreateForm
@@ -388,6 +478,24 @@ namespace FilmAholic.Server.Controllers
 
             [FromForm(Name = "banner")]
             public IFormFile? Banner { get; set; }
+
+            [FromForm(Name = "icon")]
+            public IFormFile? Icon { get; set; }
+        }
+
+        public class ComunidadeUpdateForm
+        {
+            [FromForm(Name = "nome")]
+            public string Nome { get; set; } = "";
+
+            [FromForm(Name = "descricao")]
+            public string? Descricao { get; set; }
+
+            [FromForm(Name = "banner")]
+            public IFormFile? Banner { get; set; }
+
+            [FromForm(Name = "icon")]
+            public IFormFile? Icon { get; set; }
         }
     }
 }

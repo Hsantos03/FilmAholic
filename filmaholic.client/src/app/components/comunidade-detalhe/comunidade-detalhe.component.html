@@ -5,9 +5,7 @@
         <path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z" />
       </svg>
     </button>
-
     <a class="brand" routerLink="/dashboard" routerLinkActive="active" aria-label="Ir para o painel">FilmAholic</a>
-
     <div class="top-actions">
       <app-topbar-actions></app-topbar-actions>
     </div>
@@ -24,12 +22,9 @@
         </svg>
       </button>
     </div>
-
     <div class="sidebar-links">
       <a class="sidebar-item" routerLink="/dashboard" routerLinkActive="active" (click)="toggleMenu()">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-          <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z" />
-        </svg>
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z" /></svg>
         <span>Início</span>
       </a>
       <a class="sidebar-item" routerLink="/profile" routerLinkActive="active" (click)="toggleMenu()">
@@ -37,32 +32,23 @@
         <span>Perfil</span>
       </a>
       <a class="sidebar-item" routerLink="/cinema-movies" routerLinkActive="active" (click)="toggleMenu()">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-          <path d="M18 4l2 4h-3l-2-4h-2l2 4h-3l-2-4H8l2 4H7L5 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V4h-4z" />
-        </svg>
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M18 4l2 4h-3l-2-4h-2l2 4h-3l-2-4H8l2 4H7L5 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V4h-4z" /></svg>
         <span>Filmes em Cartaz</span>
       </a>
       <a class="sidebar-item" routerLink="/higher-or-lower" routerLinkActive="active" (click)="toggleMenu()">
         <span style="font-size:20px">🎮</span>
         <span>Higher or Lower</span>
       </a>
-
       <button type="button" class="sidebar-item" (click)="goToDashboardDesafios(); toggleMenu()">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-          <path d="M12 2L14.09 8.26L21 9.27L16.5 13.14L17.82 20L12 16.77L6.18 20L7.5 13.14L3 9.27L9.91 8.26L12 2Z" />
-        </svg>
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2L14.09 8.26L21 9.27L16.5 13.14L17.82 20L12 16.77L6.18 20L7.5 13.14L3 9.27L9.91 8.26L12 2Z" /></svg>
         <span>Desafios Semanais</span>
       </button>
       <a class="sidebar-item" routerLink="/cinemas-proximos" routerLinkActive="active" (click)="toggleMenu()">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-          <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z" />
-        </svg>
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z" /></svg>
         <span>Mapa de Cinemas</span>
       </a>
       <a class="sidebar-item" routerLink="/comunidades" routerLinkActive="active" (click)="toggleMenu()">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-          <path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z" />
-        </svg>
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z" /></svg>
         <span>Comunidades</span>
       </a>
     </div>
@@ -81,10 +67,10 @@
       <div class="content">
         <div class="comunidade-heading">
           <div class="comunidade-badge"
-               [class.has-photo]="!!comunidade.bannerUrl"
-               [style.background-image]="comunidade.bannerUrl ? 'url(' + comunidade.bannerUrl + ')' : 'none'"
+               [class.has-photo]="!!(comunidade.iconUrl || comunidade.bannerUrl)"
+               [style.background-image]="(comunidade.iconUrl || comunidade.bannerUrl) ? 'url(' + (comunidade.iconUrl || comunidade.bannerUrl) + ')' : 'none'"
                aria-hidden="true">
-            <span *ngIf="!comunidade.bannerUrl">{{ initialLetra(comunidade.nome) }}</span>
+            <span *ngIf="!comunidade.iconUrl && !comunidade.bannerUrl">{{ initialLetra(comunidade.nome) }}</span>
           </div>
           <div class="comunidade-heading-text">
             <h1>{{ comunidade.nome }}</h1>
@@ -98,10 +84,32 @@
         <p class="descricao">{{ comunidade.descricao || 'Sem descrição' }}</p>
 
         <div class="actions">
+          <!-- Utilizador não membro -->
           <button *ngIf="!isMembro" type="button" class="primary-btn" (click)="juntar()" [disabled]="isJuntando">
             {{ isJuntando ? 'A juntar…' : 'Juntar-se' }}
           </button>
-          <button *ngIf="isMembro" type="button" class="secondary-btn" (click)="sair()">Sair da comunidade</button>
+
+          <!-- Membro normal (não admin) -->
+          <button *ngIf="isMembro && !isAdmin" type="button" class="secondary-btn" (click)="sair()">
+            Sair da comunidade
+          </button>
+
+          <!-- Barra de acções do Admin -->
+          <div *ngIf="isAdmin" class="admin-actions">
+            <button type="button" class="admin-btn admin-btn--edit" (click)="openEditModal()">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zm17.71-10.21a1 1 0 0 0 0-1.41l-2.34-2.34a1 1 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z" />
+              </svg>
+              Editar
+            </button>
+            <button type="button" class="admin-btn admin-btn--delete" (click)="openDeleteModal()">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z" />
+              </svg>
+              Apagar
+            </button>
+          </div>
+
           <button type="button" class="secondary-btn" (click)="goBack()">Voltar às Comunidades</button>
         </div>
       </div>
@@ -115,8 +123,6 @@
 
     <!-- Tab Publicações -->
     <div *ngIf="comunidade && activeTab === 'posts'" class="tab-content">
-
-      <!-- Barra de ordenação -->
       <div class="posts-toolbar">
         <div *ngIf="isMembro">
           <button type="button" class="primary-btn" (click)="showPostForm = !showPostForm">
@@ -132,22 +138,18 @@
         </div>
       </div>
 
-      <!-- Formulário novo post -->
       <div *ngIf="showPostForm" class="post-form">
         <input type="text" placeholder="Título" [(ngModel)]="newTitulo" />
         <textarea rows="4" placeholder="Escreve algo…" [(ngModel)]="newConteudo"></textarea>
-
         <label class="imagem-label">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z" /></svg>
           Adicionar imagem (opcional)
           <input type="file" accept="image/*" (change)="onImagemSelected($event)" style="display:none" />
         </label>
-
         <div *ngIf="imagemPreview" class="imagem-preview">
           <img [src]="imagemPreview" alt="Pré-visualização" />
           <button type="button" class="remove-img-btn" (click)="imagemFile = null; imagemPreview = null">✕ Remover</button>
         </div>
-
         <div *ngIf="postError" class="form-error">{{ postError }}</div>
         <button type="button" class="save-btn" (click)="submitPost()" [disabled]="isPosting">
           {{ isPosting ? 'A publicar…' : 'Publicar' }}
@@ -184,4 +186,88 @@
       </div>
     </div>
   </main>
+</div>
+
+
+<!--  Modal de edição  -->
+<div class="modal-overlay" *ngIf="showEditModal" (click)="closeEditModal()">
+  <div class="modal-box" (click)="$event.stopPropagation()">
+    <button class="modal-close" type="button" (click)="closeEditModal()">&times;</button>
+    <h3>✏️ Editar comunidade</h3>
+
+    <label for="editNome">Nome</label>
+    <input id="editNome" type="text" [(ngModel)]="editNome" />
+
+    <label for="editDescricao">Descrição</label>
+    <textarea id="editDescricao" rows="4" [(ngModel)]="editDescricao"></textarea>
+
+    <label class="imagem-label">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z" /></svg>
+      Alterar capa (banner)
+      <input type="file" accept="image/*" (change)="onEditBannerSelected($event)" style="display:none" />
+    </label>
+    <div *ngIf="editBannerPreview" class="imagem-preview">
+      <img [src]="editBannerPreview" alt="Nova capa" />
+      <button type="button" class="remove-img-btn" (click)="editBannerFile = null; editBannerPreview = null">✕ Remover</button>
+    </div>
+    <div *ngIf="!editBannerPreview && comunidade?.bannerUrl" class="current-img-hint">
+      <span>Capa atual:</span>
+      <img [src]="comunidade!.bannerUrl!" alt="Capa atual" class="thumb" />
+    </div>
+
+    <label class="imagem-label">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" /></svg>
+      Alterar foto de perfil (ícone)
+      <input type="file" accept="image/*" (change)="onEditIconSelected($event)" style="display:none" />
+    </label>
+    <div *ngIf="editIconPreview" class="imagem-preview">
+      <img [src]="editIconPreview" alt="Novo ícone" />
+      <button type="button" class="remove-img-btn" (click)="editIconFile = null; editIconPreview = null">✕ Remover</button>
+    </div>
+    <div *ngIf="!editIconPreview && comunidade?.iconUrl" class="current-img-hint">
+      <span>Ícone atual:</span>
+      <img [src]="comunidade!.iconUrl!" alt="Ícone atual" class="thumb" />
+    </div>
+
+    <div *ngIf="editError" class="form-error">{{ editError }}</div>
+
+    <div class="modal-actions">
+      <button type="button" class="cancel-btn" (click)="closeEditModal()" [disabled]="isSavingEdit">Cancelar</button>
+      <button type="button" class="save-btn" (click)="saveEdit()" [disabled]="isSavingEdit">
+        {{ isSavingEdit ? 'A guardar…' : 'Guardar alterações' }}
+      </button>
+    </div>
+  </div>
+</div>
+
+
+<!--  Modal de confirmação de apagar  -->
+<div class="modal-overlay modal-overlay--danger" *ngIf="showDeleteModal" (click)="closeDeleteModal()">
+  <div class="modal-box modal-box--danger" (click)="$event.stopPropagation()">
+    <button class="modal-close" type="button" (click)="closeDeleteModal()">&times;</button>
+
+    <div class="delete-modal-icon">
+      <svg width="40" height="40" viewBox="0 0 24 24" fill="currentColor">
+        <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z" />
+      </svg>
+    </div>
+
+    <h3>Apagar comunidade?</h3>
+    <p class="delete-modal-msg">
+      Tens a certeza que queres apagar <strong>{{ comunidade?.nome }}</strong>?
+      Esta acção é <strong>irreversível</strong> — todos os membros e publicações serão eliminados.
+    </p>
+
+    <div *ngIf="deleteError" class="form-error">{{ deleteError }}</div>
+
+    <div class="modal-actions">
+      <button type="button" class="cancel-btn" (click)="closeDeleteModal()" [disabled]="isDeleting">Cancelar</button>
+      <button type="button" class="delete-confirm-btn" (click)="confirmDelete()" [disabled]="isDeleting">
+        <svg *ngIf="!isDeleting" width="15" height="15" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z" />
+        </svg>
+        {{ isDeleting ? 'A apagar…' : 'Sim, apagar comunidade' }}
+      </button>
+    </div>
+  </div>
 </div>

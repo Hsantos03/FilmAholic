@@ -11,6 +11,10 @@ public class Comunidade
 
     /// Ficheiro guardado em wwwroot/uploads/comunidades.
     public string? BannerFileName { get; set; }
+
+    /// Ficheiro do ícone/foto de perfil guardado em wwwroot/uploads/comunidades/icons/
+    public string? IconFileName { get; set; }
+
     public string? CreatedById { get; set; } // FK para Utilizador.Id; se null, comunidade foi criada por um processo automático ou admin sem conta de utilizador associada
     public DateTime DataCriacao { get; set; } = DateTime.UtcNow;
 
