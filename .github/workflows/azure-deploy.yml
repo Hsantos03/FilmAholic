@@ -1,0 +1,49 @@
+name: Build and Deploy to Azure
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-and-deploy:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # 1. Setup do Node para o Angular
+      - name: Install Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: filmaholic.client/package.json
+
+      # 2. Build do Angular (Frontend)
+      - name: Build Angular
+        run: |
+          cd filmaholic.client
+          npm install
+          npm run build -- --configuration production
+
+      # 3. Setup do .NET (Backend)
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      # 4. Mover o Angular para dentro do C# (para o Azure servir tudo junto)
+      - name: Move Angular build to wwwroot
+        run: xcopy /E /I /Y "filmaholic.client\dist\filmaholic.client\browser\*" "FilmAholic.Server\wwwroot\"
+
+      # 5. Publicar o Backend C#
+      - name: Publish API
+        run: dotnet publish FilmAholic.Server/FilmAholic.Server.csproj -c Release -o ./publish
+
+      # 6. Enviar para o Azure usando o Secret que criaste
+      - name: Deploy to Azure Web App
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: 'FilmAholic'
+          publish-profile: ${{ secrets.AZURE_PUBLISH_PROFILE }}
+          package: ./publish
