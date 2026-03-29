@@ -22,4 +22,11 @@ public class Desafio
 
     // XP awarded to the user upon completion
     public int Xp { get; set; }
+
+    // Quiz properties for daily challenge
+    public string Pergunta { get; set; } = "";
+    public string OpcaoA { get; set; } = "";
+    public string OpcaoB { get; set; } = "";
+    public string OpcaoC { get; set; } = "";
+    public string RespostaCorreta { get; set; } = ""; // "A", "B" or "C"
 }

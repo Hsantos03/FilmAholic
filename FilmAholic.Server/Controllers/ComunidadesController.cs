@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using System.Security.Claims;
 using FilmAholic.Server.Data;
+using FilmAholic.Server.DTOs;
 using FilmAholic.Server.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Hosting;
@@ -322,7 +323,7 @@ namespace FilmAholic.Server.Controllers
         public async Task<IActionResult> CreatePost(int id, [FromForm] PostCreateForm form)
         {
             if (string.IsNullOrWhiteSpace(form.Titulo) || string.IsNullOrWhiteSpace(form.Conteudo))
-                return BadRequest(new { message = "Título e conteúdo são obrigatórios." });
+                return BadRequest(new { message = "Ttulo e contedo so obrigatrios." });
 
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue("sub");
 
@@ -373,7 +374,7 @@ namespace FilmAholic.Server.Controllers
             var jaExiste = await _context.ComunidadeMembros
                 .AnyAsync(m => m.ComunidadeId == id && m.UtilizadorId == userId);
 
-            if (jaExiste) return Conflict(new { message = "Já és membro desta comunidade." });
+            if (jaExiste) return Conflict(new { message = "J s membro desta comunidade." });
 
             _context.ComunidadeMembros.Add(new ComunidadeMembro
             {
