@@ -98,8 +98,88 @@
         <p class="descricao">{{ comunidade.descricao || 'Sem descrição' }}</p>
 
         <div class="actions">
-          <button type="button" class="primary-btn">Juntar-se</button>
+          <button *ngIf="!isMembro" type="button" class="primary-btn" (click)="juntar()" [disabled]="isJuntando">
+            {{ isJuntando ? 'A juntar…' : 'Juntar-se' }}
+          </button>
+          <button *ngIf="isMembro" type="button" class="secondary-btn" (click)="sair()">Sair da comunidade</button>
           <button type="button" class="secondary-btn" (click)="goBack()">Voltar às Comunidades</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Abas -->
+    <div *ngIf="comunidade" class="tabs">
+      <button class="tab-btn" [class.active]="activeTab === 'posts'" (click)="activeTab = 'posts'">Publicações</button>
+      <button class="tab-btn" [class.active]="activeTab === 'membros'" (click)="activeTab = 'membros'">Membros</button>
+    </div>
+
+    <!-- Tab Publicações -->
+    <div *ngIf="comunidade && activeTab === 'posts'" class="tab-content">
+
+      <!-- Barra de ordenação -->
+      <div class="posts-toolbar">
+        <div *ngIf="isMembro">
+          <button type="button" class="primary-btn" (click)="showPostForm = !showPostForm">
+            {{ showPostForm ? 'Cancelar' : '+ Nova publicação' }}
+          </button>
+        </div>
+        <div class="sort-control">
+          <label>Ordenar:</label>
+          <select [(ngModel)]="sortOrder">
+            <option value="desc">Mais recentes</option>
+            <option value="asc">Mais antigas</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Formulário novo post -->
+      <div *ngIf="showPostForm" class="post-form">
+        <input type="text" placeholder="Título" [(ngModel)]="newTitulo" />
+        <textarea rows="4" placeholder="Escreve algo…" [(ngModel)]="newConteudo"></textarea>
+
+        <label class="imagem-label">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z" /></svg>
+          Adicionar imagem (opcional)
+          <input type="file" accept="image/*" (change)="onImagemSelected($event)" style="display:none" />
+        </label>
+
+        <div *ngIf="imagemPreview" class="imagem-preview">
+          <img [src]="imagemPreview" alt="Pré-visualização" />
+          <button type="button" class="remove-img-btn" (click)="imagemFile = null; imagemPreview = null">✕ Remover</button>
+        </div>
+
+        <div *ngIf="postError" class="form-error">{{ postError }}</div>
+        <button type="button" class="save-btn" (click)="submitPost()" [disabled]="isPosting">
+          {{ isPosting ? 'A publicar…' : 'Publicar' }}
+        </button>
+      </div>
+
+      <div *ngIf="posts.length === 0" class="empty">Ainda não há publicações nesta comunidade.</div>
+
+      <article class="post-card" *ngFor="let p of sortedPosts">
+        <div class="post-header">
+          <span class="post-autor">{{ p.autorNome }}</span>
+          <span class="post-data">{{ p.dataCriacao | date:'short' }}</span>
+        </div>
+        <h3 class="post-titulo">{{ p.titulo }}</h3>
+        <p class="post-conteudo">{{ p.conteudo }}</p>
+        <div *ngIf="p.imagemUrl" class="post-imagem">
+          <img [src]="p.imagemUrl" alt="Imagem da publicação" />
+        </div>
+      </article>
+    </div>
+
+    <!-- Tab Membros -->
+    <div *ngIf="comunidade && activeTab === 'membros'" class="tab-content">
+      <div *ngIf="membros.length === 0" class="empty">Nenhum membro encontrado.</div>
+      <div class="membros-list">
+        <div class="membro-item" *ngFor="let m of membros">
+          <div class="membro-avatar">{{ (m.userName || '?').charAt(0).toUpperCase() }}</div>
+          <div class="membro-info">
+            <span class="membro-nome">{{ m.userName }}</span>
+            <span class="membro-role" [class.admin]="m.role === 'Admin'">{{ m.role }}</span>
+          </div>
+          <span class="membro-data">Entrou {{ m.dataEntrada | date:'shortDate' }}</span>
         </div>
       </div>
     </div>

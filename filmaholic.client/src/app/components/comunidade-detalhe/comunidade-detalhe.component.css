@@ -195,3 +195,273 @@
     border-color: rgba(255, 255, 255, 0.35);
     color: #fff;
   }
+
+/* ── Abas ── */
+.tabs {
+  display: flex;
+  gap: 4px;
+  margin: 20px 0 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.tab-btn {
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: #9aa0a6;
+  padding: 10px 18px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  margin-bottom: -1px;
+  transition: color 0.15s, border-color 0.15s;
+}
+
+  .tab-btn.active {
+    color: #fff;
+    border-bottom-color: #ff2f6d;
+  }
+
+.tab-content {
+  margin-top: 20px;
+}
+
+/* ── Toolbar de publicações ── */
+.posts-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.sort-control {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: #9aa0a6;
+}
+
+  .sort-control select {
+    background: #171717;
+    color: #fff;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 8px;
+    padding: 6px 10px;
+    font-size: 13px;
+    cursor: pointer;
+  }
+
+/* ── Formulário de novo post ── */
+.post-form {
+  background: #101010;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+  .post-form input,
+  .post-form textarea {
+    background: #171717;
+    color: #fff;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 8px;
+    padding: 10px 12px;
+    font-size: 14px;
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+.save-btn {
+  border: none;
+  border-radius: 8px;
+  padding: 10px 18px;
+  background: #ff2f6d;
+  color: #fff;
+  font-weight: 600;
+  cursor: pointer;
+  align-self: flex-end;
+}
+
+/* ── Imagem no formulário ── */
+.imagem-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #9aa0a6;
+  font-size: 13px;
+  cursor: pointer;
+  padding: 8px 12px;
+  border: 1px dashed rgba(255, 255, 255, 0.15);
+  border-radius: 8px;
+  transition: border-color 0.15s, color 0.15s;
+}
+
+  .imagem-label:hover {
+    border-color: #ff2f6d;
+    color: #fff;
+  }
+
+.imagem-preview {
+  position: relative;
+  border-radius: 8px;
+  overflow: hidden;
+  max-height: 200px;
+  background: #111;
+}
+
+  .imagem-preview img {
+    max-width: 100%;
+    max-height: 200px;
+    object-fit: contain;
+    display: block;
+  }
+
+.remove-img-btn {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: rgba(0, 0, 0, 0.7);
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 4px 8px;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+/* ── Cards de publicações ── */
+.post-card {
+  background: #101010;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 12px;
+  transition: border-color 0.12s;
+}
+
+  .post-card:hover {
+    border-color: rgba(255, 47, 109, 0.25);
+  }
+
+.post-header {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  color: #9aa0a6;
+  margin-bottom: 8px;
+}
+
+.post-autor {
+  font-weight: 600;
+  color: #ccc;
+}
+
+.post-titulo {
+  margin: 0 0 8px;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.post-conteudo {
+  margin: 0;
+  color: #c0c0c0;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.post-imagem {
+  margin-top: 12px;
+  border-radius: 8px;
+  overflow: hidden;
+  max-height: 400px;
+  background: #111;
+}
+
+  .post-imagem img {
+    width: 100%;
+    max-height: 400px;
+    object-fit: cover;
+    display: block;
+  }
+
+/* ── Lista de membros ── */
+.membros-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.membro-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: #101010;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+  padding: 12px 16px;
+}
+
+.membro-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: #252030;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 16px;
+  color: #ff2f6d;
+  flex-shrink: 0;
+}
+
+.membro-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.membro-nome {
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.membro-role {
+  font-size: 11px;
+  color: #9aa0a6;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+  .membro-role.admin {
+    color: #ff2f6d;
+  }
+
+.membro-data {
+  font-size: 12px;
+  color: #9aa0a6;
+  margin-left: auto;
+}
+
+/* ── Utilitários ── */
+.form-error {
+  color: #ff6b6b;
+  font-size: 13px;
+}
+
+.empty {
+  padding: 40px 20px;
+  text-align: center;
+  color: #9aa0a6;
+  background: #101010;
+  border: 1px dashed rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+}

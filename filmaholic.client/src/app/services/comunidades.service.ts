@@ -13,6 +13,22 @@ export interface ComunidadeDto {
   bannerUrl?: string | null;
 }
 
+export interface MembroDto {
+  utilizadorId?: string;
+  userName?: string;
+  role?: string;
+  dataEntrada?: string;
+}
+
+export interface PostDto {
+  id?: number;
+  titulo: string;
+  conteudo: string;
+  dataCriacao?: string;
+  autorNome?: string;
+  imagemUrl?: string | null;
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -36,5 +52,33 @@ export class ComunidadesService {
 
   create(formData: FormData): Observable<ComunidadeDto> {
     return this.http.post<ComunidadeDto>(this.apiUrl, formData, { withCredentials: true });
+  }
+
+  getMembros(id: number): Observable<MembroDto[]> {
+    return this.http.get<MembroDto[]>(`${this.apiUrl}/${id}/membros`).pipe(
+      catchError(() => of([]))
+    );
+  }
+
+  getPosts(id: number): Observable<PostDto[]> {
+    return this.http.get<PostDto[]>(`${this.apiUrl}/${id}/posts`).pipe(
+      catchError(() => of([]))
+    );
+  }
+
+  createPost(id: number, titulo: string, conteudo: string, imagem?: File | null): Observable<PostDto> {
+    const fd = new FormData();
+    fd.append('titulo', titulo);
+    fd.append('conteudo', conteudo);
+    if (imagem) fd.append('imagem', imagem, imagem.name);
+    return this.http.post<PostDto>(`${this.apiUrl}/${id}/posts`, fd, { withCredentials: true });
+  }
+
+  juntar(id: number): Observable<any> {
+    return this.http.post(`${this.apiUrl}/${id}/juntar`, {}, { withCredentials: true });
+  }
+
+  sair(id: number): Observable<any> {
+    return this.http.delete(`${this.apiUrl}/${id}/sair`, { withCredentials: true });
   }
 }
