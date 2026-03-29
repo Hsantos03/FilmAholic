@@ -1,0 +1,26 @@
+<div class="page comunidade-detalhe">
+  <button class="back-btn" (click)="goBack()">← Voltar</button>
+
+  <div *ngIf="isLoading" class="state">A carregar comunidade…</div>
+  <div *ngIf="error" class="state error">{{ error }}</div>
+
+  <div *ngIf="comunidade" class="comunidade-card">
+    <div class="banner" *ngIf="comunidade.bannerUrl" [style.background-image]="'url(' + comunidade.bannerUrl + ')'"></div>
+
+    <div class="content">
+      <h1>{{ comunidade.nome }}</h1>
+      <div class="meta">
+        <span>{{ comunidade.membrosCount ?? 0 }} membros</span>
+        <span *ngIf="comunidade.dataCriacao"> · Criada {{ comunidade.dataCriacao | date:'shortDate' }}</span>
+      </div>
+
+      <p class="descricao">{{ comunidade.descricao || 'Sem descrição' }}</p>
+
+      <!-- placeholder actions -->
+      <div class="actions">
+        <button class="primary-btn">Juntar-se</button>
+        <button class="secondary-btn" (click)="goBack()">Voltar às Comunidades</button>
+      </div>
+    </div>
+  </div>
+</div>

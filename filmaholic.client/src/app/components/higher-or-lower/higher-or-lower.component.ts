@@ -85,6 +85,9 @@ export class HigherOrLowerComponent implements OnInit {
 
   stats: GameStats | null = null;
 
+  // maximum number of entries to keep/display in the history UI / local storage
+  private readonly historyCap = 10;
+
   constructor(
     private router: Router,
     private route: ActivatedRoute,
@@ -830,7 +833,8 @@ export class HigherOrLowerComponent implements OnInit {
         score,
         roundsJson
       });
-      localStorage.setItem(this.localHistoryKey, JSON.stringify(existing.slice(0, 50)));
+      // Keep only the most recent `historyCap` entries
+      localStorage.setItem(this.localHistoryKey, JSON.stringify(existing.slice(0, this.historyCap)));
     } catch {
     }
   }
@@ -854,6 +858,10 @@ export class HigherOrLowerComponent implements OnInit {
             roundsCount: this.computeRoundsCount(h.roundsJson),
             category: this.computeCategory(h.roundsJson)
           }));
+          // Trim server-provided history to cap before merging local entries
+          if (this.history.length > this.historyCap) {
+            this.history = this.history.slice(0, this.historyCap);
+          }
           this.appendLocalHistory();
         },
         error: () => {
@@ -876,7 +884,8 @@ export class HigherOrLowerComponent implements OnInit {
         roundsCount: this.computeRoundsCount(l.roundsJson),
         category: this.computeCategory(l.roundsJson)
       }));
-      this.history = [...(this.history || []), ...mapped];
+      // Merge server + local and keep only the most recent `historyCap` entries
+      this.history = [...(this.history || []), ...mapped].slice(0, this.historyCap);
     } catch {
     }
   }

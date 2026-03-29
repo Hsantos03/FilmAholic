@@ -13,18 +13,18 @@ export class ProfileService {
   constructor(private http: HttpClient) { }
 
   obterTodosGeneros(): Observable<any[]> {
-    return this.http.get<any[]>(`${this.apiUrl}/generos`);
+    return this.http.get<any[]>(`${this.apiUrl}/generos`, { withCredentials: true });
   }
 
   obterGenerosFavoritos(userId: string): Observable<any[]> {
-    return this.http.get<any[]>(`${this.apiUrl}/${userId}/generos-favoritos`);
+    return this.http.get<any[]>(`${this.apiUrl}/${userId}/generos-favoritos`, { withCredentials: true });
   }
 
   atualizarGenerosFavoritos(userId: string, generoIds: number[]): Observable<any> {
-    return this.http.put(`${this.apiUrl}/${userId}/generos-favoritos`, { generoIds });
+    return this.http.put(`${this.apiUrl}/${userId}/generos-favoritos`, { generoIds }, { withCredentials: true });
   }
 
   obterPerfil(userId: string): Observable<any> {
-    return this.http.get<any>(`${this.apiUrl}/${userId}`);
+    return this.http.get<any>(`${this.apiUrl}/${userId}`, { withCredentials: true });
   }
 }

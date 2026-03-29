@@ -1,8 +1,14 @@
-import { Component, OnInit, OnDestroy, ViewChild, ElementRef, HostListener } from '@angular/core';
+import { Component, OnInit, OnDestroy, ViewChild, ElementRef, HostListener, ChangeDetectorRef } from '@angular/core';
 import { Router } from '@angular/router';
 import { forkJoin, of } from 'rxjs';
-import { catchError } from 'rxjs/operators';
+import { catchError, switchMap, tap } from 'rxjs/operators';
 import { FilmesService, Filme } from '../../services/filmes.service';
+import {
+  NotificacoesService,
+  ResumoEstatisticasFeedDto,
+  ResumoEstatisticasFeedItemDto,
+  ResumoFilmeComunidadeDto
+} from '../../services/notificacoes.service';
 
 @Component({
   selector: 'app-topbar-actions',
@@ -12,21 +18,35 @@ import { FilmesService, Filme } from '../../services/filmes.service';
 export class TopbarActionsComponent implements OnInit, OnDestroy {
   @ViewChild('notificationsContainer', { static: false }) notificationsContainerRef?: ElementRef<HTMLElement>;
 
+  private readonly posterFallback = 'https://via.placeholder.com/300x450?text=Sem+poster';
+
   isNotificationsOpen = false;
-  movies: Filme[] = [];
+  upcomingTmdb: Filme[] = [];
+  /** TMDB ids com NovaEstreia marcada como lida (servidor). */
+  readTmdbIds = new Set<number>();
   private isLoadingUpcomingDetails = false;
-  private dateOnlyMs = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
+
+  readonly upcomingPageSize = 5;
+  upcomingUnreadPage = 0;
+  upcomingReadPage = 0;
+
+  /** Com sessão (cookie): filtrar lista pelos géneros favoritos (visível no menu). */
+  filtrarEstreiasPorGeneros = true;
+
+  /** Definido pelo servidor: último carregamento de próximas estreias foi com sessão autenticada. */
+  proximasEstreiasSessaoAtiva = false;
+
+  resumoFeed: ResumoEstatisticasFeedDto = { unread: [], read: [] };
 
   constructor(
     private filmesService: FilmesService,
-    private router: Router
+    private notificacoesService: NotificacoesService,
+    private router: Router,
+    private cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit(): void {
-    this.filmesService.getAll().subscribe({
-      next: (list) => { this.movies = list || []; },
-      error: () => { this.movies = []; }
-    });
+    this.loadUpcomingFromTmdb();
   }
 
   ngOnDestroy(): void {}
@@ -40,49 +60,223 @@ export class TopbarActionsComponent implements OnInit, OnDestroy {
   toggleNotifications(e: MouseEvent): void {
     e.stopPropagation();
     this.isNotificationsOpen = !this.isNotificationsOpen;
-    if (this.isNotificationsOpen) this.loadUpcomingDetails();
+    if (this.isNotificationsOpen) {
+      this.upcomingUnreadPage = 0;
+      this.upcomingReadPage = 0;
+      this.loadResumoFeed();
+      this.loadUpcomingFromTmdb();
+    }
   }
 
-  get upcomingMovies(): Filme[] {
-    const today = new Date();
-    const todayMs = this.dateOnlyMs(today);
-    const currentYear = today.getFullYear();
-    const upcoming = (this.movies || []).filter(m => {
-      if (m.releaseDate) {
-        const parsed = new Date(m.releaseDate);
-        if (isNaN(parsed.getTime())) return false;
-        return this.dateOnlyMs(parsed) > todayMs;
+  get hasResumoItems(): boolean {
+    const u = this.resumoFeed?.unread?.length ?? 0;
+    const r = this.resumoFeed?.read?.length ?? 0;
+    return u + r > 0;
+  }
+
+  private loadResumoFeed(): void {
+    this.notificacoesService.getResumoEstatisticasFeed({ unreadLimit: 5, readLimit: 4 }).subscribe({
+      next: (dto) => {
+        this.resumoFeed = dto ?? { unread: [], read: [] };
+        this.cdr.markForCheck();
+      },
+      error: () => {
+        this.resumoFeed = { unread: [], read: [] };
       }
-      if (m.ano != null) {
-        const anoNum = Number(m.ano);
-        if (!isNaN(anoNum)) return anoNum > currentYear;
+    });
+  }
+
+  marcarResumoLida(e: MouseEvent, item: ResumoEstatisticasFeedItemDto): void {
+    e.preventDefault();
+    e.stopPropagation();
+    this.notificacoesService.marcarResumoEstatisticasComoLida(item.id).subscribe({
+      next: () => {
+        this.resumoFeed = {
+          unread: (this.resumoFeed.unread ?? []).filter((x) => x.id !== item.id),
+          read: [
+            { ...item, lidaEm: new Date().toISOString() },
+            ...(this.resumoFeed.read ?? []).filter((x) => x.id !== item.id)
+          ].slice(0, 8)
+        };
+        this.cdr.markForCheck();
       }
-      return false;
     });
-    upcoming.sort((a, b) => {
-      const dateOf = (m: Filme) => {
-        if (m.releaseDate) {
-          const d = new Date(m.releaseDate);
-          if (!isNaN(d.getTime())) return this.dateOnlyMs(d);
-        }
-        if (m.ano != null) {
-          const anoNum = Number(m.ano);
-          if (!isNaN(anoNum)) return new Date(anoNum, 0, 1).getTime();
-        }
-        return Number.MAX_SAFE_INTEGER;
-      };
-      return dateOf(a) - dateOf(b);
+  }
+
+  openResumoCommunityMovie(e: MouseEvent, f: ResumoFilmeComunidadeDto): void {
+    e.preventDefault();
+    e.stopPropagation();
+    this.isNotificationsOpen = false;
+    const id = f?.filmeId;
+    if (id && !isNaN(id)) this.router.navigate(['/movie-detail', id]);
+  }
+
+  resumoGenerosLabel(item: ResumoEstatisticasFeedItemDto): string {
+    const list = item.corpo?.generosMaisVistos ?? [];
+    if (!list.length) return '';
+    return list.map((g) => `${g.nome} (${g.filmes})`).join(', ');
+  }
+
+  get hasUpcomingList(): boolean {
+    return (this.upcomingTmdb?.length ?? 0) > 0;
+  }
+
+  /** Alternador só quando a API aceitou o cookie de sessão em /proximas-estreias. */
+  get showEstreiasGenreFilter(): boolean {
+    return this.proximasEstreiasSessaoAtiva;
+  }
+
+  private isUpcomingRead(m: Filme): boolean {
+    const t = Number(m.tmdbId);
+    return !!m.tmdbId && !isNaN(t) && this.readTmdbIds.has(t);
+  }
+
+  get upcomingUnreadAll(): Filme[] {
+    const list = (this.upcomingTmdb || []).filter((m) => m.tmdbId && !this.isUpcomingRead(m));
+    return this.filmesService.sortFilmesByReleaseAsc(list);
+  }
+
+  get upcomingReadAll(): Filme[] {
+    const list = (this.upcomingTmdb || []).filter((m) => m.tmdbId && this.isUpcomingRead(m));
+    return this.filmesService.sortFilmesByReleaseAsc(list);
+  }
+
+  get upcomingUnreadPaged(): Filme[] {
+    const all = this.upcomingUnreadAll;
+    const start = this.upcomingUnreadPage * this.upcomingPageSize;
+    return all.slice(start, start + this.upcomingPageSize);
+  }
+
+  get upcomingReadPaged(): Filme[] {
+    const all = this.upcomingReadAll;
+    const start = this.upcomingReadPage * this.upcomingPageSize;
+    return all.slice(start, start + this.upcomingPageSize);
+  }
+
+  get upcomingUnreadPagerVisible(): boolean {
+    return this.upcomingUnreadAll.length > this.upcomingPageSize;
+  }
+
+  get upcomingReadPagerVisible(): boolean {
+    return this.upcomingReadAll.length > this.upcomingPageSize;
+  }
+
+  get upcomingUnreadPageLabel(): string {
+    const total = this.upcomingUnreadAll.length;
+    if (total === 0) return '';
+    const pages = Math.max(1, Math.ceil(total / this.upcomingPageSize));
+    return `${this.upcomingUnreadPage + 1} / ${pages}`;
+  }
+
+  get upcomingReadPageLabel(): string {
+    const total = this.upcomingReadAll.length;
+    if (total === 0) return '';
+    const pages = Math.max(1, Math.ceil(total / this.upcomingPageSize));
+    return `${this.upcomingReadPage + 1} / ${pages}`;
+  }
+
+  get upcomingUnreadLastPage(): number {
+    return Math.max(0, Math.ceil(this.upcomingUnreadAll.length / this.upcomingPageSize) - 1);
+  }
+
+  get upcomingReadLastPage(): number {
+    return Math.max(0, Math.ceil(this.upcomingReadAll.length / this.upcomingPageSize) - 1);
+  }
+
+  prevUnreadPage(e: MouseEvent): void {
+    e.stopPropagation();
+    this.upcomingUnreadPage = Math.max(0, this.upcomingUnreadPage - 1);
+  }
+
+  nextUnreadPage(e: MouseEvent): void {
+    e.stopPropagation();
+    const max = Math.max(0, Math.ceil(this.upcomingUnreadAll.length / this.upcomingPageSize) - 1);
+    this.upcomingUnreadPage = Math.min(max, this.upcomingUnreadPage + 1);
+  }
+
+  prevReadPage(e: MouseEvent): void {
+    e.stopPropagation();
+    this.upcomingReadPage = Math.max(0, this.upcomingReadPage - 1);
+  }
+
+  nextReadPage(e: MouseEvent): void {
+    e.stopPropagation();
+    const max = Math.max(0, Math.ceil(this.upcomingReadAll.length / this.upcomingPageSize) - 1);
+    this.upcomingReadPage = Math.min(max, this.upcomingReadPage + 1);
+  }
+
+  private clampUpcomingPages(): void {
+    const maxU = Math.max(0, Math.ceil(this.upcomingUnreadAll.length / this.upcomingPageSize) - 1);
+    if (this.upcomingUnreadPage > maxU) this.upcomingUnreadPage = maxU;
+    const maxR = Math.max(0, Math.ceil(this.upcomingReadAll.length / this.upcomingPageSize) - 1);
+    if (this.upcomingReadPage > maxR) this.upcomingReadPage = maxR;
+  }
+
+  private syncReadTmdbFromServer(): void {
+    const ids = (this.upcomingTmdb || []).map((m) => Number(m.tmdbId)).filter((n) => n > 0 && !isNaN(n));
+    if (!ids.length) {
+      this.readTmdbIds = new Set();
+      this.cdr.markForCheck();
+      return;
+    }
+    this.notificacoesService.getLidosTmdbIds(ids).subscribe({
+      next: (lidos) => {
+        this.readTmdbIds = new Set(lidos);
+        this.clampUpcomingPages();
+        this.cdr.markForCheck();
+      }
     });
-    return upcoming.slice(0, 5);
+  }
+
+  private loadUpcomingFromTmdb(): void {
+    const onNext = (list: Filme[] | null) => {
+      this.upcomingTmdb = list || [];
+      this.syncReadTmdbFromServer();
+      this.clampUpcomingPages();
+      this.loadUpcomingDetails();
+    };
+    const onErr = () => {
+      this.upcomingTmdb = [];
+      this.readTmdbIds = new Set();
+    };
+
+    this.notificacoesService
+      .getProximasEstreiasPersonalizadas({
+        page: 1,
+        count: 40,
+        filtrarPorGeneros: this.filtrarEstreiasPorGeneros
+      })
+      .pipe(
+        tap(() => {
+          this.proximasEstreiasSessaoAtiva = true;
+        }),
+        catchError((err) => {
+          if (err?.status === 401) {
+            this.proximasEstreiasSessaoAtiva = false;
+          } else {
+            this.proximasEstreiasSessaoAtiva = true;
+          }
+          return this.filmesService.getUpcoming(1, 40);
+        })
+      )
+      .subscribe({ next: onNext, error: onErr });
+  }
+
+  setEstreiasGenreFilter(apenasGenerosFavoritos: boolean, e: MouseEvent): void {
+    e.stopPropagation();
+    if (this.filtrarEstreiasPorGeneros === apenasGenerosFavoritos) return;
+    this.filtrarEstreiasPorGeneros = apenasGenerosFavoritos;
+    this.upcomingUnreadPage = 0;
+    this.upcomingReadPage = 0;
+    this.loadUpcomingFromTmdb();
   }
 
   private loadUpcomingDetails(): void {
     if (this.isLoadingUpcomingDetails) return;
-    const upcoming = this.upcomingMovies;
-    const missing = upcoming.filter(m => !m.releaseDate && m.tmdbId);
+    const missing = (this.upcomingTmdb || []).filter((m) => !m.releaseDate && m.tmdbId);
     if (!missing.length) return;
     this.isLoadingUpcomingDetails = true;
-    const requests = missing.map(m => {
+    const requests = missing.map((m) => {
       const idNum = Number(m.tmdbId);
       if (!idNum || isNaN(idNum)) return of(null);
       return this.filmesService.getMovieFromTmdb(idNum).pipe(catchError(() => of(null)));
@@ -97,33 +291,37 @@ export class TopbarActionsComponent implements OnInit, OnDestroy {
             try {
               for (const rdGroup of anyRes.release_dates) {
                 if (rdGroup?.release_dates?.length) {
-                  const found = rdGroup.release_dates.find((x: any) => x.iso_3166_1 === 'PT' || x.iso_3166_1 === 'US') ?? rdGroup.release_dates[0];
+                  const found =
+                    rdGroup.release_dates.find((x: any) => x.iso_3166_1 === 'PT' || x.iso_3166_1 === 'US') ??
+                    rdGroup.release_dates[0];
                   remoteDate = found?.release_date ?? found?.date;
                   if (remoteDate) break;
                 }
               }
-            } catch {}
-          }
-          if (remoteDate) {
-            const parsed = new Date(remoteDate);
-            if (!isNaN(parsed.getTime())) {
-              const local = this.movies.find(x => x.id === missing[idx].id);
-              if (local) local.releaseDate = parsed.toISOString();
+            } catch {
+              /* ignore */
             }
-          } else {
-            const anyResYear = anyRes.ano ?? anyRes.year ?? anyRes.Ano;
-            if (anyResYear != null) {
-              const local = this.movies.find(x => x.id === missing[idx].id);
-              if (local && !local.ano) {
-                const y = Number(anyResYear);
-                if (!isNaN(y)) local.ano = y;
-              }
+          }
+          const tid = missing[idx].tmdbId;
+          const local = tid ? this.upcomingTmdb.find((x) => x.tmdbId === tid) : undefined;
+          if (remoteDate && local) {
+            const parsed = new Date(remoteDate);
+            if (!isNaN(parsed.getTime())) local.releaseDate = parsed.toISOString();
+          } else if (local && !local.ano) {
+            const yRaw = anyRes.ano ?? anyRes.year ?? anyRes.Ano;
+            if (yRaw != null) {
+              const y = Number(yRaw);
+              if (!isNaN(y)) local.ano = y;
             }
           }
         });
       },
-      complete: () => { this.isLoadingUpcomingDetails = false; },
-      error: () => { this.isLoadingUpcomingDetails = false; }
+      complete: () => {
+        this.isLoadingUpcomingDetails = false;
+      },
+      error: () => {
+        this.isLoadingUpcomingDetails = false;
+      }
     });
   }
 
@@ -138,11 +336,40 @@ export class TopbarActionsComponent implements OnInit, OnDestroy {
   }
 
   posterOf(f: Filme): string {
-    return f?.posterUrl || 'https://via.placeholder.com/300x450?text=Poster';
+    const u = (f?.posterUrl ?? '').trim();
+    if (!u) return this.posterFallback;
+    const tmdbBase = 'https://image.tmdb.org/t/p/w500';
+    if (u.length <= tmdbBase.length) return this.posterFallback;
+    return u;
+  }
+
+  onPosterBroken(ev: Event): void {
+    const el = ev.target as HTMLImageElement;
+    if (el && !el.src.includes('placeholder')) el.src = this.posterFallback;
+  }
+
+  marcarComoLida(e: MouseEvent, m: Filme): void {
+    e.preventDefault();
+    e.stopPropagation();
+    const tid = Number(m.tmdbId);
+    if (!tid || isNaN(tid)) return;
+
+    this.filmesService
+      .getById(tid)
+      .pipe(
+        switchMap((f) => this.notificacoesService.marcarNovaEstreiaComoLida(f.id)),
+        tap(() => this.readTmdbIds.add(tid)),
+        catchError(() => of(undefined))
+      )
+      .subscribe(() => {
+        this.clampUpcomingPages();
+        this.cdr.markForCheck();
+      });
   }
 
   openNotificationMovie(m: Filme): void {
     this.isNotificationsOpen = false;
-    if (m?.id) this.router.navigate(['/movie-detail', m.id]);
+    const id = m?.id && m.id > 0 ? m.id : Number(m?.tmdbId);
+    if (id && !isNaN(id)) this.router.navigate(['/movie-detail', id]);
   }
 }

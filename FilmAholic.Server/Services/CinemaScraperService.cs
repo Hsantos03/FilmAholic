@@ -110,8 +110,13 @@ public class CinemaScraperService : ICinemaScraperService
 
     private async Task<List<CinemaMovieDto>> ScrapeCinecartazAsync(string url, string cinemaNome)
     {
+        // Forçar o uso de protocolos de segurança modernos compatíveis
+        ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12 | SecurityProtocolType.Tls13;
+        
         var httpClient = _httpClientFactory.CreateClient();
-        httpClient.DefaultRequestHeaders.Add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36");
+        httpClient.DefaultRequestHeaders.UserAgent.ParseAdd("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36");
+        httpClient.DefaultRequestHeaders.Add("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8");
+        httpClient.DefaultRequestHeaders.Add("Accept-Language", "pt-PT,pt;q=0.9,en;q=0.8");
 
         var html = await httpClient.GetStringAsync(url);
         var doc = new HtmlDocument();

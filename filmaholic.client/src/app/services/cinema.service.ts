@@ -45,7 +45,8 @@ export class CinemaService {
   }
 
   getCinemaMovies(): Observable<CinemaMovie[]> {
-    return this.http.get<CinemaMovie[]>('https://localhost:7277/api/cinema/em-cartaz').pipe(
+    // Agora usa o caminho relativo. O Angular sabe que deve chamar a API no mesmo domínio onde o site está hospedado
+    return this.http.get<CinemaMovie[]>(`${this.cinemaApi}/em-cartaz`).pipe(
       catchError(() => of(this.getMockCinemaMovies()))
     );
   }
@@ -121,7 +122,8 @@ export class CinemaService {
   }
 
   searchMovieByTitle(titulo: string): Observable<number | null> {
-    return this.http.get<any>(`http://localhost:5185/api/cinema/search-tmdb?titulo=${encodeURIComponent(titulo)}`).pipe(
+    // NUNCA uses localhost:5185 aqui, senão o site no Azure vai falhar sempre
+    return this.http.get<any>(`${this.cinemaApi}/search-tmdb?titulo=${encodeURIComponent(titulo)}`).pipe(
       map(res => res.id ?? null),
       catchError(() => of(null))
     );

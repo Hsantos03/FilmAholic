@@ -1,4 +1,5 @@
 using FilmAholic.Server.Models;
+using FilmAholic.Server.Data;
 using FilmAholic.Server.Services;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -16,19 +17,22 @@ namespace FilmAholic.Server.Controllers
         private readonly IEmailService _emailService;
         private readonly ILogger<AutenticacaoController> _logger;
         private readonly IConfiguration _configuration;
+        private readonly FilmAholicDbContext _context;
 
         public AutenticacaoController(
             UserManager<Utilizador> userManager, 
             SignInManager<Utilizador> signInManager,
             IEmailService emailService,
             ILogger<AutenticacaoController> logger,
-            IConfiguration configuration)
+            IConfiguration configuration,
+            FilmAholicDbContext context)
         {
             _userManager = userManager;
             _signInManager = signInManager;
             _emailService = emailService;
             _logger = logger;
             _configuration = configuration;
+            _context = context;
         }
 
         [HttpPost("registar")]
@@ -51,6 +55,18 @@ namespace FilmAholic.Server.Controllers
 
             if (result.Succeeded)
             {
+                // FR64: criar preferências de notificação default ao criar nova conta.
+                _context.PreferenciasNotificacao.Add(new PreferenciasNotificacao
+                {
+                    UtilizadorId = user.Id,
+                    NovaEstreiaAtiva = true,
+                    NovaEstreiaFrequencia = "Diaria",
+                    ResumoEstatisticasAtiva = true,
+                    ResumoEstatisticasFrequencia = "Semanal",
+                    AtualizadaEm = DateTime.UtcNow
+                });
+                await _context.SaveChangesAsync();
+
                 var token = await _userManager.GenerateEmailConfirmationTokenAsync(user);
                 
                 try
