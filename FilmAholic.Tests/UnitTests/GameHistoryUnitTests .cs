@@ -14,12 +14,11 @@ using Xunit;
 
 namespace FilmAholic.Tests.UnitTests
 {
-    /// <summary>
+
     /// FR45 – Categorias; FR47 – XP/pontuação; FR48 – Leaderboard; FR49 – Nível;
     /// FR52 – Stats; FR53 – Histórico.
     /// Testa a lógica de negócio isolada: fórmulas de XP, cálculo de nível,
     /// agrupamento do leaderboard e stats.
-    /// </summary>
     public class GameHistoryUnitTests : IDisposable
     {
         private readonly FilmAholicDbContext _context;
@@ -38,8 +37,7 @@ namespace FilmAholic.Tests.UnitTests
             _controller = new GameHistoryController(_context);
         }
 
-        // ─── Helpers ────────────────────────────────────────────────────────────
-
+        // ─── Helpers ────
         private void AuthenticateAs(string userId)
         {
             var claims = new List<Claim> { new Claim(ClaimTypes.NameIdentifier, userId) };
@@ -78,11 +76,9 @@ namespace FilmAholic.Tests.UnitTests
             return JsonSerializer.Deserialize<JsonElement>(json, _jsonOpts);
         }
 
-        // ─── Fórmula XP: multiplicador 1.0 (score 1–4) ──────────────────────────
+        // ─── Fórmula XP: multiplicador 1.0 (score 1–4) ────
 
-        /// <summary>
         /// FR47 – Scores 1–4 usam multiplicador 1.0.
-        /// </summary>
         [Theory]
         [InlineData(1, 10)]
         [InlineData(2, 20)]
@@ -101,11 +97,9 @@ namespace FilmAholic.Tests.UnitTests
             Assert.Equal(expectedXp, data.GetProperty("xpGanho").GetInt32());
         }
 
-        // ─── Fórmula XP: multiplicador 1.5 (score 5–9) ──────────────────────────
+        // ─── Fórmula XP: multiplicador 1.5 (score 5–9) ─────
 
-        /// <summary>
         /// FR47 – Scores 5–9 usam multiplicador 1.5 (resultado pode ser capped a 100).
-        /// </summary>
         [Theory]
         [InlineData(5, 75)]   // 5*10*1.5 = 75
         [InlineData(7, 100)]   // 7*10*1.5 = 105 → cap = 100
@@ -124,11 +118,9 @@ namespace FilmAholic.Tests.UnitTests
             Assert.Equal(expectedXp, data.GetProperty("xpGanho").GetInt32());
         }
 
-        // ─── Fórmula XP: multiplicador 2.0 (score ≥ 10) ────────────────────────
+        // ─── Fórmula XP: multiplicador 2.0 (score ≥ 10) ─────
 
-        /// <summary>
         /// FR47 – Scores ≥ 10 usam multiplicador 2.0 mas sempre capped a 100 XP diários.
-        /// </summary>
         [Theory]
         [InlineData(10, 100)]
         [InlineData(20, 100)]
@@ -146,12 +138,10 @@ namespace FilmAholic.Tests.UnitTests
             Assert.Equal(expectedXp, data.GetProperty("xpGanho").GetInt32());
         }
 
-        // ─── XP Diário Restante ──────────────────────────────────────────────────
+        // ─── XP Diário Restante ─────
 
-        /// <summary>
         /// FR49 – xpDiarioRestante reflecte correctamente o espaço diário disponível.
         /// 60 XP já gastos → restam 40 → score 3 (30 XP) → restam 10.
-        /// </summary>
         [Fact]
         public async Task SaveResult_XPDiarioRestante_ReflectsCorrectly()
         {
@@ -168,13 +158,11 @@ namespace FilmAholic.Tests.UnitTests
             Assert.Equal(10, data.GetProperty("xpDiarioRestante").GetInt32());
         }
 
-        // ─── Cálculo de Nível ────────────────────────────────────────────────────
+        // ─── Cálculo de Nível ─────
 
-        /// <summary>
         /// FR49 – Fórmula: xpNecessario = 100 * nivel * (nivel + 1) / 2.
         /// Limiar Nv.2 = 100 XP; Nv.3 = 300 XP.
-        /// Simulamos o utilizador a ganhar 10 XP (Score = 1) para atingir os limiares.
-        /// </summary>
+        /// Simula o utilizador a ganhar 10 XP (Score = 1) para atingir o limite de xp.
         [Theory]
         [InlineData(0, 1)]     // 0 + 10 = 10 XP -> Nível 1
         [InlineData(89, 1)]    // 89 + 10 = 99 XP -> Nível 1
@@ -199,11 +187,9 @@ namespace FilmAholic.Tests.UnitTests
             Assert.Equal(expectedNivel, data.GetProperty("nivel").GetInt32());
         }
 
-        // ─── Leaderboard – totalGames ────────────────────────────────────────────
+        // ─── Leaderboard – totalGames ────
 
-        /// <summary>
         /// FR48 – totalGames conta todos os jogos do utilizador.
-        /// </summary>
         [Fact]
         public async Task GetLeaderboard_TotalGamesCountsAllGamesForUser()
         {
@@ -230,11 +216,9 @@ namespace FilmAholic.Tests.UnitTests
             Assert.Equal(7, entry.GetProperty("totalGames").GetInt32());
         }
 
-        // ─── Leaderboard – ranks sequenciais ────────────────────────────────────
+        // ─── Leaderboard – ranks sequenciais ──────
 
-        /// <summary>
         /// FR48 – Os ranks devem ser sequenciais a começar em 1.
-        /// </summary>
         [Fact]
         public async Task GetLeaderboard_RanksAreSequentialFromOne()
         {
@@ -265,9 +249,7 @@ namespace FilmAholic.Tests.UnitTests
 
         // ─── Stats – único jogo ──────────────────────────────────────────────────
 
-        /// <summary>
         /// FR52 – Com um único jogo, mediaPontos == score desse jogo.
-        /// </summary>
         [Fact]
         public async Task GetStats_SingleGame_MediaEqualsScore()
         {
@@ -294,11 +276,9 @@ namespace FilmAholic.Tests.UnitTests
             Assert.Equal(1, data.GetProperty("totalJogos").GetInt32());
         }
 
-        // ─── GetMyHistory – ordenação por data descendente ───────────────────────
+        // ─── GetMyHistory – ordenação por data descendente ────
 
-        /// <summary>
         /// FR53 – GetMyHistory devolve o jogo mais recente em primeiro.
-        /// </summary>
         [Fact]
         public async Task GetMyHistory_OrderedByDateDescending()
         {
@@ -320,11 +300,9 @@ namespace FilmAholic.Tests.UnitTests
             Assert.Equal(1, list[1].Score);
         }
 
-        // ─── Leaderboard – userName "Anónimo" ────────────────────────────────────
+        // ─── Leaderboard – userName "Anónimo" ─────
 
-        /// <summary>
         /// FR48 – Utilizador que não existe na tabela Users aparece como "Anónimo".
-        /// </summary>
         [Fact]
         public async Task GetLeaderboard_UserNotInUsersTable_ShowsAnonimo()
         {
@@ -346,6 +324,24 @@ namespace FilmAholic.Tests.UnitTests
                 i.GetProperty("utilizadorId").GetString() == "ghost-lb-user");
 
             Assert.Equal("Anónimo", entry.GetProperty("userName").GetString());
+        }
+
+        // ─── SaveResult – categoria "mixed" ───
+        [Fact]
+        public async Task SaveResult_CategoryMixed_IsPersistedCorrectly()
+        {
+            var userId = "mixed-cat-user";
+            await CreateUserAsync(userId);
+            AuthenticateAs(userId);
+
+            await _controller.saveResult(
+                new GameHistoryCreateDto { Score = 1, RoundsJson = "[]", Category = "mixed" });
+
+            var saved = await _context.GameHistories
+                .FirstOrDefaultAsync(h => h.UtilizadorId == userId);
+
+            Assert.NotNull(saved);
+            Assert.Equal("mixed", saved!.Category);
         }
 
         // ─── Dispose ────

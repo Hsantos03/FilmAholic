@@ -72,6 +72,13 @@ namespace FilmAholic.Tests.UnitTests
             Assert.True(duration.TotalMilliseconds < 100);
         }
 
+        [Fact]
+        public void GetCinemasProximos_AllHaveWebsite()
+        {
+            foreach (var c in GetCinemas())
+                Assert.False(string.IsNullOrWhiteSpace(c.Website));
+        }
+
         private List<CinemaController.CinemaVenueDto> GetCinemas()
         {
             var result = _controller.GetCinemasProximos();

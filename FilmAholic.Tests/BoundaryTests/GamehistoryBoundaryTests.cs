@@ -14,11 +14,10 @@ using Xunit;
 
 namespace FilmAholic.Tests.BoundaryTests
 {
-    /// <summary>
+
     /// FR47 – Atribuição de pontos; FR48 – Leaderboard; FR49 – XP no perfil;
     /// FR52 – Estatísticas de desempenho; FR53 – Histórico de pontuações.
     /// Testa os limites numéricos do sistema (score=0, score máximo, XP diário, top do leaderboard).
-    /// </summary>
     public class GameHistoryBoundaryTests : IDisposable
     {
         private readonly FilmAholicDbContext _context;
@@ -38,7 +37,7 @@ namespace FilmAholic.Tests.BoundaryTests
             _controller = new GameHistoryController(_context);
         }
 
-        // ─── Helpers ────────────────────────────────────────────────────────────
+        // ─── Helpers ────
 
         private void AuthenticateAs(string userId)
         {
@@ -75,18 +74,16 @@ namespace FilmAholic.Tests.BoundaryTests
             return user;
         }
 
-        /// <summary>Converte o Value de um OkObjectResult para JsonElement.</summary>
+        /// Converte o Value de um OkObjectResult para JsonElement.
         private static JsonElement ToJson(object? value)
         {
             var json = JsonSerializer.Serialize(value, _jsonOpts);
             return JsonSerializer.Deserialize<JsonElement>(json, _jsonOpts);
         }
 
-        // ─── Score = 0 ──────────────────────────────────────────────────────────
+        // ─── Score = 0 ────
 
-        /// <summary>
         /// FR47 – Score zero não deve atribuir XP nem alterar o nível do utilizador.
-        /// </summary>
         [Fact]
         public async Task SaveResult_ScoreZero_GrantsNoXP()
         {
@@ -104,11 +101,11 @@ namespace FilmAholic.Tests.BoundaryTests
             Assert.Equal(1, data.GetProperty("nivel").GetInt32());
         }
 
-        // ─── Score = 1 ──────────────────────────────────────────────────────────
 
-        /// <summary>
+        // ─── Score = 1 ───
+
+
         /// FR47 / FR49 – Um único acerto deve gerar XP = 10 (multiplicador 1.0).
-        /// </summary>
         [Fact]
         public async Task SaveResult_ScoreOne_GrantsTenXP()
         {
@@ -126,11 +123,9 @@ namespace FilmAholic.Tests.BoundaryTests
         }
 
 
-        // ─── Multiplicador 2× capped a 100 ──────────────────────────────────────
+        // ─── Multiplicador 2× capped a 100 ────
 
-        /// <summary>
         /// FR47 / FR49 – Score = 10 → XP calculado = 200, cap diário = 100 → xpGanho = 100.
-        /// </summary>
         [Fact]
         public async Task SaveResult_ScoreTen_CappedByDailyLimit()
         {
@@ -147,11 +142,9 @@ namespace FilmAholic.Tests.BoundaryTests
             Assert.Equal(0, data.GetProperty("xpDiarioRestante").GetInt32());
         }
 
-        // ─── Limite diário já atingido ───────────────────────────────────────────
+        // ─── Limite diário já atingido ────
 
-        /// <summary>
         /// FR49 – Após atingir o limite diário de 100 XP, jogos no mesmo dia não dão XP.
-        /// </summary>
         [Fact]
         public async Task SaveResult_AfterDailyLimitReached_GrantsZeroXP()
         {
@@ -171,11 +164,9 @@ namespace FilmAholic.Tests.BoundaryTests
             Assert.Equal(0, data.GetProperty("xpDiarioRestante").GetInt32());
         }
 
-        // ─── Reset do limite diário à meia-noite UTC ────────────────────────────
+        // ─── Reset do limite diário à meia-noite UTC ────
 
-        /// <summary>
         /// FR49 – Se o último reset foi ontem, o limite é reposto e é possível voltar a ganhar XP.
-        /// </summary>
         [Fact]
         public async Task SaveResult_AfterMidnightReset_AllowsNewXP()
         {
@@ -195,11 +186,9 @@ namespace FilmAholic.Tests.BoundaryTests
                 "Após reset diário deve ser possível ganhar XP.");
         }
 
-        // ─── Leaderboard – top = 1 ───────────────────────────────────────────────
+        // ─── Leaderboard – top = 1 ────
 
-        /// <summary>
         /// FR48 – top=1 deve devolver exactamente 1 entrada.
-        /// </summary>
         [Fact]
         public async Task GetLeaderboard_TopOne_ReturnsSingleEntry()
         {
@@ -217,9 +206,8 @@ namespace FilmAholic.Tests.BoundaryTests
             Assert.Single(items);
         }
 
-        /// <summary>
+
         /// FR48 – Primeiro lugar deve ter o score mais alto e rank = 1.
-        /// </summary>
         [Fact]
         public async Task GetLeaderboard_OrderByBestScoreDescending()
         {
@@ -238,11 +226,9 @@ namespace FilmAholic.Tests.BoundaryTests
             Assert.Equal(1, items[0].GetProperty("rank").GetInt32());
         }
 
-        // ─── Leaderboard – separação de categorias ──────────────────────────────
+        // ─── Leaderboard – separação de categorias ────
 
-        /// <summary>
         /// FR48 – O leaderboard de "actors" não deve incluir entradas de "films".
-        /// </summary>
         [Fact]
         public async Task GetLeaderboard_FiltersCorrectlyByCategory()
         {
@@ -260,11 +246,9 @@ namespace FilmAholic.Tests.BoundaryTests
                 Assert.NotEqual("cat-user-films", item.GetProperty("utilizadorId").GetString()));
         }
 
-        // ─── Histórico – máximo 50 entradas ─────────────────────────────────────
+        // ─── Histórico – máximo 50 entradas ────
 
-        /// <summary>
         /// FR53 – GetMyHistory devolve no máximo 50 entradas.
-        /// </summary>
         [Fact]
         public async Task GetMyHistory_LimitedToFiftyEntries()
         {
@@ -291,8 +275,35 @@ namespace FilmAholic.Tests.BoundaryTests
             Assert.True(list.Count() <= 50, "O histórico não pode exceder 50 entradas.");
         }
 
-        // ─── Dispose ────────────────────────────────────────────────────────────
 
+        /// FR53 – Se o utilizador tiver exatamente 50 entradas, GetMyHistory deve devolver todas.
+        [Fact]
+        public async Task GetMyHistory_ExactlyFiftyEntries_ReturnsAll()
+        {
+            const string userId = "exactly-fifty-user";
+            await CreateUserAsync(userId);
+            AuthenticateAs(userId);
+
+            _context.GameHistories.AddRange(
+                Enumerable.Range(1, 50).Select(i => new GameHistory
+                {
+                    UtilizadorId = userId,
+                    Score = i,
+                    RoundsJson = "[]",
+                    Category = "films",
+                    DataCriacao = DateTime.UtcNow.AddMinutes(-i)
+                })
+            );
+            await _context.SaveChangesAsync();
+
+            var result = await _controller.GetMyHistory();
+            var ok = Assert.IsType<OkObjectResult>(result);
+            var list = Assert.IsAssignableFrom<IEnumerable<GameHistory>>(ok.Value);
+            Assert.Equal(50, list.Count());
+        }
+
+
+        // ─── Dispose ───
         public void Dispose() => _context.Dispose();
     }
 }

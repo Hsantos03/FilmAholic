@@ -14,11 +14,10 @@ using Xunit;
 
 namespace FilmAholic.Tests.ErrorHandlingTests
 {
-    /// <summary>
+
     /// FR46 – Validação de rondas; FR47 – Pontuação; FR48 – Leaderboard; FR53 – Histórico.
     /// Verifica que o sistema responde correctamente a entradas inválidas,
     /// utilizadores não autenticados e pedidos com dados em falta.
-    /// </summary>
     public class GameHistoryErrorHandlingTests : IDisposable
     {
         private readonly FilmAholicDbContext _context;
@@ -37,7 +36,7 @@ namespace FilmAholic.Tests.ErrorHandlingTests
             _controller = new GameHistoryController(_context);
         }
 
-        // ─── Helpers ────────────────────────────────────────────────────────────
+        // ─── Helpers ────
 
         private void AuthenticateAs(string userId)
         {
@@ -87,9 +86,9 @@ namespace FilmAholic.Tests.ErrorHandlingTests
             return JsonSerializer.Deserialize<JsonElement>(json, _jsonOpts);
         }
 
-        // ─── Utilizador não autenticado ──────────────────────────────────────────
+        // ─── Utilizador não autenticado ─────
 
-        /// <summary>FR53 – GetMyHistory sem autenticação → 401.</summary>
+        /// FR53 – GetMyHistory sem autenticação → 401.
         [Fact]
         public async Task GetMyHistory_Unauthenticated_ReturnsUnauthorized()
         {
@@ -98,7 +97,7 @@ namespace FilmAholic.Tests.ErrorHandlingTests
             Assert.IsType<UnauthorizedResult>(result);
         }
 
-        /// <summary>FR47 – saveResult sem autenticação → 401.</summary>
+        /// FR47 – saveResult sem autenticação → 401.
         [Fact]
         public async Task SaveResult_Unauthenticated_ReturnsUnauthorized()
         {
@@ -108,7 +107,7 @@ namespace FilmAholic.Tests.ErrorHandlingTests
             Assert.IsType<UnauthorizedResult>(result);
         }
 
-        /// <summary>FR52 – GetStats sem autenticação → 401.</summary>
+        /// FR52 – GetStats sem autenticação → 401.
         [Fact]
         public async Task GetStats_Unauthenticated_ReturnsUnauthorized()
         {
@@ -117,9 +116,9 @@ namespace FilmAholic.Tests.ErrorHandlingTests
             Assert.IsType<UnauthorizedResult>(result);
         }
 
-        // ─── DTO nulo ────────────────────────────────────────────────────────────
+        // ─── DTO nulo ────
 
-        /// <summary>FR47 – saveResult com DTO nulo → 400.</summary>
+        /// FR47 – saveResult com DTO nulo → 400.
         [Fact]
         public async Task SaveResult_NullDto_ReturnsBadRequest()
         {
@@ -131,11 +130,9 @@ namespace FilmAholic.Tests.ErrorHandlingTests
             Assert.IsType<BadRequestResult>(result);
         }
 
-        // ─── Score negativo ──────────────────────────────────────────────────────
+        // ─── Score negativo ─────
 
-        /// <summary>
         /// FR47 – Score negativo não deve atribuir XP nem lançar excepção.
-        /// </summary>
         [Fact]
         public async Task SaveResult_NegativeScore_NoXPGranted()
         {
@@ -151,11 +148,9 @@ namespace FilmAholic.Tests.ErrorHandlingTests
             Assert.Equal(0, data.GetProperty("xpGanho").GetInt32());
         }
 
-        // ─── RoundsJson nulo ─────────────────────────────────────────────────────
+        // ─── RoundsJson nulo ────
 
-        /// <summary>
         /// FR52 – RoundsJson nulo deve ser guardado como string.Empty sem lançar excepção.
-        /// </summary>
         [Fact]
         public async Task SaveResult_NullRoundsJson_StoresEmptyString()
         {
@@ -173,11 +168,9 @@ namespace FilmAholic.Tests.ErrorHandlingTests
             Assert.Equal(string.Empty, saved!.RoundsJson);
         }
 
-        // ─── Categoria nula ──────────────────────────────────────────────────────
+        // ─── Categoria nula ─────
 
-        /// <summary>
         /// FR45 – Category nula deve usar o valor por defeito "films".
-        /// </summary>
         [Fact]
         public async Task SaveResult_NullCategory_DefaultsToFilms()
         {
@@ -194,11 +187,9 @@ namespace FilmAholic.Tests.ErrorHandlingTests
             Assert.Equal("films", saved!.Category);
         }
 
-        // ─── Leaderboard com zero entradas ──────────────────────────────────────
+        // ─── Leaderboard com zero entradas ──────
 
-        /// <summary>
         /// FR48 – Leaderboard de categoria vazia devolve lista vazia (não null).
-        /// </summary>
         [Fact]
         public async Task GetLeaderboard_EmptyCategory_ReturnsEmptyList()
         {
@@ -214,11 +205,9 @@ namespace FilmAholic.Tests.ErrorHandlingTests
             Assert.Empty(items);
         }
 
-        // ─── GetStats sem histórico ──────────────────────────────────────────────
+        // ─── GetStats sem histórico ──────
 
-        /// <summary>
         /// FR52 – GetStats para utilizador sem jogos devolve zeros sem excepção.
-        /// </summary>
         [Fact]
         public async Task GetStats_NoHistory_ReturnsZeros()
         {
@@ -235,12 +224,10 @@ namespace FilmAholic.Tests.ErrorHandlingTests
             Assert.Equal(0, data.GetProperty("totalJogos").GetInt32());
         }
 
-        // ─── Utilizador autenticado mas ausente na BD ────────────────────────────
+        // ─── Utilizador autenticado mas ausente na BD ────
 
-        /// <summary>
         /// FR49 – Utilizador autenticado que não existe na tabela Users:
         /// o GameHistory deve ser guardado mas sem XP atribuído.
-        /// </summary>
         [Fact]
         public async Task SaveResult_UserNotInDatabase_SavesHistoryWithoutXP()
         {
@@ -259,7 +246,29 @@ namespace FilmAholic.Tests.ErrorHandlingTests
             Assert.NotNull(saved);
         }
 
-        // ─── Dispose ────────────────────────────────────────────────────────────
+
+        /// ─── Categoria inválida no leaderboard ────
+        [Fact]
+        public async Task GetLeaderboard_InvalidCategory_ReturnsEmptyList()
+        {
+            _context.GameHistories.Add(new GameHistory
+            {
+                UtilizadorId = "cat-user",
+                Score = 10,
+                RoundsJson = "[]",
+                Category = "films",
+                DataCriacao = DateTime.UtcNow
+            });
+            await _context.SaveChangesAsync();
+
+            var result = await _controller.GetLeaderboard("categoria_invalida", top: 10);
+
+            var ok = Assert.IsType<OkObjectResult>(result);
+            var items = ToJson(ok.Value).EnumerateArray().ToList();
+            Assert.Empty(items);
+        }
+
+        // ─── Dispose ────────
 
         public void Dispose() => _context.Dispose();
     }
