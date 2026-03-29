@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
-import { ComunidadesService, ComunidadeDto } from '../../services/comunidades.service';
+import { ComunidadesService, ComunidadeDto, SugestaoFilmeComunidade } from '../../services/comunidades.service';
 import { MenuService } from '../../services/menu.service';
 
 @Component({
@@ -21,6 +21,10 @@ export class ComunidadesComponent implements OnInit {
   isCreating = false;
   createError = '';
 
+  sugestoesFilmes: SugestaoFilmeComunidade[] = [];
+  isLoadingSugestoes = false;
+  private readonly posterFallback = 'https://via.placeholder.com/300x450?text=Sem+poster';
+
   constructor(
     private service: ComunidadesService,
     private router: Router,
@@ -33,6 +37,30 @@ export class ComunidadesComponent implements OnInit {
 
   ngOnInit(): void {
     this.loadComunidades();
+    this.loadSugestoesFilmes();
+  }
+
+  private loadSugestoesFilmes(): void {
+    if (!localStorage.getItem('user_id')) {
+      this.sugestoesFilmes = [];
+      return;
+    }
+    this.isLoadingSugestoes = true;
+    this.service.getSugestoesFilmesComunidade(24).subscribe((list) => {
+      this.sugestoesFilmes = list || [];
+      this.isLoadingSugestoes = false;
+    });
+  }
+
+  posterSugestao(s: SugestaoFilmeComunidade): string {
+    const u = (s?.posterUrl ?? '').trim();
+    if (!u) return this.posterFallback;
+    return u;
+  }
+
+  onPosterSugestaoError(ev: Event): void {
+    const el = ev.target as HTMLImageElement;
+    if (el && !el.src.includes('placeholder')) el.src = this.posterFallback;
   }
 
   loadComunidades(): void {

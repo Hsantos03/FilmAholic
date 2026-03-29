@@ -80,6 +80,28 @@
         </div>
       </header>
 
+      <section class="sugestoes-comunidade-block" *ngIf="!isLoadingSugestoes && sugestoesFilmes.length > 0">
+        <div class="sugestoes-comunidade-head">
+          <h2>Descoberta nas tuas comunidades</h2>
+          <p class="sugestoes-comunidade-sub">Filmes que outros membros viram e que ainda não tens como “Já vi”. Cada sugestão indica a comunidade de origem.</p>
+        </div>
+        <div class="comunidade-sugestoes-scroll" role="list">
+          <a *ngFor="let s of sugestoesFilmes"
+             class="comunidade-sugestao-card"
+             [routerLink]="['/movie-detail', s.filmeId]"
+             role="listitem">
+            <div class="comunidade-sugestao-poster-wrap">
+              <img [src]="posterSugestao(s)" [alt]="s.titulo" (error)="onPosterSugestaoError($event)" />
+            </div>
+            <div class="comunidade-sugestao-body">
+              <span class="comunidade-sugestao-title">{{ s.titulo }}</span>
+              <span class="comunidade-pill" [attr.title]="'Sugestão da comunidade ' + s.comunidadeNome">{{ s.comunidadeNome }}</span>
+              <span class="comunidade-sugestao-count">{{ s.membrosQueViram === 1 ? '1 membro viu' : s.membrosQueViram + ' membros viram' }}</span>
+            </div>
+          </a>
+        </div>
+      </section>
+
       <div class="state" *ngIf="isLoading">A carregar comunidades…</div>
       <div class="state error" *ngIf="!isLoading && error">{{ error }}</div>
 
