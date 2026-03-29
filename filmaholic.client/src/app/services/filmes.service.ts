@@ -77,8 +77,8 @@ export class FilmesService {
   }
 
   getTrailer(id: number): Observable<string | null> {
-    return this.http.get<{ url: string }>(`https://localhost:7277/api/filmes/${id}/trailer`).pipe(
-      map(res => res.url),
+    return this.http.get<any>(`${this.apiUrl}/${id}/trailer`).pipe(
+      map(res => res.trailerUrl || null),
       catchError(() => of(null))
     );
   }
