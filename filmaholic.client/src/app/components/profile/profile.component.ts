@@ -175,6 +175,10 @@ export class ProfileComponent implements OnInit {
     this.router.navigate(['/dashboard'], { queryParams: { openDesafios: '1' } });
   }
 
+  goToNotificacoesSettings(): void {
+    this.router.navigate(['/definicoes-notificacoes']);
+  }
+
   ngOnInit(): void {
     const userId = localStorage.getItem('user_id');
 

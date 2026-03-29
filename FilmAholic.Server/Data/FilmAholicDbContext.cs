@@ -7,6 +7,8 @@ namespace FilmAholic.Server.Data;
 public class FilmAholicDbContext : IdentityDbContext<Utilizador>
 {
     public DbSet<UserMovie> UserMovies { get; set; }
+    public DbSet<Notificacao> Notificacoes => Set<Notificacao>();
+    public DbSet<PreferenciasNotificacao> PreferenciasNotificacao => Set<PreferenciasNotificacao>();
 
     public FilmAholicDbContext(DbContextOptions<FilmAholicDbContext> options) : base(options) { }
     public DbSet<Comments> Comments { get; set; }
@@ -192,6 +194,42 @@ public class FilmAholicDbContext : IdentityDbContext<Utilizador>
              .OnDelete(DeleteBehavior.SetNull);
 
             e.ToTable("ComunidadePosts");
+        });
+
+        // Configure Notificacoes (NovaEstreia, ResumoEstatisticas, etc.)
+        builder.Entity<Notificacao>(e =>
+        {
+            e.ToTable("Notificacoes");
+            e.HasKey(x => x.Id);
+            e.Property(x => x.Tipo).HasMaxLength(64).IsRequired();
+            e.Property(x => x.Corpo).HasMaxLength(4000);
+            e.Property(x => x.FilmeId).IsRequired(false);
+
+            e.HasOne(x => x.Filme)
+                .WithMany()
+                .HasForeignKey(x => x.FilmeId)
+                .IsRequired(false)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // Idempotência NovaEstreia: um par (utilizador, filme, tipo). ResumoEstatisticas usa FilmeId nulo → várias linhas permitidas.
+            e.HasIndex(x => new { x.UtilizadorId, x.FilmeId, x.Tipo })
+                .IsUnique()
+                .HasFilter("[FilmeId] IS NOT NULL");
+        });
+
+        builder.Entity<PreferenciasNotificacao>(e =>
+        {
+            e.ToTable("PreferenciasNotificacao");
+            e.HasKey(x => x.Id);
+            e.Property(x => x.NovaEstreiaFrequencia).HasMaxLength(20).IsRequired();
+            e.Property(x => x.ResumoEstatisticasFrequencia).HasMaxLength(20).IsRequired();
+            e.HasIndex(x => x.UtilizadorId).IsUnique();
+            e.Property(x => x.AtualizadaEm).IsRequired();
+
+            e.HasOne(x => x.Utilizador)
+                .WithMany()
+                .HasForeignKey(x => x.UtilizadorId)
+                .OnDelete(DeleteBehavior.Cascade);
         });
     }
 }

@@ -28,6 +28,7 @@ import { LeaderboardComponent } from './components/leaderboard/leaderboard.compo
 import { ComunidadesComponent } from './components/comunidades/comunidades.component';
 import { ComunidadeDetalheComponent } from './components/comunidade-detalhe/comunidade-detalhe.component';
 import { ComunidadesService } from './services/comunidades.service';
+import { NotificacoesConfigComponent } from './components/notificacoes-config/notificacoes-config.component';
 
 registerLocaleData(localePt);
 
@@ -52,7 +53,8 @@ registerLocaleData(localePt);
     TopbarActionsComponent,
     LeaderboardComponent,
     ComunidadesComponent,
-    ComunidadeDetalheComponent
+    ComunidadeDetalheComponent,
+    NotificacoesConfigComponent
   ],
   imports: [
     BrowserModule,
