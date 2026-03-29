@@ -204,7 +204,12 @@ await using (var scope = app.Services.CreateAsyncScope())
                     Ativo = d.Ativo,
                     Genero = d.Genero,
                     QuantidadeNecessaria = d.QuantidadeNecessaria,
-                    Xp = d.Xp
+                    Xp = d.Xp,
+                    Pergunta = d.Pergunta,
+                    OpcaoA = d.OpcaoA,
+                    OpcaoB = d.OpcaoB,
+                    OpcaoC = d.OpcaoC,
+                    RespostaCorreta = d.RespostaCorreta
                 }).ToList();
 
                 context.Desafios.AddRange(seedList);

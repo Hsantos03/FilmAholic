@@ -17,4 +17,21 @@ export class DesafiosService {
   getWithUserProgress(): Observable<any[]> {
     return this.http.get<any[]>(`${this.apiUrl}/user`, { withCredentials: true });
   }
+
+  getDesafioDiario(): Observable<any> {
+    return this.http.get<any>(`${this.apiUrl}/diario`, { withCredentials: true });
+  }
+
+  responderDesafio(id: number, resposta: string): Observable<{ acertou: boolean, xpGanho: number }> {
+    const payload = { respostaEscolhida: resposta };
+
+    return this.http.post<{ acertou: boolean, xpGanho: number }>(
+      `${this.apiUrl}/${id}/responder`,
+      payload,
+      {
+        headers: { 'Content-Type': 'application/json' },
+        withCredentials: true
+      }
+    );
+  }
 }

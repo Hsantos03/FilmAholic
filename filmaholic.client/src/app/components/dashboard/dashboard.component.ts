@@ -29,8 +29,13 @@ export class DashboardComponent implements OnInit, OnDestroy {
   userName: string = '';
 
   isDesafiosOpen: boolean = false;
-  desafios: any[] = [];
+  desafioDoDia: any = null;
+  feedbackDesafio: string = '';
+  opcaoSelecionada: string | null = null;
+  respostaCorretaVisivel: string | null = null;
   isLoadingDesafios = false;
+  timeUntilNext: string = '';
+  private countdownTimer: any;
 
   isLoadingMovies = false;
   errorMovies = '';
@@ -136,6 +141,10 @@ export class DashboardComponent implements OnInit, OnDestroy {
     this.searchSub?.unsubscribe();
     window.removeEventListener('resize', this.onResizeBound);
     document.removeEventListener('click', this.onDocumentClickBound);
+    
+    if (this.countdownTimer) {
+      clearInterval(this.countdownTimer);
+    }
   }
 
   public openDesafios(): void {
@@ -145,48 +154,97 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
   public closeDesafios(): void {
     this.isDesafiosOpen = false;
+    
+    if (this.countdownTimer) {
+      clearInterval(this.countdownTimer);
+      this.countdownTimer = null;
+    }
+  }
+
+  private startCountdown(): void {
+    this.updateCountdown(); 
+    this.countdownTimer = setInterval(() => {
+      this.updateCountdown();
+    }, 1000);
+  }
+
+  private updateCountdown(): void {
+    const now = new Date();
+    const tomorrow = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
+    const diff = tomorrow.getTime() - now.getTime();
+
+    if (diff <= 0) {
+      this.timeUntilNext = '00h 00m 00s';
+      return;
+    }
+
+    const h = Math.floor((diff / (1000 * 60 * 60)) % 24).toString().padStart(2, '0');
+    const m = Math.floor((diff / 1000 / 60) % 60).toString().padStart(2, '0');
+    const s = Math.floor((diff / 1000) % 60).toString().padStart(2, '0');
+
+    this.timeUntilNext = `${h}h ${m}m ${s}s`;
   }
 
   private loadDesafiosWithProgress(): void {
     this.isLoadingDesafios = true;
-
-    this.desafiosService.getWithUserProgress().subscribe({
+    this.feedbackDesafio = '';
+    
+    this.desafiosService.getDesafioDiario().subscribe({
       next: (res) => {
-        this.desafios = res || [];
+        this.desafioDoDia = res;
+
+        if (res && res.respondido) {
+          this.respostaCorretaVisivel = res.respostaCorreta ? res.respostaCorreta.trim() : null;
+
+          if (res.acertou) {
+            this.opcaoSelecionada = this.respostaCorretaVisivel;
+          } else {
+            this.opcaoSelecionada = null;
+          }
+
+          if (!this.countdownTimer) this.startCountdown();
+        } else {
+          this.respostaCorretaVisivel = null;
+          this.opcaoSelecionada = null;
+        }
+
         this.isLoadingDesafios = false;
       },
       error: (err) => {
-        console.warn('Falha ao carregar desafios com progresso', err);
-
-        if (err?.status === 401 || err?.status === 403) {
-          this.desafiosService.getAll().subscribe({
-            next: (res) => (this.desafios = res || []),
-            error: (e) => {
-              console.error('Falha ao carregar desafios públicos', e);
-              this.desafios = [];
-            },
-            complete: () => (this.isLoadingDesafios = false)
-          });
-        } else {
-          this.isLoadingDesafios = false;
-          this.desafios = [];
-        }
+        console.warn('Falha ou nenhum desafio hoje', err);
+        this.desafioDoDia = null;
+        this.isLoadingDesafios = false;
       }
     });
   }
 
-  public computeProgressPercent(progresso: number | null | undefined, quantidade: number | null | undefined): number {
-    const p = Number(progresso ?? 0);
-    const q = Number(quantidade ?? 1);
-    if (q <= 0) return 0;
-    return Math.min(100, Math.max(0, Math.round((p / q) * 100)));
+  public selecionarOpcao(opcao: string): void {
+    if (this.desafioDoDia?.respondido) return;
+    this.opcaoSelecionada = opcao;
   }
 
-  public isCompleted(desafio: any): boolean {
-    const p = Number(desafio?.progresso ?? 0);
-    const q = Number(desafio?.quantidadeNecessaria ?? 1);
-    if (q <= 0) return false;
-    return p >= q;
+  public submeterResposta(): void {
+    if (!this.desafioDoDia || this.desafioDoDia.respondido || !this.opcaoSelecionada) return;
+
+    this.desafiosService.responderDesafio(this.desafioDoDia.id, this.opcaoSelecionada).subscribe({
+      next: (res: any) => {
+        this.desafioDoDia.respondido = true;
+        this.desafioDoDia.acertou = res.acertou;
+
+        this.respostaCorretaVisivel = res.respostaCorreta;
+
+        if (res.acertou) {
+          this.feedbackDesafio = `Correto! Ganhaste ${res.xpGanho || this.desafioDoDia.xp} XP! 🎉`;
+        } else {
+          this.feedbackDesafio = 'Incorreto! Tenta novamente amanhã. 🎬';
+        }
+
+        if (!this.countdownTimer) this.startCountdown();
+      },
+      error: () => {
+        this.feedbackDesafio = 'Erro ao processar a resposta.';
+      }
+    });
   }
 
   private loadMovies(): void {
