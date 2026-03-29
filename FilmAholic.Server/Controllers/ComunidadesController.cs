@@ -66,7 +66,7 @@ namespace FilmAholic.Server.Controllers
             return safeName;
         }
 
-        // ─── Helper: apagar ficheiro de imagem ───
+        // ─── Helper: apagar ficheiro de imagem ────
         private void DeleteImageFile(string? fileName, string subFolder)
         {
             if (string.IsNullOrWhiteSpace(fileName)) return;
@@ -113,7 +113,7 @@ namespace FilmAholic.Server.Controllers
             return Ok(list);
         }
 
-        // ─── Public detail ────
+        // ─── Public detail ─────
         [HttpGet("{id:int}")]
         public async Task<IActionResult> GetById(int id)
         {
@@ -138,7 +138,7 @@ namespace FilmAholic.Server.Controllers
             return Ok(dto);
         }
 
-        // ─── Create (requires authenticated user) ────
+        // ─── Create (requires authenticated user) ─────
         [Authorize]
         [HttpPost]
         [RequestSizeLimit(10_000_000)]
@@ -218,7 +218,6 @@ namespace FilmAholic.Server.Controllers
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue("sub");
 
-            // Verificar se o utilizador é Admin desta comunidade
             var isAdmin = await _context.ComunidadeMembros
                 .AnyAsync(m => m.ComunidadeId == id && m.UtilizadorId == userId && m.Role == "Admin");
 
@@ -243,7 +242,7 @@ namespace FilmAholic.Server.Controllers
                 DeleteImageFile(comunidade.BannerFileName, "comunidades");
                 comunidade.BannerFileName = await SaveImageAsync(form.Banner, "comunidades");
             }
-            
+
             if (form.Icon != null && form.Icon.Length > 0)
             {
                 DeleteImageFile(comunidade.IconFileName, "comunidades/icons");
@@ -267,7 +266,31 @@ namespace FilmAholic.Server.Controllers
             return Ok(dto);
         }
 
-        // ─── GET membros da comunidade ─────
+        // ─── DELETE apagar comunidade (apenas o Admin/criador) ────
+        [Authorize]
+        [HttpDelete("{id:int}")]
+        public async Task<IActionResult> Delete(int id)
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue("sub");
+
+            var isAdmin = await _context.ComunidadeMembros
+                .AnyAsync(m => m.ComunidadeId == id && m.UtilizadorId == userId && m.Role == "Admin");
+
+            if (!isAdmin) return Forbid();
+
+            var comunidade = await _context.Comunidades.FirstOrDefaultAsync(c => c.Id == id);
+            if (comunidade == null) return NotFound();
+
+            DeleteImageFile(comunidade.BannerFileName, "comunidades");
+            DeleteImageFile(comunidade.IconFileName, "comunidades/icons");
+
+            _context.Comunidades.Remove(comunidade);
+            await _context.SaveChangesAsync();
+
+            return Ok(new { message = "Comunidade apagada com sucesso." });
+        }
+
+        // ─── GET membros da comunidade ──────
         [HttpGet("{id:int}/membros")]
         public async Task<IActionResult> GetMembros(int id)
         {
@@ -289,7 +312,7 @@ namespace FilmAholic.Server.Controllers
             return Ok(membros);
         }
 
-        // ─── GET posts da comunidade ───
+        // ─── GET posts da comunidade ──────
         [HttpGet("{id:int}/posts")]
         public async Task<IActionResult> GetPosts(int id)
         {
@@ -316,14 +339,14 @@ namespace FilmAholic.Server.Controllers
             return Ok(posts);
         }
 
-        // ─── POST criar publicação (apenas membros) ───
+        // ─── POST criar publicação (apenas membros) ────
         [Authorize]
         [HttpPost("{id:int}/posts")]
         [RequestSizeLimit(10_000_000)]
         public async Task<IActionResult> CreatePost(int id, [FromForm] PostCreateForm form)
         {
             if (string.IsNullOrWhiteSpace(form.Titulo) || string.IsNullOrWhiteSpace(form.Conteudo))
-                return BadRequest(new { message = "Ttulo e contedo so obrigatrios." });
+                return BadRequest(new { message = "Título e conteúdo são obrigatórios." });
 
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue("sub");
 
@@ -374,7 +397,7 @@ namespace FilmAholic.Server.Controllers
             var jaExiste = await _context.ComunidadeMembros
                 .AnyAsync(m => m.ComunidadeId == id && m.UtilizadorId == userId);
 
-            if (jaExiste) return Conflict(new { message = "J s membro desta comunidade." });
+            if (jaExiste) return Conflict(new { message = "Já és membro desta comunidade." });
 
             _context.ComunidadeMembros.Add(new ComunidadeMembro
             {
@@ -406,32 +429,108 @@ namespace FilmAholic.Server.Controllers
             return Ok();
         }
 
-        // ─── DELETE apagar comunidade (apenas o Admin/criador) ────
+        // ─── FR68 – Sugestões de filmes das comunidades ─────
+        /// Filmes mais vistos por outros membros das tuas comunidades (exclui filmes que já marcaste como vistos).
         [Authorize]
-        [HttpDelete("{id:int}")]
-        public async Task<IActionResult> Delete(int id)
+        [HttpGet("sugestoes-filmes")]
+        public async Task<IActionResult> GetSugestoesFilmesComunidade([FromQuery] int limit = 24)
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue("sub");
+            if (string.IsNullOrEmpty(userId))
+                return Unauthorized();
 
-            // Só o Admin da comunidade pode apagar a comunidade
-            var isAdmin = await _context.ComunidadeMembros
-                .AnyAsync(m => m.ComunidadeId == id && m.UtilizadorId == userId && m.Role == "Admin");
+            if (limit < 1) limit = 1;
+            if (limit > 60) limit = 60;
 
-            if (!isAdmin) return Forbid();
+            var minhasComunidades = await _context.ComunidadeMembros
+                .AsNoTracking()
+                .Where(m => m.UtilizadorId == userId && m.Status == "Ativo")
+                .Select(m => m.ComunidadeId)
+                .Distinct()
+                .ToListAsync();
 
-            var comunidade = await _context.Comunidades.FirstOrDefaultAsync(c => c.Id == id);
-            if (comunidade == null) return NotFound();
+            if (minhasComunidades.Count == 0)
+                return Ok(Array.Empty<SugestaoFilmeComunidadeDto>());
 
-            DeleteImageFile(comunidade.BannerFileName, "comunidades");
-            DeleteImageFile(comunidade.IconFileName, "comunidades/icons");
+            var filmesJaVistos = await _context.UserMovies
+                .AsNoTracking()
+                .Where(um => um.UtilizadorId == userId && um.JaViu)
+                .Select(um => um.FilmeId)
+                .ToListAsync();
 
-            _context.Comunidades.Remove(comunidade);
-            await _context.SaveChangesAsync();
+            var acumulado = new List<(int FilmeId, int ComunidadeId, string ComunidadeNome, int MembrosQueViram)>();
 
-            return Ok(new { message = "Comunidade apagada com sucesso." });
+            foreach (var cid in minhasComunidades)
+            {
+                var comunidadeNome = await _context.Comunidades
+                    .AsNoTracking()
+                    .Where(c => c.Id == cid)
+                    .Select(c => c.Nome)
+                    .FirstOrDefaultAsync();
+
+                if (string.IsNullOrEmpty(comunidadeNome))
+                    continue;
+
+                var outrosMembros = await _context.ComunidadeMembros
+                    .AsNoTracking()
+                    .Where(m => m.ComunidadeId == cid && m.UtilizadorId != userId && m.Status == "Ativo")
+                    .Select(m => m.UtilizadorId)
+                    .ToListAsync();
+
+                if (outrosMembros.Count == 0)
+                    continue;
+
+                var grupos = await _context.UserMovies
+                    .AsNoTracking()
+                    .Where(um => um.JaViu && outrosMembros.Contains(um.UtilizadorId))
+                    .Where(um => !filmesJaVistos.Contains(um.FilmeId))
+                    .GroupBy(um => um.FilmeId)
+                    .Select(g => new { FilmeId = g.Key, Cnt = g.Select(x => x.UtilizadorId).Distinct().Count() })
+                    .OrderByDescending(x => x.Cnt)
+                    .Take(12)
+                    .ToListAsync();
+
+                foreach (var g in grupos)
+                    acumulado.Add((g.FilmeId, cid, comunidadeNome, g.Cnt));
+            }
+
+            var ordenado = acumulado
+                .OrderByDescending(x => x.MembrosQueViram)
+                .ThenBy(x => x.ComunidadeNome)
+                .Take(limit)
+                .ToList();
+
+            var idsFilmes = ordenado.Select(x => x.FilmeId).Distinct().ToList();
+            var filmes = await _context.Filmes
+                .AsNoTracking()
+                .Where(f => idsFilmes.Contains(f.Id))
+                .ToDictionaryAsync(f => f.Id);
+
+            var resultado = new List<SugestaoFilmeComunidadeDto>();
+            foreach (var row in ordenado)
+            {
+                if (!filmes.TryGetValue(row.FilmeId, out var f))
+                    continue;
+
+                resultado.Add(new SugestaoFilmeComunidadeDto
+                {
+                    FilmeId = f.Id,
+                    Titulo = f.Titulo,
+                    Genero = f.Genero,
+                    PosterUrl = f.PosterUrl,
+                    Duracao = f.Duracao,
+                    Ano = f.Ano,
+                    ReleaseDate = f.ReleaseDate,
+                    ComunidadeId = row.ComunidadeId,
+                    ComunidadeNome = row.ComunidadeNome,
+                    MembrosQueViram = row.MembrosQueViram
+                });
+            }
+
+            return Ok(resultado);
         }
 
-        // ─── DTOs & Forms ───
+        // ─── DTOs & Forms ─────────────────────────────────────────────────────
 
         public class MembroDto
         {
