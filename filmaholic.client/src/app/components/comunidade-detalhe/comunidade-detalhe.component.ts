@@ -1,6 +1,7 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ComunidadesService, ComunidadeDto } from '../../services/comunidades.service';
+import { MenuService } from '../../services/menu.service';
 import { Subscription } from 'rxjs';
 
 @Component({
@@ -17,8 +18,13 @@ export class ComunidadeDetalheComponent implements OnInit, OnDestroy {
   constructor(
     private route: ActivatedRoute,
     private router: Router,
-    private service: ComunidadesService
+    private service: ComunidadesService,
+    public menuService: MenuService
   ) { }
+
+  toggleMenu(): void {
+    this.menuService.toggle();
+  }
 
   ngOnInit(): void {
     this.isLoading = true;
@@ -54,5 +60,14 @@ export class ComunidadeDetalheComponent implements OnInit, OnDestroy {
 
   goBack(): void {
     this.router.navigate(['/comunidades']);
+  }
+
+  goToDashboardDesafios(): void {
+    this.router.navigate(['/dashboard'], { queryParams: { openDesafios: '1' } });
+  }
+
+  initialLetra(nome: string | undefined): string {
+    const t = (nome || '?').trim();
+    return t.length ? t.charAt(0).toUpperCase() : '?';
   }
 }

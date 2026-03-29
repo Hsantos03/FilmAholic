@@ -29,29 +29,41 @@ namespace FilmAholic.Server.Controllers
             _logger = logger;
         }
 
+        private string PublicBaseUrl() => $"{Request.Scheme}://{Request.Host.Value}".TrimEnd('/');
+
+        private static string? BannerUrlFromFileName(string? fileName, string baseUrl)
+        {
+            if (string.IsNullOrWhiteSpace(fileName)) return null;
+            return $"{baseUrl}/uploads/comunidades/{fileName}";
+        }
+
         // Public list
         [HttpGet]
         public async Task<IActionResult> GetAll()
         {
-            var list = await _context.Comunidades
+            var baseUrl = PublicBaseUrl();
+            var rows = await _context.Comunidades
                 .AsNoTracking()
-                .Select(c => new ComunidadeDto
+                .Select(c => new
                 {
-                    Id = c.Id,
-                    Nome = c.Nome,
-                    Descricao = c.Descricao,
-                    DataCriacao = c.DataCriacao,
-                    MembrosCount = _context.ComunidadeMembros.Count(m => m.ComunidadeId == c.Id),
-                    BannerUrl = null // will be filled in below
+                    c.Id,
+                    c.Nome,
+                    c.Descricao,
+                    c.DataCriacao,
+                    c.BannerFileName,
+                    MembrosCount = _context.ComunidadeMembros.Count(m => m.ComunidadeId == c.Id)
                 })
                 .ToListAsync();
 
-            var baseUrl = $"{Request.Scheme}://{Request.Host.Value}".TrimEnd('/');
-            foreach (var dto in list)
+            var list = rows.Select(x => new ComunidadeDto
             {
-                // try to resolve banner by checking a stored banner filename (if you later persist filename in the model)
-                // currently we return null (frontend handles missing)
-            }
+                Id = x.Id,
+                Nome = x.Nome,
+                Descricao = x.Descricao,
+                DataCriacao = x.DataCriacao,
+                MembrosCount = x.MembrosCount,
+                BannerUrl = BannerUrlFromFileName(x.BannerFileName, baseUrl)
+            }).ToList();
 
             return Ok(list);
         }
@@ -66,6 +78,7 @@ namespace FilmAholic.Server.Controllers
 
             if (c == null) return NotFound();
 
+            var baseUrl = PublicBaseUrl();
             var dto = new ComunidadeDto
             {
                 Id = c.Id,
@@ -73,46 +86,34 @@ namespace FilmAholic.Server.Controllers
                 Descricao = c.Descricao,
                 DataCriacao = c.DataCriacao,
                 MembrosCount = await _context.ComunidadeMembros.CountAsync(m => m.ComunidadeId == c.Id),
-                BannerUrl = null
+                BannerUrl = BannerUrlFromFileName(c.BannerFileName, baseUrl)
             };
 
-            // If you later add a BannerFileName property to the model, construct absolute URL here.
             return Ok(dto);
         }
 
         // Create (requires authenticated user)
         [Authorize]
         [HttpPost]
-        [RequestSizeLimit(10_000_000)] // allow up to ~10MB, tune as needed
+        [RequestSizeLimit(10_000_000)] // até ~10MB
         public async Task<IActionResult> Create([FromForm] ComunidadeCreateForm form)
         {
             if (string.IsNullOrWhiteSpace(form.Nome))
-                return BadRequest(new { message = "Nome é obrigatório." });
+                return BadRequest(new { message = "Nome   obrigat rio." });
 
             try
             {
-                // enforce unique name (case-insensitive)
                 var exists = await _context.Comunidades.AnyAsync(c => c.Nome.ToLower() == form.Nome.Trim().ToLower());
-                if (exists) return Conflict(new { message = "Já existe uma comunidade com esse nome." });
+                if (exists) return Conflict(new { message = "J  existe uma comunidade com esse nome." });
 
                 var userId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue("sub");
-                var entity = new Comunidade
-                {
-                    Nome = form.Nome.Trim(),
-                    Descricao = string.IsNullOrWhiteSpace(form.Descricao) ? null : form.Descricao.Trim(),
-                    CreatedById = userId,
-                    DataCriacao = DateTime.UtcNow
-                };
 
-                // handle banner file upload if provided
+                string? bannerFileName = null;
                 if (form.Banner != null && form.Banner.Length > 0)
                 {
                     var uploadsRoot = _env.WebRootPath;
                     if (string.IsNullOrEmpty(uploadsRoot))
-                    {
-                        // fallback to wwwroot in content root
                         uploadsRoot = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot");
-                    }
 
                     var targetDir = Path.Combine(uploadsRoot, "uploads", "comunidades");
                     if (!Directory.Exists(targetDir)) Directory.CreateDirectory(targetDir);
@@ -121,79 +122,52 @@ namespace FilmAholic.Server.Controllers
                     var safeName = $"{Guid.NewGuid():N}{ext}";
                     var filePath = Path.Combine(targetDir, safeName);
 
-                    using (var stream = System.IO.File.Create(filePath))
+                    await using (var stream = System.IO.File.Create(filePath))
                     {
                         await form.Banner.CopyToAsync(stream);
                     }
 
-                    // store banner URL in a transient way: set a field on the model if you add it later.
-                    // For now we will return the URL in the DTO after save.
-                    var baseUrl = $"{Request.Scheme}://{Request.Host.Value}".TrimEnd('/');
-                    var bannerUrl = $"{baseUrl}/uploads/comunidades/{safeName}";
-
-                    // Persist the banner URL somewhere: easiest is to extend Comunidade with BannerUrl property later.
-                    // For now we will return it in the DTO by keeping it in a local variable.
-                    await _context.Comunidades.AddAsync(entity);
-                    await _context.SaveChangesAsync();
-
-                    // create member record for creator
-                    if (!string.IsNullOrEmpty(userId))
-                    {
-                        var member = new ComunidadeMembro
-                        {
-                            ComunidadeId = entity.Id,
-                            UtilizadorId = userId,
-                            Role = "Admin",
-                            Status = "Ativo",
-                            DataEntrada = DateTime.UtcNow
-                        };
-                        _context.ComunidadeMembros.Add(member);
-                        await _context.SaveChangesAsync();
-                    }
-
-                    var dtoWithBanner = new ComunidadeDto
-                    {
-                        Id = entity.Id,
-                        Nome = entity.Nome,
-                        Descricao = entity.Descricao,
-                        DataCriacao = entity.DataCriacao,
-                        MembrosCount = await _context.ComunidadeMembros.CountAsync(m => m.ComunidadeId == entity.Id),
-                        BannerUrl = bannerUrl
-                    };
-
-                    return CreatedAtAction(nameof(GetById), new { id = entity.Id }, dtoWithBanner);
+                    bannerFileName = safeName;
                 }
-                else
+
+                var entity = new Comunidade
                 {
-                    await _context.Comunidades.AddAsync(entity);
-                    await _context.SaveChangesAsync();
+                    Nome = form.Nome.Trim(),
+                    Descricao = string.IsNullOrWhiteSpace(form.Descricao) ? null : form.Descricao.Trim(),
+                    BannerFileName = bannerFileName,
+                    CreatedById = userId,
+                    DataCriacao = DateTime.UtcNow
+                };
 
-                    if (!string.IsNullOrEmpty(userId))
-                    {
-                        var member = new ComunidadeMembro
-                        {
-                            ComunidadeId = entity.Id,
-                            UtilizadorId = userId,
-                            Role = "Admin",
-                            Status = "Ativo",
-                            DataEntrada = DateTime.UtcNow
-                        };
-                        _context.ComunidadeMembros.Add(member);
-                        await _context.SaveChangesAsync();
-                    }
+                await _context.Comunidades.AddAsync(entity);
+                await _context.SaveChangesAsync();
 
-                    var dto = new ComunidadeDto
+                if (!string.IsNullOrEmpty(userId))
+                {
+                    var member = new ComunidadeMembro
                     {
-                        Id = entity.Id,
-                        Nome = entity.Nome,
-                        Descricao = entity.Descricao,
-                        DataCriacao = entity.DataCriacao,
-                        MembrosCount = await _context.ComunidadeMembros.CountAsync(m => m.ComunidadeId == entity.Id),
-                        BannerUrl = null
+                        ComunidadeId = entity.Id,
+                        UtilizadorId = userId,
+                        Role = "Admin",
+                        Status = "Ativo",
+                        DataEntrada = DateTime.UtcNow
                     };
-
-                    return CreatedAtAction(nameof(GetById), new { id = entity.Id }, dto);
+                    _context.ComunidadeMembros.Add(member);
+                    await _context.SaveChangesAsync();
                 }
+
+                var baseUrl = PublicBaseUrl();
+                var dto = new ComunidadeDto
+                {
+                    Id = entity.Id,
+                    Nome = entity.Nome,
+                    Descricao = entity.Descricao,
+                    DataCriacao = entity.DataCriacao,
+                    MembrosCount = await _context.ComunidadeMembros.CountAsync(m => m.ComunidadeId == entity.Id),
+                    BannerUrl = BannerUrlFromFileName(entity.BannerFileName, baseUrl)
+                };
+
+                return CreatedAtAction(nameof(GetById), new { id = entity.Id }, dto);
             }
             catch (DbUpdateException ex)
             {

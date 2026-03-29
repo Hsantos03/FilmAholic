@@ -8,7 +8,10 @@ public class Comunidade
     public int Id { get; set; }
     public string Nome { get; set; } = "";
     public string? Descricao { get; set; }
-    public string? CreatedById { get; set; } // optional FK to Utilizador
+
+    /// Ficheiro guardado em wwwroot/uploads/comunidades.
+    public string? BannerFileName { get; set; }
+    public string? CreatedById { get; set; } // FK para Utilizador.Id; se null, comunidade foi criada por um processo automático ou admin sem conta de utilizador associada
     public DateTime DataCriacao { get; set; } = DateTime.UtcNow;
 
     public ICollection<ComunidadeMembro> Membros { get; set; } = new List<ComunidadeMembro>();

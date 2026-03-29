@@ -18,11 +18,7 @@ public class FilmAholicDbContext : IdentityDbContext<Utilizador>
     public DbSet<Genero> Generos => Set<Genero>();
     public DbSet<UtilizadorGenero> UtilizadorGeneros => Set<UtilizadorGenero>();
     public DbSet<Desafio> Desafios => Set<Desafio>();
-
-    // NEW: UserDesafios table to track user progress on desafios
     public DbSet<UserDesafio> UserDesafios => Set<UserDesafio>();
-
-    // NEW: Game history
     public DbSet<GameHistory> GameHistories => Set<GameHistory>();
 
     public DbSet<CinemaMovieCache> CinemaMovieCache => Set<CinemaMovieCache>();
@@ -38,7 +34,7 @@ public class FilmAholicDbContext : IdentityDbContext<Utilizador>
             .IsUnique();
 
         base.OnModelCreating(builder);
-        
+
         // Configurar relação many-to-many entre Utilizador e Genero
         builder.Entity<UtilizadorGenero>()
             .HasKey(ug => new { ug.UtilizadorId, ug.GeneroId });
@@ -55,9 +51,9 @@ public class FilmAholicDbContext : IdentityDbContext<Utilizador>
             .HasForeignKey(ug => ug.GeneroId)
             .OnDelete(DeleteBehavior.Cascade);
 
-       builder.Entity<MovieRating>()
-        .HasIndex(r => new { r.FilmeId, r.UserId })
-        .IsUnique();
+        builder.Entity<MovieRating>()
+         .HasIndex(r => new { r.FilmeId, r.UserId })
+         .IsUnique();
 
         builder.Entity<MovieRating>()
             .HasOne(r => r.Filme)
@@ -145,6 +141,7 @@ public class FilmAholicDbContext : IdentityDbContext<Utilizador>
             e.HasKey(c => c.Id);
             e.Property(c => c.Nome).IsRequired().HasMaxLength(200);
             e.Property(c => c.Descricao).HasMaxLength(2000);
+            e.Property(c => c.BannerFileName).HasMaxLength(512);
             e.Property(c => c.DataCriacao).HasDefaultValueSql("CURRENT_TIMESTAMP");
             e.HasIndex(c => c.Nome).IsUnique();
             e.HasMany(c => c.Membros)

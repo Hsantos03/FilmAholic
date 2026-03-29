@@ -34,7 +34,6 @@ export class ComunidadesService {
     );
   }
 
-  // Create using FormData (supports banner upload)
   create(formData: FormData): Observable<ComunidadeDto> {
     return this.http.post<ComunidadeDto>(this.apiUrl, formData, { withCredentials: true });
   }
