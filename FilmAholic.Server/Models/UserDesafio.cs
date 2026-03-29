@@ -22,5 +22,9 @@ namespace FilmAholic.Server.Models
 
         // When the progress was last updated
         public DateTime DataAtualizacao { get; set; } = DateTime.Now;
+
+        // Quiz response properties
+        public bool Respondido { get; set; } = false;
+        public bool Acertou { get; set; } = false;
     }
 }

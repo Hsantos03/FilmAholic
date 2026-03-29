@@ -84,6 +84,11 @@ public class FilmAholicDbContext : IdentityDbContext<Utilizador>
         {
             e.Property(d => d.Descricao).HasMaxLength(2000);
             e.Property(d => d.Genero).HasMaxLength(150);
+            e.Property(d => d.Pergunta).HasMaxLength(1000);
+            e.Property(d => d.OpcaoA).HasMaxLength(500);
+            e.Property(d => d.OpcaoB).HasMaxLength(500);
+            e.Property(d => d.OpcaoC).HasMaxLength(500);
+            e.Property(d => d.RespostaCorreta).HasMaxLength(1);
             e.HasIndex(d => d.Ativo);
         });
 
@@ -104,6 +109,8 @@ public class FilmAholicDbContext : IdentityDbContext<Utilizador>
 
             ud.Property(x => x.QuantidadeProgresso).HasDefaultValue(0);
             ud.Property(x => x.DataAtualizacao).HasDefaultValueSql("CURRENT_TIMESTAMP");
+            ud.Property(x => x.Respondido).HasDefaultValue(false);
+            ud.Property(x => x.Acertou).HasDefaultValue(false);
         });
 
         // Configure GameHistory basic mapping
