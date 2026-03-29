@@ -195,7 +195,7 @@
         <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
           <path d="M12 2L14.09 8.26L21 9.27L16.5 13.14L17.82 20L12 16.77L6.18 20L7.5 13.14L3 9.27L9.91 8.26L12 2Z" />
         </svg>
-        <span>Desafios Semanais</span>
+        <span>Desafios Diários</span>
       </button>
       <a class="sidebar-item" routerLink="/cinemas-proximos" routerLinkActive="active" (click)="toggleMenu()">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
@@ -285,7 +285,7 @@
     <section class="strip strip-full desafios-strip">
       <div class="strip-inner">
         <div class="section-head">
-          <h2>Desafios Semanais</h2>
+          <h2>Desafios Diários</h2>
         </div>
         <div class="desafios-dashboard-cards">
           <button class="desafio-card-btn" (click)="openDesafios()" type="button">
@@ -383,50 +383,91 @@
 
 <div class="modal-overlay" *ngIf="isDesafiosOpen" (click)="closeDesafios()">
   <div class="modal-box" (click)="$event.stopPropagation()">
-    <button class="modal-close" (click)="closeDesafios()">&times;</button>
+    <button class="modal-close red-cross" (click)="closeDesafios()">&times;</button>
 
-    <h3>Desafios Semanais</h3>
+    <h3>Desafio Diário</h3>
 
-    <div *ngIf="isLoadingDesafios" class="modal-loading">Loading desafios...</div>
+    <div *ngIf="isLoadingDesafios" class="modal-loading" style="padding: 20px;">A carregar desafio...</div>
 
-    <div class="desafios-list" *ngIf="!isLoadingDesafios">
-      <div class="desafio-row" *ngFor="let d of desafios" [class.completed]="isCompleted(d)">
-        <div class="desafio-meta">
-          <h4 class="desafio-title">{{ d.descricao }}</h4>
-          <div class="desafio-sub">
-            {{ d.genero }} &middot; {{ d.dataInicio | date:'shortDate' }} - {{ d.dataFim | date:'shortDate' }}
-          </div>
-        </div>
-
-        <div class="desafio-progress">
-          <div class="progress-text">
-            <span *ngIf="!isCompleted(d)">
-              {{ d.progresso }} / {{ d.quantidadeNecessaria }}
-            </span>
-            <span *ngIf="isCompleted(d)" aria-live="polite">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="#28a745">
-                <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" />
-              </svg>
-              Completed
-            </span>
-          </div>
-
-          <div class="progress-bar" aria-hidden="true">
-            <div class="progress-fill"
-                 [style.width.%]="computeProgressPercent(d.progresso, d.quantidadeNecessaria)"></div>
-          </div>
-
-          <div class="xp-badge">+{{ d.xp }} XP</div>
-        </div>
-      </div>
-
-      <div *ngIf="desafios.length === 0" class="empty-list-message">
-        Nenhum desafio disponivel.
-      </div>
+    <div *ngIf="!isLoadingDesafios && !desafioDoDia" class="empty-list-message" style="padding: 20px;">
+      Não há nenhum desafio ativo para hoje. Volta amanhã!
     </div>
 
-    <div class="modal-actions">
-      <button class="save-btn" (click)="closeDesafios()">Close</button>
+    <div *ngIf="!isLoadingDesafios && desafioDoDia" class="quiz-container">
+  
+  {{ respostaCorretaVisivel }} | {{ opcaoSelecionada }} 
+  
+  <h4 class="quiz-question">{{ desafioDoDia.pergunta }}</h4>
+
+  <div class="quiz-options">
+    <button 
+      class="quiz-option-btn" 
+      [class.selected]="opcaoSelecionada === 'A'"
+      [class.correct]="desafioDoDia.respondido && respostaCorretaVisivel === 'A'"
+      [class.wrong]="desafioDoDia.respondido && opcaoSelecionada === 'A' && respostaCorretaVisivel !== 'A'"
+      [disabled]="desafioDoDia.respondido" 
+      (click)="selecionarOpcao('A')">
+      <span class="option-text">{{ desafioDoDia.opcaoA }}</span>
+      <span class="option-icon" *ngIf="desafioDoDia.respondido && respostaCorretaVisivel">
+        <ng-container *ngIf="respostaCorretaVisivel === 'A'">✅</ng-container>
+        <ng-container *ngIf="opcaoSelecionada === 'A' && respostaCorretaVisivel !== 'A'">❌</ng-container>
+      </span>
+    </button>
+    
+    <button 
+      class="quiz-option-btn" 
+      [class.selected]="opcaoSelecionada === 'B'"
+      [class.correct]="desafioDoDia.respondido && respostaCorretaVisivel === 'B'"
+      [class.wrong]="desafioDoDia.respondido && opcaoSelecionada === 'B' && respostaCorretaVisivel !== 'B'"
+      [disabled]="desafioDoDia.respondido" 
+      (click)="selecionarOpcao('B')">
+      <span class="option-text">{{ desafioDoDia.opcaoB }}</span>
+      <span class="option-icon" *ngIf="desafioDoDia.respondido && respostaCorretaVisivel">
+        <ng-container *ngIf="respostaCorretaVisivel === 'B'">✅</ng-container>
+        <ng-container *ngIf="opcaoSelecionada === 'B' && respostaCorretaVisivel !== 'B'">❌</ng-container>
+      </span>
+    </button>
+
+    <button 
+      class="quiz-option-btn" 
+      [class.selected]="opcaoSelecionada === 'C'"
+      [class.correct]="desafioDoDia.respondido && respostaCorretaVisivel === 'C'"
+      [class.wrong]="desafioDoDia.respondido && opcaoSelecionada === 'C' && respostaCorretaVisivel !== 'C'"
+      [disabled]="desafioDoDia.respondido" 
+      (click)="selecionarOpcao('C')">
+      <span class="option-text">{{ desafioDoDia.opcaoC }}</span>
+      <span class="option-icon" *ngIf="desafioDoDia.respondido && respostaCorretaVisivel">
+        <ng-container *ngIf="respostaCorretaVisivel === 'C'">✅</ng-container>
+        <ng-container *ngIf="opcaoSelecionada === 'C' && respostaCorretaVisivel !== 'C'">❌</ng-container>
+      </span>
+    </button>
+  </div>
+
+  <div class="quiz-submit-wrapper" *ngIf="!desafioDoDia.respondido">
+    <button 
+      class="quiz-submit-btn" 
+      [disabled]="!opcaoSelecionada" 
+      (click)="submeterResposta()">
+      Confirmar Resposta
+    </button>
+  </div>
+
+  <div *ngIf="desafioDoDia.respondido || feedbackDesafio" 
+       class="quiz-feedback"
+       [ngClass]="desafioDoDia.acertou ? 'success' : 'error'">
+    {{ feedbackDesafio || (desafioDoDia.acertou ? 'Já respondeste corretamente hoje! 🎉' : 'Já respondeste a este desafio (Incorreto).') }}
+  </div>
+
+  <div class="quiz-footer">
+    <div class="quiz-reward-wrapper">
+      <span class="quiz-reward">✨ Recompensa: {{ desafioDoDia.xp }} XP</span>
     </div>
+    
+    <div class="quiz-timer" *ngIf="desafioDoDia.respondido">
+      Próxima pergunta em: <strong>{{ timeUntilNext }}</strong>
+    </div>
+  </div>
+
+</div>
   </div>
 </div>

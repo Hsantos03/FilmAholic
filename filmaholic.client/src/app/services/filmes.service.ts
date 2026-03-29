@@ -90,7 +90,7 @@ export class FilmesService {
 
   getTrailer(id: number): Observable<string | null> {
     return this.http.get<any>(`${this.apiUrl}/${id}/trailer`).pipe(
-      map(res => res.trailerUrl || null),
+      map(res => res.url || null),
       catchError(() => of(null))
     );
   }
