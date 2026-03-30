@@ -72,15 +72,16 @@
   background: #151515;
   border: 1px solid rgba(255,255,255,0.1);
   border-radius: 8px;
-  padding: 12px 12px 12px 40px;
+  padding: 12px 12px 12px 36px;
   color: white;
   outline: none;
 }
 
 .search-icon {
   position: absolute;
-  left: 12px;
-  font-size: 18px;
+  left: 10px;
+  font-size: 16px;
+  line-height: 1;
 }
 
 .movie-search-results {
@@ -595,7 +596,7 @@
 }
 
 .comment-author {
-  color: #ef4444; /* Vermelho FilmAholic */
+  color: #ef4444; 
   font-weight: 600;
   font-size: 13px;
 }
@@ -1087,7 +1088,6 @@
     display: block;
   }
 
-/* ══ Barra de acções do Admin ═══════════════════════════════════════════════ */
 
 .admin-actions {
   display: flex;
@@ -1125,7 +1125,6 @@
     box-shadow: 0 4px 16px rgba(108, 99, 255, 0.5);
   }
 
-/* Botão Apagar */
 .admin-btn--delete {
   background: linear-gradient(135deg, #ef4444 0%, #b91c1c 100%);
   color: #fff;
@@ -1138,10 +1137,7 @@
   }
 
 
-/* ══ Modal de apagar (tema danger) ══════════════════════════════════════════ */
-
 .modal-overlay--danger {
-  /* mesmo overlay base mas com fundo ligeiramente mais escuro */
   background: rgba(0, 0, 0, 0.75);
 }
 
@@ -1168,7 +1164,6 @@
     color: var(--text, #fff);
   }
 
-/* Botão de confirmação dentro do modal de apagar */
 .delete-confirm-btn {
   display: inline-flex;
   align-items: center;
@@ -1200,8 +1195,6 @@
   }
 
 
-/* Thumbnails das imagens actuais no modal de edição */
-
 .current-img-hint {
   display: flex;
   align-items: center;
@@ -1220,7 +1213,6 @@
     flex-shrink: 0;
   }
 
-/* Pré-visualização da nova imagem seleccionada */
 .imagem-preview {
   margin: 8px 0 12px 0;
 }

@@ -165,12 +165,13 @@
 
           <div *ngIf="!filmeSelecionado" class="movie-search-container">
             <div class="search-input-wrapper">
-              <span class="search-icon">🍿</span>
               <input type="text" 
                      placeholder="Pesquisar filme para anexar..." 
                      [(ngModel)]="pesquisaFilme" 
                      (input)="procurarFilmeParaAnexar()"
-                     class="movie-search-input">
+                     class="movie-search-input"
+                     style="padding-left: 38px;">
+              <span class="search-icon" style="position:absolute; left:12px; top:50%; transform:translateY(-50%); font-size:16px; pointer-events:none;">🍿</span>
             </div>
             
             <ul *ngIf="resultadosFilmes.length > 0" class="movie-search-results">

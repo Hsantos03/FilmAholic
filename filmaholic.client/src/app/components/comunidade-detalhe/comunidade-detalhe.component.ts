@@ -21,7 +21,6 @@ export class ComunidadeDetalheComponent implements OnInit, OnDestroy {
 
   activeTab: 'posts' | 'membros' = 'posts';
 
-  // novo post
   showPostForm = false;
   newTitulo = '';
   newConteudo = '';
@@ -230,7 +229,7 @@ export class ComunidadeDetalheComponent implements OnInit, OnDestroy {
         this.imagemFile = null;
         this.imagemPreview = null;
         this.newTemSpoiler = false; 
-        this.filmeSelecionado = null; // Reset movie selection
+        this.filmeSelecionado = null; 
         this.showPostForm = false;
         this.isPosting = false;
       },
@@ -244,19 +243,19 @@ export class ComunidadeDetalheComponent implements OnInit, OnDestroy {
   get sortedPosts(): PostDto[] {
     return [...this.posts].sort((a, b) => {
       switch (this.sortOrder) {
-        case 'desc': // Mais recentes
+        case 'desc': 
           return new Date(b.dataCriacao ?? 0).getTime() - new Date(a.dataCriacao ?? 0).getTime();
         
-        case 'asc': // Mais antigas
+        case 'asc': 
           return new Date(a.dataCriacao ?? 0).getTime() - new Date(b.dataCriacao ?? 0).getTime();
         
-        case 'likes': // Mais likes
+        case 'likes': 
           return (b.likesCount || 0) - (a.likesCount || 0);
         
-        case 'dislikes': // Mais dislikes
+        case 'dislikes': 
           return (b.dislikesCount || 0) - (a.dislikesCount || 0);
         
-        case 'reports': // Mais denunciadas (apenas visível para Admin)
+        case 'reports': 
           return (b.reportsCount || 0) - (a.reportsCount || 0);
         
         default:
@@ -504,10 +503,8 @@ export class ComunidadeDetalheComponent implements OnInit, OnDestroy {
 
     this.service.reportPost(this.comunidadeId, this.postToReport.id).subscribe({
       next: () => {
-        // 1. Incrementa o contador visual para o admin ver na hora
         if (this.postToReport) {
           this.postToReport.reportsCount = (this.postToReport.reportsCount || 0) + 1;
-          // 2. Marca como reportado para desativar o botão 🚩
           this.postToReport.jaReportou = true; 
         }
         this.closeReportModal();
@@ -604,16 +601,14 @@ export class ComunidadeDetalheComponent implements OnInit, OnDestroy {
     this.timerInterval = setInterval(updateTimer, 1000); 
   }
 
-  // Mostra ou esconde os comentários de um post específico
+
   toggleComentarios(post: PostDto): void {
     post.showComentarios = !post.showComentarios;
 
-    // Se abriu e a lista de comentários está vazia, vai busca à API
     if (post.showComentarios && (!post.comentarios || post.comentarios.length === 0)) {
       this.service.getComentarios(this.comunidadeId, post.id!).subscribe({
         next: (comentarios) => {
           post.comentarios = comentarios;
-          // Sincroniza a contagem com o número real de comentários
           post.comentariosCount = comentarios.length;
         },
         error: (err) => console.error('Erro ao carregar comentários', err)
@@ -621,7 +616,6 @@ export class ComunidadeDetalheComponent implements OnInit, OnDestroy {
     }
   }
 
-  // Envia o novo comentário
   submitComentario(post: PostDto): void {
     if (!post.newComentarioTexto || !post.newComentarioTexto.trim() || !post.id) return;
 
@@ -629,11 +623,9 @@ export class ComunidadeDetalheComponent implements OnInit, OnDestroy {
 
     this.service.createComentario(this.comunidadeId, post.id, post.newComentarioTexto.trim()).subscribe({
       next: (novoComentario) => {
-        // Inicializa o array caso esteja nulo e adiciona o novo comentário
         if (!post.comentarios) post.comentarios = [];
         post.comentarios.push(novoComentario);
 
-        // Atualiza a contagem visual e limpa o input
         post.comentariosCount = (post.comentariosCount || 0) + 1;
         post.newComentarioTexto = '';
         post.isSubmittingComentario = false;

@@ -776,17 +776,14 @@ namespace FilmAholic.Server.Controllers
             if (string.IsNullOrWhiteSpace(form.Conteudo))
                 return BadRequest(new { message = "O conteúdo do comentário é obrigatório." });
 
-            // Verificar se o post existe e pertence à comunidade
             var postExists = await _context.ComunidadePosts
                 .AnyAsync(p => p.Id == postId && p.ComunidadeId == id);
             if (!postExists) return NotFound();
 
-            // Verificar se o utilizador é membro da comunidade
             var isMembro = await _context.ComunidadeMembros
                 .AnyAsync(m => m.ComunidadeId == id && m.UtilizadorId == userId);
             if (!isMembro) return Forbid();
 
-            // Verificar se o membro não está castigado
             var membroInfo = await _context.ComunidadeMembros
                 .FirstOrDefaultAsync(m => m.ComunidadeId == id && m.UtilizadorId == userId);
             if (membroInfo?.CastigadoAte != null && membroInfo.CastigadoAte > DateTime.UtcNow)
@@ -805,7 +802,6 @@ namespace FilmAholic.Server.Controllers
             _context.ComunidadePostComentarios.Add(comentario);
             await _context.SaveChangesAsync();
 
-            // Buscar o comentário criado com informações do autor
             var comentarioCriado = await _context.ComunidadePostComentarios
                 .AsNoTracking()
                 .Where(c => c.Id == comentario.Id)
@@ -833,18 +829,15 @@ namespace FilmAholic.Server.Controllers
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue("sub");
             if (string.IsNullOrEmpty(userId)) return Unauthorized();
 
-            // 1. Verificar se o post existe
             var post = await _context.ComunidadePosts.AnyAsync(p => p.Id == postId && p.ComunidadeId == id);
             if (!post) return NotFound();
 
-            // 2. VERIFICAÇÃO CRUCIAL: Já reportou?
             var jaReportou = await _context.ComunidadePostReports
                 .AnyAsync(r => r.PostId == postId && r.UtilizadorId == userId);
 
             if (jaReportou) 
                 return BadRequest(new { message = "Já denunciaste esta publicação." });
 
-            // 3. Adicionar o report
             _context.ComunidadePostReports.Add(new ComunidadePostReport
             {
                 PostId = postId,
@@ -874,7 +867,6 @@ namespace FilmAholic.Server.Controllers
             public bool TemSpoiler { get; set; }
             public bool JaReportou { get; set; }
             
-            // --- CAMPOS DO FILME ANEXADO ---
             public int? FilmeId { get; set; }
             public string? FilmeTitulo { get; set; }
             public string? FilmePosterUrl { get; set; }
