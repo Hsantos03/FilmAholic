@@ -28,6 +28,7 @@ public class FilmAholicDbContext : IdentityDbContext<Utilizador>
     public DbSet<ComunidadePost> ComunidadePosts => Set<ComunidadePost>();
     public DbSet<ComunidadePostVoto> ComunidadePostVotos => Set<ComunidadePostVoto>();
     public DbSet<ComunidadePostReport> ComunidadePostReports => Set<ComunidadePostReport>();
+    public DbSet<ComunidadePostComentario> ComunidadePostComentarios => Set<ComunidadePostComentario>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -229,6 +230,27 @@ public class FilmAholicDbContext : IdentityDbContext<Utilizador>
              .OnDelete(DeleteBehavior.Cascade);
 
             e.ToTable("ComunidadePostReports");
+        });
+
+        // NEW: ComunidadePostComentario mapping
+        builder.Entity<ComunidadePostComentario>(e =>
+        {
+            e.HasKey(c => c.Id);
+            e.Property(c => c.Conteudo).IsRequired().HasMaxLength(2000);
+            e.Property(c => c.DataCriacao).HasDefaultValueSql("CURRENT_TIMESTAMP");
+            e.HasIndex(c => c.PostId);
+            
+            e.HasOne(c => c.Post)
+             .WithMany()
+             .HasForeignKey(c => c.PostId)
+             .OnDelete(DeleteBehavior.Cascade);
+
+            e.HasOne(c => c.Utilizador)
+             .WithMany()
+             .HasForeignKey(c => c.UtilizadorId)
+             .OnDelete(DeleteBehavior.Restrict);
+
+            e.ToTable("ComunidadePostComentarios");
         });
 
         // Configure Notificacoes (NovaEstreia, ResumoEstatisticas, etc.)

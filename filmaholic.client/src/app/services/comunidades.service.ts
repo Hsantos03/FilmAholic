@@ -34,7 +34,25 @@ export interface PostDto {
   dislikesCount?: number; 
   userVote?: number; 
   reportsCount?: number; 
-  temSpoiler?: boolean; 
+  temSpoiler?: boolean;
+  jaReportou?: boolean;
+  comentariosCount?: number;
+  showComentarios?: boolean;
+  comentarios?: ComentarioDto[];
+  newComentarioTexto?: string;
+  isSubmittingComentario?: boolean;
+  filmeId?: number | null;
+  filmeTitulo?: string | null;
+  filmePosterUrl?: string | null;
+}
+
+export interface ComentarioDto {
+  id?: number;
+  postId?: number;
+  autorId?: string;
+  autorNome?: string;
+  conteudo: string;
+  dataCriacao?: string;
 }
 
 export interface SugestaoFilmeComunidade {
@@ -91,12 +109,18 @@ export class ComunidadesService {
     );
   }
 
-  createPost(id: number, titulo: string, conteudo: string, imagem?: File | null, temSpoiler: boolean = false): Observable<PostDto> {
+  createPost(id: number, titulo: string, conteudo: string, imagem?: File | null, temSpoiler: boolean = false, filmeId?: number | null, filmeTitulo?: string | null, filmePosterUrl?: string | null): Observable<PostDto> {
     const fd = new FormData();
     fd.append('titulo', titulo);
     fd.append('conteudo', conteudo);
     fd.append('temSpoiler', String(temSpoiler)); 
     if (imagem) fd.append('imagem', imagem, imagem.name);
+    
+    // Add movie attachment data
+    if (filmeId) fd.append('filmeId', String(filmeId));
+    if (filmeTitulo) fd.append('filmeTitulo', filmeTitulo);
+    if (filmePosterUrl) fd.append('filmePosterUrl', filmePosterUrl);
+    
     return this.http.post<PostDto>(`${this.apiUrl}/${id}/posts`, fd, { withCredentials: true });
   }
 
@@ -145,5 +169,15 @@ export class ComunidadesService {
 
   castigarMembro(comunidadeId: number, utilizadorId: string, horas: number): Observable<any> {
     return this.http.post(`${this.apiUrl}/${comunidadeId}/membros/${utilizadorId}/castigar?horas=${horas}`, {}, { withCredentials: true });
+  }
+
+  getComentarios(comunidadeId: number, postId: number): Observable<ComentarioDto[]> {
+    return this.http.get<ComentarioDto[]>(`${this.apiUrl}/${comunidadeId}/posts/${postId}/comentarios`, { withCredentials: true }).pipe(
+      catchError(() => of([]))
+    );
+  }
+
+  createComentario(comunidadeId: number, postId: number, conteudo: string): Observable<ComentarioDto> {
+    return this.http.post<ComentarioDto>(`${this.apiUrl}/${comunidadeId}/posts/${postId}/comentarios`, { conteudo }, { withCredentials: true });
   }
 }

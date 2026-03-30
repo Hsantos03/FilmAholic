@@ -136,9 +136,12 @@
         </div>
         <div class="sort-control">
           <label>Ordenar:</label>
-          <select [(ngModel)]="sortOrder">
+          <select [(ngModel)]="sortOrder" class="custom-select">
             <option value="desc">Mais recentes</option>
             <option value="asc">Mais antigas</option>
+            <option value="likes">Mais likes</option>
+            <option value="dislikes">Mais dislikes</option>
+            <option *ngIf="isAdmin" value="reports">Mais denunciadas</option>
           </select>
         </div>
       </div>
@@ -146,6 +149,42 @@
       <div *ngIf="showPostForm" class="post-form">
         <input type="text" placeholder="Título" [(ngModel)]="newTitulo" />
         <textarea rows="4" placeholder="Escreve algo…" [(ngModel)]="newConteudo"></textarea>
+        
+        <!-- Movie Attachment Section -->
+        <div class="movie-attachment-section">
+          <div *ngIf="filmeSelecionado" class="selected-movie-tag">
+            <img [src]="filmeSelecionado.poster_path ? 'https://image.tmdb.org/t/p/w92' + filmeSelecionado.poster_path : 'assets/no-poster.png'" class="smt-poster">
+            <div class="selected-movie-info">
+              <span class="smt-label">FILME ANEXADO</span>
+              <span class="smt-title">{{ filmeSelecionado.title }}</span>
+            </div>
+            <button type="button" class="remove-movie-btn" (click)="removerFilmeAnexado()">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+            </button>
+          </div>
+
+          <div *ngIf="!filmeSelecionado" class="movie-search-container">
+            <div class="search-input-wrapper">
+              <span class="search-icon">🍿</span>
+              <input type="text" 
+                     placeholder="Pesquisar filme para anexar..." 
+                     [(ngModel)]="pesquisaFilme" 
+                     (input)="procurarFilmeParaAnexar()"
+                     class="movie-search-input">
+            </div>
+            
+            <ul *ngIf="resultadosFilmes.length > 0" class="movie-search-results">
+              <li *ngFor="let filme of resultadosFilmes" (click)="selecionarFilme(filme)">
+                <img [src]="filme.poster_path ? 'https://image.tmdb.org/t/p/w92' + filme.poster_path : 'assets/no-poster.png'">
+                <div class="res-info">
+                  <span class="res-title">{{ filme.title }}</span>
+                  <span class="res-year">{{ filme.release_date | date:'yyyy' }}</span>
+                </div>
+              </li>
+            </ul>
+          </div>
+        </div>
+
         <label class="imagem-label">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z" /></svg>
           Adicionar imagem (opcional)
@@ -184,7 +223,7 @@
               🚩 {{ p.reportsCount }}
             </span>
 
-            <button *ngIf="p.autorId !== currentUserId" class="post-action-btn report-btn" (click)="openReportModal(p)" title="Denunciar publicação">🚩</button>
+            <button *ngIf="p.autorId !== currentUserId" class="post-action-btn report-btn" (click)="openReportModal(p)" title="Denunciar publicação" [disabled]="p.jaReportou">🚩</button>
 
             <button *ngIf="p.autorId === currentUserId" class="post-action-btn edit-btn" (click)="openEditPost(p)" title="Editar">✏️</button>
             
@@ -192,22 +231,34 @@
           </div>
         </div>
 
-        <div class="spoiler-wrapper" [class.is-blurred]="p.temSpoiler && !revealedSpoilers.has(p.id!)">
-          <h3 class="post-titulo">
-            <span *ngIf="p.temSpoiler" class="spoiler-badge">SPOILER</span>
-            {{ p.titulo }}
-          </h3>
-          <p class="post-conteudo">{{ p.conteudo }}</p>
-          
-          <div *ngIf="p.imagemUrl" class="post-imagem">
-            <img [src]="p.imagemUrl" alt="Imagem da publicação" />
+        <div style="display:flex; gap:12px; align-items:flex-start;">
+          <div style="flex:1; min-width:0; overflow:hidden;">
+            <div class="spoiler-wrapper" [class.is-blurred]="p.temSpoiler && !revealedSpoilers.has(p.id!)">
+              <h3 class="post-titulo">
+                <span *ngIf="p.temSpoiler" class="spoiler-badge">SPOILER</span>
+                {{ p.titulo }}
+              </h3>
+              <p class="post-conteudo">{{ p.conteudo }}</p>
+
+              <div *ngIf="p.imagemUrl" class="post-imagem">
+                <img [src]="p.imagemUrl" alt="Imagem da publicação" />
+              </div>
+
+              <div class="spoiler-overlay" *ngIf="p.temSpoiler && !revealedSpoilers.has(p.id!)">
+                <button class="reveal-btn" (click)="revelarSpoiler(p.id)">
+                  👀 Revelar Spoiler
+                </button>
+              </div>
+            </div>
           </div>
 
-          <div class="spoiler-overlay" *ngIf="p.temSpoiler && !revealedSpoilers.has(p.id!)">
-            <button class="reveal-btn" (click)="revelarSpoiler(p.id)">
-              👀 Revelar Spoiler
-            </button>
-          </div>
+          <a *ngIf="p.filmePosterUrl" 
+   [routerLink]="['/movie-detail', p.filmeId]"
+   style="flex-shrink:0; margin-top:4px;">
+  <img [src]="'https://image.tmdb.org/t/p/w92' + p.filmePosterUrl"
+       [title]="p.filmeTitulo || ''"
+       style="width:70px; height:100px; object-fit:cover; border-radius:6px; display:block; cursor:pointer;">
+</a>
         </div>
 
         <div class="post-footer">
@@ -219,6 +270,48 @@
               👎 <span>{{ p.dislikesCount || 0 }}</span>
             </button>
           </div>
+
+          <button class="view-comments-link" (click)="toggleComentarios(p)">
+            {{ p.showComentarios ? 'Ocultar comentários' : 'Ver ' + (p.comentariosCount || 0) + ' comentários' }}
+            <span class="chevron" [class.open]="p.showComentarios">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M6 9l6 6 6-6"/>
+              </svg>
+            </span>
+          </button>
+        </div>
+
+        <div class="comments-section" *ngIf="p.showComentarios">
+          <hr class="comments-divider">
+          
+          <div class="comments-list">
+            <div *ngIf="p.comentarios?.length === 0" class="no-comments">Ainda não há comentários.</div>
+            
+            <div class="comment-item" *ngFor="let c of p.comentarios">
+              <div class="comment-avatar">{{ getUserInitial(c.autorNome) }}</div>
+              <div class="comment-body">
+                <div class="comment-header">
+                  <span class="comment-author">{{ c.autorNome }}</span>
+                  <span class="comment-date">• {{ c.dataCriacao | date:'short' }}</span>
+                </div>
+                <p class="comment-content">{{ c.conteudo }}</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="new-comment-box" *ngIf="isMembro && !isCurrentCastigado">
+            <div class="new-comment-input-wrapper">
+              <input type="text" 
+                     placeholder="Escreve um comentário..." 
+                     [(ngModel)]="p.newComentarioTexto" 
+                     (keyup.enter)="submitComentario(p)">
+              <button class="send-comment-btn" 
+                      (click)="submitComentario(p)" 
+                      [disabled]="p.isSubmittingComentario || !p.newComentarioTexto">
+                Enviar
+              </button>
+            </div>
+          </div>
         </div>
       </article>
     </div>
@@ -228,7 +321,7 @@
       <div *ngIf="membros.length === 0" class="empty">Nenhum membro encontrado.</div>
       <div class="membros-list">
         <div class="membro-item" *ngFor="let m of membros">
-          <div class="membro-avatar">{{ (m.userName || '?').charAt(0).toUpperCase() }}</div>
+          <div class="membro-avatar">{{ getUserInitial(m.userName) }}</div>
           <div class="membro-info">
             <span class="membro-nome">{{ m.userName }}</span>
             <span class="membro-role" [class.admin]="m.role === 'Admin'">{{ m.role }}</span>

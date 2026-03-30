@@ -2,7 +2,9 @@ import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ComunidadesService, ComunidadeDto, MembroDto, PostDto } from '../../services/comunidades.service';
 import { MenuService } from '../../services/menu.service';
+import { HttpClient } from '@angular/common/http';
 import { Subscription } from 'rxjs';
+import { environment } from '../../../environments/environment';
 
 @Component({
   selector: 'app-comunidade-detalhe',
@@ -28,7 +30,7 @@ export class ComunidadeDetalheComponent implements OnInit, OnDestroy {
   imagemFile: File | null = null;
   imagemPreview: string | null = null;
 
-  sortOrder: 'desc' | 'asc' = 'desc';
+  sortOrder: 'desc' | 'asc' | 'likes' | 'dislikes' | 'reports' = 'desc';
 
   isMembro = false;
   isAdmin = false;
@@ -63,6 +65,11 @@ export class ComunidadeDetalheComponent implements OnInit, OnDestroy {
   editPostConteudo = '';
   isSavingPostEdit = false;
 
+  // Movie attachment properties
+  filmeSelecionado: any = null;
+  pesquisaFilme: string = '';
+  resultadosFilmes: any[] = [];
+
   // ── Modais de Publicações ──
   showDeletePostModal = false;
   postToDelete: PostDto | null = null;
@@ -95,7 +102,8 @@ export class ComunidadeDetalheComponent implements OnInit, OnDestroy {
     private route: ActivatedRoute,
     private router: Router,
     private service: ComunidadesService,
-    public menuService: MenuService
+    public menuService: MenuService,
+    private http: HttpClient
   ) { }
 
   toggleMenu(): void { this.menuService.toggle(); }
@@ -197,7 +205,16 @@ export class ComunidadeDetalheComponent implements OnInit, OnDestroy {
       return;
     }
     this.isPosting = true;
-    this.service.createPost(this.comunidadeId, this.newTitulo.trim(), this.newConteudo.trim(), this.imagemFile, this.newTemSpoiler).subscribe({
+    this.service.createPost(
+      this.comunidadeId, 
+      this.newTitulo.trim(), 
+      this.newConteudo.trim(), 
+      this.imagemFile, 
+      this.newTemSpoiler,
+      this.filmeSelecionado?.id,
+      this.filmeSelecionado?.title,
+      this.filmeSelecionado?.poster_path
+    ).subscribe({
       next: (post) => {
 
         post.autorId = this.currentUserId || undefined; 
@@ -213,6 +230,7 @@ export class ComunidadeDetalheComponent implements OnInit, OnDestroy {
         this.imagemFile = null;
         this.imagemPreview = null;
         this.newTemSpoiler = false; 
+        this.filmeSelecionado = null; // Reset movie selection
         this.showPostForm = false;
         this.isPosting = false;
       },
@@ -225,9 +243,25 @@ export class ComunidadeDetalheComponent implements OnInit, OnDestroy {
 
   get sortedPosts(): PostDto[] {
     return [...this.posts].sort((a, b) => {
-      const dateA = new Date(a.dataCriacao ?? 0).getTime();
-      const dateB = new Date(b.dataCriacao ?? 0).getTime();
-      return this.sortOrder === 'desc' ? dateB - dateA : dateA - dateB;
+      switch (this.sortOrder) {
+        case 'desc': // Mais recentes
+          return new Date(b.dataCriacao ?? 0).getTime() - new Date(a.dataCriacao ?? 0).getTime();
+        
+        case 'asc': // Mais antigas
+          return new Date(a.dataCriacao ?? 0).getTime() - new Date(b.dataCriacao ?? 0).getTime();
+        
+        case 'likes': // Mais likes
+          return (b.likesCount || 0) - (a.likesCount || 0);
+        
+        case 'dislikes': // Mais dislikes
+          return (b.dislikesCount || 0) - (a.dislikesCount || 0);
+        
+        case 'reports': // Mais denunciadas (apenas visível para Admin)
+          return (b.reportsCount || 0) - (a.reportsCount || 0);
+        
+        default:
+          return 0;
+      }
     });
   }
 
@@ -326,6 +360,11 @@ export class ComunidadeDetalheComponent implements OnInit, OnDestroy {
   initialLetra(nome: string | undefined): string {
     const t = (nome || '?').trim();
     return t.length ? t.charAt(0).toUpperCase() : '?';
+  }
+
+  getUserInitial(nome: string | undefined | null): string {
+    if (!nome || !nome.trim()) return '?';
+    return nome.trim().charAt(0).toUpperCase();
   }
 
   openKickModal(membro: MembroDto): void {
@@ -465,13 +504,17 @@ export class ComunidadeDetalheComponent implements OnInit, OnDestroy {
 
     this.service.reportPost(this.comunidadeId, this.postToReport.id).subscribe({
       next: () => {
-        if (this.isAdmin) {
-          this.postToReport!.reportsCount = (this.postToReport!.reportsCount || 0) + 1;
+        // 1. Incrementa o contador visual para o admin ver na hora
+        if (this.postToReport) {
+          this.postToReport.reportsCount = (this.postToReport.reportsCount || 0) + 1;
+          // 2. Marca como reportado para desativar o botão 🚩
+          this.postToReport.jaReportou = true; 
         }
         this.closeReportModal();
       },
-      error: () => {
-        alert('Erro ao denunciar publicação.');
+      error: (err) => {
+        const errorMsg = err?.error?.message || 'Erro ao denunciar.';
+        alert(errorMsg);
         this.isReporting = false;
       }
     });
@@ -559,5 +602,76 @@ export class ComunidadeDetalheComponent implements OnInit, OnDestroy {
 
     updateTimer(); 
     this.timerInterval = setInterval(updateTimer, 1000); 
+  }
+
+  // Mostra ou esconde os comentários de um post específico
+  toggleComentarios(post: PostDto): void {
+    post.showComentarios = !post.showComentarios;
+
+    // Se abriu e a lista de comentários está vazia, vai busca à API
+    if (post.showComentarios && (!post.comentarios || post.comentarios.length === 0)) {
+      this.service.getComentarios(this.comunidadeId, post.id!).subscribe({
+        next: (comentarios) => {
+          post.comentarios = comentarios;
+          // Sincroniza a contagem com o número real de comentários
+          post.comentariosCount = comentarios.length;
+        },
+        error: (err) => console.error('Erro ao carregar comentários', err)
+      });
+    }
+  }
+
+  // Envia o novo comentário
+  submitComentario(post: PostDto): void {
+    if (!post.newComentarioTexto || !post.newComentarioTexto.trim() || !post.id) return;
+
+    post.isSubmittingComentario = true;
+
+    this.service.createComentario(this.comunidadeId, post.id, post.newComentarioTexto.trim()).subscribe({
+      next: (novoComentario) => {
+        // Inicializa o array caso esteja nulo e adiciona o novo comentário
+        if (!post.comentarios) post.comentarios = [];
+        post.comentarios.push(novoComentario);
+
+        // Atualiza a contagem visual e limpa o input
+        post.comentariosCount = (post.comentariosCount || 0) + 1;
+        post.newComentarioTexto = '';
+        post.isSubmittingComentario = false;
+      },
+      error: (err) => {
+        console.error('Erro ao enviar comentário', err);
+        post.isSubmittingComentario = false;
+      }
+    });
+  }
+
+  // ── Movie Attachment Methods ──
+  procurarFilmeParaAnexar(): void {
+    if (this.pesquisaFilme.length < 3) {
+      this.resultadosFilmes = [];
+      return;
+    }
+    
+    const url = `https://api.themoviedb.org/3/search/movie?api_key=${environment.tmdbApiKey}&language=pt-PT&query=${this.pesquisaFilme}`;
+    
+    this.http.get<any>(url).subscribe({
+      next: (res) => {
+        this.resultadosFilmes = res.results.slice(0, 5);
+      },
+      error: (err) => {
+        console.error('Error searching movies:', err);
+        this.resultadosFilmes = [];
+      }
+    });
+  }
+
+  selecionarFilme(filme: any): void {
+    this.filmeSelecionado = filme;
+    this.resultadosFilmes = [];
+    this.pesquisaFilme = '';
+  }
+
+  removerFilmeAnexado(): void {
+    this.filmeSelecionado = null;
   }
 }
