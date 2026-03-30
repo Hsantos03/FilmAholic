@@ -26,6 +26,8 @@ public class FilmAholicDbContext : IdentityDbContext<Utilizador>
     public DbSet<Comunidade> Comunidades => Set<Comunidade>();
     public DbSet<ComunidadeMembro> ComunidadeMembros => Set<ComunidadeMembro>();
     public DbSet<ComunidadePost> ComunidadePosts => Set<ComunidadePost>();
+    public DbSet<ComunidadePostVoto> ComunidadePostVotos => Set<ComunidadePostVoto>();
+    public DbSet<ComunidadePostReport> ComunidadePostReports => Set<ComunidadePostReport>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -98,12 +100,12 @@ public class FilmAholicDbContext : IdentityDbContext<Utilizador>
             ud.HasIndex(x => new { x.UtilizadorId, x.DesafioId }).IsUnique();
 
             ud.HasOne(x => x.Utilizador)
-              .WithMany() // no navigation required on Utilizador side; add if you add collection there
+              .WithMany() 
               .HasForeignKey(x => x.UtilizadorId)
               .OnDelete(DeleteBehavior.Cascade);
 
             ud.HasOne(x => x.Desafio)
-              .WithMany() // no navigation required on Desafio side; add if you add collection there
+              .WithMany() 
               .HasForeignKey(x => x.DesafioId)
               .OnDelete(DeleteBehavior.Cascade);
 
@@ -201,6 +203,34 @@ public class FilmAholicDbContext : IdentityDbContext<Utilizador>
             e.ToTable("ComunidadePosts");
         });
 
+        // NEW: ComunidadePostVoto mapping
+        builder.Entity<ComunidadePostVoto>(e =>
+        {
+            e.HasKey(v => v.Id);
+            e.HasIndex(v => new { v.PostId, v.UtilizadorId }).IsUnique();
+            
+            e.HasOne(v => v.Post)
+             .WithMany()
+             .HasForeignKey(v => v.PostId)
+             .OnDelete(DeleteBehavior.Cascade);
+
+            e.ToTable("ComunidadePostVotos");
+        });
+
+        // NEW: ComunidadePostReport mapping
+        builder.Entity<ComunidadePostReport>(e =>
+        {
+            e.HasKey(r => r.Id);
+            e.HasIndex(r => new { r.PostId, r.UtilizadorId }).IsUnique();
+            
+            e.HasOne(r => r.Post)
+             .WithMany()
+             .HasForeignKey(r => r.PostId)
+             .OnDelete(DeleteBehavior.Cascade);
+
+            e.ToTable("ComunidadePostReports");
+        });
+
         // Configure Notificacoes (NovaEstreia, ResumoEstatisticas, etc.)
         builder.Entity<Notificacao>(e =>
         {
@@ -216,7 +246,6 @@ public class FilmAholicDbContext : IdentityDbContext<Utilizador>
                 .IsRequired(false)
                 .OnDelete(DeleteBehavior.Cascade);
 
-            // Idempotência NovaEstreia: um par (utilizador, filme, tipo). ResumoEstatisticas usa FilmeId nulo → várias linhas permitidas.
             e.HasIndex(x => new { x.UtilizadorId, x.FilmeId, x.Tipo })
                 .IsUnique()
                 .HasFilter("[FilmeId] IS NOT NULL");

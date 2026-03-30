@@ -19,6 +19,7 @@ export interface MembroDto {
   userName?: string;
   role?: string;
   dataEntrada?: string;
+  castigadoAte?: string; 
 }
 
 export interface PostDto {
@@ -26,11 +27,16 @@ export interface PostDto {
   titulo: string;
   conteudo: string;
   dataCriacao?: string;
+  autorId?: string; 
   autorNome?: string;
   imagemUrl?: string | null;
+  likesCount?: number; 
+  dislikesCount?: number; 
+  userVote?: number; 
+  reportsCount?: number; 
+  temSpoiler?: boolean; 
 }
 
-/** FR68 — sugestões com base na atividade social nas comunidades */
 export interface SugestaoFilmeComunidade {
   filmeId: number;
   titulo: string;
@@ -69,7 +75,6 @@ export class ComunidadesService {
     return this.http.post<ComunidadeDto>(this.apiUrl, formData, { withCredentials: true });
   }
 
-  /** Editar uma comunidade (apenas o Admin pode chamar este método). */
   update(id: number, formData: FormData): Observable<ComunidadeDto> {
     return this.http.put<ComunidadeDto>(`${this.apiUrl}/${id}`, formData, { withCredentials: true });
   }
@@ -81,15 +86,16 @@ export class ComunidadesService {
   }
 
   getPosts(id: number): Observable<PostDto[]> {
-    return this.http.get<PostDto[]>(`${this.apiUrl}/${id}/posts`).pipe(
+    return this.http.get<PostDto[]>(`${this.apiUrl}/${id}/posts`, { withCredentials: true }).pipe(
       catchError(() => of([]))
     );
   }
 
-  createPost(id: number, titulo: string, conteudo: string, imagem?: File | null): Observable<PostDto> {
+  createPost(id: number, titulo: string, conteudo: string, imagem?: File | null, temSpoiler: boolean = false): Observable<PostDto> {
     const fd = new FormData();
     fd.append('titulo', titulo);
     fd.append('conteudo', conteudo);
+    fd.append('temSpoiler', String(temSpoiler)); 
     if (imagem) fd.append('imagem', imagem, imagem.name);
     return this.http.post<PostDto>(`${this.apiUrl}/${id}/posts`, fd, { withCredentials: true });
   }
@@ -106,7 +112,10 @@ export class ComunidadesService {
     return this.http.delete(`${this.apiUrl}/${id}/sair`, { withCredentials: true });
   }
 
-  /** Requer sessão. Filmes populares entre outros membros das tuas comunidades (exclui os que já viste). */
+  removerMembro(comunidadeId: number, utilizadorId: string): Observable<any> {
+    return this.http.delete(`${this.apiUrl}/${comunidadeId}/membros/${utilizadorId}`, { withCredentials: true });
+  }
+
   getSugestoesFilmesComunidade(limit: number = 24): Observable<SugestaoFilmeComunidade[]> {
     const params = new HttpParams().set('limit', String(limit));
     return this.http
@@ -115,5 +124,26 @@ export class ComunidadesService {
         withCredentials: true
       })
       .pipe(catchError(() => of([])));
+  }
+
+
+  votarPost(comunidadeId: number, postId: number, isLike: boolean): Observable<any> {
+    return this.http.post(`${this.apiUrl}/${comunidadeId}/posts/${postId}/votar?isLike=${isLike}`, {}, { withCredentials: true });
+  }
+
+  updatePost(comunidadeId: number, postId: number, titulo: string, conteudo: string, temSpoiler: boolean): Observable<any> {
+    return this.http.put(`${this.apiUrl}/${comunidadeId}/posts/${postId}`, { titulo, conteudo, temSpoiler }, { withCredentials: true });
+  }
+
+  deletePost(comunidadeId: number, postId: number): Observable<any> {
+    return this.http.delete(`${this.apiUrl}/${comunidadeId}/posts/${postId}`, { withCredentials: true });
+  }
+
+  reportPost(comunidadeId: number, postId: number): Observable<any> {
+    return this.http.post(`${this.apiUrl}/${comunidadeId}/posts/${postId}/report`, {}, { withCredentials: true });
+  }
+
+  castigarMembro(comunidadeId: number, utilizadorId: string, horas: number): Observable<any> {
+    return this.http.post(`${this.apiUrl}/${comunidadeId}/membros/${utilizadorId}/castigar?horas=${horas}`, {}, { withCredentials: true });
   }
 }

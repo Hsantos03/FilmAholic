@@ -13,6 +13,8 @@ public class ComunidadePost
     public DateTime DataCriacao { get; set; } = DateTime.UtcNow;
     public DateTime? DataAtualizacao { get; set; }
 
+    public bool TemSpoiler { get; set; } 
+
     public Comunidade Comunidade { get; set; } = null!;
     public Utilizador? Utilizador { get; set; }
 }
