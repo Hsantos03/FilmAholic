@@ -1,31 +1,138 @@
 <div class="page comunidades-page">
-  <header class="comunidades-header">
-    <h1>Comunidades</h1>
-    <div class="actions">
-      <button class="primary-btn" (click)="openCreate()">Criar Comunidade</button>
+  <header class="topbar topbar-simple">
+    <button class="icon-btn" (click)="toggleMenu()" aria-label="Menu">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+        <path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z" />
+      </svg>
+    </button>
+
+    <a class="brand" routerLink="/dashboard" routerLinkActive="active" aria-label="Ir para o painel">FilmAholic</a>
+
+    <div class="top-actions">
+      <app-topbar-actions></app-topbar-actions>
     </div>
   </header>
 
-  <div class="state" *ngIf="isLoading">A carregar comunidades…</div>
-  <div class="state error" *ngIf="!isLoading && error">{{ error }}</div>
+  <div class="sidebar-overlay" *ngIf="menuService.isOpen$ | async" (click)="toggleMenu()"></div>
 
-  <div class="grid" *ngIf="!isLoading && comunidades.length">
-    <article class="card" *ngFor="let c of comunidades" (click)="goToCommunity(c)" role="button" tabindex="0">
-      <div class="card-banner" *ngIf="c.bannerUrl" [style.background-image]="'url(' + c.bannerUrl + ')'"></div>
-      <div class="card-body">
-        <div class="card-title">{{ c.nome }}</div>
-        <div class="card-desc">{{ c.descricao || 'Sem descrição' }}</div>
-      </div>
-      <div class="card-meta">
-        <span class="members">{{ c.membrosCount ?? 0 }} membros</span>
-        <span class="created" *ngIf="c.dataCriacao">Criada: {{ c.dataCriacao | date:'shortDate' }}</span>
-      </div>
-    </article>
-  </div>
+  <nav class="sidebar" [class.open]="menuService.isOpen$ | async">
+    <div class="sidebar-header">
+      <span class="sidebar-brand">FilmAholic</span>
+      <button type="button" class="icon-btn" (click)="toggleMenu()" aria-label="Fechar">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z" />
+        </svg>
+      </button>
+    </div>
 
-  <div *ngIf="!isLoading && !comunidades.length" class="empty">
-    Ainda não há comunidades. Seja o primeiro a criar uma!
-  </div>
+    <div class="sidebar-links">
+      <a class="sidebar-item" routerLink="/dashboard" routerLinkActive="active" (click)="toggleMenu()">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z" />
+        </svg>
+        <span>Início</span>
+      </a>
+      <a class="sidebar-item" routerLink="/profile" routerLinkActive="active" (click)="toggleMenu()">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" /></svg>
+        <span>Perfil</span>
+      </a>
+      <a class="sidebar-item" routerLink="/cinema-movies" routerLinkActive="active" (click)="toggleMenu()">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M18 4l2 4h-3l-2-4h-2l2 4h-3l-2-4H8l2 4H7L5 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V4h-4z" />
+        </svg>
+        <span>Filmes em Cartaz</span>
+      </a>
+      <a class="sidebar-item" routerLink="/higher-or-lower" routerLinkActive="active" (click)="toggleMenu()">
+        <span style="font-size:20px">🎮</span>
+        <span>Higher or Lower</span>
+      </a>
+
+      <button type="button" class="sidebar-item" (click)="goToDashboardDesafios(); toggleMenu()">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M12 2L14.09 8.26L21 9.27L16.5 13.14L17.82 20L12 16.77L6.18 20L7.5 13.14L3 9.27L9.91 8.26L12 2Z" />
+        </svg>
+        <span>Desafios Semanais</span>
+      </button>
+      <a class="sidebar-item" routerLink="/cinemas-proximos" routerLinkActive="active" (click)="toggleMenu()">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z" />
+        </svg>
+        <span>Mapa de Cinemas</span>
+      </a>
+      <a class="sidebar-item" routerLink="/comunidades" routerLinkActive="active" (click)="toggleMenu()">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z" />
+        </svg>
+        <span>Comunidades</span>
+      </a>
+    </div>
+  </nav>
+
+  <main class="comunidades-wrap">
+    <div class="comunidades-inner">
+      <header class="comunidades-header">
+        <div class="comunidades-title-block">
+          <h1>Comunidades</h1>
+          <p class="comunidades-subtitle">Explora grupos de cinéfilos e cria a tua.</p>
+        </div>
+        <div class="actions">
+          <button type="button" class="primary-btn" (click)="openCreate()">Criar comunidade</button>
+        </div>
+      </header>
+
+      <section class="sugestoes-comunidade-block" *ngIf="!isLoadingSugestoes && sugestoesFilmes.length > 0">
+        <div class="sugestoes-comunidade-head">
+          <h2>Descoberta nas tuas comunidades</h2>
+          <p class="sugestoes-comunidade-sub">Filmes que outros membros viram e que ainda não tens como “Já vi”. Cada sugestão indica a comunidade de origem.</p>
+        </div>
+        <div class="comunidade-sugestoes-scroll" role="list">
+          <a *ngFor="let s of sugestoesFilmes"
+             class="comunidade-sugestao-card"
+             [routerLink]="['/movie-detail', s.filmeId]"
+             role="listitem">
+            <div class="comunidade-sugestao-poster-wrap">
+              <img [src]="posterSugestao(s)" [alt]="s.titulo" (error)="onPosterSugestaoError($event)" />
+            </div>
+            <div class="comunidade-sugestao-body">
+              <span class="comunidade-sugestao-title">{{ s.titulo }}</span>
+              <span class="comunidade-pill" [attr.title]="'Sugestão da comunidade ' + s.comunidadeNome">{{ s.comunidadeNome }}</span>
+              <span class="comunidade-sugestao-count">{{ s.membrosQueViram === 1 ? '1 membro viu' : s.membrosQueViram + ' membros viram' }}</span>
+            </div>
+          </a>
+        </div>
+      </section>
+
+      <div class="state" *ngIf="isLoading">A carregar comunidades…</div>
+      <div class="state error" *ngIf="!isLoading && error">{{ error }}</div>
+
+      <div class="grid" *ngIf="!isLoading && comunidades.length">
+        <article class="card" *ngFor="let c of comunidades" (click)="goToCommunity(c)" role="button" tabindex="0">
+          <div class="card-banner" *ngIf="c.bannerUrl" [style.background-image]="'url(' + c.bannerUrl + ')'"></div>
+          <div class="card-banner card-banner--empty" *ngIf="!c.bannerUrl" aria-hidden="true"></div>
+          <div class="card-badge-wrap">
+            <div class="card-badge"
+                 [class.has-photo]="!!c.bannerUrl"
+                 [style.background-image]="c.bannerUrl ? 'url(' + c.bannerUrl + ')' : 'none'"
+                 aria-hidden="true">
+              <span *ngIf="!c.bannerUrl">{{ initialLetra(c.nome) }}</span>
+            </div>
+          </div>
+          <div class="card-body">
+            <div class="card-title">{{ c.nome }}</div>
+            <div class="card-desc">{{ c.descricao || 'Sem descrição' }}</div>
+          </div>
+          <div class="card-meta">
+            <span class="members">{{ c.membrosCount ?? 0 }} membros</span>
+            <span class="created" *ngIf="c.dataCriacao">Criada: {{ c.dataCriacao | date:'shortDate' }}</span>
+          </div>
+        </article>
+      </div>
+
+      <div *ngIf="!isLoading && !comunidades.length" class="empty">
+        Ainda não há comunidades. Sê o primeiro a criar uma!
+      </div>
+    </div>
+  </main>
 
   <!-- Create modal -->
   <div class="modal-overlay" *ngIf="showCreateModal" (click)="closeCreate()">
@@ -40,7 +147,7 @@
         <label for="descricao">Descrição</label>
         <textarea id="descricao" name="descricao" rows="4" [(ngModel)]="newDescricao"></textarea>
 
-        <label for="banner">Banner (imagem)</label>
+        <label for="banner">Imagem da comunidade (aparece como banner e ícone)</label>
         <input id="banner" name="banner" type="file" accept="image/*" (change)="onBannerSelected($event)" />
 
         <div *ngIf="bannerPreview" class="banner-preview">

@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable, of } from 'rxjs';
 import { environment } from '../../environments/environment';
 import { catchError } from 'rxjs/operators';
@@ -11,6 +11,37 @@ export interface ComunidadeDto {
   dataCriacao?: string;
   membrosCount?: number;
   bannerUrl?: string | null;
+  iconUrl?: string | null;
+}
+
+export interface MembroDto {
+  utilizadorId?: string;
+  userName?: string;
+  role?: string;
+  dataEntrada?: string;
+}
+
+export interface PostDto {
+  id?: number;
+  titulo: string;
+  conteudo: string;
+  dataCriacao?: string;
+  autorNome?: string;
+  imagemUrl?: string | null;
+}
+
+/** FR68 — sugestões com base na atividade social nas comunidades */
+export interface SugestaoFilmeComunidade {
+  filmeId: number;
+  titulo: string;
+  genero: string;
+  posterUrl: string;
+  duracao: number;
+  ano?: number | null;
+  releaseDate?: string | null;
+  comunidadeId: number;
+  comunidadeNome: string;
+  membrosQueViram: number;
 }
 
 @Injectable({
@@ -34,8 +65,55 @@ export class ComunidadesService {
     );
   }
 
-  // Create using FormData (supports banner upload)
   create(formData: FormData): Observable<ComunidadeDto> {
     return this.http.post<ComunidadeDto>(this.apiUrl, formData, { withCredentials: true });
+  }
+
+  /** Editar uma comunidade (apenas o Admin pode chamar este método). */
+  update(id: number, formData: FormData): Observable<ComunidadeDto> {
+    return this.http.put<ComunidadeDto>(`${this.apiUrl}/${id}`, formData, { withCredentials: true });
+  }
+
+  getMembros(id: number): Observable<MembroDto[]> {
+    return this.http.get<MembroDto[]>(`${this.apiUrl}/${id}/membros`).pipe(
+      catchError(() => of([]))
+    );
+  }
+
+  getPosts(id: number): Observable<PostDto[]> {
+    return this.http.get<PostDto[]>(`${this.apiUrl}/${id}/posts`).pipe(
+      catchError(() => of([]))
+    );
+  }
+
+  createPost(id: number, titulo: string, conteudo: string, imagem?: File | null): Observable<PostDto> {
+    const fd = new FormData();
+    fd.append('titulo', titulo);
+    fd.append('conteudo', conteudo);
+    if (imagem) fd.append('imagem', imagem, imagem.name);
+    return this.http.post<PostDto>(`${this.apiUrl}/${id}/posts`, fd, { withCredentials: true });
+  }
+
+  juntar(id: number): Observable<any> {
+    return this.http.post(`${this.apiUrl}/${id}/juntar`, {}, { withCredentials: true });
+  }
+
+  deleteComunidade(id: number): Observable<any> {
+    return this.http.delete(`${this.apiUrl}/${id}`, { withCredentials: true });
+  }
+
+  sair(id: number): Observable<any> {
+    return this.http.delete(`${this.apiUrl}/${id}/sair`, { withCredentials: true });
+  }
+
+  /** Requer sessão. Filmes populares entre outros membros das tuas comunidades (exclui os que já viste). */
+  getSugestoesFilmesComunidade(limit: number = 24): Observable<SugestaoFilmeComunidade[]> {
+    const params = new HttpParams().set('limit', String(limit));
+    return this.http
+      .get<SugestaoFilmeComunidade[]>(`${this.apiUrl}/sugestoes-filmes`, {
+        params,
+        withCredentials: true
+      })
+      .pipe(catchError(() => of([])));
   }
 }

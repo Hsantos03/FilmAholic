@@ -78,6 +78,24 @@ namespace FilmAholic.Tests.DataIntegrityTests
             }
         }
 
+        [Fact]
+        public void Cinemas_ContainBothNOSAndCinemaCity()
+        {
+            var cinemas = GetCinemas();
+            Assert.Contains(cinemas, c => c.Nome.Contains("NOS"));
+            Assert.Contains(cinemas, c => c.Nome.Contains("City"));
+        }
+
+        [Fact]
+        public void Cinemas_AreLocatedInPortugal()
+        {
+            foreach (var c in GetCinemas())
+            {
+                Assert.InRange(c.Latitude, 30.0, 43.0);
+                Assert.InRange(c.Longitude, -32.0, -6.0);
+            }
+        }
+
         private List<CinemaController.CinemaVenueDto> GetCinemas()
         {
             var result = _controller.GetCinemasProximos();

@@ -1,19 +1,86 @@
 .page.comunidade-detalhe {
-  padding: 16px;
+  min-height: 100vh;
+  width: 100%;
+  color: #fff;
+  overflow-x: hidden;
 }
 
-.back-btn {
-  margin-bottom: 12px;
-  background: transparent;
-  border: none;
-  color: #ccc;
-  cursor: pointer;
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  width: 100%;
+  height: 70px;
+  display: grid;
+  grid-template-columns: 60px 160px 1fr;
+  align-items: center;
+  gap: 12px;
+  padding: 0 22px;
+  background: #010b15;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(10px);
 }
+
+.topbar-simple {
+  grid-template-columns: 60px 160px 1fr;
+}
+
+  .topbar-simple .top-actions {
+    justify-self: end;
+  }
+
+.comunidade-detalhe > .topbar {
+  z-index: 2100;
+}
+
+.comunidade-detalhe > .sidebar-overlay {
+  z-index: 2500;
+}
+
+.comunidade-detalhe > .sidebar {
+  z-index: 2600;
+}
+
+.comunidade-detalhe-wrap {
+  min-height: calc(100vh - 70px);
+  padding: 24px;
+  background: #080808;
+  color: #fff;
+  max-width: 900px;
+  margin: 0 auto;
+  box-sizing: border-box;
+  width: 100%;
+}
+
+.back-link {
+  display: inline-block;
+  margin-bottom: 18px;
+  padding: 0;
+  background: none;
+  border: none;
+  color: #9aa0a6;
+  font-size: 14px;
+  cursor: pointer;
+  transition: color 0.15s ease;
+}
+
+  .back-link:hover {
+    color: #fff;
+  }
+
+.state {
+  margin-bottom: 12px;
+  color: #ccc;
+}
+
+  .state.error {
+    color: #ff6b6b;
+  }
 
 .comunidade-card {
-  background: #0b0b0b;
-  border: 1px solid rgba(255,255,255,0.04);
-  border-radius: 8px;
+  background: #101010;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
   overflow: hidden;
 }
 
@@ -21,23 +88,561 @@
   height: 220px;
   background-size: cover;
   background-position: center;
+  background-color: #1a1a1a;
+}
+
+.banner--empty {
+  background: linear-gradient(145deg, #2a2230 0%, #15151a 50%, #0e0e12 100%);
 }
 
 .content {
-  padding: 16px;
+  padding: 20px;
 }
+
+.comunidade-heading {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  margin-bottom: 14px;
+}
+
+.comunidade-badge {
+  flex-shrink: 0;
+  width: 72px;
+  height: 72px;
+  margin-top: -44px;
+  border-radius: 16px;
+  background: #252030;
+  border: 4px solid #101010;
+  background-size: cover;
+  background-position: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28px;
+  font-weight: 800;
+  color: #ff2f6d;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+  position: relative;
+  z-index: 1;
+}
+
+  .comunidade-badge.has-photo {
+    color: transparent;
+  }
+
+.comunidade-heading-text {
+  flex: 1;
+  min-width: 0;
+  padding-top: 4px;
+}
+
+  .comunidade-heading-text h1 {
+    margin: 0 0 8px;
+    font-size: 1.5rem;
+    font-weight: 700;
+  }
 
 .meta {
   color: #9aa0a6;
-  margin-bottom: 12px;
+  margin-bottom: 14px;
+  font-size: 14px;
+}
+
+.comunidade-heading .meta {
+  margin-bottom: 0;
 }
 
 .descricao {
   color: #d0d0d0;
-  margin-bottom: 16px;
+  margin-bottom: 20px;
+  line-height: 1.5;
 }
 
 .actions {
-  display:flex;
-  gap:8px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
 }
+
+.primary-btn {
+  border: none;
+  border-radius: 10px;
+  padding: 10px 18px;
+  background: #ff2f6d;
+  color: #fff;
+  font-weight: 600;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+  .primary-btn:hover {
+    background: #e62860;
+  }
+
+.secondary-btn {
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 10px;
+  padding: 10px 18px;
+  background: transparent;
+  color: #ddd;
+  font-weight: 500;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+  .secondary-btn:hover {
+    border-color: rgba(255, 255, 255, 0.35);
+    color: #fff;
+  }
+
+/* ── Abas ── */
+.tabs {
+  display: flex;
+  gap: 4px;
+  margin: 20px 0 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.tab-btn {
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: #9aa0a6;
+  padding: 10px 18px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  margin-bottom: -1px;
+  transition: color 0.15s, border-color 0.15s;
+}
+
+  .tab-btn.active {
+    color: #fff;
+    border-bottom-color: #ff2f6d;
+  }
+
+.tab-content {
+  margin-top: 20px;
+}
+
+/* ── Toolbar de publicações ── */
+.posts-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.sort-control {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: #9aa0a6;
+}
+
+  .sort-control select {
+    background: #171717;
+    color: #fff;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 8px;
+    padding: 6px 10px;
+    font-size: 13px;
+    cursor: pointer;
+  }
+
+/* ── Formulário de novo post ── */
+.post-form {
+  background: #101010;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+  .post-form input,
+  .post-form textarea {
+    background: #171717;
+    color: #fff;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 8px;
+    padding: 10px 12px;
+    font-size: 14px;
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+.save-btn {
+  border: none;
+  border-radius: 8px;
+  padding: 10px 18px;
+  background: #ff2f6d;
+  color: #fff;
+  font-weight: 600;
+  cursor: pointer;
+  align-self: flex-end;
+}
+
+/* ── Imagem no formulário ── */
+.imagem-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #9aa0a6;
+  font-size: 13px;
+  cursor: pointer;
+  padding: 8px 12px;
+  border: 1px dashed rgba(255, 255, 255, 0.15);
+  border-radius: 8px;
+  transition: border-color 0.15s, color 0.15s;
+}
+
+  .imagem-label:hover {
+    border-color: #ff2f6d;
+    color: #fff;
+  }
+
+.imagem-preview {
+  position: relative;
+  border-radius: 8px;
+  overflow: hidden;
+  max-height: 200px;
+  background: #111;
+}
+
+  .imagem-preview img {
+    max-width: 100%;
+    max-height: 200px;
+    object-fit: contain;
+    display: block;
+  }
+
+.remove-img-btn {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: rgba(0, 0, 0, 0.7);
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 4px 8px;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+/* ── Cards de publicações ── */
+.post-card {
+  background: #101010;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 12px;
+  transition: border-color 0.12s;
+}
+
+  .post-card:hover {
+    border-color: rgba(255, 47, 109, 0.25);
+  }
+
+.post-header {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  color: #9aa0a6;
+  margin-bottom: 8px;
+}
+
+.post-autor {
+  font-weight: 600;
+  color: #ccc;
+}
+
+.post-titulo {
+  margin: 0 0 8px;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.post-conteudo {
+  margin: 0;
+  color: #c0c0c0;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.post-imagem {
+  margin-top: 12px;
+  border-radius: 8px;
+  overflow: hidden;
+  max-height: 400px;
+  background: #111;
+}
+
+  .post-imagem img {
+    width: 100%;
+    max-height: 400px;
+    object-fit: cover;
+    display: block;
+  }
+
+/* ── Lista de membros ── */
+.membros-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.membro-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: #101010;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+  padding: 12px 16px;
+}
+
+.membro-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: #252030;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 16px;
+  color: #ff2f6d;
+  flex-shrink: 0;
+}
+
+.membro-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.membro-nome {
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.membro-role {
+  font-size: 11px;
+  color: #9aa0a6;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+  .membro-role.admin {
+    color: #ff2f6d;
+  }
+
+.membro-data {
+  font-size: 12px;
+  color: #9aa0a6;
+  margin-left: auto;
+}
+
+/* ── Utilitários ── */
+.form-error {
+  color: #ff6b6b;
+  font-size: 13px;
+}
+
+.empty {
+  padding: 40px 20px;
+  text-align: center;
+  color: #9aa0a6;
+  background: #101010;
+  border: 1px dashed rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+}
+
+
+/* Pré-visualização das imagens actuais no modal de edição */
+.current-img-hint {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 6px 0 14px 0;
+  font-size: 0.82rem;
+  color: var(--text-muted, #aaa);
+}
+
+  .current-img-hint .thumb {
+    width: 80px;
+    height: 50px;
+    object-fit: cover;
+    border-radius: 6px;
+    border: 1px solid var(--border, #333);
+    flex-shrink: 0;
+  }
+
+/* Pré-visualização da nova imagem seleccionada */
+.imagem-preview {
+  margin: 8px 0 12px 0;
+}
+
+  .imagem-preview img {
+    max-width: 100%;
+    max-height: 160px;
+    object-fit: cover;
+    border-radius: 8px;
+    border: 1px solid var(--border, #333);
+    display: block;
+  }
+
+/* ══ Barra de acções do Admin ═══════════════════════════════════════════════ */
+
+.admin-actions {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.admin-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 9px 18px;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.88rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.18s ease, transform 0.12s ease, box-shadow 0.18s ease;
+  letter-spacing: 0.01em;
+}
+
+  .admin-btn:active {
+    transform: scale(0.97);
+  }
+
+/* Botão Editar */
+.admin-btn--edit {
+  background: linear-gradient(135deg, #6c63ff 0%, #4f46e5 100%);
+  color: #fff;
+  box-shadow: 0 2px 10px rgba(108, 99, 255, 0.35);
+}
+
+  .admin-btn--edit:hover {
+    background: linear-gradient(135deg, #7c74ff 0%, #5b52f0 100%);
+    box-shadow: 0 4px 16px rgba(108, 99, 255, 0.5);
+  }
+
+/* Botão Apagar */
+.admin-btn--delete {
+  background: linear-gradient(135deg, #ef4444 0%, #b91c1c 100%);
+  color: #fff;
+  box-shadow: 0 2px 10px rgba(239, 68, 68, 0.35);
+}
+
+  .admin-btn--delete:hover {
+    background: linear-gradient(135deg, #f87171 0%, #dc2626 100%);
+    box-shadow: 0 4px 16px rgba(239, 68, 68, 0.5);
+  }
+
+
+/* ══ Modal de apagar (tema danger) ══════════════════════════════════════════ */
+
+.modal-overlay--danger {
+  /* mesmo overlay base mas com fundo ligeiramente mais escuro */
+  background: rgba(0, 0, 0, 0.75);
+}
+
+.modal-box--danger {
+  border-top: 3px solid #ef4444;
+  text-align: center;
+}
+
+.delete-modal-icon {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 12px;
+  color: #ef4444;
+}
+
+.delete-modal-msg {
+  font-size: 0.95rem;
+  line-height: 1.6;
+  color: var(--text-muted, #aaa);
+  margin-bottom: 20px;
+}
+
+  .delete-modal-msg strong {
+    color: var(--text, #fff);
+  }
+
+/* Botão de confirmação dentro do modal de apagar */
+.delete-confirm-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 10px 22px;
+  background: linear-gradient(135deg, #ef4444 0%, #b91c1c 100%);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.18s ease, box-shadow 0.18s ease, transform 0.12s ease;
+  box-shadow: 0 2px 10px rgba(239, 68, 68, 0.4);
+}
+
+  .delete-confirm-btn:hover:not(:disabled) {
+    background: linear-gradient(135deg, #f87171 0%, #dc2626 100%);
+    box-shadow: 0 4px 18px rgba(239, 68, 68, 0.55);
+  }
+
+  .delete-confirm-btn:active:not(:disabled) {
+    transform: scale(0.97);
+  }
+
+  .delete-confirm-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+
+
+/* Thumbnails das imagens actuais no modal de edição */
+
+.current-img-hint {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 6px 0 14px 0;
+  font-size: 0.82rem;
+  color: var(--text-muted, #aaa);
+}
+
+  .current-img-hint .thumb {
+    width: 80px;
+    height: 50px;
+    object-fit: cover;
+    border-radius: 6px;
+    border: 1px solid var(--border, #333);
+    flex-shrink: 0;
+  }
+
+/* Pré-visualização da nova imagem seleccionada */
+.imagem-preview {
+  margin: 8px 0 12px 0;
+}
+
+  .imagem-preview img {
+    max-width: 100%;
+    max-height: 160px;
+    object-fit: cover;
+    border-radius: 8px;
+    border: 1px solid var(--border, #333);
+    display: block;
+  }

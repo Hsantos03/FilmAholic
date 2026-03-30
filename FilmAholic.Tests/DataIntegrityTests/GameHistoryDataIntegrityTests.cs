@@ -14,10 +14,9 @@ using Xunit;
 
 namespace FilmAholic.Tests.DataIntegrityTests
 {
-    /// <summary>
+
     /// FR47 – Pontuação correta; FR49 – XP persistido; FR52 – Stats; FR53 – Histórico.
     /// Garante que os dados guardados na BD ficam consistentes e sem corrupção.
-    /// </summary>
     public class GameHistoryDataIntegrityTests : IDisposable
     {
         private readonly FilmAholicDbContext _context;
@@ -36,7 +35,7 @@ namespace FilmAholic.Tests.DataIntegrityTests
             _controller = new GameHistoryController(_context);
         }
 
-        // ─── Helpers ────────────────────────────────────────────────────────────
+        // ─── Helpers ────
 
         private void AuthenticateAs(string userId)
         {
@@ -78,11 +77,9 @@ namespace FilmAholic.Tests.DataIntegrityTests
             return JsonSerializer.Deserialize<JsonElement>(json, _jsonOpts);
         }
 
-        // ─── Persistência do GameHistory ─────────────────────────────────────────
+        // ─── Persistência do GameHistory ────
 
-        /// <summary>
         /// FR53 – Após saveResult, o registo deve existir na BD com os valores corretos.
-        /// </summary>
         [Fact]
         public async Task SaveResult_PersistsGameHistoryToDatabase()
         {
@@ -107,9 +104,8 @@ namespace FilmAholic.Tests.DataIntegrityTests
             Assert.Equal(roundsJson, saved.RoundsJson);
         }
 
-        /// <summary>
+
         /// FR53 – A DataCriacao deve ser UTC e estar dentro dos últimos 5 segundos.
-        /// </summary>
         [Fact]
         public async Task SaveResult_DataCriacaoIsRecentUtc()
         {
@@ -131,11 +127,9 @@ namespace FilmAholic.Tests.DataIntegrityTests
                 $"DataCriacao ({saved.DataCriacao}) deve estar entre {before} e {after}.");
         }
 
-        // ─── XP e Nível persistidos no Utilizador ────────────────────────────────
+        // ─── XP e Nível persistidos no Utilizador ─────
 
-        /// <summary>
         /// FR49 – O XP ganho deve ser somado ao XP existente do utilizador na BD.
-        /// </summary>
         [Fact]
         public async Task SaveResult_XPIsAccumulatedOnUser()
         {
@@ -152,10 +146,9 @@ namespace FilmAholic.Tests.DataIntegrityTests
             Assert.Equal(60, user!.XP);
         }
 
-        /// <summary>
+
         /// FR49 – O nível deve ser recalculado e guardado na BD após ganho de XP.
         /// Nível 2 requer 100 XP. Com 95 + 10 = 105 → nível 2.
-        /// </summary>
         [Fact]
         public async Task SaveResult_NivelIsRecalculatedAndPersisted()
         {
@@ -171,11 +164,9 @@ namespace FilmAholic.Tests.DataIntegrityTests
             Assert.True(user!.Nivel >= 2, $"Nível esperado ≥ 2, obtido {user.Nivel}.");
         }
 
-        // ─── XP Diário guardado correctamente ────────────────────────────────────
+        // ─── XP Diário guardado correctamente ────
 
-        /// <summary>
         /// FR49 – O XPDiario do utilizador deve ser incrementado com o XP ganho.
-        /// </summary>
         [Fact]
         public async Task SaveResult_XPDiarioIsUpdated()
         {
@@ -192,11 +183,9 @@ namespace FilmAholic.Tests.DataIntegrityTests
             Assert.Equal(20, user!.XPDiario);
         }
 
-        // ─── Categoria guardada correctamente ────────────────────────────────────
+        // ─── Categoria guardada correctamente ─────
 
-        /// <summary>
         /// FR45 / FR53 – A categoria deve ser persistida tal como enviada.
-        /// </summary>
         [Theory]
         [InlineData("films")]
         [InlineData("actors")]
@@ -217,11 +206,10 @@ namespace FilmAholic.Tests.DataIntegrityTests
             Assert.Equal(category, saved!.Category);
         }
 
-        // ─── Múltiplos jogos do mesmo utilizador ────────────────────────────────
 
-        /// <summary>
+        // ─── Múltiplos jogos do mesmo utilizador ─────
+
         /// FR53 – Múltiplos jogos devem ser guardados independentemente.
-        /// </summary>
         [Fact]
         public async Task SaveResult_MultipleGames_AllPersisted()
         {
@@ -245,11 +233,9 @@ namespace FilmAholic.Tests.DataIntegrityTests
             Assert.Contains(history, h => h.Score == 5);
         }
 
-        // ─── GetMyHistory devolve apenas dados do utilizador autenticado ─────────
+        // ─── GetMyHistory devolve apenas dados do utilizador autenticado ────
 
-        /// <summary>
         /// FR53 – GetMyHistory não deve devolver entradas de outros utilizadores.
-        /// </summary>
         [Fact]
         public async Task GetMyHistory_ReturnsOnlyOwnEntries()
         {
@@ -272,11 +258,8 @@ namespace FilmAholic.Tests.DataIntegrityTests
             Assert.All(list, h => Assert.Equal(ownerUserId, h.UtilizadorId));
         }
 
-        // ─── RoundsJson preservado íntegro ──────────────────────────────────────
 
-        /// <summary>
         /// FR52 – O RoundsJson completo deve ser guardado sem alterações.
-        /// </summary>
         [Fact]
         public async Task SaveResult_RoundsJsonStoredVerbatim()
         {
@@ -298,11 +281,9 @@ namespace FilmAholic.Tests.DataIntegrityTests
             Assert.Equal(roundsJson, saved!.RoundsJson);
         }
 
-        // ─── Stats – dados calculados correctamente ──────────────────────────────
+        // ─── Stats – dados calculados correctamente ─────
 
-        /// <summary>
         /// FR52 – GetStats deve calcular corretamente melhorSequencia, mediaPontos e totalJogos.
-        /// </summary>
         [Fact]
         public async Task GetStats_CalculatesCorrectly()
         {
@@ -326,11 +307,9 @@ namespace FilmAholic.Tests.DataIntegrityTests
             Assert.Equal(3, data.GetProperty("totalJogos").GetInt32());
         }
 
-        // ─── Leaderboard – best score por utilizador ────────────────────────────
+        // ─── Leaderboard – best score por utilizador ────────
 
-        /// <summary>
         /// FR48 – Se um utilizador tem vários jogos, só o melhor score aparece no leaderboard.
-        /// </summary>
         [Fact]
         public async Task GetLeaderboard_ShowsBestScorePerUser()
         {
@@ -355,7 +334,26 @@ namespace FilmAholic.Tests.DataIntegrityTests
             Assert.Equal(3, entry.GetProperty("totalGames").GetInt32());
         }
 
-        // ─── Dispose ────────────────────────────────────────────────────────────
+
+        // FR53 – O UtilizadorId do GameHistory deve corresponder ao utilizador autenticado.
+        [Fact]
+        public async Task SaveResult_UtilizadorId_MatchesAuthenticatedUser()
+        {
+            const string userId = "id-match-user";
+            await CreateUserAsync(userId);
+            AuthenticateAs(userId);
+
+            await _controller.saveResult(
+                new GameHistoryCreateDto { Score = 3, RoundsJson = "[]", Category = "films" });
+
+            var saved = await _context.GameHistories
+                .FirstOrDefaultAsync(h => h.UtilizadorId == userId);
+
+            Assert.NotNull(saved);
+            Assert.Equal(userId, saved!.UtilizadorId);
+        }
+
+        // ─── Dispose ───────
 
         public void Dispose() => _context.Dispose();
     }

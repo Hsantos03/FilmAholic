@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
-import { ComunidadesService, ComunidadeDto } from '../../services/comunidades.service';
+import { ComunidadesService, ComunidadeDto, SugestaoFilmeComunidade } from '../../services/comunidades.service';
+import { MenuService } from '../../services/menu.service';
 
 @Component({
   selector: 'app-comunidades',
@@ -12,7 +13,6 @@ export class ComunidadesComponent implements OnInit {
   isLoading = false;
   error = '';
 
-  // create form
   showCreateModal = false;
   newNome = '';
   newDescricao = '';
@@ -21,10 +21,46 @@ export class ComunidadesComponent implements OnInit {
   isCreating = false;
   createError = '';
 
-  constructor(private service: ComunidadesService, private router: Router) { }
+  sugestoesFilmes: SugestaoFilmeComunidade[] = [];
+  isLoadingSugestoes = false;
+  private readonly posterFallback = 'https://via.placeholder.com/300x450?text=Sem+poster';
+
+  constructor(
+    private service: ComunidadesService,
+    private router: Router,
+    public menuService: MenuService
+  ) { }
+
+  toggleMenu(): void {
+    this.menuService.toggle();
+  }
 
   ngOnInit(): void {
     this.loadComunidades();
+    this.loadSugestoesFilmes();
+  }
+
+  private loadSugestoesFilmes(): void {
+    if (!localStorage.getItem('user_id')) {
+      this.sugestoesFilmes = [];
+      return;
+    }
+    this.isLoadingSugestoes = true;
+    this.service.getSugestoesFilmesComunidade(24).subscribe((list) => {
+      this.sugestoesFilmes = list || [];
+      this.isLoadingSugestoes = false;
+    });
+  }
+
+  posterSugestao(s: SugestaoFilmeComunidade): string {
+    const u = (s?.posterUrl ?? '').trim();
+    if (!u) return this.posterFallback;
+    return u;
+  }
+
+  onPosterSugestaoError(ev: Event): void {
+    const el = ev.target as HTMLImageElement;
+    if (el && !el.src.includes('placeholder')) el.src = this.posterFallback;
   }
 
   loadComunidades(): void {
@@ -87,10 +123,8 @@ export class ComunidadesComponent implements OnInit {
         this.isCreating = false;
         this.showCreateModal = false;
         if (created?.id) {
-          // navigate to the community page
           this.router.navigate(['/comunidades', created.id]);
         } else {
-          // optimistic: add to list and stay on page
           if (created) this.comunidades.unshift(created);
         }
       },
@@ -105,5 +139,14 @@ export class ComunidadesComponent implements OnInit {
   goToCommunity(c: ComunidadeDto): void {
     if (!c || !c.id) return;
     this.router.navigate(['/comunidades', c.id]);
+  }
+
+  goToDashboardDesafios(): void {
+    this.router.navigate(['/dashboard'], { queryParams: { openDesafios: '1' } });
+  }
+
+  initialLetra(nome: string | undefined): string {
+    const t = (nome || '?').trim();
+    return t.length ? t.charAt(0).toUpperCase() : '?';
   }
 }

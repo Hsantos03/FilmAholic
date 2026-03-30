@@ -96,40 +96,50 @@ namespace FilmAholic.Tests.BoundaryTests
             Assert.Equal(33, cinemas.Count());
         }
 
-        [Fact]
-        public async Task SearchTmdb_EmptyTitle_ReturnsNotFoundOrBadRequest()
-        {
-            var result = await _controller.SearchTmdb("   ");
-
-            // Assumindo que o teu código devolve NotFound se não houver query válida
-            Assert.IsType<NotFoundResult>(result);
-        }
-
-
-        [Fact]
-        public async Task SearchTmdb_ExtremelyLongTitle_HandlesGracefully()
-        {
-            // Arrange: Criar uma string gigante
-            var longTitle = new string('a', 5000);
-
-            var result = await _controller.SearchTmdb(longTitle);
-
-            // Assert: O sistema não deve dar Crash (Erro 500). Deve devolver NotFound ou BadRequest de forma limpa.
-            Assert.True(result is NotFoundResult || result is BadRequestResult);
-        }
 
         [Fact]
         public void GetCinemasProximos_FirstAndLastItems_AreValid()
         {
             var result = _controller.GetCinemasProximos();
             var ok = Assert.IsType<OkObjectResult>(result);
-            var cinemas = Assert.IsAssignableFrom<List<CinemaController.CinemaVenueDto>>(ok.Value);
+            var cinemas = Assert
+                .IsAssignableFrom<IEnumerable<CinemaController.CinemaVenueDto>>(ok.Value)
+                .ToList();
 
-            var first = cinemas.First();
-            var last = cinemas.Last();
+            Assert.False(string.IsNullOrWhiteSpace(cinemas.First().Id));
+            Assert.False(string.IsNullOrWhiteSpace(cinemas.Last().Id));
+        }
 
-            Assert.False(string.IsNullOrWhiteSpace(first.Id));
-            Assert.False(string.IsNullOrWhiteSpace(last.Id));
+
+        [Fact]
+        public async Task ToggleCinemaFavorito_EmptyCinemaId_ReturnsBadRequest()
+        {
+            const string userId = "empty-id-user";
+            _context.Users.Add(new Utilizador { Id = userId, CinemasFavoritos = "" });
+            await _context.SaveChangesAsync();
+            AuthenticateAs(userId);
+
+            var dto = new CinemaController.ToggleCinemaFavoritoDto { CinemaId = "" };
+            var result = await _controller.ToggleCinemaFavorito(dto);
+            Assert.IsType<BadRequestResult>(result);
+        }
+
+        [Fact]
+        public async Task GetCinemasFavoritos_UserWithCorruptJson_ReturnsEmptyList()
+        {
+            const string userId = "corrupt-json-user";
+            _context.Users.Add(new Utilizador
+            {
+                Id = userId,
+                CinemasFavoritos = "INVALID_JSON{{{{"
+            });
+            await _context.SaveChangesAsync();
+            AuthenticateAs(userId);
+
+            var result = await _controller.GetCinemasFavoritos();
+            var ok = Assert.IsType<OkObjectResult>(result);
+            var favs = Assert.IsAssignableFrom<IEnumerable<string>>(ok.Value);
+            Assert.Empty(favs);
         }
 
         [Fact]

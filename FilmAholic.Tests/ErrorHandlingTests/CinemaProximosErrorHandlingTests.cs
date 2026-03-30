@@ -47,21 +47,19 @@ namespace FilmAholic.Tests.ErrorHandlingTests
             Assert.IsType<OkObjectResult>(result);
         }
 
+
         [Fact]
-        public async Task ToggleCinemaFavorito_NotAuthenticated()
+        public async Task ToggleCinemaFavorito_NotAuthenticated_ReturnsUnauthorized()
         {
-            // Setup: Garante que o User no Controller é um ClaimsPrincipal sem claims de ID
             _controller.ControllerContext = new ControllerContext
             {
-                HttpContext = new DefaultHttpContext { User = new ClaimsPrincipal(new ClaimsIdentity()) }
+                HttpContext = new DefaultHttpContext
+                {
+                    User = new ClaimsPrincipal(new ClaimsIdentity())
+                }
             };
-
             var dto = new CinemaController.ToggleCinemaFavoritoDto { CinemaId = "nos-colombo" };
-
-            // Act
             var result = await _controller.ToggleCinemaFavorito(dto);
-
-            // Assert
             Assert.IsType<UnauthorizedResult>(result);
         }
 
@@ -100,27 +98,22 @@ namespace FilmAholic.Tests.ErrorHandlingTests
         }
 
         [Fact]
-        public async Task ToggleCinemaFavorito_UserNotFound()
+        public async Task ToggleCinemaFavorito_UserNotFound_ReturnsNotFound()
         {
-            var claims = new List<Claim> { new Claim(ClaimTypes.NameIdentifier, "ghost") };
-
+            var claims = new List<Claim>
+    {
+        new Claim(ClaimTypes.NameIdentifier, "ghost")
+    };
             _controller.ControllerContext = new ControllerContext
             {
                 HttpContext = new DefaultHttpContext
                 {
-                    User = new ClaimsPrincipal(new ClaimsIdentity(claims))
+                    User = new ClaimsPrincipal(new ClaimsIdentity(claims, "TestAuth"))
                 }
             };
-
             var dto = new CinemaController.ToggleCinemaFavoritoDto { CinemaId = "x" };
-
             var result = await _controller.ToggleCinemaFavorito(dto);
-
-            Assert.True(
-                result is NotFoundResult ||
-                result is BadRequestResult ||
-                result is ObjectResult
-            );
+            Assert.IsType<NotFoundResult>(result);
         }
 
         public void Dispose() => _context.Dispose();
