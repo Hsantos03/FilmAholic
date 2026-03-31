@@ -395,11 +395,13 @@
             &lsaquo;
           </button>
 
-          <div class="rec-card" (click)="openRecomendacao(currentRecomendacao)" *ngIf="currentRecomendacao as r">
+          <div class="rec-card" *ngIf="currentRecomendacao as r">
             <img class="rec-poster"
                  [src]="recomendacaoPoster(r)"
-                 [alt]="r.titulo" />
-            <div class="rec-info">
+                 [alt]="r.titulo"
+                 (click)="openRecomendacao(r)" />
+
+            <div class="rec-bottom">
               <h3 class="rec-title">{{ r.titulo }}</h3>
               <div class="rec-meta">
                 <span *ngIf="r.ano">{{ r.ano }}</span>
@@ -408,6 +410,27 @@
               <div class="rec-rating" *ngIf="r.communityVotes > 0">
                 ⭐ {{ r.communityAverage }}/10
                 <span class="rec-votes">({{ r.communityVotes }} votos)</span>
+              </div>
+
+              <div class="rec-feedback-row">
+                <button class="rec-fb-btn rec-fb-down"
+                        type="button"
+                        [disabled]="isSendingFeedback || r._voted"
+                        [class.rec-fb-voted]="r._voted === 'down'"
+                        (click)="submitFeedback(r, false, $event)"
+                        title="Não me interessa"
+                        aria-label="Recomendação irrelevante">
+                  👎
+                </button>
+                <button class="rec-fb-btn rec-fb-up"
+                        type="button"
+                        [disabled]="isSendingFeedback || r._voted"
+                        [class.rec-fb-voted]="r._voted === 'up'"
+                        (click)="submitFeedback(r, true, $event)"
+                        title="Gosto! Mais como este"
+                        aria-label="Recomendação relevante">
+                  👍
+                </button>
               </div>
             </div>
           </div>

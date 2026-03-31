@@ -26,6 +26,8 @@ export interface RecomendacaoDto {
   duracao: number;
   communityAverage: number;
   communityVotes: number;
+  /** Client-only: set after the user votes on this recommendation. */
+  _voted?: 'up' | 'down';
 }
 
 export interface TmdbSearchResponse {
@@ -183,16 +185,24 @@ export class FilmesService {
     return this.http.get<ActorDto[]>(`${atoresUrl}/search`, { params });
   }
 
-  /** Personalized recommendations based on user's favorite genres + community ratings. */
-  getRecomendacoesPersonalizadas(limit: number = 20, minRating: number = 6.5): Observable<RecomendacaoDto[]> {
-    const params = new HttpParams()
-      .set('limit', String(limit))
-      .set('minRating', String(minRating));
+  /** Personalized recommendations — always returns up to 5. */
+  getRecomendacoesPersonalizadas(minRating: number = 5): Observable<RecomendacaoDto[]> {
+    const params = new HttpParams().set('minRating', String(minRating));
     return this.http.get<RecomendacaoDto[]>(`${this.recomendacoesUrl}/personalizadas`, {
       params,
       withCredentials: true
     }).pipe(
       catchError(() => of([]))
+    );
+  }
+
+  /** Submit feedback for a recommendation (👍 = relevant, 👎 = irrelevant). */
+  submitRecomendacaoFeedback(filmeId: number, relevante: boolean): Observable<void> {
+    return this.http.post<void>(`${this.recomendacoesUrl}/feedback`, {
+      filmeId,
+      relevante
+    }, { withCredentials: true }).pipe(
+      catchError(() => of(undefined as any))
     );
   }
 }

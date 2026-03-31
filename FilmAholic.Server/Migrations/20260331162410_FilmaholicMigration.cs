@@ -476,6 +476,28 @@ namespace FilmAholic.Server.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "RecomendacaoFeedbacks",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    UtilizadorId = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    FilmeId = table.Column<int>(type: "int", nullable: false),
+                    Relevante = table.Column<bool>(type: "bit", nullable: false),
+                    CriadoEm = table.Column<DateTime>(type: "datetime2", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_RecomendacaoFeedbacks", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_RecomendacaoFeedbacks_Filmes_FilmeId",
+                        column: x => x.FilmeId,
+                        principalTable: "Filmes",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "UserMovies",
                 columns: table => new
                 {
@@ -668,6 +690,17 @@ namespace FilmAholic.Server.Migrations
                 unique: true);
 
             migrationBuilder.CreateIndex(
+                name: "IX_RecomendacaoFeedbacks_FilmeId",
+                table: "RecomendacaoFeedbacks",
+                column: "FilmeId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_RecomendacaoFeedbacks_UtilizadorId_FilmeId",
+                table: "RecomendacaoFeedbacks",
+                columns: new[] { "UtilizadorId", "FilmeId" },
+                unique: true);
+
+            migrationBuilder.CreateIndex(
                 name: "IX_UserDesafios_DesafioId",
                 table: "UserDesafios",
                 column: "DesafioId");
@@ -736,6 +769,9 @@ namespace FilmAholic.Server.Migrations
 
             migrationBuilder.DropTable(
                 name: "PreferenciasNotificacao");
+
+            migrationBuilder.DropTable(
+                name: "RecomendacaoFeedbacks");
 
             migrationBuilder.DropTable(
                 name: "UserDesafios");

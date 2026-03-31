@@ -12,7 +12,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace FilmAholic.Server.Migrations
 {
     [DbContext(typeof(FilmAholicDbContext))]
-    [Migration("20260331153859_FilmaholicMigration")]
+    [Migration("20260331162410_FilmaholicMigration")]
     partial class FilmaholicMigration
     {
         /// <inheritdoc />
@@ -554,6 +554,37 @@ namespace FilmAholic.Server.Migrations
                     b.ToTable("PreferenciasNotificacao", (string)null);
                 });
 
+            modelBuilder.Entity("FilmAholic.Server.Models.RecomendacaoFeedback", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CriadoEm")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("FilmeId")
+                        .HasColumnType("int");
+
+                    b.Property<bool>("Relevante")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("UtilizadorId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("FilmeId");
+
+                    b.HasIndex("UtilizadorId", "FilmeId")
+                        .IsUnique();
+
+                    b.ToTable("RecomendacaoFeedbacks", (string)null);
+                });
+
             modelBuilder.Entity("FilmAholic.Server.Models.UserDesafio", b =>
                 {
                     b.Property<int>("Id")
@@ -993,6 +1024,17 @@ namespace FilmAholic.Server.Migrations
                         .IsRequired();
 
                     b.Navigation("Utilizador");
+                });
+
+            modelBuilder.Entity("FilmAholic.Server.Models.RecomendacaoFeedback", b =>
+                {
+                    b.HasOne("FilmAholic.Server.Models.Filme", "Filme")
+                        .WithMany()
+                        .HasForeignKey("FilmeId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Filme");
                 });
 
             modelBuilder.Entity("FilmAholic.Server.Models.UserDesafio", b =>
