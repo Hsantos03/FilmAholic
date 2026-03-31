@@ -4,7 +4,7 @@ import { take } from 'rxjs/operators';
 import { Subject, Subscription, forkJoin, of } from 'rxjs';
 import { debounceTime, filter, switchMap, catchError, tap } from 'rxjs/operators';
 import { DesafiosService } from '../../services/desafios.service';
-import { Filme, FilmesService } from '../../services/filmes.service';
+import { Filme, FilmesService, RecomendacaoDto } from '../../services/filmes.service';
 import { AtoresService, PopularActor } from '../../services/atores.service';
 import { ProfileService } from '../../services/profile.service';
 import { MenuService } from '../../services/menu.service';
@@ -63,7 +63,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
   top10VisibleCount = 4;
 
   atores: PopularActor[] = [];
-  atoresIndex = 0;
+ atoresIndex = 0;
   atoresVisibleCount = 5;
   isAtoresAnimating = false;
   atoresSlideDir: 'fade-out' | 'left' | 'right' | null = null;
@@ -86,6 +86,11 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
   /** Definido pelo servidor: último carregamento foi com sessão em /proximas-estreias. */
   proximasEstreiasSessaoAtiva = false;
+
+  // ── RECOMENDAÇÕES PERSONALIZADAS ──
+  recomendacoes: RecomendacaoDto[] = [];
+  recomendacaoIndex = 0;
+  isLoadingRecomendacoes = false;
 
   private onResizeBound = () => this.updateVisibleCount();
   private onDocumentClickBound = (e: MouseEvent) => this.onDocumentClick(e);
@@ -112,6 +117,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
     });
     this.loadMovies();
     this.loadAtores();
+    this.loadRecomendacoes();
     this.updateVisibleCount();
     window.addEventListener('resize', this.onResizeBound);
     document.addEventListener('click', this.onDocumentClickBound);
@@ -146,6 +152,55 @@ export class DashboardComponent implements OnInit, OnDestroy {
       clearInterval(this.countdownTimer);
     }
   }
+
+  // ── RECOMENDAÇÕES PERSONALIZADAS ──
+
+  private loadRecomendacoes(): void {
+    const userId = localStorage.getItem('user_id');
+    if (!userId) return;
+
+    this.isLoadingRecomendacoes = true;
+    this.filmesService.getRecomendacoesPersonalizadas(20, 5).subscribe({
+      next: (res) => {
+        this.recomendacoes = res || [];
+        this.recomendacaoIndex = 0;
+        this.isLoadingRecomendacoes = false;
+      },
+      error: () => {
+        this.recomendacoes = [];
+        this.isLoadingRecomendacoes = false;
+      }
+    });
+  }
+
+  public get currentRecomendacao(): RecomendacaoDto | null {
+    if (!this.recomendacoes.length) return null;
+    return this.recomendacoes[this.recomendacaoIndex] ?? null;
+  }
+
+  public prevRecomendacao(): void {
+    if (this.recomendacaoIndex > 0) {
+      this.recomendacaoIndex--;
+    }
+  }
+
+  public nextRecomendacao(): void {
+    if (this.recomendacaoIndex < this.recomendacoes.length - 1) {
+      this.recomendacaoIndex++;
+    }
+  }
+
+  public recomendacaoPoster(r: RecomendacaoDto | null): string {
+    return r?.posterUrl || 'https://via.placeholder.com/300x450?text=Poster';
+  }
+
+  public openRecomendacao(r: RecomendacaoDto | null): void {
+    if (r?.id) {
+      this.router.navigate(['/movie-detail', r.id]);
+    }
+  }
+
+  // ── (existing methods below — unchanged) ──
 
   public openDesafios(): void {
     this.isDesafiosOpen = true;
