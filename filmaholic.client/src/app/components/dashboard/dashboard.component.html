@@ -378,6 +378,76 @@
         </div>
       </div>
     </section>
+
+    <!-- ── RECOMENDAÇÕES PERSONALIZADAS ── -->
+    <section class="strip strip-full recomendacoes-strip" *ngIf="!isLoadingRecomendacoes && recomendacoes.length > 0">
+      <div class="strip-inner">
+        <div class="section-head">
+          <h2>Recomendado para ti 🎯</h2>
+          <span class="rec-counter">{{ recomendacaoIndex + 1 }} / {{ recomendacoes.length }}</span>
+        </div>
+
+        <div class="rec-spotlight">
+          <button class="rec-nav rec-nav-prev"
+                  (click)="prevRecomendacao()"
+                  [disabled]="recomendacaoIndex === 0"
+                  aria-label="Anterior">
+            &lsaquo;
+          </button>
+
+          <div class="rec-card" *ngIf="currentRecomendacao as r">
+            <img class="rec-poster"
+                 [src]="recomendacaoPoster(r)"
+                 [alt]="r.titulo"
+                 (click)="openRecomendacao(r)" />
+
+            <div class="rec-bottom">
+              <h3 class="rec-title">{{ r.titulo }}</h3>
+              <div class="rec-meta">
+                <span *ngIf="r.ano">{{ r.ano }}</span>
+                <span *ngIf="r.genero"> · {{ r.genero }}</span>
+              </div>
+              <div class="rec-rating" *ngIf="r.communityVotes > 0">
+                ⭐ {{ r.communityAverage }}/10
+                <span class="rec-votes">({{ r.communityVotes }} votos)</span>
+              </div>
+
+              <div class="rec-feedback-row">
+                <button class="rec-fb-btn rec-fb-down"
+                        type="button"
+                        [disabled]="isSendingFeedback || r._voted"
+                        [class.rec-fb-voted]="r._voted === 'down'"
+                        (click)="submitFeedback(r, false, $event)"
+                        title="Não me interessa"
+                        aria-label="Recomendação irrelevante">
+                  👎
+                </button>
+                <button class="rec-fb-btn rec-fb-up"
+                        type="button"
+                        [disabled]="isSendingFeedback || r._voted"
+                        [class.rec-fb-voted]="r._voted === 'up'"
+                        (click)="submitFeedback(r, true, $event)"
+                        title="Gosto! Mais como este"
+                        aria-label="Recomendação relevante">
+                  👍
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <button class="rec-nav rec-nav-next"
+                  (click)="nextRecomendacao()"
+                  [disabled]="recomendacaoIndex >= recomendacoes.length - 1"
+                  aria-label="Seguinte">
+            &rsaquo;
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <div class="state" *ngIf="isLoadingRecomendacoes" style="padding: 20px 0;">
+      A carregar recomendações&hellip;
+    </div>
   </main>
 </div>
 

@@ -16,6 +16,20 @@ export interface Filme {
   releaseDate?: string | null;
 }
 
+export interface RecomendacaoDto {
+  id: number;
+  titulo: string;
+  posterUrl: string;
+  genero: string;
+  ano: number | null;
+  tmdbId: string;
+  duracao: number;
+  communityAverage: number;
+  communityVotes: number;
+  /** Client-only: set after the user votes on this recommendation. */
+  _voted?: 'up' | 'down';
+}
+
 export interface TmdbSearchResponse {
   page: number;
   results: TmdbMovieResult[];
@@ -65,6 +79,7 @@ export interface ActorDto {
 export class FilmesService {
   private readonly apiBase = environment.apiBaseUrl || '';
   private apiUrl = this.apiBase ? `${this.apiBase}/api/filmes` : '/api/filmes';
+  private recomendacoesUrl = this.apiBase ? `${this.apiBase}/api/recomendacoes` : '/api/recomendacoes';
 
   constructor(private http: HttpClient) { }
 
@@ -168,5 +183,26 @@ export class FilmesService {
     const params = new HttpParams().set('query', query);
     const atoresUrl = this.apiBase ? `${this.apiBase}/api/atores` : '/api/atores';
     return this.http.get<ActorDto[]>(`${atoresUrl}/search`, { params });
+  }
+
+  /** Personalized recommendations — always returns up to 5. */
+  getRecomendacoesPersonalizadas(minRating: number = 5): Observable<RecomendacaoDto[]> {
+    const params = new HttpParams().set('minRating', String(minRating));
+    return this.http.get<RecomendacaoDto[]>(`${this.recomendacoesUrl}/personalizadas`, {
+      params,
+      withCredentials: true
+    }).pipe(
+      catchError(() => of([]))
+    );
+  }
+
+  /** Submit feedback for a recommendation (👍 = relevant, 👎 = irrelevant). */
+  submitRecomendacaoFeedback(filmeId: number, relevante: boolean): Observable<void> {
+    return this.http.post<void>(`${this.recomendacoesUrl}/feedback`, {
+      filmeId,
+      relevante
+    }, { withCredentials: true }).pipe(
+      catchError(() => of(undefined as any))
+    );
   }
 }
