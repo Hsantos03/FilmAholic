@@ -305,7 +305,8 @@ namespace FilmAholic.Server.Controllers
                         .Select(u => u.Nome + " " + u.Sobrenome)
                         .FirstOrDefault() ?? "Utilizador removido",
                     Role = m.Role,
-                    DataEntrada = m.DataEntrada
+                    DataEntrada = m.DataEntrada,
+                    CastigadoAte = m.CastigadoAte
                 })
                 .ToListAsync();
 
@@ -317,6 +318,8 @@ namespace FilmAholic.Server.Controllers
         public async Task<IActionResult> GetPosts(int id)
         {
             var baseUrl = PublicBaseUrl();
+            var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue("sub");
+
             var posts = await _context.ComunidadePosts
                 .AsNoTracking()
                 .Where(p => p.ComunidadeId == id)
@@ -327,12 +330,35 @@ namespace FilmAholic.Server.Controllers
                     Titulo = p.Titulo,
                     Conteudo = p.Conteudo,
                     DataCriacao = p.DataCriacao,
+                    AutorId = p.UtilizadorId,
                     ImagemUrl = p.ImagemUrl != null ? baseUrl + p.ImagemUrl : null,
-                    AutorNome = _context.Users
-                        .OfType<Utilizador>()
+                    AutorNome = _context.Users.OfType<Utilizador>()
                         .Where(u => u.Id == p.UtilizadorId)
                         .Select(u => u.Nome + " " + u.Sobrenome)
-                        .FirstOrDefault() ?? "Utilizador removido"
+                        .FirstOrDefault() ?? "Utilizador removido",
+                    
+                    LikesCount = _context.ComunidadePostVotos.Count(v => v.PostId == p.Id && v.IsLike),
+                    DislikesCount = _context.ComunidadePostVotos.Count(v => v.PostId == p.Id && !v.IsLike),
+                    
+                    ReportsCount = _context.ComunidadePostReports.Count(r => r.PostId == p.Id),
+                    
+                    ComentariosCount = _context.ComunidadePostComentarios.Count(c => c.PostId == p.Id),
+                    
+                    FilmeId = p.FilmeId,
+                    FilmeTitulo = p.FilmeTitulo,
+                    FilmePosterUrl = p.FilmePosterUrl,
+                    
+                    UserVote = currentUserId == null ? 0 : 
+                        _context.ComunidadePostVotos
+                        .Where(v => v.PostId == p.Id && v.UtilizadorId == currentUserId)
+                        .Select(v => v.IsLike ? 1 : -1)
+                        .FirstOrDefault(),
+                    
+                    JaReportou = currentUserId == null ? false :
+                        _context.ComunidadePostReports
+                        .Any(r => r.PostId == p.Id && r.UtilizadorId == currentUserId),
+                    
+                    TemSpoiler = p.TemSpoiler
                 })
                 .ToListAsync();
 
@@ -355,6 +381,14 @@ namespace FilmAholic.Server.Controllers
 
             if (!isMembro) return Forbid();
 
+            var membroInfo = await _context.ComunidadeMembros
+                .FirstOrDefaultAsync(m => m.ComunidadeId == id && m.UtilizadorId == userId);
+
+            if (membroInfo?.CastigadoAte != null && membroInfo.CastigadoAte > DateTime.UtcNow)
+            {
+                return BadRequest(new { message = "Estás castigado e não podes publicar no momento." });
+            }
+
             var imagemFileName = await SaveImageAsync(form.Imagem, "posts");
 
             var post = new ComunidadePost
@@ -365,26 +399,54 @@ namespace FilmAholic.Server.Controllers
                 Conteudo = form.Conteudo.Trim(),
                 ImagemUrl = imagemFileName != null ? $"/uploads/posts/{imagemFileName}" : null,
                 DataCriacao = DateTime.UtcNow,
-                DataAtualizacao = DateTime.UtcNow
+                DataAtualizacao = DateTime.UtcNow,
+                TemSpoiler = form.TemSpoiler,
+                FilmeId = form.FilmeId,           
+                FilmeTitulo = form.FilmeTitulo,  
+                FilmePosterUrl = form.FilmePosterUrl
             };
 
             _context.ComunidadePosts.Add(post);
             await _context.SaveChangesAsync();
 
-            var autor = await _context.Users
-                .OfType<Utilizador>()
-                .FirstOrDefaultAsync(u => u.Id == userId);
-
-            var baseUrl = PublicBaseUrl();
-            return Ok(new PostDto
+            try
             {
-                Id = post.Id,
-                Titulo = post.Titulo,
-                Conteudo = post.Conteudo,
-                DataCriacao = post.DataCriacao,
-                AutorNome = autor != null ? (autor.Nome + " " + autor.Sobrenome).Trim() : "Desconhecido",
-                ImagemUrl = post.ImagemUrl != null ? $"{baseUrl}{post.ImagemUrl}" : null
-            });
+                var autor = await _context.Users
+                    .OfType<Utilizador>()
+                    .FirstOrDefaultAsync(u => u.Id == userId);
+
+                var baseUrl = PublicBaseUrl();
+                
+                var dtoCompleto = new PostDto
+                {
+                    Id = post.Id,
+                    Titulo = post.Titulo,
+                    Conteudo = post.Conteudo,
+                    DataCriacao = post.DataCriacao,
+                    AutorId = userId, 
+                    AutorNome = autor != null ? (autor.Nome + " " + autor.Sobrenome).Trim() : "Desconhecido",
+                    ImagemUrl = post.ImagemUrl != null ? $"{baseUrl}{post.ImagemUrl}" : null,
+                    
+                    LikesCount = 0,
+                    DislikesCount = 0,
+                    UserVote = 0,
+                    ReportsCount = 0,
+                    ComentariosCount = 0,
+                    TemSpoiler = post.TemSpoiler,
+                    JaReportou = false,
+
+                    FilmeId = post.FilmeId,
+                    FilmeTitulo = post.FilmeTitulo,
+                    FilmePosterUrl = post.FilmePosterUrl
+                };
+
+                return Ok(dtoCompleto);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error creating post");
+                return StatusCode(StatusCodes.Status500InternalServerError, new { message = "Erro ao criar post." });
+            }
         }
 
         // ─── POST juntar-se à comunidade ────
@@ -429,8 +491,76 @@ namespace FilmAholic.Server.Controllers
             return Ok();
         }
 
-        // ─── FR68 – Sugestões de filmes das comunidades ─────
-        /// Filmes mais vistos por outros membros das tuas comunidades (exclui filmes que já marcaste como vistos).
+        // ─── DELETE remover membro e o seu histórico (apenas Admin) ────
+        [Authorize]
+        [HttpDelete("{id:int}/membros/{utilizadorId}")]
+        public async Task<IActionResult> RemoverMembro(int id, string utilizadorId)
+        {
+            var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue("sub");
+
+            var isAdmin = await _context.ComunidadeMembros
+                .AnyAsync(m => m.ComunidadeId == id && m.UtilizadorId == currentUserId && m.Role == "Admin");
+
+            if (!isAdmin) return Forbid();
+
+            if (currentUserId == utilizadorId)
+                return BadRequest(new { message = "Não podes remover-te a ti próprio." });
+
+            var membroARemover = await _context.ComunidadeMembros
+                .FirstOrDefaultAsync(m => m.ComunidadeId == id && m.UtilizadorId == utilizadorId);
+
+            if (membroARemover == null) return NotFound(new { message = "Membro não encontrado." });
+
+            var votosNaComunidade = await _context.ComunidadePostVotos
+                .Include(v => v.Post)
+                .Where(v => v.UtilizadorId == utilizadorId && v.Post.ComunidadeId == id)
+                .ToListAsync();
+            _context.ComunidadePostVotos.RemoveRange(votosNaComunidade);
+
+            var reportsNaComunidade = await _context.ComunidadePostReports
+                .Include(r => r.Post)
+                .Where(r => r.UtilizadorId == utilizadorId && r.Post.ComunidadeId == id)
+                .ToListAsync();
+            _context.ComunidadePostReports.RemoveRange(reportsNaComunidade);
+
+            var postsDoUtilizador = await _context.ComunidadePosts
+                .Where(p => p.UtilizadorId == utilizadorId && p.ComunidadeId == id)
+                .ToListAsync();
+            _context.ComunidadePosts.RemoveRange(postsDoUtilizador);
+
+            _context.ComunidadeMembros.Remove(membroARemover);
+
+            await _context.SaveChangesAsync();
+
+            return Ok(new { message = "Membro e respetivo histórico removidos com sucesso." });
+        }
+
+        // ─── POST Aplicar Castigo (Admin) ────
+        [Authorize]
+        [HttpPost("{id:int}/membros/{utilizadorId}/castigar")]
+        public async Task<IActionResult> CastigarMembro(int id, string utilizadorId, [FromQuery] int horas)
+        {
+            var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue("sub");
+
+            var isAdmin = await _context.ComunidadeMembros
+                .AnyAsync(m => m.ComunidadeId == id && m.UtilizadorId == currentUserId && m.Role == "Admin");
+
+            if (!isAdmin) return Forbid();
+
+            if (currentUserId == utilizadorId)
+                return BadRequest(new { message = "Não te podes castigar a ti próprio." });
+
+            var membro = await _context.ComunidadeMembros
+                .FirstOrDefaultAsync(m => m.ComunidadeId == id && m.UtilizadorId == utilizadorId);
+
+            if (membro == null) return NotFound(new { message = "Membro não encontrado." });
+
+            membro.CastigadoAte = DateTime.UtcNow.AddHours(horas);
+            await _context.SaveChangesAsync();
+
+            return Ok(new { message = "Membro castigado com sucesso.", castigadoAte = membro.CastigadoAte });
+        }
+
         [Authorize]
         [HttpGet("sugestoes-filmes")]
         public async Task<IActionResult> GetSugestoesFilmesComunidade([FromQuery] int limit = 24)
@@ -530,15 +660,195 @@ namespace FilmAholic.Server.Controllers
             return Ok(resultado);
         }
 
-        // ─── DTOs & Forms ─────────────────────────────────────────────────────
-
-        public class MembroDto
+        // ─── POST Votar num Post (Like / Dislike) ────
+        [Authorize]
+        [HttpPost("{id:int}/posts/{postId:int}/votar")]
+        public async Task<IActionResult> VotarPost(int id, int postId, [FromQuery] bool isLike)
         {
-            public string? UtilizadorId { get; set; }
-            public string? UserName { get; set; }
-            public string? Role { get; set; }
-            public DateTime DataEntrada { get; set; }
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue("sub");
+            if (string.IsNullOrEmpty(userId)) return Unauthorized();
+
+            var votoExistente = await _context.ComunidadePostVotos
+                .FirstOrDefaultAsync(v => v.PostId == postId && v.UtilizadorId == userId);
+
+            if (votoExistente != null)
+            {
+                if (votoExistente.IsLike == isLike)
+                {
+                    _context.ComunidadePostVotos.Remove(votoExistente);
+                }
+                else
+                {
+                    votoExistente.IsLike = isLike;
+                }
+            }
+            else
+            {
+                _context.ComunidadePostVotos.Add(new ComunidadePostVoto
+                {
+                    PostId = postId,
+                    UtilizadorId = userId,
+                    IsLike = isLike
+                });
+            }
+
+            await _context.SaveChangesAsync();
+            return Ok();
         }
+
+        // ─── PUT Editar Post (Só o dono) ────
+        [Authorize]
+        [HttpPut("{id:int}/posts/{postId:int}")]
+        public async Task<IActionResult> EditPost(int id, int postId, [FromBody] PostEditDto form)
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue("sub");
+
+            var post = await _context.ComunidadePosts.FirstOrDefaultAsync(p => p.Id == postId && p.ComunidadeId == id);
+            if (post == null) return NotFound();
+
+            if (post.UtilizadorId != userId) return Forbid();
+
+            if (string.IsNullOrWhiteSpace(form.Titulo) || string.IsNullOrWhiteSpace(form.Conteudo))
+                return BadRequest(new { message = "Título e conteúdo são obrigatórios." });
+
+            post.Titulo = form.Titulo.Trim();
+            post.Conteudo = form.Conteudo.Trim();
+            post.TemSpoiler = form.TemSpoiler;
+            post.DataAtualizacao = DateTime.UtcNow;
+
+            await _context.SaveChangesAsync();
+            return Ok();
+        }
+
+        // ─── DELETE Apagar Post (Dono do post OU Admin da comunidade) ────
+        [Authorize]
+        [HttpDelete("{id:int}/posts/{postId:int}")]
+        public async Task<IActionResult> DeletePost(int id, int postId)
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue("sub");
+
+            var post = await _context.ComunidadePosts.FirstOrDefaultAsync(p => p.Id == postId && p.ComunidadeId == id);
+            if (post == null) return NotFound();
+
+            var isAdmin = await _context.ComunidadeMembros
+                .AnyAsync(m => m.ComunidadeId == id && m.UtilizadorId == userId && m.Role == "Admin");
+            if (post.UtilizadorId != userId && !isAdmin) return Forbid();
+
+            _context.ComunidadePosts.Remove(post);
+            await _context.SaveChangesAsync();
+            return Ok(new { message = "Publicação apagada com sucesso." });
+        }
+
+        // ─── GET comentários de um post ────
+        [HttpGet("{id:int}/posts/{postId:int}/comentarios")]
+        public async Task<IActionResult> GetComentarios(int id, int postId)
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue("sub");
+
+            var comentarios = await _context.ComunidadePostComentarios
+                .AsNoTracking()
+                .Where(c => c.PostId == postId)
+                .OrderByDescending(c => c.DataCriacao)
+                .Select(c => new
+                {
+                    c.Id,
+                    c.Conteudo,
+                    c.DataCriacao,
+                    AutorId = c.UtilizadorId,
+                    AutorNome = _context.Users.OfType<Utilizador>()
+                        .Where(u => u.Id == c.UtilizadorId)
+                        .Select(u => u.Nome + " " + u.Sobrenome)
+                        .FirstOrDefault() ?? "Utilizador removido"
+                })
+                .ToListAsync();
+
+            return Ok(comentarios);
+        }
+
+        // ─── POST criar comentário ────
+        [Authorize]
+        [HttpPost("{id:int}/posts/{postId:int}/comentarios")]
+        public async Task<IActionResult> CreateComentario(int id, int postId, [FromBody] CreateComentarioDto form)
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue("sub");
+            if (string.IsNullOrEmpty(userId)) return Unauthorized();
+
+            if (string.IsNullOrWhiteSpace(form.Conteudo))
+                return BadRequest(new { message = "O conteúdo do comentário é obrigatório." });
+
+            var postExists = await _context.ComunidadePosts
+                .AnyAsync(p => p.Id == postId && p.ComunidadeId == id);
+            if (!postExists) return NotFound();
+
+            var isMembro = await _context.ComunidadeMembros
+                .AnyAsync(m => m.ComunidadeId == id && m.UtilizadorId == userId);
+            if (!isMembro) return Forbid();
+
+            var membroInfo = await _context.ComunidadeMembros
+                .FirstOrDefaultAsync(m => m.ComunidadeId == id && m.UtilizadorId == userId);
+            if (membroInfo?.CastigadoAte != null && membroInfo.CastigadoAte > DateTime.UtcNow)
+            {
+                return BadRequest(new { message = "Estás temporariamente impedido de comentar." });
+            }
+
+            var comentario = new ComunidadePostComentario
+            {
+                PostId = postId,
+                UtilizadorId = userId,
+                Conteudo = form.Conteudo.Trim(),
+                DataCriacao = DateTime.UtcNow
+            };
+
+            _context.ComunidadePostComentarios.Add(comentario);
+            await _context.SaveChangesAsync();
+
+            var comentarioCriado = await _context.ComunidadePostComentarios
+                .AsNoTracking()
+                .Where(c => c.Id == comentario.Id)
+                .Select(c => new
+                {
+                    c.Id,
+                    c.Conteudo,
+                    c.DataCriacao,
+                    AutorId = c.UtilizadorId,
+                    AutorNome = _context.Users.OfType<Utilizador>()
+                        .Where(u => u.Id == c.UtilizadorId)
+                        .Select(u => u.Nome + " " + u.Sobrenome)
+                        .FirstOrDefault() ?? "Desconhecido"
+                })
+                .FirstOrDefaultAsync();
+
+            return Ok(comentarioCriado);
+        }
+
+        // ─── POST Reportar Post ────
+        [Authorize]
+        [HttpPost("{id:int}/posts/{postId:int}/report")]
+        public async Task<IActionResult> ReportPost(int id, int postId)
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue("sub");
+            if (string.IsNullOrEmpty(userId)) return Unauthorized();
+
+            var post = await _context.ComunidadePosts.AnyAsync(p => p.Id == postId && p.ComunidadeId == id);
+            if (!post) return NotFound();
+
+            var jaReportou = await _context.ComunidadePostReports
+                .AnyAsync(r => r.PostId == postId && r.UtilizadorId == userId);
+
+            if (jaReportou) 
+                return BadRequest(new { message = "Já denunciaste esta publicação." });
+
+            _context.ComunidadePostReports.Add(new ComunidadePostReport
+            {
+                PostId = postId,
+                UtilizadorId = userId
+            });
+
+            await _context.SaveChangesAsync();
+            return Ok(new { message = "Publicação denunciada com sucesso." });
+        }
+
+        // ─── DTOs & Forms ─────────────────────────────────────────────────────
 
         public class PostDto
         {
@@ -546,15 +856,34 @@ namespace FilmAholic.Server.Controllers
             public string Titulo { get; set; } = "";
             public string Conteudo { get; set; } = "";
             public DateTime DataCriacao { get; set; }
+            public string? AutorId { get; set; } 
             public string? AutorNome { get; set; }
             public string? ImagemUrl { get; set; }
+            public int LikesCount { get; set; } 
+            public int DislikesCount { get; set; } 
+            public int UserVote { get; set; } 
+            public int ReportsCount { get; set; } 
+            public int ComentariosCount { get; set; }
+            public bool TemSpoiler { get; set; }
+            public bool JaReportou { get; set; }
+            
+            public int? FilmeId { get; set; }
+            public string? FilmeTitulo { get; set; }
+            public string? FilmePosterUrl { get; set; }
         }
 
-        public class PostCreateForm
+        public class CreateComentarioDto
         {
-            public string Titulo { get; set; } = "";
             public string Conteudo { get; set; } = "";
-            public IFormFile? Imagem { get; set; }
+        }
+
+        public class MembroDto
+        {
+            public string? UtilizadorId { get; set; }
+            public string? UserName { get; set; }
+            public string? Role { get; set; }
+            public DateTime DataEntrada { get; set; }
+            public DateTime? CastigadoAte { get; set; } 
         }
 
         public class ComunidadeDto
@@ -566,6 +895,22 @@ namespace FilmAholic.Server.Controllers
             public int MembrosCount { get; set; }
             public string? BannerUrl { get; set; }
             public string? IconUrl { get; set; }
+        }
+
+        public class PostCreateForm
+        {
+            public string Titulo { get; set; } = "";
+            public string Conteudo { get; set; } = "";
+            public IFormFile? Imagem { get; set; }
+            [FromForm(Name = "temSpoiler")]
+            public bool TemSpoiler { get; set; }
+
+            [FromForm(Name = "filmeId")]
+            public int? FilmeId { get; set; }
+            [FromForm(Name = "filmeTitulo")]
+            public string? FilmeTitulo { get; set; }
+            [FromForm(Name = "filmePosterUrl")]
+            public string? FilmePosterUrl { get; set; }
         }
 
         public class ComunidadeCreateForm
@@ -596,6 +941,13 @@ namespace FilmAholic.Server.Controllers
 
             [FromForm(Name = "icon")]
             public IFormFile? Icon { get; set; }
+        }
+
+        public class PostEditDto
+        {
+            public string Titulo { get; set; } = "";
+            public string Conteudo { get; set; } = "";
+            public bool TemSpoiler { get; set; } 
         }
     }
 }

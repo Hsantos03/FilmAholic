@@ -4,5 +4,6 @@
  */
 export const environment = {
   production: false,
-  apiBaseUrl: 'https://localhost:7277'
+  apiBaseUrl: 'https://localhost:7277',
+  tmdbApiKey: '575504fdb34f6e0ca7ea22bc0d7b140d'
 };

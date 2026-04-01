@@ -4,6 +4,7 @@ using FilmAholic.Server.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace FilmAholic.Server.Migrations
 {
     [DbContext(typeof(FilmAholicDbContext))]
-    partial class FilmAholicDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260330113128_VotosPosts")]
+    partial class VotosPosts
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -124,7 +127,7 @@ namespace FilmAholic.Server.Migrations
                     b.HasIndex("CommentId", "UserId")
                         .IsUnique();
 
-                    b.ToTable("CommentVotes", (string)null);
+                    b.ToTable("CommentVotes");
                 });
 
             modelBuilder.Entity("FilmAholic.Server.Models.Comments", b =>
@@ -157,7 +160,7 @@ namespace FilmAholic.Server.Migrations
 
                     b.HasIndex("FilmeId");
 
-                    b.ToTable("Comments", (string)null);
+                    b.ToTable("Comments");
                 });
 
             modelBuilder.Entity("FilmAholic.Server.Models.Comunidade", b =>
@@ -208,9 +211,6 @@ namespace FilmAholic.Server.Migrations
                         .HasColumnType("int");
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<DateTime?>("CastigadoAte")
-                        .HasColumnType("datetime2");
 
                     b.Property<int>("ComunidadeId")
                         .HasColumnType("int");
@@ -270,21 +270,9 @@ namespace FilmAholic.Server.Migrations
                         .HasColumnType("datetime2")
                         .HasDefaultValueSql("CURRENT_TIMESTAMP");
 
-                    b.Property<int?>("FilmeId")
-                        .HasColumnType("int");
-
-                    b.Property<string>("FilmePosterUrl")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("FilmeTitulo")
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<string>("ImagemUrl")
                         .HasMaxLength(1000)
                         .HasColumnType("nvarchar(1000)");
-
-                    b.Property<bool>("TemSpoiler")
-                        .HasColumnType("bit");
 
                     b.Property<string>("Titulo")
                         .IsRequired()
@@ -301,75 +289,6 @@ namespace FilmAholic.Server.Migrations
                     b.HasIndex("UtilizadorId");
 
                     b.ToTable("ComunidadePosts", (string)null);
-                });
-
-            modelBuilder.Entity("FilmAholic.Server.Models.ComunidadePostComentario", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<int?>("ComunidadePostId")
-                        .HasColumnType("int");
-
-                    b.Property<string>("Conteudo")
-                        .IsRequired()
-                        .HasMaxLength(2000)
-                        .HasColumnType("nvarchar(2000)");
-
-                    b.Property<DateTime>("DataCriacao")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("datetime2")
-                        .HasDefaultValueSql("CURRENT_TIMESTAMP");
-
-                    b.Property<int>("PostId")
-                        .HasColumnType("int");
-
-                    b.Property<string>("UtilizadorId")
-                        .HasColumnType("nvarchar(450)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("ComunidadePostId");
-
-                    b.HasIndex("PostId");
-
-                    b.HasIndex("UtilizadorId");
-
-                    b.ToTable("ComunidadePostComentarios", (string)null);
-                });
-
-            modelBuilder.Entity("FilmAholic.Server.Models.ComunidadePostReport", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<int?>("ComunidadePostId")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime>("DataReport")
-                        .HasColumnType("datetime2");
-
-                    b.Property<int>("PostId")
-                        .HasColumnType("int");
-
-                    b.Property<string>("UtilizadorId")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(450)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("ComunidadePostId");
-
-                    b.HasIndex("PostId", "UtilizadorId")
-                        .IsUnique();
-
-                    b.ToTable("ComunidadePostReports", (string)null);
                 });
 
             modelBuilder.Entity("FilmAholic.Server.Models.ComunidadePostVoto", b =>
@@ -460,7 +379,7 @@ namespace FilmAholic.Server.Migrations
 
                     b.HasIndex("Ativo");
 
-                    b.ToTable("Desafios", (string)null);
+                    b.ToTable("Desafios");
                 });
 
             modelBuilder.Entity("FilmAholic.Server.Models.Filme", b =>
@@ -498,7 +417,7 @@ namespace FilmAholic.Server.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Filmes", (string)null);
+                    b.ToTable("Filmes");
                 });
 
             modelBuilder.Entity("FilmAholic.Server.Models.GameHistory", b =>
@@ -549,7 +468,7 @@ namespace FilmAholic.Server.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Generos", (string)null);
+                    b.ToTable("Generos");
                 });
 
             modelBuilder.Entity("FilmAholic.Server.Models.MovieRating", b =>
@@ -578,7 +497,7 @@ namespace FilmAholic.Server.Migrations
                     b.HasIndex("FilmeId", "UserId")
                         .IsUnique();
 
-                    b.ToTable("MovieRatings", (string)null);
+                    b.ToTable("MovieRatings");
                 });
 
             modelBuilder.Entity("FilmAholic.Server.Models.Notificacao", b =>
@@ -703,7 +622,7 @@ namespace FilmAholic.Server.Migrations
                     b.HasIndex("UtilizadorId", "DesafioId")
                         .IsUnique();
 
-                    b.ToTable("UserDesafios", (string)null);
+                    b.ToTable("UserDesafios");
                 });
 
             modelBuilder.Entity("FilmAholic.Server.Models.UserMovie", b =>
@@ -734,7 +653,7 @@ namespace FilmAholic.Server.Migrations
                     b.HasIndex("UtilizadorId", "FilmeId")
                         .IsUnique();
 
-                    b.ToTable("UserMovies", (string)null);
+                    b.ToTable("UserMovies");
                 });
 
             modelBuilder.Entity("FilmAholic.Server.Models.Utilizador", b =>
@@ -867,7 +786,7 @@ namespace FilmAholic.Server.Migrations
 
                     b.HasIndex("GeneroId");
 
-                    b.ToTable("UtilizadorGeneros", (string)null);
+                    b.ToTable("UtilizadorGeneros");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole", b =>
@@ -1062,43 +981,6 @@ namespace FilmAholic.Server.Migrations
                     b.Navigation("Utilizador");
                 });
 
-            modelBuilder.Entity("FilmAholic.Server.Models.ComunidadePostComentario", b =>
-                {
-                    b.HasOne("FilmAholic.Server.Models.ComunidadePost", null)
-                        .WithMany("Comentarios")
-                        .HasForeignKey("ComunidadePostId");
-
-                    b.HasOne("FilmAholic.Server.Models.ComunidadePost", "Post")
-                        .WithMany()
-                        .HasForeignKey("PostId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("FilmAholic.Server.Models.Utilizador", "Utilizador")
-                        .WithMany()
-                        .HasForeignKey("UtilizadorId")
-                        .OnDelete(DeleteBehavior.Restrict);
-
-                    b.Navigation("Post");
-
-                    b.Navigation("Utilizador");
-                });
-
-            modelBuilder.Entity("FilmAholic.Server.Models.ComunidadePostReport", b =>
-                {
-                    b.HasOne("FilmAholic.Server.Models.ComunidadePost", null)
-                        .WithMany("Reports")
-                        .HasForeignKey("ComunidadePostId");
-
-                    b.HasOne("FilmAholic.Server.Models.ComunidadePost", "Post")
-                        .WithMany()
-                        .HasForeignKey("PostId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Post");
-                });
-
             modelBuilder.Entity("FilmAholic.Server.Models.ComunidadePostVoto", b =>
                 {
                     b.HasOne("FilmAholic.Server.Models.ComunidadePost", "Post")
@@ -1263,13 +1145,6 @@ namespace FilmAholic.Server.Migrations
                     b.Navigation("Membros");
 
                     b.Navigation("Posts");
-                });
-
-            modelBuilder.Entity("FilmAholic.Server.Models.ComunidadePost", b =>
-                {
-                    b.Navigation("Comentarios");
-
-                    b.Navigation("Reports");
                 });
 
             modelBuilder.Entity("FilmAholic.Server.Models.Genero", b =>

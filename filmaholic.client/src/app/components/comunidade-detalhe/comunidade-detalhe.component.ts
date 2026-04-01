@@ -2,7 +2,9 @@ import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ComunidadesService, ComunidadeDto, MembroDto, PostDto } from '../../services/comunidades.service';
 import { MenuService } from '../../services/menu.service';
+import { HttpClient } from '@angular/common/http';
 import { Subscription } from 'rxjs';
+import { environment } from '../../../environments/environment';
 
 @Component({
   selector: 'app-comunidade-detalhe',
@@ -19,7 +21,6 @@ export class ComunidadeDetalheComponent implements OnInit, OnDestroy {
 
   activeTab: 'posts' | 'membros' = 'posts';
 
-  // novo post
   showPostForm = false;
   newTitulo = '';
   newConteudo = '';
@@ -28,11 +29,12 @@ export class ComunidadeDetalheComponent implements OnInit, OnDestroy {
   imagemFile: File | null = null;
   imagemPreview: string | null = null;
 
-  sortOrder: 'desc' | 'asc' = 'desc';
+  sortOrder: 'desc' | 'asc' | 'likes' | 'dislikes' | 'reports' = 'desc';
 
   isMembro = false;
   isAdmin = false;
   isJuntando = false;
+  currentUserId: string | null = null;
 
   // ── Edição ───
   showEditModal = false;
@@ -50,6 +52,48 @@ export class ComunidadeDetalheComponent implements OnInit, OnDestroy {
   isDeleting = false;
   deleteError = '';
 
+  // ── Modal de expulsar membro ─────
+  showKickModal = false;
+  membroToKick: MembroDto | null = null;
+  isKicking = false;
+  kickError = '';
+
+  // Adiciona estas variáveis na classe
+  editingPost: PostDto | null = null;
+  editPostTitulo = '';
+  editPostConteudo = '';
+  isSavingPostEdit = false;
+
+  // Movie attachment properties
+  filmeSelecionado: any = null;
+  pesquisaFilme: string = '';
+  resultadosFilmes: any[] = [];
+
+  // ── Modais de Publicações ──
+  showDeletePostModal = false;
+  postToDelete: PostDto | null = null;
+  isDeletingPost = false;
+
+  showReportModal = false;
+  postToReport: PostDto | null = null;
+  isReporting = false;
+
+  // ── Spoiler Properties ──
+  newTemSpoiler = false;
+  editTemSpoiler = false;
+  revealedSpoilers: Set<number> = new Set<number>(); 
+
+  
+  showCastigoModal = false;
+  membroToCastigar: MembroDto | null = null;
+  horasCastigo: number = 1; 
+  isCastigando = false;
+  castigoError = '';
+
+  currentUserCastigadoAte: Date | null = null;
+  castigoCountdown: string = '';
+  private timerInterval: any;
+
   private comunidadeId!: number;
   private sub?: Subscription;
 
@@ -57,12 +101,14 @@ export class ComunidadeDetalheComponent implements OnInit, OnDestroy {
     private route: ActivatedRoute,
     private router: Router,
     private service: ComunidadesService,
-    public menuService: MenuService
+    public menuService: MenuService,
+    private http: HttpClient
   ) { }
 
   toggleMenu(): void { this.menuService.toggle(); }
 
   ngOnInit(): void {
+    this.currentUserId = localStorage.getItem('user_id'); 
     this.isLoading = true;
     this.sub = this.route.paramMap.subscribe(params => {
       const id = params.get('id');
@@ -72,7 +118,12 @@ export class ComunidadeDetalheComponent implements OnInit, OnDestroy {
     });
   }
 
-  ngOnDestroy(): void { this.sub?.unsubscribe(); }
+  ngOnDestroy(): void { 
+    this.sub?.unsubscribe();
+    if (this.timerInterval) {
+      clearInterval(this.timerInterval);
+    }
+  }
 
   private load(id: number): void {
     this.service.getById(id).subscribe({
@@ -91,10 +142,20 @@ export class ComunidadeDetalheComponent implements OnInit, OnDestroy {
     this.service.getMembros(this.comunidadeId).subscribe({
       next: (list) => {
         this.membros = list;
-        const currentUserId = localStorage.getItem('user_id');
-        const membro = list.find(m => m.utilizadorId === currentUserId);
+        this.currentUserId = localStorage.getItem('user_id'); 
+        const membro = list.find(m => m.utilizadorId === this.currentUserId);
         this.isMembro = !!membro;
         this.isAdmin = membro?.role === 'Admin';
+        
+        if (membro?.castigadoAte) {
+          const dateStr = membro.castigadoAte.endsWith('Z') ? membro.castigadoAte : membro.castigadoAte + 'Z';
+          this.currentUserCastigadoAte = new Date(dateStr);
+          
+          this.startCastigoTimer(); 
+        } else {
+          this.currentUserCastigadoAte = null;
+          if (this.timerInterval) clearInterval(this.timerInterval);
+        }
       }
     });
   }
@@ -143,25 +204,63 @@ export class ComunidadeDetalheComponent implements OnInit, OnDestroy {
       return;
     }
     this.isPosting = true;
-    this.service.createPost(this.comunidadeId, this.newTitulo.trim(), this.newConteudo.trim(), this.imagemFile).subscribe({
+    this.service.createPost(
+      this.comunidadeId, 
+      this.newTitulo.trim(), 
+      this.newConteudo.trim(), 
+      this.imagemFile, 
+      this.newTemSpoiler,
+      this.filmeSelecionado?.id,
+      this.filmeSelecionado?.title,
+      this.filmeSelecionado?.poster_path
+    ).subscribe({
       next: (post) => {
-        this.posts.unshift(post);
+
+        post.autorId = this.currentUserId || undefined; 
+        post.likesCount = 0;
+        post.dislikesCount = 0;
+        post.userVote = 0;
+        post.reportsCount = 0;
+        post.temSpoiler = this.newTemSpoiler;
+
+        this.posts.unshift(post); 
         this.newTitulo = '';
         this.newConteudo = '';
         this.imagemFile = null;
         this.imagemPreview = null;
+        this.newTemSpoiler = false; 
+        this.filmeSelecionado = null; 
         this.showPostForm = false;
         this.isPosting = false;
       },
-      error: () => { this.postError = 'Erro ao publicar.'; this.isPosting = false; }
+      error: (err) => { 
+        this.postError = err?.error?.message || 'Erro ao publicar.'; 
+        this.isPosting = false; 
+      }
     });
   }
 
   get sortedPosts(): PostDto[] {
     return [...this.posts].sort((a, b) => {
-      const dateA = new Date(a.dataCriacao ?? 0).getTime();
-      const dateB = new Date(b.dataCriacao ?? 0).getTime();
-      return this.sortOrder === 'desc' ? dateB - dateA : dateA - dateB;
+      switch (this.sortOrder) {
+        case 'desc': 
+          return new Date(b.dataCriacao ?? 0).getTime() - new Date(a.dataCriacao ?? 0).getTime();
+        
+        case 'asc': 
+          return new Date(a.dataCriacao ?? 0).getTime() - new Date(b.dataCriacao ?? 0).getTime();
+        
+        case 'likes': 
+          return (b.likesCount || 0) - (a.likesCount || 0);
+        
+        case 'dislikes': 
+          return (b.dislikesCount || 0) - (a.dislikesCount || 0);
+        
+        case 'reports': 
+          return (b.reportsCount || 0) - (a.reportsCount || 0);
+        
+        default:
+          return 0;
+      }
     });
   }
 
@@ -226,7 +325,6 @@ export class ComunidadeDetalheComponent implements OnInit, OnDestroy {
     });
   }
 
-  // ── Apagar comunidade ───
 
   openDeleteModal(): void {
     this.deleteError = '';
@@ -261,5 +359,311 @@ export class ComunidadeDetalheComponent implements OnInit, OnDestroy {
   initialLetra(nome: string | undefined): string {
     const t = (nome || '?').trim();
     return t.length ? t.charAt(0).toUpperCase() : '?';
+  }
+
+  getUserInitial(nome: string | undefined | null): string {
+    if (!nome || !nome.trim()) return '?';
+    return nome.trim().charAt(0).toUpperCase();
+  }
+
+  openKickModal(membro: MembroDto): void {
+    this.membroToKick = membro;
+    this.kickError = '';
+    this.showKickModal = true;
+  }
+
+  closeKickModal(): void {
+    this.showKickModal = false;
+    this.membroToKick = null;
+    this.isKicking = false;
+  }
+
+  confirmKick(): void {
+    if (!this.membroToKick?.utilizadorId) return;
+
+    this.isKicking = true;
+    this.kickError = '';
+
+    this.service.removerMembro(this.comunidadeId, this.membroToKick.utilizadorId).subscribe({
+      next: () => {
+        this.membros = this.membros.filter(m => m.utilizadorId !== this.membroToKick!.utilizadorId);
+        
+        if (this.comunidade) {
+          this.comunidade.membrosCount = Math.max(0, (this.comunidade.membrosCount ?? 1) - 1);
+        }
+        
+        this.loadPosts(); 
+
+        this.closeKickModal();
+      },
+      error: (err) => {
+        this.kickError = err?.error?.message || 'Erro ao remover membro.';
+        this.isKicking = false;
+      }
+    });
+  }
+
+  votar(post: PostDto, isLike: boolean): void {
+    if (!post.id) return;
+    
+    const previousVote = post.userVote || 0;
+    const targetVote = isLike ? 1 : -1;
+
+    if (previousVote === targetVote) {
+      post.userVote = 0;
+      if (isLike) post.likesCount = (post.likesCount || 1) - 1;
+      else post.dislikesCount = (post.dislikesCount || 1) - 1;
+    } else {
+      post.userVote = targetVote;
+      if (isLike) {
+        post.likesCount = (post.likesCount || 0) + 1;
+        if (previousVote === -1) post.dislikesCount = Math.max(0, (post.dislikesCount || 1) - 1);
+      } else {
+        post.dislikesCount = (post.dislikesCount || 0) + 1;
+        if (previousVote === 1) post.likesCount = Math.max(0, (post.likesCount || 1) - 1);
+      }
+    }
+
+    this.service.votarPost(this.comunidadeId, post.id, isLike).subscribe({
+      error: () => this.loadPosts()
+    });
+  }
+
+  openEditPost(post: PostDto): void {
+    this.editingPost = post;
+    this.editPostTitulo = post.titulo;
+    this.editPostConteudo = post.conteudo;
+    this.editTemSpoiler = post.temSpoiler || false; 
+  }
+
+  closeEditPost(): void {
+    this.editingPost = null;
+  }
+
+  saveEditPost(): void {
+    if (!this.editingPost?.id || !this.editPostTitulo.trim()) return;
+    this.isSavingPostEdit = true;
+
+    this.service.updatePost(this.comunidadeId, this.editingPost.id, this.editPostTitulo, this.editPostConteudo, this.editTemSpoiler).subscribe({
+      next: () => {
+        this.editingPost!.titulo = this.editPostTitulo;
+        this.editingPost!.conteudo = this.editPostConteudo;
+        this.editingPost!.temSpoiler = this.editTemSpoiler; 
+        this.isSavingPostEdit = false;
+        this.closeEditPost();
+      },
+      error: () => {
+        alert('Erro ao editar post.');
+        this.isSavingPostEdit = false;
+      }
+    });
+  }
+
+  openDeletePostModal(post: PostDto): void {
+    this.postToDelete = post;
+    this.showDeletePostModal = true;
+  }
+
+  closeDeletePostModal(): void {
+    this.showDeletePostModal = false;
+    this.postToDelete = null;
+    this.isDeletingPost = false;
+  }
+
+  confirmDeletePost(): void {
+    if (!this.postToDelete?.id) return;
+    this.isDeletingPost = true;
+
+    this.service.deletePost(this.comunidadeId, this.postToDelete.id).subscribe({
+      next: () => {
+        this.posts = this.posts.filter(p => p.id !== this.postToDelete!.id);
+        this.closeDeletePostModal();
+      },
+      error: () => {
+        alert('Erro ao apagar publicação.');
+        this.isDeletingPost = false;
+      }
+    });
+  }
+
+  openReportModal(post: PostDto): void {
+    this.postToReport = post;
+    this.showReportModal = true;
+  }
+
+  closeReportModal(): void {
+    this.showReportModal = false;
+    this.postToReport = null;
+    this.isReporting = false;
+  }
+
+  confirmReport(): void {
+    if (!this.postToReport?.id) return;
+    this.isReporting = true;
+
+    this.service.reportPost(this.comunidadeId, this.postToReport.id).subscribe({
+      next: () => {
+        if (this.postToReport) {
+          this.postToReport.reportsCount = (this.postToReport.reportsCount || 0) + 1;
+          this.postToReport.jaReportou = true; 
+        }
+        this.closeReportModal();
+      },
+      error: (err) => {
+        const errorMsg = err?.error?.message || 'Erro ao denunciar.';
+        alert(errorMsg);
+        this.isReporting = false;
+      }
+    });
+  }
+
+  revelarSpoiler(postId: number | undefined): void {
+    if (postId) {
+      this.revealedSpoilers.add(postId);
+    }
+  }
+
+  get isCurrentCastigado(): boolean {
+    if (!this.currentUserCastigadoAte) return false;
+    return new Date() < this.currentUserCastigadoAte;
+  }
+
+  openCastigoModal(membro: MembroDto): void {
+    this.membroToCastigar = membro;
+    this.horasCastigo = 1; 
+    this.castigoError = '';
+    this.showCastigoModal = true;
+  }
+
+  closeCastigoModal(): void {
+    this.showCastigoModal = false;
+    this.membroToCastigar = null;
+    this.isCastigando = false;
+  }
+
+  confirmCastigo(): void {
+    if (!this.membroToCastigar?.utilizadorId) return;
+
+    this.isCastigando = true;
+    this.castigoError = '';
+
+    this.service.castigarMembro(this.comunidadeId, this.membroToCastigar.utilizadorId, this.horasCastigo).subscribe({
+      next: (res) => {
+        this.membroToCastigar!.castigadoAte = res.castigadoAte;
+        this.closeCastigoModal();
+        this.loadMembros();
+      },
+      error: (err) => {
+        this.castigoError = err?.error?.message || 'Erro ao castigar membro.';
+        this.isCastigando = false;
+      }
+    });
+  }
+
+  startCastigoTimer(): void {
+    if (this.timerInterval) {
+      clearInterval(this.timerInterval);
+    }
+
+    const updateTimer = () => {
+      if (!this.currentUserCastigadoAte) {
+        this.castigoCountdown = '';
+        return;
+      }
+
+      const now = new Date().getTime();
+      const end = this.currentUserCastigadoAte.getTime();
+      const diff = end - now;
+
+      if (diff <= 0) {
+        this.castigoCountdown = 'Terminado (faz refresh)';
+        clearInterval(this.timerInterval);
+        return;
+      }
+
+      const d = Math.floor(diff / (1000 * 60 * 60 * 24));
+      const h = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+      const m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+      const s = Math.floor((diff % (1000 * 60)) / 1000);
+
+      const hh = h.toString().padStart(2, '0');
+      const mm = m.toString().padStart(2, '0');
+      const ss = s.toString().padStart(2, '0');
+
+      if (d > 0) {
+        this.castigoCountdown = `${d}d ${hh}:${mm}:${ss}`;
+      } else {
+        this.castigoCountdown = `${hh}:${mm}:${ss}`;
+      }
+    };
+
+    updateTimer(); 
+    this.timerInterval = setInterval(updateTimer, 1000); 
+  }
+
+
+  toggleComentarios(post: PostDto): void {
+    post.showComentarios = !post.showComentarios;
+
+    if (post.showComentarios && (!post.comentarios || post.comentarios.length === 0)) {
+      this.service.getComentarios(this.comunidadeId, post.id!).subscribe({
+        next: (comentarios) => {
+          post.comentarios = comentarios;
+          post.comentariosCount = comentarios.length;
+        },
+        error: (err) => console.error('Erro ao carregar comentários', err)
+      });
+    }
+  }
+
+  submitComentario(post: PostDto): void {
+    if (!post.newComentarioTexto || !post.newComentarioTexto.trim() || !post.id) return;
+
+    post.isSubmittingComentario = true;
+
+    this.service.createComentario(this.comunidadeId, post.id, post.newComentarioTexto.trim()).subscribe({
+      next: (novoComentario) => {
+        if (!post.comentarios) post.comentarios = [];
+        post.comentarios.push(novoComentario);
+
+        post.comentariosCount = (post.comentariosCount || 0) + 1;
+        post.newComentarioTexto = '';
+        post.isSubmittingComentario = false;
+      },
+      error: (err) => {
+        console.error('Erro ao enviar comentário', err);
+        post.isSubmittingComentario = false;
+      }
+    });
+  }
+
+  // ── Movie Attachment Methods ──
+  procurarFilmeParaAnexar(): void {
+    if (this.pesquisaFilme.length < 3) {
+      this.resultadosFilmes = [];
+      return;
+    }
+    
+    const url = `https://api.themoviedb.org/3/search/movie?api_key=${environment.tmdbApiKey}&language=pt-PT&query=${this.pesquisaFilme}`;
+    
+    this.http.get<any>(url).subscribe({
+      next: (res) => {
+        this.resultadosFilmes = res.results.slice(0, 5);
+      },
+      error: (err) => {
+        console.error('Error searching movies:', err);
+        this.resultadosFilmes = [];
+      }
+    });
+  }
+
+  selecionarFilme(filme: any): void {
+    this.filmeSelecionado = filme;
+    this.resultadosFilmes = [];
+    this.pesquisaFilme = '';
+  }
+
+  removerFilmeAnexado(): void {
+    this.filmeSelecionado = null;
   }
 }

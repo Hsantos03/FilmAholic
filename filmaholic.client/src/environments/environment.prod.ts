@@ -6,5 +6,6 @@
  */
 export const environment = {
   production: true,
-  apiBaseUrl: ''
+  apiBaseUrl: '',
+  tmdbApiKey: '575504fdb34f6e0ca7ea22bc0d7b140d'
 };
