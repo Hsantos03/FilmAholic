@@ -226,10 +226,6 @@ namespace FilmAholic.Server.Controllers
             return false;
         }
 
-        /// <summary>
-        /// Retorna a lista de filmes para “NovaEstreia” já filtrada por géneros favoritos e histórico.
-        /// Também cria notificações em `Notificacoes` para os filmes elegíveis.
-        /// </summary>
         [HttpGet("nova-estreia")]
         public async Task<ActionResult<List<Filme>>> GetNovaEstreia(
             [FromQuery] int limit = 5,
@@ -281,15 +277,12 @@ namespace FilmAholic.Server.Controllers
                 .Distinct(StringComparer.OrdinalIgnoreCase)
                 .ToList();
 
-            // Se o utilizador não tem géneros favoritos, não geramos notificações “personalizadas”.
             if (favoriteGenres.Count == 0)
             {
                 return Ok(new List<Filme>());
             }
 
-            // Se o utilizador selecionou "quase todos" os géneros, assumimos que não deve haver filtragem apertada.
             var totalGenres = await _context.Generos.CountAsync();
-            // Permitimos 1 género "em falta" para não bloquear a lista por detalhes de persistência.
             var applyGenreFilter = totalGenres > 0 && favoriteGenres.Count < Math.Max(1, totalGenres - 1);
 
             var watchedIds = await _context.UserMovies
@@ -305,8 +298,6 @@ namespace FilmAholic.Server.Controllers
                 .Take(400)
                 .ToListAsync();
 
-            // Fallback: se a BD praticamente não tem “estreias” dentro da janela,
-            // buscamos ao TMDB para conseguir ter notificações suficientes.
             var fallbackThreshold = Math.Max(10, limit * 2);
             if (candidates.Count < fallbackThreshold)
             {
@@ -337,7 +328,6 @@ namespace FilmAholic.Server.Controllers
                     await _context.SaveChangesAsync();
                 }
 
-                // Recalcular candidatos após inserir novos filmes.
                 candidates = await _context.Filmes
                     .Where(f => (f.ReleaseDate.HasValue && f.ReleaseDate.Value > nowUtc && f.ReleaseDate.Value <= endUtc)
                                 || (f.ReleaseDate == null && f.Ano.HasValue && f.Ano.Value >= nowUtc.Year && f.Ano.Value <= nowUtc.Year + maxAnoAhead))
@@ -352,9 +342,6 @@ namespace FilmAholic.Server.Controllers
                 .OrderBy(f => SortKey(f, nowUtc, maxAnoAhead))
                 .ToList();
 
-            // Cria notificações NovaEstreia para os elegíveis (idempotente pelo índice único).
-            // Nota: se o utilizador já marcou como "lida" vários filmes mais próximos, precisamos de considerar
-            // mais candidatos para existirem sempre "não lidas" suficientes na janela.
             if (await CanGenerateNovaEstreiaAsync(userId, prefs, nowUtc))
             {
                 var desiredCreateCount = Math.Min(Math.Max(limit * 20, 50), 200); // ex.: limit=5 => 100
@@ -383,7 +370,6 @@ namespace FilmAholic.Server.Controllers
                 await _context.SaveChangesAsync();
             }
 
-            // Devolve só notificações não lidas, revalidando elegibilidade.
             var unread = await _context.Notificacoes
                 .Where(n => n.UtilizadorId == userId && n.Tipo == TipoNovaEstreia && n.LidaEm == null)
                 .Include(n => n.Filme)
@@ -395,7 +381,6 @@ namespace FilmAholic.Server.Controllers
                 .Cast<Filme>()
                 .Where(f => IsUpcoming(f, nowUtc, endUtc, maxAnoAhead))
                 .Where(f => !watchedSet.Contains(f.Id))
-                // Respeitar o mesmo critério de filtragem usado na criação
                 .Where(f => !applyGenreFilter || GenreMatches(f, favoriteGenres))
                 .OrderBy(f => SortKey(f, nowUtc, maxAnoAhead))
                 .Take(limit)
@@ -415,10 +400,7 @@ namespace FilmAholic.Server.Controllers
             public List<int> LidosTmdbIds { get; set; } = new();
         }
 
-        /// <summary>
-        /// Devolve quais TMDB ids (entre os pedidos) têm notificação NovaEstreia marcada como lida.
-        /// Usado pela lista “upcoming” TMDB na UI (filmes podem ainda não ter linha de notificação).
-        /// </summary>
+
         [HttpGet("nova-estreia/lidos-tmdb-ids")]
         public async Task<ActionResult<LidosTmdbIdsDto>> GetLidosTmdbIds([FromQuery] string? ids = null)
         {
@@ -478,10 +460,7 @@ namespace FilmAholic.Server.Controllers
             return r.Distinct().ToList();
         }
 
-        /// <summary>
-        /// Lista “Próximas estreias” para a campainha (TMDB): opcionalmente filtrada pelos géneros favoritos do utilizador e exclui filmes já vistos.
-        /// Sem autenticação → <see cref="UnauthorizedResult"/> (o cliente usa <c>/api/filmes/upcoming</c> como fallback).
-        /// </summary>
+
         /// <param name="filtrarPorGeneros">Se <c>true</c> (defeito), aplica <see cref="GenreMatches"/> quando existem géneros favoritos na BD. Se <c>false</c>, upcoming completo (só exclui já vistos).</param>
         [HttpGet("proximas-estreias")]
         public async Task<ActionResult<List<Filme>>> GetProximasEstreiasPersonalizadas(
@@ -523,8 +502,6 @@ namespace FilmAholic.Server.Controllers
                 .Distinct(StringComparer.OrdinalIgnoreCase)
                 .ToList();
 
-            // Com filtrarPorGeneros=true, aplicamos sempre que existam géneros favoritos na BD.
-            // (A antiga regra "quase todos os géneros = sem filtro" fazia "Os meus géneros" igual a "Todos".)
             var applyGenreFilter = filtrarPorGeneros && favoriteGenres.Count > 0;
 
             var watchedIds = await _context.UserMovies
@@ -572,9 +549,6 @@ namespace FilmAholic.Server.Controllers
             return Ok(filtered);
         }
 
-        /// <summary>
-        /// Feed para a UI: devolve não lidas + lidas (últimas N) para o menu de notificações.
-        /// </summary>
         [HttpGet("nova-estreia/feed")]
         public async Task<ActionResult<NovaEstreiaFeedDto>> GetNovaEstreiaFeed(
             [FromQuery] int unreadLimit = 5,
@@ -622,7 +596,6 @@ namespace FilmAholic.Server.Controllers
                 .ToListAsync();
             var watchedSet = watchedIds.ToHashSet();
 
-            // Garantir que há pelo menos notificações criadas para candidatos dentro da janela
             _ = await GetNovaEstreia(unreadLimit == 0 ? 1 : unreadLimit, windowDays, maxAnoAhead);
 
             var unreadNotifs = await _context.Notificacoes
@@ -697,10 +670,7 @@ namespace FilmAholic.Server.Controllers
             public int? Ano { get; set; }
         }
 
-        /// <summary>
-        /// Endpoint de diagnóstico para perceber porque a lista devolvida fica pequena.
-        /// Não é usado pela UI.
-        /// </summary>
+
         [HttpGet("nova-estreia/debug")]
         public async Task<ActionResult<NovaEstreiaDebugDto>> DebugNovaEstreia(
             [FromQuery] int limit = 5,
@@ -724,7 +694,6 @@ namespace FilmAholic.Server.Controllers
                 MaxAnoAhead = maxAnoAhead,
             };
 
-            // Sem auth => "genérico"
             if (string.IsNullOrWhiteSpace(userId))
             {
                 var genericCandidates = await _context.Filmes
@@ -778,9 +747,7 @@ namespace FilmAholic.Server.Controllers
                 .ToListAsync();
 
             dto.CandidatesCount = candidates.Count;
-
-            // Fallback: se a BD praticamente não tem “estreias” dentro da janela,
-            // buscamos ao TMDB e inserimos na BD para permitir mais candidatos.
+           
             var fallbackThreshold = Math.Max(10, limit * 2);
             if (candidates.Count < fallbackThreshold)
             {
@@ -861,8 +828,6 @@ namespace FilmAholic.Server.Controllers
                 .Where(n => n.UtilizadorId == userId && n.Tipo == TipoNovaEstreia && n.LidaEm == null)
                 .CountAsync();
 
-            // Preview dos filmes que de facto seriam devolvidos pelo endpoint principal
-            // (isto explica quando o número de notificações “não lidas” diverge do que a UI mostra).
             var unread = await _context.Notificacoes
                 .Where(n => n.UtilizadorId == userId && n.Tipo == TipoNovaEstreia && n.LidaEm == null)
                 .Include(n => n.Filme)
@@ -949,9 +914,7 @@ namespace FilmAholic.Server.Controllers
         {
             public bool NovaEstreiaAtiva { get; set; } = true;
             public string NovaEstreiaFrequencia { get; set; } = "Diaria";
-            /// <summary>Null se o cliente não enviou o campo (mantém valor na BD).</summary>
             public bool? ResumoEstatisticasAtiva { get; set; }
-            /// <summary>Null ou vazio: mantém frequência na BD.</summary>
             public string? ResumoEstatisticasFrequencia { get; set; }
         }
 
@@ -1034,7 +997,6 @@ namespace FilmAholic.Server.Controllers
             return NoContent();
         }
 
-        /// <summary>Feed FR70: resumos periódicos de estatísticas (lidas / não lidas).</summary>
         [HttpGet("resumo-estatisticas/feed")]
         public async Task<ActionResult<ResumoEstatisticasFeedDto>> GetResumoEstatisticasFeed(
             [FromQuery] int unreadLimit = 5,
@@ -1114,6 +1076,131 @@ namespace FilmAholic.Server.Controllers
                 return NotFound();
 
             notif.LidaEm = nowUtc;
+            await _context.SaveChangesAsync();
+            return NoContent();
+        }
+
+        public class NotificacaoComunidadeItemDto
+        {
+            public int Id { get; set; }
+            public int ComunidadeId { get; set; }
+            public string ComunidadeNome { get; set; } = "";
+            public int PostId { get; set; }
+            public DateTime CriadaEm { get; set; }
+            public DateTime? LidaEm { get; set; }
+        }
+
+        public class NotificacaoComunidadeFeedDto
+        {
+            public List<NotificacaoComunidadeItemDto> Unread { get; set; } = new();
+            public List<NotificacaoComunidadeItemDto> Read { get; set; } = new();
+        }
+
+        /// <summary>Feed de notificações de comunidade (lidas + não lidas).</summary>
+        [HttpGet("comunidade/feed")]
+        public async Task<ActionResult<NotificacaoComunidadeFeedDto>> GetNotificacoesComunidadeFeed(
+            [FromQuery] int unreadLimit = 20,
+            [FromQuery] int readLimit = 10)
+        {
+            var userId = GetUserId();
+            if (string.IsNullOrWhiteSpace(userId))
+                return Unauthorized();
+
+            if (unreadLimit < 0) unreadLimit = 0;
+            if (unreadLimit > 50) unreadLimit = 50;
+            if (readLimit < 0) readLimit = 0;
+            if (readLimit > 50) readLimit = 50;
+
+            var unread = await _context.Set<NotificacaoComunidade>()
+                .AsNoTracking()
+                .Where(n => n.UtilizadorId == userId && n.LidaEm == null)
+                .OrderByDescending(n => n.CriadaEm)
+                .Take(unreadLimit)
+                .Select(n => new NotificacaoComunidadeItemDto
+                {
+                    Id = n.Id,
+                    ComunidadeId = n.ComunidadeId,
+                    ComunidadeNome = _context.Comunidades
+                        .Where(c => c.Id == n.ComunidadeId)
+                        .Select(c => c.Nome)
+                        .FirstOrDefault() ?? "",
+                    PostId = n.PostId,
+                    CriadaEm = n.CriadaEm,
+                    LidaEm = n.LidaEm
+                })
+                .ToListAsync();
+
+            var read = await _context.Set<NotificacaoComunidade>()
+                .AsNoTracking()
+                .Where(n => n.UtilizadorId == userId && n.LidaEm != null)
+                .OrderByDescending(n => n.LidaEm)
+                .Take(readLimit)
+                .Select(n => new NotificacaoComunidadeItemDto
+                {
+                    Id = n.Id,
+                    ComunidadeId = n.ComunidadeId,
+                    ComunidadeNome = _context.Comunidades
+                        .Where(c => c.Id == n.ComunidadeId)
+                        .Select(c => c.Nome)
+                        .FirstOrDefault() ?? "",
+                    PostId = n.PostId,
+                    CriadaEm = n.CriadaEm,
+                    LidaEm = n.LidaEm
+                })
+                .ToListAsync();
+
+            return Ok(new NotificacaoComunidadeFeedDto { Unread = unread, Read = read });
+        }
+
+        /// <summary>Contagem de notificações de comunidade não lidas.</summary>
+        [HttpGet("comunidade/unread-count")]
+        public async Task<ActionResult<int>> GetNotificacoesComunidadeUnreadCount()
+        {
+            var userId = GetUserId();
+            if (string.IsNullOrWhiteSpace(userId))
+                return Unauthorized();
+
+            var count = await _context.Set<NotificacaoComunidade>()
+                .CountAsync(n => n.UtilizadorId == userId && n.LidaEm == null);
+
+            return Ok(count);
+        }
+
+        /// <summary>Marcar uma notificação de comunidade como lida.</summary>
+        [HttpPut("comunidade/{id:int}/lida")]
+        public async Task<IActionResult> MarcarNotificacaoComunidadeComoLida([FromRoute] int id)
+        {
+            var userId = GetUserId();
+            if (string.IsNullOrWhiteSpace(userId))
+                return Unauthorized();
+
+            var notif = await _context.Set<NotificacaoComunidade>()
+                .FirstOrDefaultAsync(n => n.Id == id && n.UtilizadorId == userId);
+
+            if (notif == null)
+                return NotFound();
+
+            notif.LidaEm = DateTime.UtcNow;
+            await _context.SaveChangesAsync();
+            return NoContent();
+        }
+
+        /// <summary>Marcar todas as notificações de comunidade como lidas.</summary>
+        [HttpPut("comunidade/marcar-todas-lidas")]
+        public async Task<IActionResult> MarcarTodasNotificacoesComunidadeComoLidas()
+        {
+            var userId = GetUserId();
+            if (string.IsNullOrWhiteSpace(userId))
+                return Unauthorized();
+
+            var nowUtc = DateTime.UtcNow;
+            var unread = await _context.Set<NotificacaoComunidade>()
+                .Where(n => n.UtilizadorId == userId && n.LidaEm == null)
+                .ToListAsync();
+
+            foreach (var n in unread)
+                n.LidaEm = nowUtc;
+
             await _context.SaveChangesAsync();
             return NoContent();
         }

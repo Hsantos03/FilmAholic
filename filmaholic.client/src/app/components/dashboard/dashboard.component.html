@@ -52,106 +52,7 @@
 
 
     <div class="top-actions">
-      <!-- Notifications bell with menu -->
-      <div class="notifications-wrap" style="position: relative;">
-        <button class="icon-btn"
-                type="button"
-                (click)="toggleNotifications($event)"
-                aria-label="Notificações">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.64-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.63 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z" />
-          </svg>
-        </button>
-
-        <div class="notifications-menu"
-             #notificationsContainer
-             *ngIf="isNotificationsOpen"
-             role="menu"
-             style="position: absolute; top: calc(100% + 8px); right: 0; min-width:260px; background: #0a0a0a; border: 1px solid rgba(255,255,255,0.06); border-radius:8px; box-shadow: 0 8px 24px rgba(0,0,0,0.45); padding:8px; z-index:1500;">
-
-          <div *ngIf="hasUpcomingList; else noUpcoming" style="display:flex; flex-direction:column; gap:8px;">
-            <div class="dash-notif-section-title">Próximas estreias</div>
-            <div *ngIf="showEstreiasGenreFilter"
-                 class="dash-notif-genre-filter"
-                 (click)="$event.stopPropagation()"
-                 role="group"
-                 aria-label="Filtrar por géneros">
-              <button type="button"
-                      class="dash-notif-genre-filter-btn"
-                      [class.dash-notif-genre-filter-btn--active]="filtrarEstreiasPorGeneros"
-                      (click)="setEstreiasGenreFilter(true, $event)">Os meus géneros</button>
-              <button type="button"
-                      class="dash-notif-genre-filter-btn"
-                      [class.dash-notif-genre-filter-btn--active]="!filtrarEstreiasPorGeneros"
-                      (click)="setEstreiasGenreFilter(false, $event)">Todos</button>
-            </div>
-
-            <ng-container *ngIf="upcomingUnreadAll.length > 0; else dashAllReadOrEmpty">
-              <div *ngFor="let m of upcomingUnreadPaged"
-                   class="dash-notif-row"
-                   (click)="openNotificationMovie(m)">
-                <img [src]="posterOf(m)" [alt]="m.titulo" style="width:56px; height:84px; object-fit:cover; border-radius:6px; flex-shrink:0;" (error)="onPosterBroken($event)" />
-                <div style="display:flex; flex-direction:column; min-width:0;">
-                  <div style="font-size:13px; font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ m.titulo }}</div>
-                  <div style="font-size:12px; color:#aaa; margin-top:6px;">{{ releaseLabel(m) }}</div>
-                </div>
-                <button type="button"
-                        class="dash-notif-mark"
-                        (click)="marcarComoLida($event, m)"
-                        aria-label="Marcar como vista">✓</button>
-              </div>
-              <div *ngIf="upcomingUnreadPagerVisible" class="dash-notif-pager">
-                <button type="button"
-                        class="dash-notif-pager-btn"
-                        (click)="prevUnreadPage($event)"
-                        [disabled]="upcomingUnreadPage === 0">‹</button>
-                <span class="dash-notif-pager-label">{{ upcomingUnreadPageLabel }}</span>
-                <button type="button"
-                        class="dash-notif-pager-btn"
-                        (click)="nextUnreadPage($event)"
-                        [disabled]="upcomingUnreadPage >= upcomingUnreadLastPage">›</button>
-              </div>
-            </ng-container>
-            <ng-template #dashAllReadOrEmpty>
-              <div *ngIf="upcomingReadAll.length === 0" style="padding:8px 12px; color:#aaa;">Nada por mostrar nesta lista.</div>
-            </ng-template>
-
-            <ng-container *ngIf="upcomingReadAll.length > 0">
-              <div class="dash-notif-section-title dash-notif-divider">Já vistas</div>
-              <div *ngFor="let m of upcomingReadPaged"
-                   class="dash-notif-row is-read"
-                   (click)="openNotificationMovie(m)">
-                <img [src]="posterOf(m)" [alt]="m.titulo" style="width:56px; height:84px; object-fit:cover; border-radius:6px; flex-shrink:0;" (error)="onPosterBroken($event)" />
-                <div style="display:flex; flex-direction:column; min-width:0;">
-                  <div style="font-size:13px; font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ m.titulo }}</div>
-                  <div style="font-size:12px; color:#aaa; margin-top:6px;">{{ releaseLabel(m) }}</div>
-                </div>
-              </div>
-              <div *ngIf="upcomingReadPagerVisible" class="dash-notif-pager">
-                <button type="button"
-                        class="dash-notif-pager-btn"
-                        (click)="prevReadPage($event)"
-                        [disabled]="upcomingReadPage === 0">‹</button>
-                <span class="dash-notif-pager-label">{{ upcomingReadPageLabel }}</span>
-                <button type="button"
-                        class="dash-notif-pager-btn"
-                        (click)="nextReadPage($event)"
-                        [disabled]="upcomingReadPage >= upcomingReadLastPage">›</button>
-              </div>
-            </ng-container>
-          </div>
-
-          <ng-template #noUpcoming>
-            <div style="padding:12px; color:#aaa;">Ainda sem próximas estreias.</div>
-          </ng-template>
-        </div>
-      </div>
-
-      <button class="icon-btn" routerLink="/profile" aria-label="Perfil">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-          <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
-        </svg>
-      </button>
+      <app-topbar-actions></app-topbar-actions>
     </div>
   </header>
 
@@ -277,25 +178,6 @@
                   [disabled]="top10Index >= (top10.length - top10VisibleCount)"
                   aria-label="Seguinte">
             &rsaquo;
-          </button>
-        </div>
-      </div>
-    </section>
-
-    <section class="strip strip-full desafios-strip">
-      <div class="strip-inner">
-        <div class="section-head">
-          <h2>Desafios Diários</h2>
-        </div>
-        <div class="desafios-dashboard-cards">
-          <button class="desafio-card-btn" (click)="openDesafios()" type="button">
-            <span class="desafio-card-icon">
-              <svg width="42" height="42" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M12 2L14.09 8.26L21 9.27L16.5 13.14L17.82 20L12 16.77L6.18 20L7.5 13.14L3 9.27L9.91 8.26L12 2Z" />
-              </svg>
-            </span>
-            <span class="desafio-card-label">Ver desafios</span>
-            <span class="desafio-card-desc">Completa desafios e ganha XP</span>
           </button>
         </div>
       </div>

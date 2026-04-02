@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace FilmAholic.Server.Migrations
 {
     [DbContext(typeof(FilmAholicDbContext))]
-    [Migration("20260402084201_FilmAholic")]
-    partial class FilmAholic
+    [Migration("20260402104138_FilmaholicMigration")]
+    partial class FilmaholicMigration
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -625,6 +625,41 @@ namespace FilmAholic.Server.Migrations
                     b.ToTable("Notificacoes", (string)null);
                 });
 
+            modelBuilder.Entity("FilmAholic.Server.Models.NotificacaoComunidade", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("ComunidadeId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("CriadaEm")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("LidaEm")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("PostId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("UtilizadorId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ComunidadeId");
+
+                    b.HasIndex("PostId");
+
+                    b.HasIndex("UtilizadorId", "LidaEm");
+
+                    b.ToTable("NotificacoesComunidade", (string)null);
+                });
+
             modelBuilder.Entity("FilmAholic.Server.Models.PreferenciasNotificacao", b =>
                 {
                     b.Property<int>("Id")
@@ -1169,6 +1204,33 @@ namespace FilmAholic.Server.Migrations
                         .IsRequired();
 
                     b.Navigation("Filme");
+
+                    b.Navigation("Utilizador");
+                });
+
+            modelBuilder.Entity("FilmAholic.Server.Models.NotificacaoComunidade", b =>
+                {
+                    b.HasOne("FilmAholic.Server.Models.Comunidade", "Comunidade")
+                        .WithMany()
+                        .HasForeignKey("ComunidadeId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.HasOne("FilmAholic.Server.Models.ComunidadePost", "Post")
+                        .WithMany()
+                        .HasForeignKey("PostId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("FilmAholic.Server.Models.Utilizador", "Utilizador")
+                        .WithMany()
+                        .HasForeignKey("UtilizadorId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Comunidade");
+
+                    b.Navigation("Post");
 
                     b.Navigation("Utilizador");
                 });
