@@ -32,6 +32,8 @@ public class FilmAholicDbContext : IdentityDbContext<Utilizador>
 
     public DbSet<RecomendacaoFeedback> RecomendacaoFeedbacks => Set<RecomendacaoFeedback>();
 
+    public DbSet<NotificacaoComunidade> NotificacoesComunidade => Set<NotificacaoComunidade>();
+
     protected override void OnModelCreating(ModelBuilder builder)
     {
         builder.Entity<UserMovie>()
@@ -301,6 +303,29 @@ public class FilmAholicDbContext : IdentityDbContext<Utilizador>
             e.HasOne(x => x.Filme)
              .WithMany()
              .HasForeignKey(x => x.FilmeId)
+             .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        // NotificacaoComunidade mapping
+        builder.Entity<NotificacaoComunidade>(e =>
+        {
+            e.ToTable("NotificacoesComunidade");
+            e.HasKey(x => x.Id);
+            e.HasIndex(x => new { x.UtilizadorId, x.LidaEm });
+
+            e.HasOne(x => x.Utilizador)
+             .WithMany()
+             .HasForeignKey(x => x.UtilizadorId)
+             .OnDelete(DeleteBehavior.Cascade);
+
+            e.HasOne(x => x.Comunidade)
+             .WithMany()
+             .HasForeignKey(x => x.ComunidadeId)
+             .OnDelete(DeleteBehavior.NoAction);
+
+            e.HasOne(x => x.Post)
+             .WithMany()
+             .HasForeignKey(x => x.PostId)
              .OnDelete(DeleteBehavior.Cascade);
         });
     }

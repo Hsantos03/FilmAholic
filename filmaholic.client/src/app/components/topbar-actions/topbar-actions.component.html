@@ -1,12 +1,13 @@
 <div class="topbar-actions">
   <div class="notifications-wrap" #notificationsContainer>
     <button type="button"
-            class="icon-btn"
+            class="icon-btn notif-bell-btn"
             (click)="toggleNotifications($event)"
             aria-label="Notificações">
       <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
         <path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.64-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.63 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z" />
       </svg>
+      <span class="notif-badge" *ngIf="comunidadeUnreadCount > 0">{{ comunidadeUnreadCount > 9 ? '9+' : comunidadeUnreadCount }}</span>
     </button>
     <div class="notifications-menu" *ngIf="isNotificationsOpen" role="menu">
       <div *ngIf="hasResumoItems" class="notif-resumo-section" (click)="$event.stopPropagation()">
@@ -74,6 +75,64 @@
         </div>
       </div>
 
+      <!-- ── Tab bar ── -->
+      <div class="notif-tab-bar" (click)="$event.stopPropagation()">
+        <button type="button"
+                class="notif-tab-btn"
+                [class.notif-tab-btn--active]="activeNotifTab === 'estreias'"
+                (click)="setActiveNotifTab('estreias', $event)">Próximas estreias</button>
+        <button type="button"
+                class="notif-tab-btn"
+                [class.notif-tab-btn--active]="activeNotifTab === 'notificacoes'"
+                (click)="setActiveNotifTab('notificacoes', $event)">
+          Notificações
+          <span class="notif-tab-badge" *ngIf="comunidadeUnreadCount > 0">{{ comunidadeUnreadCount }}</span>
+        </button>
+      </div>
+
+      <!-- ══════ TAB: Próximas estreias ══════ -->
+      <ng-container *ngIf="activeNotifTab === 'estreias'">
+        <div *ngIf="hasResumoItems" class="notif-resumo-section" (click)="$event.stopPropagation()">
+          <div class="notifications-title">Resumo de estatísticas</div>
+          <div *ngFor="let it of resumoFeed.unread" class="resumo-card resumo-card--unread">
+            <div class="resumo-card-body">
+              <p *ngIf="it.corpo" class="resumo-line">
+                Tempo total: <strong>{{ it.corpo.tempoTotalHoras }} h</strong>
+              </p>
+              <p *ngIf="resumoGenerosLabel(it)" class="resumo-line resumo-line--muted">
+                Géneros mais vistos: {{ resumoGenerosLabel(it) }}
+              </p>
+              <p *ngIf="it.corpo?.filmeMaisVistoSemanaPlataforma as fc" class="resumo-line resumo-line--muted">
+                Filme da semana na plataforma:
+                <button type="button" class="resumo-link" (click)="openResumoCommunityMovie($event, fc)">{{ fc.titulo }}</button>
+                <span class="resumo-count">({{ fc.marcacoesNaSemana }} marcações)</span>
+              </p>
+            </div>
+            <button
+              type="button"
+              class="notification-mark-read"
+              (click)="marcarResumoLida($event, it)"
+              aria-label="Marcar resumo como lido">✓</button>
+          </div>
+          <ng-container *ngIf="resumoFeed.read?.length">
+            <div class="notifications-title resumo-subtitle">Resumos anteriores</div>
+            <div *ngFor="let it of resumoFeed.read" class="resumo-card resumo-card--read">
+              <div class="resumo-card-body">
+                <p *ngIf="it.corpo" class="resumo-line">
+                  Tempo total: <strong>{{ it.corpo.tempoTotalHoras }} h</strong>
+                </p>
+                <p *ngIf="resumoGenerosLabel(it)" class="resumo-line resumo-line--muted">
+                  Géneros: {{ resumoGenerosLabel(it) }}
+                </p>
+                <p *ngIf="it.corpo?.filmeMaisVistoSemanaPlataforma as fc" class="resumo-line resumo-line--muted">
+                  Filme da semana:
+                  <button type="button" class="resumo-link" (click)="openResumoCommunityMovie($event, fc)">{{ fc.titulo }}</button>
+                </p>
+              </div>
+            </div>
+          </ng-container>
+        </div>
+
       <div *ngIf="hasUpcomingList; else noUpcoming" class="notifications-inner">
         <div class="notifications-title">Próximas estreias</div>
         <div *ngIf="showEstreiasGenreFilter"
@@ -94,6 +153,22 @@
             Todos
           </button>
         </div>
+        <div *ngIf="hasUpcomingList; else noUpcoming" class="notifications-inner">
+          <div class="notifications-title">Próximas estreias</div>
+          <div *ngIf="showEstreiasGenreFilter"
+               class="notif-genre-filter"
+               (click)="$event.stopPropagation()"
+               role="group"
+               aria-label="Filtrar por géneros">
+            <button type="button"
+                    class="notif-genre-filter-btn"
+                    [class.notif-genre-filter-btn--active]="filtrarEstreiasPorGeneros"
+                    (click)="setEstreiasGenreFilter(true, $event)">Os meus géneros</button>
+            <button type="button"
+                    class="notif-genre-filter-btn"
+                    [class.notif-genre-filter-btn--active]="!filtrarEstreiasPorGeneros"
+                    (click)="setEstreiasGenreFilter(false, $event)">Todos</button>
+          </div>
 
         <ng-container *ngIf="upcomingUnreadAll.length > 0; else allReadOrEmpty">
           <div *ngFor="let m of upcomingUnreadPaged"
@@ -131,6 +206,36 @@
         <ng-template #allReadOrEmpty>
           <div *ngIf="upcomingReadAll.length === 0" class="notifications-empty" style="padding-top:0;">Nada por mostrar nesta lista.</div>
         </ng-template>
+          <ng-container *ngIf="upcomingUnreadAll.length > 0; else allReadOrEmpty">
+            <div *ngFor="let m of upcomingUnreadPaged"
+                 class="notification-item"
+                 (click)="openNotificationMovie(m)"
+                 role="menuitem">
+              <img [src]="posterOf(m)" [alt]="m.titulo" class="notification-poster" (error)="onPosterBroken($event)" />
+              <div class="notification-meta">
+                <span class="notification-movie-title">{{ m.titulo }}</span>
+                <span class="notification-date">{{ releaseLabel(m) }}</span>
+              </div>
+              <button type="button"
+                      class="notification-mark-read"
+                      (click)="marcarComoLida($event, m)"
+                      aria-label="Marcar como vista">✓</button>
+            </div>
+            <div *ngIf="upcomingUnreadPagerVisible" class="notif-pager">
+              <button type="button"
+                      class="notif-pager-btn"
+                      (click)="prevUnreadPage($event)"
+                      [disabled]="upcomingUnreadPage === 0">‹</button>
+              <span class="notif-pager-label">{{ upcomingUnreadPageLabel }}</span>
+              <button type="button"
+                      class="notif-pager-btn"
+                      (click)="nextUnreadPage($event)"
+                      [disabled]="upcomingUnreadPage >= upcomingUnreadLastPage">›</button>
+            </div>
+          </ng-container>
+          <ng-template #allReadOrEmpty>
+            <div *ngIf="upcomingReadAll.length === 0" class="notifications-empty" style="padding-top:0;">Nada por mostrar nesta lista.</div>
+          </ng-template>
 
         <ng-container *ngIf="upcomingReadAll.length > 0">
           <div class="notifications-title" style="margin-top:10px; padding-top:8px; border-top:1px solid rgba(255,255,255,0.08);">Já vistas</div>
@@ -165,6 +270,85 @@
         <div *ngIf="!hasResumoItems" class="notifications-empty">Ainda sem próximas estreias.</div>
         <div *ngIf="hasResumoItems" class="notifications-empty notifications-empty--sub">Sem estreias nesta lista.</div>
       </ng-template>
+          <ng-container *ngIf="upcomingReadAll.length > 0">
+            <div class="notifications-title" style="margin-top:10px; padding-top:8px; border-top:1px solid rgba(255,255,255,0.08);">Já vistas</div>
+            <div *ngFor="let m of upcomingReadPaged"
+                 class="notification-item read"
+                 (click)="openNotificationMovie(m)"
+                 role="menuitem">
+              <img [src]="posterOf(m)" [alt]="m.titulo" class="notification-poster" (error)="onPosterBroken($event)" />
+              <div class="notification-meta">
+                <span class="notification-movie-title">{{ m.titulo }}</span>
+                <span class="notification-date">{{ releaseLabel(m) }}</span>
+              </div>
+            </div>
+            <div *ngIf="upcomingReadPagerVisible" class="notif-pager">
+              <button type="button"
+                      class="notif-pager-btn"
+                      (click)="prevReadPage($event)"
+                      [disabled]="upcomingReadPage === 0">‹</button>
+              <span class="notif-pager-label">{{ upcomingReadPageLabel }}</span>
+              <button type="button"
+                      class="notif-pager-btn"
+                      (click)="nextReadPage($event)"
+                      [disabled]="upcomingReadPage >= upcomingReadLastPage">›</button>
+            </div>
+          </ng-container>
+        </div>
+        <ng-template #noUpcoming>
+          <div *ngIf="!hasResumoItems" class="notifications-empty">Ainda sem próximas estreias.</div>
+          <div *ngIf="hasResumoItems" class="notifications-empty notifications-empty--sub">Sem estreias nesta lista.</div>
+        </ng-template>
+      </ng-container>
+
+      <!-- ══════ TAB: Notificações (comunidades) ══════ -->
+      <ng-container *ngIf="activeNotifTab === 'notificacoes'">
+        <div class="notifications-inner">
+          <div class="notifications-title" style="display:flex; align-items:center; justify-content:space-between;">
+            <span>Comunidades</span>
+            <button type="button"
+                    class="notif-mark-all-btn"
+                    *ngIf="comunidadeFeed.unread.length > 0"
+                    (click)="marcarTodasComunidadeLidas($event)">Marcar todas como lidas</button>
+          </div>
+
+          <ng-container *ngIf="comunidadeFeed.unread.length > 0">
+            <div *ngFor="let n of comunidadeFeed.unread"
+                 class="comunidade-notif-card"
+                 (click)="openComunidadeFromNotif(n)"
+                 role="menuitem">
+              <div class="comunidade-notif-icon">👥</div>
+              <div class="comunidade-notif-body">
+                <span class="comunidade-notif-text">Existem novas publicações na comunidade <strong>{{ n.comunidadeNome }}</strong></span>
+                <span class="comunidade-notif-date">{{ n.criadaEm | date:'dd/MM/yyyy HH:mm' }}</span>
+              </div>
+              <button type="button"
+                      class="notification-mark-read"
+                      (click)="marcarComunidadeNotifLida($event, n)"
+                      aria-label="Marcar como lida">✓</button>
+            </div>
+          </ng-container>
+
+          <div *ngIf="comunidadeFeed.unread.length === 0 && comunidadeFeed.read.length === 0" class="notifications-empty">
+            Sem notificações de comunidades.
+          </div>
+
+          <ng-container *ngIf="comunidadeFeed.read.length > 0">
+            <div class="notifications-title" style="margin-top:10px; padding-top:8px; border-top:1px solid rgba(255,255,255,0.08);">Anteriores</div>
+            <div *ngFor="let n of comunidadeFeed.read"
+                 class="comunidade-notif-card comunidade-notif-card--read"
+                 (click)="openComunidadeFromNotif(n)"
+                 role="menuitem">
+              <div class="comunidade-notif-icon">👥</div>
+              <div class="comunidade-notif-body">
+                <span class="comunidade-notif-text">Novas publicações na comunidade <strong>{{ n.comunidadeNome }}</strong></span>
+                <span class="comunidade-notif-date">{{ n.criadaEm | date:'dd/MM/yyyy HH:mm' }}</span>
+              </div>
+            </div>
+          </ng-container>
+        </div>
+      </ng-container>
+
     </div>
   </div>
   <a class="icon-btn" routerLink="/profile" aria-label="Perfil">

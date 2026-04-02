@@ -9,6 +9,9 @@ import {
   ResumoEstatisticasFeedItemDto,
   ResumoFilmeComunidadeDto,
   ReminderJogoNotifDto
+  ResumoFilmeComunidadeDto,
+  NotificacaoComunidadeFeedDto,
+  NotificacaoComunidadeItemDto
 } from '../../services/notificacoes.service';
 
 @Component({
@@ -22,6 +25,10 @@ export class TopbarActionsComponent implements OnInit, OnDestroy {
   private readonly posterFallback = 'https://via.placeholder.com/300x450?text=Sem+poster';
 
   isNotificationsOpen = false;
+
+  // ── Tab state ──
+  activeNotifTab: 'estreias' | 'notificacoes' = 'estreias';
+
   upcomingTmdb: Filme[] = [];
   /** TMDB ids com NovaEstreia marcada como lida (servidor). */
   readTmdbIds = new Set<number>();
@@ -41,6 +48,10 @@ export class TopbarActionsComponent implements OnInit, OnDestroy {
 
   reminderJogo: ReminderJogoNotifDto[] = [];
 
+  // ── Community notifications ──
+  comunidadeFeed: NotificacaoComunidadeFeedDto = { unread: [], read: [] };
+  comunidadeUnreadCount = 0;
+
   constructor(
     private filmesService: FilmesService,
     private notificacoesService: NotificacoesService,
@@ -50,6 +61,7 @@ export class TopbarActionsComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.loadUpcomingFromTmdb();
+    this.loadComunidadeUnreadCount();
   }
 
   ngOnDestroy(): void {}
@@ -69,8 +81,86 @@ export class TopbarActionsComponent implements OnInit, OnDestroy {
       this.loadResumoFeed();
       this.loadReminderJogo();
       this.loadUpcomingFromTmdb();
+      this.loadComunidadeFeed();
     }
   }
+
+  setActiveNotifTab(tab: 'estreias' | 'notificacoes', e: MouseEvent): void {
+    e.stopPropagation();
+    this.activeNotifTab = tab;
+    if (tab === 'notificacoes') {
+      this.loadComunidadeFeed();
+    }
+  }
+
+  // ── Community notifications ──
+
+  private loadComunidadeUnreadCount(): void {
+    this.notificacoesService.getNotificacoesComunidadeUnreadCount().subscribe({
+      next: (count) => {
+        this.comunidadeUnreadCount = count;
+        this.cdr.markForCheck();
+      }
+    });
+  }
+
+  private loadComunidadeFeed(): void {
+    this.notificacoesService.getNotificacoesComunidadeFeed({ unreadLimit: 10, readLimit: 5 }).subscribe({
+      next: (dto) => {
+        this.comunidadeFeed = dto ?? { unread: [], read: [] };
+        this.comunidadeUnreadCount = (dto?.unread?.length ?? 0);
+        this.cdr.markForCheck();
+      },
+      error: () => {
+        this.comunidadeFeed = { unread: [], read: [] };
+      }
+    });
+  }
+
+  marcarComunidadeNotifLida(e: MouseEvent, item: NotificacaoComunidadeItemDto): void {
+    e.preventDefault();
+    e.stopPropagation();
+    this.notificacoesService.marcarNotificacaoComunidadeComoLida(item.id).subscribe({
+      next: () => {
+        this.comunidadeFeed = {
+          unread: (this.comunidadeFeed.unread ?? []).filter(x => x.id !== item.id),
+          read: [
+            { ...item, lidaEm: new Date().toISOString() },
+            ...(this.comunidadeFeed.read ?? []).filter(x => x.id !== item.id)
+          ].slice(0, 10)
+        };
+        this.comunidadeUnreadCount = Math.max(0, this.comunidadeUnreadCount - 1);
+        this.cdr.markForCheck();
+      }
+    });
+  }
+
+  marcarTodasComunidadeLidas(e: MouseEvent): void {
+    e.stopPropagation();
+    this.notificacoesService.marcarTodasNotificacoesComunidadeComoLidas().subscribe({
+      next: () => {
+        const now = new Date().toISOString();
+        const allRead = [
+          ...(this.comunidadeFeed.unread ?? []).map(x => ({ ...x, lidaEm: now })),
+          ...(this.comunidadeFeed.read ?? [])
+        ].slice(0, 15);
+        this.comunidadeFeed = { unread: [], read: allRead };
+        this.comunidadeUnreadCount = 0;
+        this.cdr.markForCheck();
+      }
+    });
+  }
+
+  openComunidadeFromNotif(item: NotificacaoComunidadeItemDto): void {
+    this.isNotificationsOpen = false;
+    this.router.navigate(['/comunidades', item.comunidadeId]);
+  }
+
+  get hasComunidadeItems(): boolean {
+    return ((this.comunidadeFeed?.unread?.length ?? 0) + (this.comunidadeFeed?.read?.length ?? 0)) > 0;
+  }
+
+  // ── Existing methods below unchanged ──
 
   get hasResumoItems(): boolean {
     const u = this.resumoFeed?.unread?.length ?? 0;
@@ -154,7 +244,6 @@ export class TopbarActionsComponent implements OnInit, OnDestroy {
     return (this.upcomingTmdb?.length ?? 0) > 0;
   }
 
-  /** Alternador só quando a API aceitou o cookie de sessão em /proximas-estreias. */
   get showEstreiasGenreFilter(): boolean {
     return this.proximasEstreiasSessaoAtiva;
   }
