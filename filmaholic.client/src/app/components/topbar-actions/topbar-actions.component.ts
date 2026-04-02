@@ -7,7 +7,8 @@ import {
   NotificacoesService,
   ResumoEstatisticasFeedDto,
   ResumoEstatisticasFeedItemDto,
-  ResumoFilmeComunidadeDto
+  ResumoFilmeComunidadeDto,
+  ReminderJogoNotifDto
 } from '../../services/notificacoes.service';
 
 @Component({
@@ -38,6 +39,8 @@ export class TopbarActionsComponent implements OnInit, OnDestroy {
 
   resumoFeed: ResumoEstatisticasFeedDto = { unread: [], read: [] };
 
+  reminderJogo: ReminderJogoNotifDto[] = [];
+
   constructor(
     private filmesService: FilmesService,
     private notificacoesService: NotificacoesService,
@@ -64,6 +67,7 @@ export class TopbarActionsComponent implements OnInit, OnDestroy {
       this.upcomingUnreadPage = 0;
       this.upcomingReadPage = 0;
       this.loadResumoFeed();
+      this.loadReminderJogo();
       this.loadUpcomingFromTmdb();
     }
   }
@@ -84,6 +88,35 @@ export class TopbarActionsComponent implements OnInit, OnDestroy {
         this.resumoFeed = { unread: [], read: [] };
       }
     });
+  }
+
+  private loadReminderJogo(): void {
+    this.notificacoesService.getReminderJogoFeed().subscribe({
+      next: (data) => {
+        this.reminderJogo = data ?? [];
+        this.cdr.markForCheck();
+      },
+      error: () => { this.reminderJogo = []; }
+    });
+  }
+
+  // Só marca como lido (botão ✓)
+  marcarReminderLido(e: MouseEvent, id: number): void {
+    e.preventDefault();
+    e.stopPropagation();
+    this.notificacoesService.marcarReminderJogoComoLida(id).subscribe();
+    this.reminderJogo = this.reminderJogo.filter(r => r.id !== id);
+    this.cdr.markForCheck();
+  }
+
+  // Marca como lido E navega (botão "Jogar agora →")
+  marcarReminderLidoEJogar(e: MouseEvent, id: number): void {
+    e.preventDefault();
+    e.stopPropagation();
+    this.notificacoesService.marcarReminderJogoComoLida(id).subscribe();
+    this.reminderJogo = this.reminderJogo.filter(r => r.id !== id);
+    this.cdr.markForCheck();
+    this.router.navigate(['/higher-or-lower']);
   }
 
   marcarResumoLida(e: MouseEvent, item: ResumoEstatisticasFeedItemDto): void {

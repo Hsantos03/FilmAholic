@@ -69,6 +69,31 @@
              role="menu"
              style="position: absolute; top: calc(100% + 8px); right: 0; min-width:260px; background: #0a0a0a; border: 1px solid rgba(255,255,255,0.06); border-radius:8px; box-shadow: 0 8px 24px rgba(0,0,0,0.45); padding:8px; z-index:1500;">
 
+          <!-- Reminder Higher or Lower -->
+          <div *ngIf="reminderJogo.length > 0"
+               style="padding-bottom:6px; margin-bottom:6px; border-bottom:1px solid rgba(255,255,255,0.08);"
+               (click)="$event.stopPropagation()">
+            <div class="dash-notif-section-title">Higher or Lower</div>
+            <div *ngFor="let r of reminderJogo"
+                 style="display:flex; align-items:flex-start; gap:10px; padding:8px; border-radius:8px; background:rgba(255,47,109,0.06); margin-bottom:6px;">
+              <div style="font-size:20px; flex-shrink:0;">🎮</div>
+              <div style="flex:1; min-width:0;">
+                <p style="margin:0 0 6px; font-size:13px; color:#e0e0e0; line-height:1.4;">{{ r.corpo }}</p>
+                <button type="button"
+                        style="background:none; border:none; color:#ff2f6d; font-size:12px; font-weight:700; cursor:pointer; padding:0; text-decoration:underline;"
+                        (click)="marcarReminderLidoEJogar($event, r.id)">
+                  Jogar agora →
+                </button>
+              </div>
+              <button type="button"
+                      class="dash-notif-mark"
+                      (click)="marcarReminderLido($event, r.id)"
+                      aria-label="Marcar como lido">
+                ✓
+              </button>
+            </div>
+          </div>
+
           <div *ngIf="hasUpcomingList; else noUpcoming" style="display:flex; flex-direction:column; gap:8px;">
             <div class="dash-notif-section-title">Próximas estreias</div>
             <div *ngIf="showEstreiasGenreFilter"
@@ -79,11 +104,15 @@
               <button type="button"
                       class="dash-notif-genre-filter-btn"
                       [class.dash-notif-genre-filter-btn--active]="filtrarEstreiasPorGeneros"
-                      (click)="setEstreiasGenreFilter(true, $event)">Os meus géneros</button>
+                      (click)="setEstreiasGenreFilter(true, $event)">
+                Os meus géneros
+              </button>
               <button type="button"
                       class="dash-notif-genre-filter-btn"
                       [class.dash-notif-genre-filter-btn--active]="!filtrarEstreiasPorGeneros"
-                      (click)="setEstreiasGenreFilter(false, $event)">Todos</button>
+                      (click)="setEstreiasGenreFilter(false, $event)">
+                Todos
+              </button>
             </div>
 
             <ng-container *ngIf="upcomingUnreadAll.length > 0; else dashAllReadOrEmpty">
@@ -98,18 +127,24 @@
                 <button type="button"
                         class="dash-notif-mark"
                         (click)="marcarComoLida($event, m)"
-                        aria-label="Marcar como vista">✓</button>
+                        aria-label="Marcar como vista">
+                  ✓
+                </button>
               </div>
               <div *ngIf="upcomingUnreadPagerVisible" class="dash-notif-pager">
                 <button type="button"
                         class="dash-notif-pager-btn"
                         (click)="prevUnreadPage($event)"
-                        [disabled]="upcomingUnreadPage === 0">‹</button>
+                        [disabled]="upcomingUnreadPage === 0">
+                  ‹
+                </button>
                 <span class="dash-notif-pager-label">{{ upcomingUnreadPageLabel }}</span>
                 <button type="button"
                         class="dash-notif-pager-btn"
                         (click)="nextUnreadPage($event)"
-                        [disabled]="upcomingUnreadPage >= upcomingUnreadLastPage">›</button>
+                        [disabled]="upcomingUnreadPage >= upcomingUnreadLastPage">
+                  ›
+                </button>
               </div>
             </ng-container>
             <ng-template #dashAllReadOrEmpty>
@@ -131,12 +166,16 @@
                 <button type="button"
                         class="dash-notif-pager-btn"
                         (click)="prevReadPage($event)"
-                        [disabled]="upcomingReadPage === 0">‹</button>
+                        [disabled]="upcomingReadPage === 0">
+                  ‹
+                </button>
                 <span class="dash-notif-pager-label">{{ upcomingReadPageLabel }}</span>
                 <button type="button"
                         class="dash-notif-pager-btn"
                         (click)="nextReadPage($event)"
-                        [disabled]="upcomingReadPage >= upcomingReadLastPage">›</button>
+                        [disabled]="upcomingReadPage >= upcomingReadLastPage">
+                  ›
+                </button>
               </div>
             </ng-container>
           </div>

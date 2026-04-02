@@ -32,15 +32,22 @@
 
         <div class="row">
           <label for="freq">Frequência (estreias)</label>
-          <select
-            id="freq"
-            [(ngModel)]="prefs.novaEstreiaFrequencia"
-            [disabled]="!prefs.novaEstreiaAtiva">
+          <select id="freq"
+                  [(ngModel)]="prefs.novaEstreiaFrequencia"
+                  [disabled]="!prefs.novaEstreiaAtiva">
             <option *ngFor="let f of frequencias" [ngValue]="f">{{ f }}</option>
           </select>
         </div>
 
         <div class="row row-divider"></div>
+
+        <div class="row">
+          <label class="switch-row">
+            <input type="checkbox" [(ngModel)]="prefs.reminderJogoAtiva" />
+            <span>Receber lembretes para jogar Higher or Lower</span>
+          </label>
+        </div>
+        <p class="hint">Recebes um lembrete se não jogares durante 7 dias.</p>
 
         <div class="row">
           <label class="switch-row">
@@ -51,10 +58,9 @@
 
         <div class="row">
           <label for="freqResumo">Frequência (resumo)</label>
-          <select
-            id="freqResumo"
-            [(ngModel)]="prefs.resumoEstatisticasFrequencia"
-            [disabled]="!prefs.resumoEstatisticasAtiva">
+          <select id="freqResumo"
+                  [(ngModel)]="prefs.resumoEstatisticasFrequencia"
+                  [disabled]="!prefs.resumoEstatisticasAtiva">
             <option *ngFor="let f of frequenciasResumo" [ngValue]="f">{{ f }}</option>
           </select>
         </div>

@@ -11,6 +11,7 @@ export interface PreferenciasNotificacaoDto {
   novaEstreiaFrequencia: 'Imediata' | 'Diaria' | 'Semanal';
   resumoEstatisticasAtiva: boolean;
   resumoEstatisticasFrequencia: 'Diaria' | 'Semanal';
+  reminderJogoAtiva: boolean;
 }
 
 export interface ResumoGeneroContagemDto {
@@ -40,6 +41,12 @@ export interface ResumoEstatisticasFeedItemDto {
 export interface ResumoEstatisticasFeedDto {
   unread: ResumoEstatisticasFeedItemDto[];
   read: ResumoEstatisticasFeedItemDto[];
+}
+
+export interface ReminderJogoNotifDto {
+  id: number;
+  corpo: string;
+  criadaEm: string;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -119,5 +126,15 @@ export class NotificacoesService {
 
   marcarResumoEstatisticasComoLida(id: number): Observable<void> {
     return this.http.put<void>(`${this.apiUrl}/resumo-estatisticas/${id}/lida`, {}, { withCredentials: true });
+  }
+
+  getReminderJogoFeed(): Observable<ReminderJogoNotifDto[]> {
+    return this.http
+      .get<ReminderJogoNotifDto[]>(`${this.apiUrl}/reminder-jogo/feed`, { withCredentials: true })
+      .pipe(catchError(() => of([])));
+  }
+
+  marcarReminderJogoComoLida(id: number): Observable<void> {
+    return this.http.put<void>(`${this.apiUrl}/reminder-jogo/${id}/lida`, {}, { withCredentials: true });
   }
 }

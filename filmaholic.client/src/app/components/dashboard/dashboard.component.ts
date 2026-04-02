@@ -8,7 +8,7 @@ import { Filme, FilmesService, RecomendacaoDto } from '../../services/filmes.ser
 import { AtoresService, PopularActor } from '../../services/atores.service';
 import { ProfileService } from '../../services/profile.service';
 import { MenuService } from '../../services/menu.service';
-import { NotificacoesService } from '../../services/notificacoes.service';
+import { NotificacoesService, ReminderJogoNotifDto } from '../../services/notificacoes.service';
 
 export interface SearchResultItem {
   id?: number;
@@ -92,6 +92,8 @@ export class DashboardComponent implements OnInit, OnDestroy {
   recomendacaoIndex = 0;
   isLoadingRecomendacoes = false;
   isSendingFeedback = false;
+
+  reminderJogo: ReminderJogoNotifDto[] = [];
 
   private onResizeBound = () => this.updateVisibleCount();
   private onDocumentClickBound = (e: MouseEvent) => this.onDocumentClick(e);
@@ -530,8 +532,29 @@ export class DashboardComponent implements OnInit, OnDestroy {
       this.upcomingUnreadPage = 0;
       this.upcomingReadPage = 0;
       this.loadUpcomingFromTmdb();
+      this.notificacoesService.getReminderJogoFeed().subscribe({
+        next: (data) => { this.reminderJogo = data ?? []; },
+        error: () => { this.reminderJogo = []; }
+      });
     }
   }
+
+
+  marcarReminderLido(e: MouseEvent, id: number): void {
+    e.preventDefault();
+    e.stopPropagation();
+    this.notificacoesService.marcarReminderJogoComoLida(id).subscribe();
+    this.reminderJogo = this.reminderJogo.filter(r => r.id !== id);
+  }
+
+  marcarReminderLidoEJogar(e: MouseEvent, id: number): void {
+    e.preventDefault();
+    e.stopPropagation();
+    this.notificacoesService.marcarReminderJogoComoLida(id).subscribe();
+    this.reminderJogo = this.reminderJogo.filter(r => r.id !== id);
+    this.router.navigate(['/higher-or-lower']);
+  }
+
 
   public closeNotifications(): void {
     this.isNotificationsOpen = false;

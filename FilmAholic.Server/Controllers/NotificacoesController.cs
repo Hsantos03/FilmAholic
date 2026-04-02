@@ -18,6 +18,7 @@ namespace FilmAholic.Server.Controllers
         private static readonly string[] ResumoFrequenciasPermitidas = ["Diaria", "Semanal"];
         private readonly FilmAholicDbContext _context;
         private readonly IMovieService _movieService;
+        private const string TipoReminderJogo = "ReminderJogo";
 
         public NotificacoesController(FilmAholicDbContext context, IMovieService movieService)
         {
@@ -226,10 +227,8 @@ namespace FilmAholic.Server.Controllers
             return false;
         }
 
-        /// <summary>
         /// Retorna a lista de filmes para “NovaEstreia” já filtrada por géneros favoritos e histórico.
         /// Também cria notificações em `Notificacoes` para os filmes elegíveis.
-        /// </summary>
         [HttpGet("nova-estreia")]
         public async Task<ActionResult<List<Filme>>> GetNovaEstreia(
             [FromQuery] int limit = 5,
@@ -415,10 +414,8 @@ namespace FilmAholic.Server.Controllers
             public List<int> LidosTmdbIds { get; set; } = new();
         }
 
-        /// <summary>
         /// Devolve quais TMDB ids (entre os pedidos) têm notificação NovaEstreia marcada como lida.
         /// Usado pela lista “upcoming” TMDB na UI (filmes podem ainda não ter linha de notificação).
-        /// </summary>
         [HttpGet("nova-estreia/lidos-tmdb-ids")]
         public async Task<ActionResult<LidosTmdbIdsDto>> GetLidosTmdbIds([FromQuery] string? ids = null)
         {
@@ -945,29 +942,7 @@ namespace FilmAholic.Server.Controllers
             return NoContent();
         }
 
-        public class PreferenciasNotificacaoDto
-        {
-            public bool NovaEstreiaAtiva { get; set; } = true;
-            public string NovaEstreiaFrequencia { get; set; } = "Diaria";
-            /// <summary>Null se o cliente não enviou o campo (mantém valor na BD).</summary>
-            public bool? ResumoEstatisticasAtiva { get; set; }
-            /// <summary>Null ou vazio: mantém frequência na BD.</summary>
-            public string? ResumoEstatisticasFrequencia { get; set; }
-        }
 
-        public class ResumoEstatisticasFeedItemDto
-        {
-            public int Id { get; set; }
-            public DateTime CriadaEm { get; set; }
-            public DateTime? LidaEm { get; set; }
-            public ResumoEstatisticasCorpoDto? Corpo { get; set; }
-        }
-
-        public class ResumoEstatisticasFeedDto
-        {
-            public List<ResumoEstatisticasFeedItemDto> Unread { get; set; } = new();
-            public List<ResumoEstatisticasFeedItemDto> Read { get; set; } = new();
-        }
 
         private static readonly JsonSerializerOptions ResumoJsonOpts = new()
         {
@@ -987,6 +962,7 @@ namespace FilmAholic.Server.Controllers
                 NovaEstreiaAtiva = prefs.NovaEstreiaAtiva,
                 NovaEstreiaFrequencia = prefs.NovaEstreiaFrequencia,
                 ResumoEstatisticasAtiva = prefs.ResumoEstatisticasAtiva,
+                ReminderJogoAtiva = prefs.ReminderJogoAtiva,
                 ResumoEstatisticasFrequencia = string.IsNullOrWhiteSpace(prefs.ResumoEstatisticasFrequencia)
                     ? "Semanal"
                     : prefs.ResumoEstatisticasFrequencia
@@ -1024,6 +1000,7 @@ namespace FilmAholic.Server.Controllers
             var prefs = await GetOrCreatePreferenciasNotificacaoAsync(userId);
             prefs.NovaEstreiaAtiva = dto.NovaEstreiaAtiva;
             prefs.NovaEstreiaFrequencia = freq;
+            prefs.ReminderJogoAtiva = dto.ReminderJogoAtiva;
             if (dto.ResumoEstatisticasAtiva.HasValue)
                 prefs.ResumoEstatisticasAtiva = dto.ResumoEstatisticasAtiva.Value;
             if (!string.IsNullOrEmpty(freqResumoRaw))
@@ -1034,7 +1011,7 @@ namespace FilmAholic.Server.Controllers
             return NoContent();
         }
 
-        /// <summary>Feed FR70: resumos periódicos de estatísticas (lidas / não lidas).</summary>
+        /// Feed FR70: resumos periódicos de estatísticas (lidas / não lidas).
         [HttpGet("resumo-estatisticas/feed")]
         public async Task<ActionResult<ResumoEstatisticasFeedDto>> GetResumoEstatisticasFeed(
             [FromQuery] int unreadLimit = 5,
@@ -1116,6 +1093,66 @@ namespace FilmAholic.Server.Controllers
             notif.LidaEm = nowUtc;
             await _context.SaveChangesAsync();
             return NoContent();
+        }
+
+
+        [HttpGet("reminder-jogo/feed")]
+        public async Task<IActionResult> GetReminderJogoFeed()
+        {
+            var userId = GetUserId();
+            if (string.IsNullOrWhiteSpace(userId)) return Unauthorized();
+
+            var notifs = await _context.Notificacoes
+                .AsNoTracking()
+                .Where(n => n.UtilizadorId == userId && n.Tipo == TipoReminderJogo && n.LidaEm == null)
+                .OrderByDescending(n => n.CriadaEm)
+                .Take(5)
+                .Select(n => new { n.Id, n.Corpo, n.CriadaEm })
+                .ToListAsync();
+
+            return Ok(notifs);
+        }
+
+        [HttpPut("reminder-jogo/{id:int}/lida")]
+        public async Task<IActionResult> MarcarReminderJogoComoLida([FromRoute] int id)
+        {
+            var userId = GetUserId();
+            if (string.IsNullOrWhiteSpace(userId)) return Unauthorized();
+
+            var notif = await _context.Notificacoes
+                .FirstOrDefaultAsync(n => n.Id == id && n.UtilizadorId == userId && n.Tipo == TipoReminderJogo);
+
+            if (notif == null) return NotFound();
+
+            notif.LidaEm = DateTime.UtcNow;
+            await _context.SaveChangesAsync();
+            return NoContent();
+        }
+
+        public class PreferenciasNotificacaoDto
+        {
+            public bool NovaEstreiaAtiva { get; set; } = true;
+            public string NovaEstreiaFrequencia { get; set; } = "Diaria";
+            /// Null se o cliente não enviou o campo (mantém valor na BD).
+            public bool? ResumoEstatisticasAtiva { get; set; }
+            /// Null ou vazio: mantém frequência na BD.
+            public string? ResumoEstatisticasFrequencia { get; set; }
+
+            public bool ReminderJogoAtiva { get; set; } = true;
+        }
+
+        public class ResumoEstatisticasFeedItemDto
+        {
+            public int Id { get; set; }
+            public DateTime CriadaEm { get; set; }
+            public DateTime? LidaEm { get; set; }
+            public ResumoEstatisticasCorpoDto? Corpo { get; set; }
+        }
+
+        public class ResumoEstatisticasFeedDto
+        {
+            public List<ResumoEstatisticasFeedItemDto> Unread { get; set; } = new();
+            public List<ResumoEstatisticasFeedItemDto> Read { get; set; } = new();
         }
     }
 }
