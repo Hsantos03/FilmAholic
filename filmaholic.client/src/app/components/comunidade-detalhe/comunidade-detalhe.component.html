@@ -116,9 +116,65 @@
     </div>
 
     <!-- Abas -->
+    <!-- Abas -->
     <div *ngIf="comunidade" class="tabs">
       <button class="tab-btn" [class.active]="activeTab === 'posts'" (click)="activeTab = 'posts'">Publicações</button>
       <button class="tab-btn" [class.active]="activeTab === 'membros'" (click)="activeTab = 'membros'">Membros</button>
+      <button class="tab-btn" [class.active]="activeTab === 'ranking'" (click)="activeTab = 'ranking'; carregarRanking()">🏆 Ranking</button>
+    </div>
+
+
+    <!-- Tab Ranking -->
+    <div *ngIf="comunidade && activeTab === 'ranking'" class="tab-content">
+
+      <!-- Toggle de métrica -->
+      <div class="ranking-metrica-toggle">
+        <button class="metrica-btn" [class.active]="rankingMetrica === 'filmes'" (click)="mudarMetrica('filmes')">
+          🎬 Filmes vistos
+        </button>
+        <button class="metrica-btn" [class.active]="rankingMetrica === 'tempo'" (click)="mudarMetrica('tempo')">
+          ⏱️ Tempo assistido
+        </button>
+      </div>
+
+      <!-- Loading -->
+      <div *ngIf="isLoadingRanking" class="ranking-loading">A carregar ranking...</div>
+
+      <!-- Tabela de ranking -->
+      <div *ngIf="!isLoadingRanking" class="ranking-table">
+
+        <div *ngIf="ranking.length === 0" class="ranking-empty">
+          Nenhum membro com filmes vistos ainda.
+        </div>
+
+        <div *ngFor="let membro of ranking"
+             class="ranking-row"
+             [class.is-current-user]="membro.isCurrentUser"
+             [class.top1]="membro.posicao === 1"
+             [class.top2]="membro.posicao === 2"
+             [class.top3]="membro.posicao === 3">
+          <!-- Posição -->
+          <div class="ranking-pos">
+            <span *ngIf="membro.posicao === 1">🥇</span>
+            <span *ngIf="membro.posicao === 2">🥈</span>
+            <span *ngIf="membro.posicao === 3">🥉</span>
+            <span *ngIf="membro.posicao > 3">#{{ membro.posicao }}</span>
+          </div>
+
+          <!-- Nome -->
+          <div class="ranking-nome">
+            {{ membro.userName }}
+            <span *ngIf="membro.isCurrentUser" class="tu-badge">Tu</span>
+          </div>
+
+          <!-- Stats -->
+          <div class="ranking-stats">
+            <span *ngIf="rankingMetrica === 'filmes'" class="stat-filmes">🎬 {{ membro.filmesVistos }} filmes</span>
+            <span *ngIf="rankingMetrica === 'tempo'" class="stat-tempo">⏱️ {{ membro.minutosAssistidos | number:'1.0-0' }} min</span>
+          </div>
+        </div>
+
+      </div>
     </div>
 
     <!-- Tab Publicações -->
@@ -149,7 +205,7 @@
       <div *ngIf="showPostForm" class="post-form">
         <input type="text" placeholder="Título" [(ngModel)]="newTitulo" />
         <textarea rows="4" placeholder="Escreve algo…" [(ngModel)]="newConteudo"></textarea>
-        
+
         <!-- Movie Attachment Section -->
         <div class="movie-attachment-section">
           <div *ngIf="filmeSelecionado" class="selected-movie-tag">
@@ -159,21 +215,21 @@
               <span class="smt-title">{{ filmeSelecionado.title }}</span>
             </div>
             <button type="button" class="remove-movie-btn" (click)="removerFilmeAnexado()">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12" /></svg>
             </button>
           </div>
 
           <div *ngIf="!filmeSelecionado" class="movie-search-container">
             <div class="search-input-wrapper">
-              <input type="text" 
-                     placeholder="Pesquisar filme para anexar..." 
-                     [(ngModel)]="pesquisaFilme" 
+              <input type="text"
+                     placeholder="Pesquisar filme para anexar..."
+                     [(ngModel)]="pesquisaFilme"
                      (input)="procurarFilmeParaAnexar()"
                      class="movie-search-input"
                      style="padding-left: 38px;">
               <span class="search-icon" style="position:absolute; left:12px; top:50%; transform:translateY(-50%); font-size:16px; pointer-events:none;">🍿</span>
             </div>
-            
+
             <ul *ngIf="resultadosFilmes.length > 0" class="movie-search-results">
               <li *ngFor="let filme of resultadosFilmes" (click)="selecionarFilme(filme)">
                 <img [src]="filme.poster_path ? 'https://image.tmdb.org/t/p/w92' + filme.poster_path : 'assets/no-poster.png'">
@@ -198,7 +254,7 @@
         <div *ngIf="postError" class="form-error">{{ postError }}</div>
         <div class="spoiler-toggle-container">
           <div class="spoiler-toggle-info">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="#ef4444"><path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/></svg>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="#ef4444"><path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z" /></svg>
             <span>Esta publicação contém spoiler</span>
           </div>
           <label class="toggle-switch">
@@ -227,7 +283,7 @@
             <button *ngIf="p.autorId !== currentUserId" class="post-action-btn report-btn" (click)="openReportModal(p)" title="Denunciar publicação" [disabled]="p.jaReportou">🚩</button>
 
             <button *ngIf="p.autorId === currentUserId" class="post-action-btn edit-btn" (click)="openEditPost(p)" title="Editar">✏️</button>
-            
+
             <button *ngIf="p.autorId === currentUserId || isAdmin" class="post-action-btn delete-btn" (click)="openDeletePostModal(p)" title="Apagar">🗑️</button>
           </div>
         </div>
@@ -253,13 +309,13 @@
             </div>
           </div>
 
-          <a *ngIf="p.filmePosterUrl" 
-   [routerLink]="['/movie-detail', p.filmeId]"
-   style="flex-shrink:0; margin-top:4px;">
-  <img [src]="'https://image.tmdb.org/t/p/w92' + p.filmePosterUrl"
-       [title]="p.filmeTitulo || ''"
-       style="width:70px; height:100px; object-fit:cover; border-radius:6px; display:block; cursor:pointer;">
-</a>
+          <a *ngIf="p.filmePosterUrl"
+             [routerLink]="['/movie-detail', p.filmeId]"
+             style="flex-shrink:0; margin-top:4px;">
+            <img [src]="'https://image.tmdb.org/t/p/w92' + p.filmePosterUrl"
+                 [title]="p.filmeTitulo || ''"
+                 style="width:70px; height:100px; object-fit:cover; border-radius:6px; display:block; cursor:pointer;">
+          </a>
         </div>
 
         <div class="post-footer">
@@ -276,7 +332,7 @@
             {{ p.showComentarios ? 'Ocultar comentários' : 'Ver ' + (p.comentariosCount || 0) + ' comentários' }}
             <span class="chevron" [class.open]="p.showComentarios">
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M6 9l6 6 6-6"/>
+                <path d="M6 9l6 6 6-6" />
               </svg>
             </span>
           </button>
@@ -284,10 +340,10 @@
 
         <div class="comments-section" *ngIf="p.showComentarios">
           <hr class="comments-divider">
-          
+
           <div class="comments-list">
             <div *ngIf="p.comentarios?.length === 0" class="no-comments">Ainda não há comentários.</div>
-            
+
             <div class="comment-item" *ngFor="let c of p.comentarios">
               <div class="comment-avatar">{{ getUserInitial(c.autorNome) }}</div>
               <div class="comment-body">
@@ -302,12 +358,12 @@
 
           <div class="new-comment-box" *ngIf="isMembro && !isCurrentCastigado">
             <div class="new-comment-input-wrapper">
-              <input type="text" 
-                     placeholder="Escreve um comentário..." 
-                     [(ngModel)]="p.newComentarioTexto" 
+              <input type="text"
+                     placeholder="Escreve um comentário..."
+                     [(ngModel)]="p.newComentarioTexto"
                      (keyup.enter)="submitComentario(p)">
-              <button class="send-comment-btn" 
-                      (click)="submitComentario(p)" 
+              <button class="send-comment-btn"
+                      (click)="submitComentario(p)"
                       [disabled]="p.isSubmittingComentario || !p.newComentarioTexto">
                 Enviar
               </button>
@@ -328,7 +384,7 @@
             <span class="membro-role" [class.admin]="m.role === 'Admin'">{{ m.role }}</span>
           </div>
           <span class="membro-data">Entrou {{ m.dataEntrada | date:'shortDate' }}</span>
-          
+
           <div class="membro-actions" *ngIf="isAdmin && m.utilizadorId !== currentUserId">
             <button class="kick-btn punish-btn" (click)="openCastigoModal(m)" title="Castigar membro">
               ⏱️
@@ -433,15 +489,15 @@
   <div class="modal-box" (click)="$event.stopPropagation()">
     <button class="modal-close" (click)="closeEditPost()">&times;</button>
     <h3>✏️ Editar publicação</h3>
-    
+
     <label>Título</label>
     <input type="text" [(ngModel)]="editPostTitulo" />
-    
+
     <label>Conteúdo</label>
     <textarea rows="4" [(ngModel)]="editPostConteudo"></textarea>
     <div class="spoiler-toggle-container" style="margin-top: 16px;">
       <div class="spoiler-toggle-info">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="#ef4444"><path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/></svg>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="#ef4444"><path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z" /></svg>
         <span>Esta publicação contém spoiler</span>
       </div>
       <label class="toggle-switch">
@@ -465,12 +521,12 @@
     <button class="modal-close" (click)="closeDeletePostModal()">&times;</button>
     <div class="delete-modal-icon">
       <svg width="40" height="40" viewBox="0 0 24 24" fill="currentColor">
-        <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/>
+        <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z" />
       </svg>
     </div>
     <h3>Apagar publicação?</h3>
     <p class="delete-modal-msg">Tens a certeza que queres apagar esta publicação? Esta ação não pode ser desfeita.</p>
-    
+
     <div class="modal-actions" style="justify-content: center;">
       <button type="button" class="delete-confirm-btn" (click)="confirmDeletePost()" [disabled]="isDeletingPost">
         {{ isDeletingPost ? 'A apagar…' : 'Sim, apagar' }}
@@ -488,7 +544,7 @@
     </div>
     <h3>Denunciar publicação</h3>
     <p class="delete-modal-msg">Tem a certeza que deseja denunciar esta publicação por conteúdo inadequado?</p>
-    
+
     <div class="modal-actions" style="justify-content: center;">
       <button type="button" class="delete-confirm-btn" (click)="confirmReport()" [disabled]="isReporting">
         {{ isReporting ? 'A denunciar…' : 'Denunciar' }}
@@ -506,7 +562,7 @@
     </div>
     <h3>Castigar membro</h3>
     <p class="delete-modal-msg">Escolhe quanto tempo o membro <strong>{{ membroToCastigar?.userName }}</strong> ficará impedido de fazer novas publicações.</p>
-    
+
     <label style="text-align: left; display: block; margin-top: 15px;">Duração do Castigo</label>
     <select [(ngModel)]="horasCastigo" class="castigo-select">
       <option [ngValue]="1">1 Hora</option>
@@ -532,7 +588,7 @@
 
     <div class="delete-modal-icon">
       <svg width="40" height="40" viewBox="0 0 24 24" fill="currentColor">
-        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm5 11H7v-2h10v2z"/>
+        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm5 11H7v-2h10v2z" />
       </svg>
     </div>
 

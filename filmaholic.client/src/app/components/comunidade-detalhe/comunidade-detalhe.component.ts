@@ -1,6 +1,6 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { ComunidadesService, ComunidadeDto, MembroDto, PostDto } from '../../services/comunidades.service';
+import { ComunidadesService, ComunidadeDto, MembroDto, PostDto, RankingMembroDto } from '../../services/comunidades.service';
 import { MenuService } from '../../services/menu.service';
 import { HttpClient } from '@angular/common/http';
 import { Subscription } from 'rxjs';
@@ -19,7 +19,12 @@ export class ComunidadeDetalheComponent implements OnInit, OnDestroy {
   isLoading = false;
   error = '';
 
-  activeTab: 'posts' | 'membros' = 'posts';
+  // ── Ranking ───
+  activeTab: 'posts' | 'membros' | 'ranking' = 'posts';
+
+  ranking: RankingMembroDto[] = [];
+  rankingMetrica: 'filmes' | 'tempo' = 'filmes';
+  isLoadingRanking = false;
 
   showPostForm = false;
   newTitulo = '';
@@ -81,12 +86,12 @@ export class ComunidadeDetalheComponent implements OnInit, OnDestroy {
   // ── Spoiler Properties ──
   newTemSpoiler = false;
   editTemSpoiler = false;
-  revealedSpoilers: Set<number> = new Set<number>(); 
+  revealedSpoilers: Set<number> = new Set<number>();
 
-  
+
   showCastigoModal = false;
   membroToCastigar: MembroDto | null = null;
-  horasCastigo: number = 1; 
+  horasCastigo: number = 1;
   isCastigando = false;
   castigoError = '';
 
@@ -108,7 +113,7 @@ export class ComunidadeDetalheComponent implements OnInit, OnDestroy {
   toggleMenu(): void { this.menuService.toggle(); }
 
   ngOnInit(): void {
-    this.currentUserId = localStorage.getItem('user_id'); 
+    this.currentUserId = localStorage.getItem('user_id');
     this.isLoading = true;
     this.sub = this.route.paramMap.subscribe(params => {
       const id = params.get('id');
@@ -118,7 +123,7 @@ export class ComunidadeDetalheComponent implements OnInit, OnDestroy {
     });
   }
 
-  ngOnDestroy(): void { 
+  ngOnDestroy(): void {
     this.sub?.unsubscribe();
     if (this.timerInterval) {
       clearInterval(this.timerInterval);
@@ -142,16 +147,16 @@ export class ComunidadeDetalheComponent implements OnInit, OnDestroy {
     this.service.getMembros(this.comunidadeId).subscribe({
       next: (list) => {
         this.membros = list;
-        this.currentUserId = localStorage.getItem('user_id'); 
+        this.currentUserId = localStorage.getItem('user_id');
         const membro = list.find(m => m.utilizadorId === this.currentUserId);
         this.isMembro = !!membro;
         this.isAdmin = membro?.role === 'Admin';
-        
+
         if (membro?.castigadoAte) {
           const dateStr = membro.castigadoAte.endsWith('Z') ? membro.castigadoAte : membro.castigadoAte + 'Z';
           this.currentUserCastigadoAte = new Date(dateStr);
-          
-          this.startCastigoTimer(); 
+
+          this.startCastigoTimer();
         } else {
           this.currentUserCastigadoAte = null;
           if (this.timerInterval) clearInterval(this.timerInterval);
@@ -205,10 +210,10 @@ export class ComunidadeDetalheComponent implements OnInit, OnDestroy {
     }
     this.isPosting = true;
     this.service.createPost(
-      this.comunidadeId, 
-      this.newTitulo.trim(), 
-      this.newConteudo.trim(), 
-      this.imagemFile, 
+      this.comunidadeId,
+      this.newTitulo.trim(),
+      this.newConteudo.trim(),
+      this.imagemFile,
       this.newTemSpoiler,
       this.filmeSelecionado?.id,
       this.filmeSelecionado?.title,
@@ -216,26 +221,26 @@ export class ComunidadeDetalheComponent implements OnInit, OnDestroy {
     ).subscribe({
       next: (post) => {
 
-        post.autorId = this.currentUserId || undefined; 
+        post.autorId = this.currentUserId || undefined;
         post.likesCount = 0;
         post.dislikesCount = 0;
         post.userVote = 0;
         post.reportsCount = 0;
         post.temSpoiler = this.newTemSpoiler;
 
-        this.posts.unshift(post); 
+        this.posts.unshift(post);
         this.newTitulo = '';
         this.newConteudo = '';
         this.imagemFile = null;
         this.imagemPreview = null;
-        this.newTemSpoiler = false; 
-        this.filmeSelecionado = null; 
+        this.newTemSpoiler = false;
+        this.filmeSelecionado = null;
         this.showPostForm = false;
         this.isPosting = false;
       },
-      error: (err) => { 
-        this.postError = err?.error?.message || 'Erro ao publicar.'; 
-        this.isPosting = false; 
+      error: (err) => {
+        this.postError = err?.error?.message || 'Erro ao publicar.';
+        this.isPosting = false;
       }
     });
   }
@@ -243,21 +248,21 @@ export class ComunidadeDetalheComponent implements OnInit, OnDestroy {
   get sortedPosts(): PostDto[] {
     return [...this.posts].sort((a, b) => {
       switch (this.sortOrder) {
-        case 'desc': 
+        case 'desc':
           return new Date(b.dataCriacao ?? 0).getTime() - new Date(a.dataCriacao ?? 0).getTime();
-        
-        case 'asc': 
+
+        case 'asc':
           return new Date(a.dataCriacao ?? 0).getTime() - new Date(b.dataCriacao ?? 0).getTime();
-        
-        case 'likes': 
+
+        case 'likes':
           return (b.likesCount || 0) - (a.likesCount || 0);
-        
-        case 'dislikes': 
+
+        case 'dislikes':
           return (b.dislikesCount || 0) - (a.dislikesCount || 0);
-        
-        case 'reports': 
+
+        case 'reports':
           return (b.reportsCount || 0) - (a.reportsCount || 0);
-        
+
         default:
           return 0;
       }
@@ -325,6 +330,22 @@ export class ComunidadeDetalheComponent implements OnInit, OnDestroy {
     });
   }
 
+  carregarRanking(): void {
+    this.isLoadingRanking = true;
+    this.service.getRanking(this.comunidadeId, this.rankingMetrica).subscribe({
+      next: (data) => {
+        this.ranking = data;
+        this.isLoadingRanking = false;
+      },
+      error: () => { this.isLoadingRanking = false; }
+    });
+  }
+
+  mudarMetrica(metrica: 'filmes' | 'tempo'): void {
+    this.rankingMetrica = metrica;
+    this.carregarRanking();
+  }
+
 
   openDeleteModal(): void {
     this.deleteError = '';
@@ -387,12 +408,12 @@ export class ComunidadeDetalheComponent implements OnInit, OnDestroy {
     this.service.removerMembro(this.comunidadeId, this.membroToKick.utilizadorId).subscribe({
       next: () => {
         this.membros = this.membros.filter(m => m.utilizadorId !== this.membroToKick!.utilizadorId);
-        
+
         if (this.comunidade) {
           this.comunidade.membrosCount = Math.max(0, (this.comunidade.membrosCount ?? 1) - 1);
         }
-        
-        this.loadPosts(); 
+
+        this.loadPosts();
 
         this.closeKickModal();
       },
@@ -405,7 +426,7 @@ export class ComunidadeDetalheComponent implements OnInit, OnDestroy {
 
   votar(post: PostDto, isLike: boolean): void {
     if (!post.id) return;
-    
+
     const previousVote = post.userVote || 0;
     const targetVote = isLike ? 1 : -1;
 
@@ -433,7 +454,7 @@ export class ComunidadeDetalheComponent implements OnInit, OnDestroy {
     this.editingPost = post;
     this.editPostTitulo = post.titulo;
     this.editPostConteudo = post.conteudo;
-    this.editTemSpoiler = post.temSpoiler || false; 
+    this.editTemSpoiler = post.temSpoiler || false;
   }
 
   closeEditPost(): void {
@@ -448,7 +469,7 @@ export class ComunidadeDetalheComponent implements OnInit, OnDestroy {
       next: () => {
         this.editingPost!.titulo = this.editPostTitulo;
         this.editingPost!.conteudo = this.editPostConteudo;
-        this.editingPost!.temSpoiler = this.editTemSpoiler; 
+        this.editingPost!.temSpoiler = this.editTemSpoiler;
         this.isSavingPostEdit = false;
         this.closeEditPost();
       },
@@ -505,7 +526,7 @@ export class ComunidadeDetalheComponent implements OnInit, OnDestroy {
       next: () => {
         if (this.postToReport) {
           this.postToReport.reportsCount = (this.postToReport.reportsCount || 0) + 1;
-          this.postToReport.jaReportou = true; 
+          this.postToReport.jaReportou = true;
         }
         this.closeReportModal();
       },
@@ -530,7 +551,7 @@ export class ComunidadeDetalheComponent implements OnInit, OnDestroy {
 
   openCastigoModal(membro: MembroDto): void {
     this.membroToCastigar = membro;
-    this.horasCastigo = 1; 
+    this.horasCastigo = 1;
     this.castigoError = '';
     this.showCastigoModal = true;
   }
@@ -597,8 +618,8 @@ export class ComunidadeDetalheComponent implements OnInit, OnDestroy {
       }
     };
 
-    updateTimer(); 
-    this.timerInterval = setInterval(updateTimer, 1000); 
+    updateTimer();
+    this.timerInterval = setInterval(updateTimer, 1000);
   }
 
 
@@ -643,9 +664,9 @@ export class ComunidadeDetalheComponent implements OnInit, OnDestroy {
       this.resultadosFilmes = [];
       return;
     }
-    
+
     const url = `https://api.themoviedb.org/3/search/movie?api_key=${environment.tmdbApiKey}&language=pt-PT&query=${this.pesquisaFilme}`;
-    
+
     this.http.get<any>(url).subscribe({
       next: (res) => {
         this.resultadosFilmes = res.results.slice(0, 5);

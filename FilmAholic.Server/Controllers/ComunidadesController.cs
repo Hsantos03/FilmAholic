@@ -313,6 +313,85 @@ namespace FilmAholic.Server.Controllers
             return Ok(membros);
         }
 
+        /// FR56 – Ranking interno da comunidade.
+        /// Ordena os membros por número de filmes vistos (metrica=filmes, default)
+        /// ou por minutos totais assistidos (metrica=tempo).
+        /// O utilizador autenticado é identificado com IsCurrentUser = true.
+        [HttpGet("{id:int}/ranking")]
+        public async Task<IActionResult> GetRanking(int id, [FromQuery] string metrica = "filmes")
+        {
+            var existe = await _context.Comunidades.AnyAsync(c => c.Id == id);
+            if (!existe) return NotFound();
+
+            var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier)
+                             ?? User.FindFirstValue("sub");
+
+            var membros = await _context.ComunidadeMembros
+                .AsNoTracking()
+                .Where(m => m.ComunidadeId == id && m.Status == "Ativo")
+                .Select(m => m.UtilizadorId)
+                .ToListAsync();
+
+            if (membros.Count == 0)
+                return Ok(Array.Empty<RankingMembroDto>());
+
+            var utilizadores = await _context.Users
+                .OfType<Utilizador>()
+                .AsNoTracking()
+                .Where(u => membros.Contains(u.Id))
+                .Select(u => new { u.Id, NomeCompleto = u.Nome + " " + u.Sobrenome })
+                .ToDictionaryAsync(u => u.Id, u => u.NomeCompleto.Trim());
+
+            var stats = await _context.UserMovies
+                .AsNoTracking()
+                .Where(um => membros.Contains(um.UtilizadorId) && um.JaViu)
+                .GroupBy(um => um.UtilizadorId)
+                .Select(g => new
+                {
+                    UtilizadorId = g.Key,
+                    FilmesVistos = g.Count(),
+                    MinutosAssistidos = g
+                        .Join(_context.Filmes,
+                              um => um.FilmeId,
+                              f => f.Id,
+                              (um, f) => f.Duracao)
+                        .Sum()
+                })
+                .ToDictionaryAsync(x => x.UtilizadorId, x => x);
+
+            var lista = membros.Select(uid =>
+            {
+                stats.TryGetValue(uid, out var s);
+                utilizadores.TryGetValue(uid, out var nome);
+                return new
+                {
+                    UtilizadorId = uid,
+                    UserName = nome ?? "Utilizador removido",
+                    FilmesVistos = s?.FilmesVistos ?? 0,
+                    MinutosAssistidos = s?.MinutosAssistidos ?? 0
+                };
+            }).ToList();
+
+            var ordenada = metrica.ToLowerInvariant() == "tempo"
+                ? lista.OrderByDescending(x => x.MinutosAssistidos).ThenByDescending(x => x.FilmesVistos)
+                : lista.OrderByDescending(x => x.FilmesVistos).ThenByDescending(x => x.MinutosAssistidos);
+
+            var resultado = ordenada
+                .Select((x, idx) => new RankingMembroDto
+                {
+                    Posicao = idx + 1,
+                    UtilizadorId = x.UtilizadorId,
+                    UserName = x.UserName,
+                    FilmesVistos = x.FilmesVistos,
+                    MinutosAssistidos = x.MinutosAssistidos,
+                    IsCurrentUser = x.UtilizadorId == currentUserId
+                })
+                .ToList();
+
+            return Ok(resultado);
+        }
+
+
         // ─── GET posts da comunidade ──────
         [HttpGet("{id:int}/posts")]
         public async Task<IActionResult> GetPosts(int id)
@@ -699,7 +778,7 @@ namespace FilmAholic.Server.Controllers
         // ─── PUT Editar Post (Só o dono) ────
         [Authorize]
         [HttpPut("{id:int}/posts/{postId:int}")]
-        public async Task<IActionResult> EditPost(int id, int postId, [FromBody] PostEditDto form)
+        public async Task<IActionResult> EditPost(int id, int postId, [FromBody] PostDto form)
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue("sub");
 
@@ -848,7 +927,7 @@ namespace FilmAholic.Server.Controllers
             return Ok(new { message = "Publicação denunciada com sucesso." });
         }
 
-        // ─── DTOs & Forms ─────────────────────────────────────────────────────
+        // ─── DTOs & Forms ────
 
         public class PostDto
         {
@@ -884,6 +963,17 @@ namespace FilmAholic.Server.Controllers
             public string? Role { get; set; }
             public DateTime DataEntrada { get; set; }
             public DateTime? CastigadoAte { get; set; } 
+        }
+
+
+        public class RankingMembroDto
+        {
+            public int Posicao { get; set; }
+            public string? UtilizadorId { get; set; }
+            public string? UserName { get; set; }
+            public int FilmesVistos { get; set; }
+            public int MinutosAssistidos { get; set; }
+            public bool IsCurrentUser { get; set; }
         }
 
         public class ComunidadeDto
@@ -941,13 +1031,6 @@ namespace FilmAholic.Server.Controllers
 
             [FromForm(Name = "icon")]
             public IFormFile? Icon { get; set; }
-        }
-
-        public class PostEditDto
-        {
-            public string Titulo { get; set; } = "";
-            public string Conteudo { get; set; } = "";
-            public bool TemSpoiler { get; set; } 
         }
     }
 }

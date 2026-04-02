@@ -6,7 +6,7 @@ public class ComunidadePost
 {
     public int Id { get; set; }
     public int ComunidadeId { get; set; }
-    public string? UtilizadorId { get; set; } // nullable to allow soft-deleted users
+    public string? UtilizadorId { get; set; }
     public string Titulo { get; set; } = "";
     public string Conteudo { get; set; } = "";
     public string? ImagemUrl { get; set; }
