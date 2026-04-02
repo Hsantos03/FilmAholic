@@ -109,7 +109,7 @@ namespace FilmAholic.Server.Controllers
                 opcaoC = desafio.OpcaoC,
                 xp = desafio.Xp,
                 respondido = jaRespondidoHoje,
-                acertou = jaRespondidoHoje && userDesafio.Acertou,
+                acertou = userDesafio != null && jaRespondidoHoje && userDesafio.Acertou,
                 respostaCorreta = jaRespondidoHoje ? desafio.RespostaCorreta : null
             });
         }

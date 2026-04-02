@@ -8,8 +8,7 @@ import {
   ResumoEstatisticasFeedDto,
   ResumoEstatisticasFeedItemDto,
   ResumoFilmeComunidadeDto,
-  ReminderJogoNotifDto
-  ResumoFilmeComunidadeDto,
+  ReminderJogoNotifDto,
   NotificacaoComunidadeFeedDto,
   NotificacaoComunidadeItemDto
 } from '../../services/notificacoes.service';

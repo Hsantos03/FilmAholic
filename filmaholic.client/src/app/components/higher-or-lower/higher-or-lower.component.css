@@ -713,9 +713,7 @@
   font-size: 96px;
   line-height: 1;
   background: linear-gradient(135deg, #ff2f6d, #ff6b35);
-  -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
-  background-clip: text;
 }
 
 .endgame-sub {
