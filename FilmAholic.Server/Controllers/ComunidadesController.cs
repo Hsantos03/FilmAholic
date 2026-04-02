@@ -488,6 +488,34 @@ namespace FilmAholic.Server.Controllers
             _context.ComunidadePosts.Add(post);
             await _context.SaveChangesAsync();
 
+            // ── Notify all community members (except the post author) ──
+            try
+            {
+                var memberIds = await _context.ComunidadeMembros
+                    .Where(m => m.ComunidadeId == id && m.Status == "Ativo" && m.UtilizadorId != userId)
+                    .Select(m => m.UtilizadorId)
+                    .ToListAsync();
+
+                var notifications = memberIds.Select(mid => new NotificacaoComunidade
+                {
+                    UtilizadorId = mid,
+                    ComunidadeId = id,
+                    PostId = post.Id,
+                    CriadaEm = DateTime.UtcNow
+                }).ToList();
+
+                if (notifications.Count > 0)
+                {
+                    _context.Set<NotificacaoComunidade>().AddRange(notifications);
+                    await _context.SaveChangesAsync();
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Failed to create community post notifications for comunidade {Id}", id);
+                // Don't fail the post creation if notifications fail
+            }
+
             try
             {
                 var autor = await _context.Users

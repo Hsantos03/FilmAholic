@@ -42,6 +42,21 @@ export interface ResumoEstatisticasFeedDto {
   read: ResumoEstatisticasFeedItemDto[];
 }
 
+// ── Community notification DTOs ──
+export interface NotificacaoComunidadeItemDto {
+  id: number;
+  comunidadeId: number;
+  comunidadeNome: string;
+  postId: number;
+  criadaEm: string;
+  lidaEm?: string | null;
+}
+
+export interface NotificacaoComunidadeFeedDto {
+  unread: NotificacaoComunidadeItemDto[];
+  read: NotificacaoComunidadeItemDto[];
+}
+
 @Injectable({ providedIn: 'root' })
 export class NotificacoesService {
   private readonly apiBase = environment.apiBaseUrl || '';
@@ -119,5 +134,32 @@ export class NotificacoesService {
 
   marcarResumoEstatisticasComoLida(id: number): Observable<void> {
     return this.http.put<void>(`${this.apiUrl}/resumo-estatisticas/${id}/lida`, {}, { withCredentials: true });
+  }
+
+  // ── Community notifications ──
+
+  getNotificacoesComunidadeFeed(options?: { unreadLimit?: number; readLimit?: number }): Observable<NotificacaoComunidadeFeedDto> {
+    const o = options ?? {};
+    let params = new HttpParams();
+    if (o.unreadLimit != null) params = params.set('unreadLimit', String(o.unreadLimit));
+    if (o.readLimit != null) params = params.set('readLimit', String(o.readLimit));
+    return this.http.get<NotificacaoComunidadeFeedDto>(`${this.apiUrl}/comunidade/feed`, {
+      params,
+      withCredentials: true
+    }).pipe(catchError(() => of({ unread: [], read: [] })));
+  }
+
+  getNotificacoesComunidadeUnreadCount(): Observable<number> {
+    return this.http.get<number>(`${this.apiUrl}/comunidade/unread-count`, {
+      withCredentials: true
+    }).pipe(catchError(() => of(0)));
+  }
+
+  marcarNotificacaoComunidadeComoLida(id: number): Observable<void> {
+    return this.http.put<void>(`${this.apiUrl}/comunidade/${id}/lida`, {}, { withCredentials: true });
+  }
+
+  marcarTodasNotificacoesComunidadeComoLidas(): Observable<void> {
+    return this.http.put<void>(`${this.apiUrl}/comunidade/marcar-todas-lidas`, {}, { withCredentials: true });
   }
 }
