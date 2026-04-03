@@ -422,3 +422,31 @@
   background: rgba(126, 200, 255, 0.1);
   color: #b9ddff;
 }
+
+/* ── Medal notification cards ── */
+.medalha-notif-card {
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.1), rgba(124, 58, 237, 0.05));
+  border: 1px solid rgba(139, 92, 246, 0.2);
+  border-radius: 8px;
+  padding: 12px;
+  transition: all 0.2s ease;
+}
+
+.medalha-notif-card:hover {
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.15), rgba(124, 58, 237, 0.08));
+  border-color: rgba(139, 92, 246, 0.3);
+  transform: translateY(-1px);
+}
+
+.medalha-notif-card--read {
+  opacity: 0.7;
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.05), rgba(124, 58, 237, 0.02));
+  border-color: rgba(139, 92, 246, 0.1);
+}
+
+.comunidade-notif-desc {
+  font-size: 12px;
+  color: #aaa;
+  margin-top: 2px;
+  line-height: 1.3;
+}

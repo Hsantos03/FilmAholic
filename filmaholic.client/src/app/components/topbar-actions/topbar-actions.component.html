@@ -7,7 +7,9 @@
       <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
         <path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.64-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.63 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z" />
       </svg>
-      <span class="notif-badge" *ngIf="comunidadeUnreadCount > 0">{{ comunidadeUnreadCount > 9 ? '9+' : comunidadeUnreadCount }}</span>
+      <span class="notif-badge" *ngIf="comunidadeUnreadCount + medalhaUnreadCount > 0">{{ 
+    (comunidadeUnreadCount + medalhaUnreadCount) > 9 ? '9+' : (comunidadeUnreadCount + medalhaUnreadCount) 
+  }}</span>
     </button>
     <div class="notifications-menu" *ngIf="isNotificationsOpen" role="menu">
 
@@ -232,6 +234,54 @@
               <div class="comunidade-notif-icon">👥</div>
               <div class="comunidade-notif-body">
                 <span class="comunidade-notif-text">Novas publicações na comunidade <strong>{{ n.comunidadeNome }}</strong></span>
+                <span class="comunidade-notif-date">{{ n.criadaEm | date:'dd/MM/yyyy HH:mm' }}</span>
+              </div>
+            </div>
+          </ng-container>
+
+          <!-- Medal notifications -->
+          <div class="notifications-title" style="display:flex; align-items:center; justify-content:space-between; margin-top:16px; padding-top:12px; border-top:1px solid rgba(255,255,255,0.08);">
+            <span>Medalhas</span>
+            <button type="button"
+                    class="notif-mark-all-btn"
+                    *ngIf="medalhaFeed.unread.length > 0"
+                    (click)="marcarTodasMedalhasComoLidas()">Marcar todas como lidas</button>
+          </div>
+
+          <ng-container *ngIf="medalhaFeed.unread.length > 0">
+            <div *ngFor="let n of medalhaFeed.unread"
+                 class="comunidade-notif-card medalha-notif-card"
+                 role="menuitem">
+              <div class="comunidade-notif-icon">
+                <span>🏅</span>
+              </div>
+              <div class="comunidade-notif-body">
+                <span class="comunidade-notif-text">Parabéns! Desbloqueaste a medalha <strong>{{ n.medalhaNome }}</strong></span>
+                <span class="comunidade-notif-desc">{{ n.medalhaDescricao }}</span>
+                <span class="comunidade-notif-date">{{ n.criadaEm | date:'dd/MM/yyyy HH:mm' }}</span>
+              </div>
+              <button type="button"
+                      class="notification-mark-read"
+                      (click)="marcarMedalhaComoLida(n)"
+                      aria-label="Marcar como lida">✓</button>
+            </div>
+          </ng-container>
+
+          <div *ngIf="medalhaFeed.unread.length === 0 && medalhaFeed.read.length === 0" class="notifications-empty">
+            Sem notificações de medalhas.
+          </div>
+
+          <ng-container *ngIf="medalhaFeed.read.length > 0">
+            <div class="notifications-title" style="margin-top:10px; padding-top:8px; border-top:1px solid rgba(255,255,255,0.08);">Anteriores</div>
+            <div *ngFor="let n of medalhaFeed.read"
+                 class="comunidade-notif-card comunidade-notif-card--read medalha-notif-card--read"
+                 role="menuitem">
+              <div class="comunidade-notif-icon">
+                <span>🏅</span>
+              </div>
+              <div class="comunidade-notif-body">
+                <span class="comunidade-notif-text">Desbloqueaste a medalha <strong>{{ n.medalhaNome }}</strong></span>
+                <span class="comunidade-notif-desc">{{ n.medalhaDescricao }}</span>
                 <span class="comunidade-notif-date">{{ n.criadaEm | date:'dd/MM/yyyy HH:mm' }}</span>
               </div>
             </div>

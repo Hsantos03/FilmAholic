@@ -14,10 +14,10 @@ type StatsPeriod = 'all' | '7d' | '30d' | '3m' | '12m';
 type GraphTheme = 'default' | 'dark' | 'force';
 
 interface GraphSettings {
-  showGenreBar: boolean;   // Filmes por duração
-  showGenrePie: boolean;   // Distribuição por duração
-  showPeriodBar: boolean;  // Filmes por período
-  showPeriodPie: boolean;  // Distribuição por período
+  showGenreBar: boolean;
+  showGenrePie: boolean;
+  showPeriodBar: boolean;
+  showPeriodPie: boolean;
   showMonthlyChart: boolean;
   showGenrePercentages: boolean;
   theme: GraphTheme;
@@ -61,7 +61,7 @@ export class ProfileComponent implements OnInit {
   readonly TOP_10 = 10;
 
   favoritosFilmes: number[] = [];
-  favoritosAtores: ActorDto[] = []; // Changed from string[] to ActorDto[]
+  favoritosAtores: ActorDto[] = [];
   novoAtor = '';
   isSavingFavorites = false;
   showAllFavoritesModal = false;
@@ -70,10 +70,10 @@ export class ProfileComponent implements OnInit {
   actorSuggestions: ActorDto[] = [];
   showSuggestions = false;
   private actorSearchTerms = new Subject<string>();
-  private isSelectingActor = false; // Flag to prevent blur from hiding during click
-  private lastSelectedActor: ActorDto | null = null; // Track last selected actor
-  actorErrorMessage = ''; // Error message for invalid actors
-  private readonly ACTOR_CACHE_KEY = 'filmaholic_actor_cache'; // localStorage key for actor data
+  private isSelectingActor = false;
+  private lastSelectedActor: ActorDto | null = null;
+  actorErrorMessage = '';
+  private readonly ACTOR_CACHE_KEY = 'filmaholic_actor_cache';
 
   draggedIndex: number | null = null;
   dragOverIndex: number | null = null;
@@ -86,7 +86,7 @@ export class ProfileComponent implements OnInit {
   editBio = '';
   editFotoPerfilUrl: string | null = null;
   editCapaUrl: string | null = null;
-  
+
   isEditingCapa = false;
   isEditingAvatar = false;
 
@@ -103,7 +103,20 @@ export class ProfileComponent implements OnInit {
   watchLaterFilter: 'all' | 'newest' | 'oldest' | '7days' | '30days' = 'all';
   watchedFilter: 'all' | 'newest' | 'oldest' | '7days' | '30days' = 'all';
 
-  activeSection: 'overview' | 'statistics' = 'overview';
+  activeSection: 'overview' | 'statistics' | 'conquistas' = 'overview';
+
+  conquistasTab: 'minhas' | 'todas' = 'minhas';
+
+  medalhasConquistadas: any[] = [];
+  todasMedalhas: any[] = [];
+
+  private readonly apiMedalhas = environment.apiBaseUrl
+    ? `${environment.apiBaseUrl}/api/medalhas`
+    : '/api/medalhas';
+
+  readonly API_URL = environment.apiBaseUrl
+    ? environment.apiBaseUrl
+    : '';
 
   statsPeriod: StatsPeriod = 'all';
 
@@ -115,7 +128,6 @@ export class ProfileComponent implements OnInit {
     { value: '12m', label: 'Últimos 12 meses' }
   ];
 
-  // Graph Customization
   showGraphCustomizeMenu = false;
   graphSettings: GraphSettings = {
     showGenreBar: true,
@@ -151,11 +163,13 @@ export class ProfileComponent implements OnInit {
       chart: ['#0f172a', '#334155', '#4338ca']
     },
     force: {
-      userColor: '#3b82f6', // blue saber
-      globalColor: '#22c55e', // green saber
-      chart: ['#3b82f6', '#22c55e', '#ef4444'] // blue, green, red
+      userColor: '#3b82f6',
+      globalColor: '#22c55e',
+      chart: ['#3b82f6', '#22c55e', '#ef4444']
     }
   };
+
+  showStatsPeriodMenu = false;
 
   constructor(
     private http: HttpClient,
@@ -167,33 +181,21 @@ export class ProfileComponent implements OnInit {
     private favoritesService: FavoritesService
   ) { }
 
-  toggleMenu(): void {
-    this.menuService.toggle();
-  }
-
-  goToDashboardDesafios(): void {
-    this.router.navigate(['/dashboard'], { queryParams: { openDesafios: '1' } });
-  }
-
-  goToNotificacoesSettings(): void {
-    this.router.navigate(['/definicoes-notificacoes']);
-  }
 
   ngOnInit(): void {
     const userId = localStorage.getItem('user_id');
 
     this.loadGraphSettings();
-
     this.loadCatalogo();
     this.refreshAllListsAndStats();
     this.loadFavorites();
+    this.loadConquistas();
 
-    this.favoritesService.favoritesChanged$
-      .subscribe(() => {
-        this.loadFavorites();
-      });
+    this.favoritesService.favoritesChanged$.subscribe(() => {
+      this.loadFavorites();
+    });
 
-    // Setup actor search functionality
+    // Setup actor search with debounce
     this.actorSearchTerms.pipe(
       debounceTime(300),
       distinctUntilChanged(),
@@ -203,17 +205,13 @@ export class ProfileComponent implements OnInit {
       })
     ).subscribe({
       next: (results) => {
-        // 1. Filtrar lixo: só atores com foto e popularidade mínima (ex: 2.0)
-        // 2. Ordenar pelos mais populares primeiro
-        // 3. Cortar para mostrar apenas os primeiros 4
         this.actorSuggestions = results
           .filter(actor => actor.fotoUrl !== null && actor.fotoUrl !== undefined)
           .sort((a, b) => b.popularidade - a.popularidade)
           .slice(0, 4);
-
         this.showSuggestions = this.actorSuggestions.length > 0;
       },
-      error: (err) => {
+      error: () => {
         this.actorSuggestions = [];
         this.showSuggestions = false;
       }
@@ -235,6 +233,7 @@ export class ProfileComponent implements OnInit {
           } else {
             this.userName = this.userName || 'User';
           }
+
           this.bio = res?.bio ?? '';
           this.fotoPerfilUrl = res?.fotoPerfilUrl ?? null;
           if (this.fotoPerfilUrl != null) localStorage.setItem('fotoPerfilUrl', this.fotoPerfilUrl);
@@ -244,12 +243,42 @@ export class ProfileComponent implements OnInit {
             this.joined = new Date(res.dataCriacao).toLocaleString('pt-PT');
           }
 
-          this.xp = res?.xp ?? 0;
-          this.level = res?.nivel ?? this.calcularNivelLocal(this.xp);
+          if (res?.xp !== undefined) {
+            this.xp = res.xp;
+            // Use database level if available, otherwise calculate from XP
+            this.level = res?.nivel ?? this.calcularNivelLocal(this.xp);
+            
+            // Check for level medals when profile loads
+            if (this.level >= 10) {
+              this.checkLevelMedals();
+            }
+          }
         },
-        error: (err) => console.warn('Failed to load profile from API; keeping local values.', err)
+        error: (err) => console.warn('Failed to load profile from API.', err)
       });
   }
+
+
+  toggleMenu(): void {
+    this.menuService.toggle();
+  }
+
+  goToDashboardDesafios(): void {
+    this.router.navigate(['/dashboard'], { queryParams: { openDesafios: '1' } });
+  }
+
+  goToNotificacoesSettings(): void {
+    this.router.navigate(['/definicoes-notificacoes']);
+  }
+
+  goToHome(): void {
+    this.router.navigate(['/dashboard']);
+  }
+
+  logout(): void {
+    this.authService.logout();
+  }
+
 
   private xpParaNivel(n: number): number {
     if (n <= 1) return 0;
@@ -279,6 +308,22 @@ export class ProfileComponent implements OnInit {
     }
     return nivel;
   }
+
+  private checkLevelMedals(): void {
+    this.http.post<any>(`${this.apiMedalhas}/check-level`, {}, { withCredentials: true })
+      .subscribe({
+        next: (response) => {
+          if (response && response.novasMedalhas > 0) {
+            console.log('Novas medalhas de nível detectadas!');
+            this.loadConquistas();
+          }
+        },
+        error: (err) => {
+          console.error('Erro ao verificar medalhas de nível:', err);
+        }
+      });
+  }
+
 
   toggleGraphCustomize(): void {
     this.showGraphCustomizeMenu = !this.showGraphCustomizeMenu;
@@ -327,12 +372,12 @@ export class ProfileComponent implements OnInit {
 
   getBarChartColor(index: number): string {
     const palette = this.currentTheme.chart;
-    return palette[index % 2]; // alternate between first two colors
+    return palette[index % 2];
   }
 
   getPieChartColor(index: number): string {
     const palette = this.currentTheme.chart;
-    return palette[index % 3]; // use all three for pies
+    return palette[index % 3];
   }
 
   getUserBarColor(): string {
@@ -364,24 +409,20 @@ export class ProfileComponent implements OnInit {
   }
 
   private adjustColorBrightness(hex: string, percent: number): string {
-
     hex = hex.replace('#', '');
-
     const r = parseInt(hex.substring(0, 2), 16);
     const g = parseInt(hex.substring(2, 4), 16);
     const b = parseInt(hex.substring(4, 6), 16);
-
     const adjustedR = Math.min(255, Math.max(0, r + percent));
     const adjustedG = Math.min(255, Math.max(0, g + percent));
     const adjustedB = Math.min(255, Math.max(0, b + percent));
-
     const toHex = (n: number) => {
-      const hex = Math.round(n).toString(16);
-      return hex.length === 1 ? '0' + hex : hex;
+      const h = Math.round(n).toString(16);
+      return h.length === 1 ? '0' + h : h;
     };
-
     return `#${toHex(adjustedR)}${toHex(adjustedG)}${toHex(adjustedB)}`;
   }
+
 
   refreshAllListsAndStats(): void {
     this.loadLists();
@@ -397,7 +438,7 @@ export class ProfileComponent implements OnInit {
 
     const now = new Date();
     const to = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    let from = new Date(to);
+    const from = new Date(to);
 
     switch (this.statsPeriod) {
       case '7d':
@@ -430,8 +471,6 @@ export class ProfileComponent implements OnInit {
     this.loadStatsWithPeriod();
   }
 
-  showStatsPeriodMenu = false;
-
   toggleStatsPeriodMenu(): void {
     this.showStatsPeriodMenu = !this.showStatsPeriodMenu;
   }
@@ -462,6 +501,7 @@ export class ProfileComponent implements OnInit {
     this.showStatsPeriodMenu = false;
     this.onStatsPeriodChange();
   }
+
 
   loadCatalogo(): void {
     this.filmesService.getAll().subscribe({
@@ -527,6 +567,7 @@ export class ProfileComponent implements OnInit {
     });
   }
 
+
   lollipopPosIntervaloAnos(total: number): number {
     const p = this.chartBarWidthIntervaloAnos(total);
     if (total <= 0) return 0;
@@ -567,7 +608,6 @@ export class ProfileComponent implements OnInit {
     });
     return cells.slice(0, 100);
   }
-
 
   getComparisonBarWidth(userValue: number, globalValue: number): number {
     const max = Math.max(userValue, globalValue, 1);
@@ -731,6 +771,7 @@ export class ProfileComponent implements OnInit {
   }
 
   readonly chartColors = ['#ff2f6d', '#6366f1', '#22c55e', '#eab308', '#ec4899', '#14b8a6', '#f97316', '#8b5cf6'];
+
   chartColor(i: number): string {
     return this.chartColors[i % this.chartColors.length];
   }
@@ -779,6 +820,7 @@ export class ProfileComponent implements OnInit {
       .sort((a, b) => b.percent - a.percent);
   }
 
+
   addToWatchLater(filmeId: number): void {
     this.addMovieToList(filmeId, false);
   }
@@ -790,7 +832,7 @@ export class ProfileComponent implements OnInit {
   removeFromLists(filmeId: number): void {
     const filme = this.catalogo.find(f => f.id === filmeId);
     if (!filme) return;
-    
+
     const userMovie = [...this.watchLater, ...this.watched].find(
       x => x?.filme?.titulo === filme.titulo || x?.filme?.Titulo === filme.titulo
     );
@@ -861,18 +903,17 @@ export class ProfileComponent implements OnInit {
   inWatchLater(filmeId: number): boolean {
     const filme = this.catalogo.find(f => f.id === filmeId);
     if (!filme) return false;
-    
-    return this.watchLater?.some(x => x?.filme?.titulo === filme.titulo || 
-                                      x?.filme?.Titulo === filme.titulo);
+    return this.watchLater?.some(x => x?.filme?.titulo === filme.titulo ||
+      x?.filme?.Titulo === filme.titulo);
   }
 
   inWatched(filmeId: number): boolean {
     const filme = this.catalogo.find(f => f.id === filmeId);
     if (!filme) return false;
-    
-    return this.watched?.some(x => x?.filme?.titulo === filme.titulo || 
-                                   x?.filme?.Titulo === filme.titulo);
+    return this.watched?.some(x => x?.filme?.titulo === filme.titulo ||
+      x?.filme?.Titulo === filme.titulo);
   }
+
 
   loadFavorites(): void {
     this.favoritesService.getFavorites().subscribe({
@@ -880,17 +921,15 @@ export class ProfileComponent implements OnInit {
         const filmes = fav?.filmes ?? (fav as any)?.Filmes ?? [];
         const atores = fav?.atores ?? (fav as any)?.Atores ?? [];
         this.favoritosFilmes = Array.isArray(filmes) ? filmes : [];
-        
-        // Convert string array to ActorDto array using cached data
+
         this.favoritosAtores = Array.isArray(atores) ? atores.map((nome: any) => {
           const actorName = typeof nome === 'string' ? nome : nome.nome || '';
           const cachedActor = this.getCachedActor(actorName);
-          
+
           if (cachedActor) {
             return cachedActor;
           }
-          
-          // Fallback for actors without cached data
+
           return {
             id: typeof nome === 'object' ? nome.id || 0 : 0,
             nome: actorName,
@@ -898,7 +937,7 @@ export class ProfileComponent implements OnInit {
             popularidade: typeof nome === 'object' ? nome.popularidade || 0 : 0
           };
         }) : [];
-        
+
         this.ensureCatalogoHasFavorites();
       },
       error: () => {
@@ -936,14 +975,12 @@ export class ProfileComponent implements OnInit {
 
   toggleFavoriteFilme(filmeId: number): void {
     const idx = this.favoritosFilmes.indexOf(filmeId);
-
     if (idx >= 0) {
       this.favoritosFilmes.splice(idx, 1);
     } else {
       if (this.favoritosFilmes.length >= this.MAX_FAVORITES) return;
       this.favoritosFilmes.push(filmeId);
     }
-
     this.saveFavorites();
   }
 
@@ -956,15 +993,14 @@ export class ProfileComponent implements OnInit {
   }
 
   addAtorFavorito(): void {
-    // Clear previous error message
     this.actorErrorMessage = '';
-    
+
     if (!this.lastSelectedActor) {
       this.actorErrorMessage = 'Por favor, selecione um ator da lista de sugestões.';
       setTimeout(() => this.actorErrorMessage = '', 3000);
       return;
     }
-    
+
     const actor = this.lastSelectedActor;
     if (this.favoritosAtores.some(a => a.nome === actor.nome)) {
       this.actorErrorMessage = 'Este ator já está na sua lista de favoritos.';
@@ -995,14 +1031,10 @@ export class ProfileComponent implements OnInit {
 
   selectActor(actor: ActorDto): void {
     this.isSelectingActor = true;
-    this.lastSelectedActor = actor; // Track the selected actor
-    
-    // Cache the actor data to persist images
+    this.lastSelectedActor = actor;
     this.cacheActorData(actor);
-    
     this.novoAtor = actor.nome;
-    this.addAtorFavorito(); // Adiciona à lista
-    // Hide immediately when actor is selected
+    this.addAtorFavorito();
     this.showSuggestions = false;
     this.actorSuggestions = [];
     setTimeout(() => {
@@ -1011,9 +1043,7 @@ export class ProfileComponent implements OnInit {
   }
 
   hideSuggestionsWithDelay(): void {
-    // Only hide if not in the middle of selecting an actor
     if (this.isSelectingActor) return;
-    
     setTimeout(() => {
       if (!this.isSelectingActor) {
         this.showSuggestions = false;
@@ -1021,14 +1051,13 @@ export class ProfileComponent implements OnInit {
     }, 300);
   }
 
-  // Actor data caching methods
   private cacheActorData(actor: ActorDto): void {
     try {
       const cache = this.getActorCache();
       cache[actor.nome] = actor;
       localStorage.setItem(this.ACTOR_CACHE_KEY, JSON.stringify(cache));
     } catch (error) {
-      // Silently fail caching, don't break the app
+      // Silently fail
     }
   }
 
@@ -1056,7 +1085,7 @@ export class ProfileComponent implements OnInit {
 
     const dto: FavoritosDTO = {
       filmes: this.favoritosFilmes,
-      atores: this.favoritosAtores.map(actor => actor.nome) // Convert to string array for API
+      atores: this.favoritosAtores.map(actor => actor.nome)
     };
 
     this.favoritesService.saveFavorites(dto).subscribe({
@@ -1083,6 +1112,7 @@ export class ProfileComponent implements OnInit {
     return this.favoritosAtores.slice(0, this.TOP_10);
   }
 
+
   openEdit(): void {
     this.editUserName = this.userName;
     this.editBio = this.bio;
@@ -1104,10 +1134,7 @@ export class ProfileComponent implements OnInit {
     this.http
       .put<any>(
         `${this.apiBase}/${encodeURIComponent(userId)}`,
-        { 
-          userName: this.userName, 
-          bio: this.bio
-        },
+        { userName: this.userName, bio: this.bio },
         { withCredentials: true }
       )
       .subscribe({
@@ -1205,9 +1232,6 @@ export class ProfileComponent implements OnInit {
     reader.readAsDataURL(file);
   }
 
-  goToHome(): void {
-    this.router.navigate(['/dashboard']);
-  }
 
   showOverview(): void {
     this.activeSection = 'overview';
@@ -1216,6 +1240,12 @@ export class ProfileComponent implements OnInit {
   showStatistics(): void {
     this.activeSection = 'statistics';
   }
+
+  showConquistas(): void {
+    this.activeSection = 'conquistas';
+    this.loadConquistas();
+  }
+
 
   openDeleteConfirm(): void {
     this.deleteInput = '';
@@ -1244,6 +1274,7 @@ export class ProfileComponent implements OnInit {
         }
       });
   }
+
 
   openListModal(type: 'watchLater' | 'watched'): void {
     this.currentListType = type;
@@ -1284,12 +1315,12 @@ export class ProfileComponent implements OnInit {
         case '7days': {
           const cutoff = Date.now() - 7 * 24 * 60 * 60 * 1000;
           return list.filter(m => (parseDate(m)?.getTime() ?? 0) >= cutoff)
-                     .sort((a, b) => (parseDate(b)?.getTime() ?? 0) - (parseDate(a)?.getTime() ?? 0));
+            .sort((a, b) => (parseDate(b)?.getTime() ?? 0) - (parseDate(a)?.getTime() ?? 0));
         }
         case '30days': {
           const cutoff = Date.now() - 30 * 24 * 60 * 60 * 1000;
           return list.filter(m => (parseDate(m)?.getTime() ?? 0) >= cutoff)
-                     .sort((a, b) => (parseDate(b)?.getTime() ?? 0) - (parseDate(a)?.getTime() ?? 0));
+            .sort((a, b) => (parseDate(b)?.getTime() ?? 0) - (parseDate(a)?.getTime() ?? 0));
         }
         case 'all':
         default:
@@ -1324,9 +1355,6 @@ export class ProfileComponent implements OnInit {
     return '';
   }
 
-  logout(): void {
-    this.authService.logout();
-  }
 
   onDragStart(event: DragEvent, index: number): void {
     this.draggedIndex = index;
@@ -1342,7 +1370,6 @@ export class ProfileComponent implements OnInit {
     if (event.dataTransfer) {
       event.dataTransfer.dropEffect = 'move';
     }
-    
     const target = event.currentTarget as HTMLElement;
     const index = parseInt(target.getAttribute('data-index') || '0', 10);
     this.dragOverIndex = index;
@@ -1359,7 +1386,6 @@ export class ProfileComponent implements OnInit {
 
     const newOrder = [...this.favoritosFilmes];
     [newOrder[this.draggedIndex], newOrder[dropIndex]] = [newOrder[dropIndex], newOrder[this.draggedIndex]];
-
     this.favoritosFilmes = newOrder;
     this.saveFavorites();
 
@@ -1377,6 +1403,7 @@ export class ProfileComponent implements OnInit {
     this.dragOverIndex = null;
   }
 
+
   onActorDragStart(event: DragEvent, index: number): void {
     this.draggedActorIndex = index;
     if (event.dataTransfer) {
@@ -1391,7 +1418,6 @@ export class ProfileComponent implements OnInit {
     if (event.dataTransfer) {
       event.dataTransfer.dropEffect = 'move';
     }
-    
     const target = event.currentTarget as HTMLElement;
     const index = parseInt(target.getAttribute('data-index') || '0', 10);
     this.dragOverActorIndex = index;
@@ -1408,7 +1434,6 @@ export class ProfileComponent implements OnInit {
 
     const newOrder = [...this.favoritosAtores];
     [newOrder[this.draggedActorIndex], newOrder[dropIndex]] = [newOrder[dropIndex], newOrder[this.draggedActorIndex]];
-
     this.favoritosAtores = newOrder;
     this.saveFavorites();
 
@@ -1424,5 +1449,50 @@ export class ProfileComponent implements OnInit {
     });
     this.draggedActorIndex = null;
     this.dragOverActorIndex = null;
+  }
+
+
+  loadConquistas(): void {
+    this.http.get<any[]>(`${this.apiMedalhas}/pessoal`, { withCredentials: true })
+      .subscribe({
+        next: (res) => {
+          this.medalhasConquistadas = res || [];
+        },
+        error: (err) => {
+          console.error('Erro ao carregar medalhas:', err);
+          this.medalhasConquistadas = [];
+        }
+      });
+
+    this.http.get<any[]>(`${this.apiMedalhas}/todas`, { withCredentials: true })
+      .subscribe({
+        next: (res) => (this.todasMedalhas = res || []),
+        error: () => (this.todasMedalhas = [])
+      });
+  }
+
+  getMedalThreshold(medalName: string): number {
+    const thresholds: { [key: string]: number } = {
+      'Amador dos Desafios': 7,
+      'Experiente em Desafios': 30,
+      'Mestre dos Desafios': 150,
+      'Iniciante da Adivinhação': 5,
+      'Experiente da Adivinhação': 10,
+      'Mestre da Adivinhação': 25,
+      'Fundador': 1,
+      'Participante': 1,
+      'Explorador Cinéfilo': 50,
+      'Entusiasta do Cinema': 100,
+      'Mestre Cinéfilo': 500,
+      'Lenda do Cinema': 1000,
+      'Iniciante': 10,
+      'Experiente': 50,
+      'Mestre': 100
+    };
+    return thresholds[medalName] || 1;
+  }
+
+  getMedalProgressPercentage(current: number, threshold: number): number {
+    return Math.min((current / threshold) * 100, 100);
   }
 }

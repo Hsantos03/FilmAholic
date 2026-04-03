@@ -2,6 +2,8 @@ import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { ComunidadesService, ComunidadeDto, SugestaoFilmeComunidade } from '../../services/comunidades.service';
 import { MenuService } from '../../services/menu.service';
+import { HttpClient } from '@angular/common/http';
+import { environment } from '../../../environments/environment';
 
 @Component({
   selector: 'app-comunidades',
@@ -12,6 +14,11 @@ export class ComunidadesComponent implements OnInit {
   comunidades: ComunidadeDto[] = [];
   isLoading = false;
   error = '';
+
+  // Medal notification properties
+  medalSuccessMessage = '';
+  medalErrorMessage = '';
+  private readonly apiMedalhas = environment.apiBaseUrl ? `${environment.apiBaseUrl}/api/medalhas` : '/api/medalhas';
 
   showCreateModal = false;
   newNome = '';
@@ -28,11 +35,17 @@ export class ComunidadesComponent implements OnInit {
   constructor(
     private service: ComunidadesService,
     private router: Router,
-    public menuService: MenuService
+    public menuService: MenuService,
+    private http: HttpClient
   ) { }
 
   toggleMenu(): void {
     this.menuService.toggle();
+  }
+
+  clearMedalMessages(): void {
+    this.medalSuccessMessage = '';
+    this.medalErrorMessage = '';
   }
 
   ngOnInit(): void {
@@ -127,6 +140,18 @@ export class ComunidadesComponent implements OnInit {
         } else {
           if (created) this.comunidades.unshift(created);
         }
+
+        this.http.post<any>(`${this.apiMedalhas}/check-comunidade`, {}, { withCredentials: true })
+          .subscribe({
+            next: (medalRes) => {
+              if (medalRes.novasMedalhas > 0) {
+                this.medalSuccessMessage = `Ganhaste a medalha: ${medalRes.medalhas[0].nome}! 🏆`;
+              }
+            },
+            error: (err) => {
+              this.medalErrorMessage = 'Erro ao verificar medalhas.';
+            }
+          });
       },
       error: (err) => {
         console.error(err);

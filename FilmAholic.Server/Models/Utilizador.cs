@@ -24,6 +24,7 @@ public class Utilizador : IdentityUser
     public string? Bio { get; set; } 
     public DateTime DataCriacao { get; set; } = DateTime.UtcNow;
 
-    // Navegação para géneros favoritos (relação many-to-many)
     public ICollection<UtilizadorGenero> GenerosFavoritos { get; set; } = new List<UtilizadorGenero>();
+
+    public ICollection<UtilizadorMedalha> UtilizadorMedalhas { get; set; } = new List<UtilizadorMedalha>();
 }

@@ -15,6 +15,7 @@ namespace FilmAholic.Server.Models
         public Filme Filme { get; set; }
 
         public bool JaViu { get; set; } // false = Quero Ver | true = Já Vi
+        public bool Favorito { get; set; } // false = Não é favorito | true = É favorito
         public DateTime Data { get; set; } = DateTime.Now;
     }
 }

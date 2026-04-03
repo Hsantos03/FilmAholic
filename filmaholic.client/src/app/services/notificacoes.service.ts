@@ -48,7 +48,7 @@ export interface NotificacaoComunidadeItemDto {
   id: number;
   comunidadeId: number;
   comunidadeNome: string;
-  postId: number;
+  tipo: 'post' | 'comentario' | 'juntou';
   criadaEm: string;
   lidaEm?: string | null;
 }
@@ -62,6 +62,22 @@ export interface ReminderJogoNotifDto {
   id: number;
   corpo: string;
   criadaEm: string;
+}
+
+// ── Medal notification DTOs ──
+export interface NotificacaoMedalhaItemDto {
+  id: number;
+  medalhaId: number;
+  medalhaNome: string;
+  medalhaDescricao: string;
+  medalhaIconeUrl: string;
+  criadaEm: string;
+  lidaEm?: string | null;
+}
+
+export interface NotificacaoMedalhaFeedDto {
+  unread: NotificacaoMedalhaItemDto[];
+  read: NotificacaoMedalhaItemDto[];
 }
 
 @Injectable({ providedIn: 'root' })
@@ -178,5 +194,32 @@ export class NotificacoesService {
 
   marcarReminderJogoComoLida(id: number): Observable<void> {
     return this.http.put<void>(`${this.apiUrl}/reminder-jogo/${id}/lida`, {}, { withCredentials: true });
+  }
+
+  // ── Medal notifications ──
+
+  getNotificacoesMedalhaFeed(options?: { unreadLimit?: number; readLimit?: number }): Observable<NotificacaoMedalhaFeedDto> {
+    const o = options ?? {};
+    let params = new HttpParams();
+    if (o.unreadLimit != null) params = params.set('unreadLimit', String(o.unreadLimit));
+    if (o.readLimit != null) params = params.set('readLimit', String(o.readLimit));
+    return this.http.get<NotificacaoMedalhaFeedDto>(`${this.apiUrl}/medalha/feed`, {
+      params,
+      withCredentials: true
+    }).pipe(catchError(() => of({ unread: [], read: [] })));
+  }
+
+  getNotificacoesMedalhaUnreadCount(): Observable<number> {
+    return this.http.get<number>(`${this.apiUrl}/medalha/unread-count`, {
+      withCredentials: true
+    }).pipe(catchError(() => of(0)));
+  }
+
+  marcarNotificacaoMedalhaComoLida(id: number): Observable<void> {
+    return this.http.put<void>(`${this.apiUrl}/medalha/${id}/lida`, {}, { withCredentials: true });
+  }
+
+  marcarTodasNotificacoesMedalhaComoLidas(): Observable<void> {
+    return this.http.put<void>(`${this.apiUrl}/medalha/marcar-todas-lidas`, {}, { withCredentials: true });
   }
 }

@@ -8,6 +8,8 @@ import { Filme, FilmesService, RecomendacaoDto } from '../../services/filmes.ser
 import { AtoresService, PopularActor } from '../../services/atores.service';
 import { ProfileService } from '../../services/profile.service';
 import { MenuService } from '../../services/menu.service';
+import { HttpClient } from '@angular/common/http';
+import { environment } from '../../../environments/environment';
 
 export interface SearchResultItem {
   id?: number;
@@ -25,6 +27,20 @@ export class DashboardComponent implements OnInit, OnDestroy {
   @ViewChild('searchContainer', { static: false }) searchContainerRef?: ElementRef;
 
   userName: string = '';
+
+  // Medal notification properties
+  medalSuccessMessage = '';
+  medalErrorMessage = '';
+  private readonly apiMedalhas = environment.apiBaseUrl ? `${environment.apiBaseUrl}/api/medalhas` : '/api/medalhas';
+  
+  // Medal progress properties
+  medalProgress = {
+    current: 0,
+    target: 0,
+    percentage: 0,
+    medalName: '',
+    nextMedalName: ''
+  };
 
   isDesafiosOpen: boolean = false;
   desafioDoDia: any = null;
@@ -85,7 +101,8 @@ export class DashboardComponent implements OnInit, OnDestroy {
     private profileService: ProfileService,
     private router: Router,
     private route: ActivatedRoute,
-    public menuService: MenuService
+    public menuService: MenuService,
+    private http: HttpClient
   ) { }
 
   ngOnInit(): void {
@@ -292,6 +309,15 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
         if (res.acertou) {
           this.feedbackDesafio = `Correto! Ganhaste ${res.xpGanho || this.desafioDoDia.xp} XP! 🎉`;
+          
+          this.http.post<any>(`${this.apiMedalhas}/check-desafios`, {}, { withCredentials: true })
+            .subscribe(medalRes => {
+              this.updateMedalProgress('', medalRes.progress || 0);
+              
+              if (medalRes.novasMedalhas > 0) {
+                this.medalSuccessMessage = `Ganhaste a medalha: ${medalRes.medalhas[0].nome}! 🏆`;
+              }
+            });
         } else {
           this.feedbackDesafio = 'Incorreto! Tenta novamente amanhã. 🎬';
         }
@@ -533,8 +559,6 @@ export class DashboardComponent implements OnInit, OnDestroy {
     this.featuredIndex = Math.min(maxIndex, this.featuredIndex + this.featuredVisibleCount);
   }
 
-  toggleMenu(): void { this.menuService.toggle(); }
-
   get top10Visible(): Filme[] {
     return this.top10.slice(this.top10Index, this.top10Index + this.top10VisibleCount);
   }
@@ -608,8 +632,49 @@ export class DashboardComponent implements OnInit, OnDestroy {
     if (el && !el.src.includes('placeholder')) el.src = this.posterFallback;
   }
 
-  openMenu(): void {
+  toggleMenu(): void {
     this.menuService.toggle();
+  }
+
+  clearMedalMessages(): void {
+    this.medalSuccessMessage = '';
+    this.medalErrorMessage = '';
+  }
+
+  updateMedalProgress(medalName: string, currentCount: number): void {
+    const medalThresholds = [
+      { name: 'Amador dos Desafios', threshold: 7 },
+      { name: 'Experiente em Desafios', threshold: 30 },
+      { name: 'Mestre dos Desafios', threshold: 150 }
+    ];
+
+    let currentThreshold = 0;
+    let nextThreshold = 0;
+    let nextMedalName = '';
+
+    for (let i = 0; i < medalThresholds.length; i++) {
+      if (currentCount >= medalThresholds[i].threshold) {
+        currentThreshold = medalThresholds[i].threshold;
+      } else {
+        nextThreshold = medalThresholds[i].threshold;
+        nextMedalName = medalThresholds[i].name;
+        break;
+      }
+    }
+
+    if (nextThreshold === 0 && currentCount >= medalThresholds[medalThresholds.length - 1].threshold) {
+      currentThreshold = medalThresholds[medalThresholds.length - 1].threshold;
+      nextThreshold = currentThreshold;
+      nextMedalName = 'Todas conquistadas!';
+    }
+
+    this.medalProgress = {
+      current: currentCount,
+      target: nextThreshold || currentThreshold,
+      percentage: nextThreshold > 0 ? Math.min((currentCount / nextThreshold) * 100, 100) : 100,
+      medalName: medalName || '',
+      nextMedalName: nextMedalName
+    };
   }
 
   public doSearch(): void {

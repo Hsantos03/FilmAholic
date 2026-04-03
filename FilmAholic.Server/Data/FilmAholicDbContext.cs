@@ -34,6 +34,9 @@ public class FilmAholicDbContext : IdentityDbContext<Utilizador>
 
     public DbSet<NotificacaoComunidade> NotificacoesComunidade => Set<NotificacaoComunidade>();
 
+    public DbSet<Medalha> Medalhas => Set<Medalha>();
+    public DbSet<UtilizadorMedalha> UtilizadorMedalhas => Set<UtilizadorMedalha>();
+
     protected override void OnModelCreating(ModelBuilder builder)
     {
         builder.Entity<UserMovie>()
@@ -326,6 +329,39 @@ public class FilmAholicDbContext : IdentityDbContext<Utilizador>
             e.HasOne(x => x.Post)
              .WithMany()
              .HasForeignKey(x => x.PostId)
+             .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        // Configure Medalha entity
+        builder.Entity<Medalha>(e =>
+        {
+            e.ToTable("Medalhas");
+            e.HasKey(x => x.Id);
+            e.Property(x => x.Nome).IsRequired().HasMaxLength(200);
+            e.Property(x => x.Descricao).IsRequired().HasMaxLength(1000);
+            e.Property(x => x.IconeUrl).IsRequired().HasMaxLength(500);
+            e.Property(x => x.CriterioTipo).IsRequired().HasMaxLength(100);
+            e.HasIndex(x => x.Ativa);
+            
+            // Seed das medalhas base
+            e.HasData(MedalhaSeed.Medalhas);
+        });
+
+        // Configure UtilizadorMedalha entity (many-to-many relationship)
+        builder.Entity<UtilizadorMedalha>(e =>
+        {
+            e.ToTable("UtilizadorMedalhas");
+            e.HasKey(x => new { x.UtilizadorId, x.MedalhaId });
+            e.Property(x => x.DataConquista).HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+            e.HasOne(x => x.Utilizador)
+             .WithMany(u => u.UtilizadorMedalhas)
+             .HasForeignKey(x => x.UtilizadorId)
+             .OnDelete(DeleteBehavior.Cascade);
+
+            e.HasOne(x => x.Medalha)
+             .WithMany(m => m.UtilizadorMedalhas)
+             .HasForeignKey(x => x.MedalhaId)
              .OnDelete(DeleteBehavior.Cascade);
         });
     }

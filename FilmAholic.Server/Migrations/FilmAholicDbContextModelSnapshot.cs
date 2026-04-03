@@ -552,6 +552,199 @@ namespace FilmAholic.Server.Migrations
                     b.ToTable("Generos");
                 });
 
+            modelBuilder.Entity("FilmAholic.Server.Models.Medalha", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<bool>("Ativa")
+                        .HasColumnType("bit");
+
+                    b.Property<int>("CriterioQuantidade")
+                        .HasColumnType("int");
+
+                    b.Property<string>("CriterioTipo")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("Descricao")
+                        .IsRequired()
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<string>("IconeUrl")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<string>("Nome")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Ativa");
+
+                    b.ToTable("Medalhas", (string)null);
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            Ativa = true,
+                            CriterioQuantidade = 50,
+                            CriterioTipo = "filmesVistos",
+                            Descricao = "Viste 50 filmes.",
+                            IconeUrl = "/uploads/comunidades/icons/filmesVistos/50_FilmesVistos.png",
+                            Nome = "Explorador Cinéfilo"
+                        },
+                        new
+                        {
+                            Id = 2,
+                            Ativa = true,
+                            CriterioQuantidade = 100,
+                            CriterioTipo = "filmesVistos",
+                            Descricao = "Viste 100 filmes.",
+                            IconeUrl = "/uploads/comunidades/icons/filmesVistos/100_FilmesVistos.png",
+                            Nome = "Entusiasta do Cinema"
+                        },
+                        new
+                        {
+                            Id = 3,
+                            Ativa = true,
+                            CriterioQuantidade = 500,
+                            CriterioTipo = "filmesVistos",
+                            Descricao = "Viste 500 filmes.",
+                            IconeUrl = "/uploads/comunidades/icons/filmesVistos/500_FilmesVistos.png",
+                            Nome = "Mestre Cinéfilo"
+                        },
+                        new
+                        {
+                            Id = 4,
+                            Ativa = true,
+                            CriterioQuantidade = 1000,
+                            CriterioTipo = "filmesVistos",
+                            Descricao = "Viste 1000 filmes.",
+                            IconeUrl = "/uploads/comunidades/icons/filmesVistos/1000_FilmesVistos.png",
+                            Nome = "Lenda do Cinema"
+                        },
+                        new
+                        {
+                            Id = 5,
+                            Ativa = true,
+                            CriterioQuantidade = 10,
+                            CriterioTipo = "nivel",
+                            Descricao = "Alcançaste o nível 10.",
+                            IconeUrl = "/uploads/comunidades/icons/Nivel/Nivel_10.png",
+                            Nome = "Iniciante"
+                        },
+                        new
+                        {
+                            Id = 6,
+                            Ativa = true,
+                            CriterioQuantidade = 50,
+                            CriterioTipo = "nivel",
+                            Descricao = "Alcançaste o nível 50.",
+                            IconeUrl = "/uploads/comunidades/icons/Nivel/Nivel_50.png",
+                            Nome = "Experiente"
+                        },
+                        new
+                        {
+                            Id = 7,
+                            Ativa = true,
+                            CriterioQuantidade = 100,
+                            CriterioTipo = "nivel",
+                            Descricao = "Alcançaste o nível 100.",
+                            IconeUrl = "/uploads/comunidades/icons/Nivel/Nivel_100.png",
+                            Nome = "Mestre"
+                        },
+                        new
+                        {
+                            Id = 8,
+                            Ativa = true,
+                            CriterioQuantidade = 7,
+                            CriterioTipo = "desafiosDiarios",
+                            Descricao = "Completaste 7 desafios diários.",
+                            IconeUrl = "/uploads/comunidades/icons/DesafiosDiarios/DesafiosDiarios_7.png",
+                            Nome = "Amador dos Desafios"
+                        },
+                        new
+                        {
+                            Id = 9,
+                            Ativa = true,
+                            CriterioQuantidade = 30,
+                            CriterioTipo = "desafiosDiarios",
+                            Descricao = "Completaste 30 desafios diários.",
+                            IconeUrl = "/uploads/comunidades/icons/DesafiosDiarios/DesafiosDiarios_30.png",
+                            Nome = "Experiente em Desafios"
+                        },
+                        new
+                        {
+                            Id = 10,
+                            Ativa = true,
+                            CriterioQuantidade = 150,
+                            CriterioTipo = "desafiosDiarios",
+                            Descricao = "Completaste 150 desafios diários.",
+                            IconeUrl = "/uploads/comunidades/icons/DesafiosDiarios/DesafiosDiarios_150.png",
+                            Nome = "Mestre dos Desafios"
+                        },
+                        new
+                        {
+                            Id = 11,
+                            Ativa = true,
+                            CriterioQuantidade = 5,
+                            CriterioTipo = "higherOrLower",
+                            Descricao = "Acertaste 5 vezes seguidas no Higher or Lower.",
+                            IconeUrl = "/uploads/comunidades/icons/HigherOrLower/HigherOrLower_5.png",
+                            Nome = "Iniciante da Adivinhação"
+                        },
+                        new
+                        {
+                            Id = 12,
+                            Ativa = true,
+                            CriterioQuantidade = 10,
+                            CriterioTipo = "higherOrLower",
+                            Descricao = "Acertaste 10 vezes seguidas no Higher or Lower.",
+                            IconeUrl = "/uploads/comunidades/icons/HigherOrLower/HigherOrLower_10.png",
+                            Nome = "Experiente da Adivinhação"
+                        },
+                        new
+                        {
+                            Id = 13,
+                            Ativa = true,
+                            CriterioQuantidade = 25,
+                            CriterioTipo = "higherOrLower",
+                            Descricao = "Acertaste 25 vezes seguidas no Higher or Lower.",
+                            IconeUrl = "/uploads/comunidades/icons/HigherOrLower/HigherOrLower_25.png",
+                            Nome = "Mestre da Adivinhação"
+                        },
+                        new
+                        {
+                            Id = 14,
+                            Ativa = true,
+                            CriterioQuantidade = 1,
+                            CriterioTipo = "criarComunidade",
+                            Descricao = "Criaste a tua primeira comunidade.",
+                            IconeUrl = "/uploads/comunidades/icons/Comunidades/CriarComunidade.png",
+                            Nome = "Fundador"
+                        },
+                        new
+                        {
+                            Id = 15,
+                            Ativa = true,
+                            CriterioQuantidade = 1,
+                            CriterioTipo = "juntarComunidade",
+                            Descricao = "Juntaste-te a uma comunidade.",
+                            IconeUrl = "/uploads/comunidades/icons/Comunidades/JuntarComunidade.png",
+                            Nome = "Participante"
+                        });
+                });
+
             modelBuilder.Entity("FilmAholic.Server.Models.MovieRating", b =>
                 {
                     b.Property<int>("Id")
@@ -786,6 +979,9 @@ namespace FilmAholic.Server.Migrations
                     b.Property<DateTime>("Data")
                         .HasColumnType("datetime2");
 
+                    b.Property<bool>("Favorito")
+                        .HasColumnType("bit");
+
                     b.Property<int>("FilmeId")
                         .HasColumnType("int");
 
@@ -937,6 +1133,26 @@ namespace FilmAholic.Server.Migrations
                     b.HasIndex("GeneroId");
 
                     b.ToTable("UtilizadorGeneros");
+                });
+
+            modelBuilder.Entity("FilmAholic.Server.Models.UtilizadorMedalha", b =>
+                {
+                    b.Property<string>("UtilizadorId")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<int>("MedalhaId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("DataConquista")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+                    b.HasKey("UtilizadorId", "MedalhaId");
+
+                    b.HasIndex("MedalhaId");
+
+                    b.ToTable("UtilizadorMedalhas", (string)null);
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole", b =>
@@ -1314,6 +1530,25 @@ namespace FilmAholic.Server.Migrations
                     b.Navigation("Utilizador");
                 });
 
+            modelBuilder.Entity("FilmAholic.Server.Models.UtilizadorMedalha", b =>
+                {
+                    b.HasOne("FilmAholic.Server.Models.Medalha", "Medalha")
+                        .WithMany("UtilizadorMedalhas")
+                        .HasForeignKey("MedalhaId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("FilmAholic.Server.Models.Utilizador", "Utilizador")
+                        .WithMany("UtilizadorMedalhas")
+                        .HasForeignKey("UtilizadorId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Medalha");
+
+                    b.Navigation("Utilizador");
+                });
+
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
                 {
                     b.HasOne("Microsoft.AspNetCore.Identity.IdentityRole", null)
@@ -1384,9 +1619,16 @@ namespace FilmAholic.Server.Migrations
                     b.Navigation("Utilizadores");
                 });
 
+            modelBuilder.Entity("FilmAholic.Server.Models.Medalha", b =>
+                {
+                    b.Navigation("UtilizadorMedalhas");
+                });
+
             modelBuilder.Entity("FilmAholic.Server.Models.Utilizador", b =>
                 {
                     b.Navigation("GenerosFavoritos");
+
+                    b.Navigation("UtilizadorMedalhas");
                 });
 #pragma warning restore 612, 618
         }

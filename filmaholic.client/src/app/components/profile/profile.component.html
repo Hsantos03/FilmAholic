@@ -90,7 +90,7 @@
         <li class="menu-item" [class.active]="activeSection === 'overview'" (click)="showOverview()">Preferências</li>
         <li class="menu-item" [class.active]="activeSection === 'statistics'" (click)="showStatistics()">Estatísticas</li>
         <li class="menu-item" (click)="goToNotificacoesSettings()">Definições de notificações</li>
-        <li>Conquistas</li>
+        <li class="menu-item" [class.active]="activeSection === 'conquistas'" (click)="showConquistas()">Conquistas</li>
         <li class="logout" (click)="logout()">Terminar sessão</li>
         <li class="logout" (click)="openDeleteConfirm()">Apagar conta</li>
       </ul>
@@ -832,7 +832,89 @@
       <p class="chart-empty" *ngIf="!isLoadingCharts && !chartData">Sem dados para mostrar.</p>
     </ng-container>
 
-  </section>
+    <!-- Conquistas -->
+    <ng-container *ngIf="activeSection === 'conquistas'">
+      <div class="conquistas-view">
+
+        <!-- Tabs -->
+        <div class="conquistas-tabs">
+          <button class="conquistas-tab" 
+                  [class.active]="conquistasTab === 'minhas'"
+                  (click)="conquistasTab = 'minhas'">
+            🏅 Minhas Medalhas
+          </button>
+          <button class="conquistas-tab" 
+                  [class.active]="conquistasTab === 'todas'"
+                  (click)="conquistasTab = 'todas'">
+            🎯 Todas as Medalhas
+          </button>
+        </div>
+
+        <!-- Tab: Minhas Medalhas -->
+        <div *ngIf="conquistasTab === 'minhas'">
+          <div *ngIf="medalhasConquistadas.length === 0" class="conquistas-empty">
+            <span>Ainda não conquistaste nenhuma medalha.</span>
+            <small>Continua a usar a plataforma para desbloquear conquistas!</small>
+          </div>
+
+          <div class="medalhas-lista" *ngIf="medalhasConquistadas.length > 0">
+            <div class="medalha-card-row conquistada" *ngFor="let um of medalhasConquistadas">
+              
+              <div class="medalha-icone-lado">
+                <img *ngIf="um.medalha?.iconeUrl" 
+                     [src]="API_URL + um.medalha.iconeUrl" 
+                     [alt]="um.medalha?.nome">
+                <span *ngIf="!um.medalha?.iconeUrl">🏅</span>
+              </div>
+
+              <div class="medalha-info-centro">
+                <span class="medalha-nome">{{ um.medalha?.nome || 'Medalha' }}</span>
+                <span class="medalha-desc">{{ um.medalha?.descricao }}</span>
+                <span class="medalha-data" style="font-size: 0.75rem; color: #888; margin-top: 4px;">
+                  Conquistada em {{ um.dataConquista | date:'dd/MM/yyyy' }}
+                </span>
+              </div>
+
+              <div class="medalha-status-direita">
+                <div class="status-badge">✅ Conquistada</div>
+              </div>
+
+            </div>
+          </div>
+        </div>
+
+        <!-- Tab: Todas as Medalhas -->
+        <div *ngIf="conquistasTab === 'todas'">
+  <div class="medalhas-lista"> 
+    <div class="medalha-card-row" *ngFor="let m of todasMedalhas" [class.conquistada]="m.conquistada">
+  
+  <div class="medalha-icone-lado">
+    <img [src]="API_URL + m.iconeUrl" [alt]="m.nome">
+  </div>
+
+  <div class="medalha-info-centro">
+    <span class="medalha-nome">{{ m.nome }}</span>
+    <span class="medalha-desc">{{ m.descricao }}</span>
+    
+    <!-- Progress bar for non-conquered medals -->
+    <div class="medalha-progress-mini" *ngIf="!m.conquistada && m.progresso !== undefined">
+      <div class="progress-info-mini">
+        <span class="progress-text-mini">{{ m.progresso }}/{{ getMedalThreshold(m.nome) }}</span>
+      </div>
+      <div class="progress-bar-mini">
+        <div class="progress-fill-mini" [style.width.%]="getMedalProgressPercentage(m.progresso, getMedalThreshold(m.nome))"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="medalha-status-direita">
+    <div class="status-badge">
+       {{ m.conquistada ? '✅ Conquistada' : '🔒 Por conquistar' }}
+    </div>
+  </div>
+
+</div>
+  </div>
 </div>
 
 <!-- EDITAR a Conta (Username e Bio) -->

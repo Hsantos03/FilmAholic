@@ -15,11 +15,13 @@ namespace FilmAholic.Server.Controllers
     {
         private readonly FilmAholicDbContext _context;
         private readonly IMovieService _movieService;
+        private readonly MedalhaService _medalhaService;
 
-        public UserMoviesController(FilmAholicDbContext context, IMovieService movieService)
+        public UserMoviesController(FilmAholicDbContext context, IMovieService movieService, MedalhaService medalhaService)
         {
             _context = context;
             _movieService = movieService;
+            _medalhaService = medalhaService;
         }
 
         [HttpPost("add")]
@@ -99,6 +101,13 @@ namespace FilmAholic.Server.Controllers
             if (shouldProcessDesafio)
             {
                 await HandleDesafioProgressAsync(userId, dbFilme);
+                
+                var novasMedalhas = await _medalhaService.VerificarConquistasFilmeVisto(userId);
+                
+                if (novasMedalhas.Any())
+                {
+                    // Console.WriteLine($"User {userId} unlocked {novasMedalhas.Count} new medals!");
+                }
             }
 
             return Ok();
@@ -608,6 +617,9 @@ namespace FilmAholic.Server.Controllers
                     if (user != null)
                     {
                         user.XP += desafio.Xp;
+                        await _context.SaveChangesAsync();
+                        
+                        await _medalhaService.VerificarMedalhasNivel(userId);
                     }
                 }
             }
