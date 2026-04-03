@@ -60,6 +60,16 @@
     <div *ngIf="isLoading" class="state">A carregar comunidade…</div>
     <div *ngIf="error" class="state error">{{ error }}</div>
 
+    <!-- Medal notifications -->
+    <div class="medal-notifications" *ngIf="medalSuccessMessage || medalErrorMessage">
+      <div class="state success" *ngIf="medalSuccessMessage">
+        {{ medalSuccessMessage }}
+      </div>
+      <div class="state error" *ngIf="medalErrorMessage">
+        {{ medalErrorMessage }}
+      </div>
+    </div>
+
     <div *ngIf="comunidade" class="comunidade-card">
       <div class="banner" *ngIf="comunidade.bannerUrl" [style.background-image]="'url(' + comunidade.bannerUrl + ')'"></div>
       <div class="banner banner--empty" *ngIf="!comunidade.bannerUrl" aria-hidden="true"></div>

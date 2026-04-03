@@ -133,5 +133,86 @@ namespace FilmAholic.Server.Controllers
                 return StatusCode(500, new { message = "Erro interno", error = ex.Message });
             }
         }
+
+        // POST: api/medalhas/check-comunidade
+        [HttpPost("check-comunidade")]
+        public async Task<IActionResult> CheckComunidadeMedals()
+        {
+            var userId = _userManager.GetUserId(User);
+            if (userId == null) return Unauthorized();
+
+            try
+            {
+                var novasMedalhas = await _medalhaService.VerificarConquistasComunidades(userId);
+
+                return Ok(new {
+                    novasMedalhas = novasMedalhas.Count,
+                    medalhas = novasMedalhas.Select(m => new {
+                        id = m.Id,
+                        nome = m.Nome,
+                        iconeUrl = m.IconeUrl
+                    })
+                });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "Erro ao verificar medalhas de comunidade", error = ex.Message });
+            }
+        }
+
+        // POST: api/medalhas/check-desafios
+        [HttpPost("check-desafios")]
+        public async Task<IActionResult> CheckDesafiosMedals()
+        {
+            var userId = _userManager.GetUserId(User);
+            if (userId == null) return Unauthorized();
+
+            try
+            {
+                var novasMedalhas = await _medalhaService.VerificarConquistas(userId, "desafiosDiarios");
+                
+                var currentProgress = await _medalhaService.GetCurrentProgress(userId, "desafiosDiarios");
+
+                return Ok(new {
+                    novasMedalhas = novasMedalhas.Count,
+                    medalhas = novasMedalhas.Select(m => new {
+                        id = m.Id,
+                        nome = m.Nome,
+                        iconeUrl = m.IconeUrl
+                    }),
+                    progress = currentProgress
+                });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "Erro ao verificar medalhas de desafios", error = ex.Message });
+            }
+        }
+
+        // POST: api/medalhas/check-higher-or-lower
+        [HttpPost("check-higher-or-lower")]
+        public async Task<IActionResult> CheckHigherOrLowerMedals()
+        {
+            var userId = _userManager.GetUserId(User);
+            if (userId == null) return Unauthorized();
+
+            try
+            {
+                var novasMedalhas = await _medalhaService.VerificarConquistas(userId, "higherOrLower");
+
+                return Ok(new {
+                    novasMedalhas = novasMedalhas.Count,
+                    medalhas = novasMedalhas.Select(m => new {
+                        id = m.Id,
+                        nome = m.Nome,
+                        iconeUrl = m.IconeUrl
+                    })
+                });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "Erro ao verificar medalhas de higher-or-lower", error = ex.Message });
+            }
+        }
     } 
 }

@@ -355,6 +355,16 @@
         </div>
       </div>
 
+      <!-- Medal notifications -->
+      <div class="medal-notifications" *ngIf="medalSuccessMessage || medalErrorMessage">
+        <div class="state success" *ngIf="medalSuccessMessage">
+          {{ medalSuccessMessage }}
+        </div>
+        <div class="state error" *ngIf="medalErrorMessage">
+          {{ medalErrorMessage }}
+        </div>
+      </div>
+
       <div class="endgame-actions">
         <button class="start-btn" (click)="startGame(gameCategory ?? 'films')">
           <span>Jogar de Novo</span>

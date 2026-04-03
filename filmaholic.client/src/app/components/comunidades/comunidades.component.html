@@ -105,6 +105,16 @@
       <div class="state" *ngIf="isLoading">A carregar comunidades…</div>
       <div class="state error" *ngIf="!isLoading && error">{{ error }}</div>
 
+      <!-- Medal notifications -->
+      <div class="medal-notifications" *ngIf="medalSuccessMessage || medalErrorMessage">
+        <div class="state success" *ngIf="medalSuccessMessage">
+          {{ medalSuccessMessage }}
+        </div>
+        <div class="state error" *ngIf="medalErrorMessage">
+          {{ medalErrorMessage }}
+        </div>
+      </div>
+
       <div class="grid" *ngIf="!isLoading && comunidades.length">
         <article class="card" *ngFor="let c of comunidades" (click)="goToCommunity(c)" role="button" tabindex="0">
           <div class="card-banner" *ngIf="c.bannerUrl" [style.background-image]="'url(' + c.bannerUrl + ')'"></div>

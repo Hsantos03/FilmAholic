@@ -1456,7 +1456,6 @@ export class ProfileComponent implements OnInit {
     this.http.get<any[]>(`${this.apiMedalhas}/pessoal`, { withCredentials: true })
       .subscribe({
         next: (res) => {
-          console.log('Dados recebidos:', res);
           this.medalhasConquistadas = res || [];
         },
         error: (err) => {
@@ -1470,5 +1469,30 @@ export class ProfileComponent implements OnInit {
         next: (res) => (this.todasMedalhas = res || []),
         error: () => (this.todasMedalhas = [])
       });
+  }
+
+  getMedalThreshold(medalName: string): number {
+    const thresholds: { [key: string]: number } = {
+      'Amador dos Desafios': 7,
+      'Experiente em Desafios': 30,
+      'Mestre dos Desafios': 150,
+      'Iniciante da Adivinhação': 5,
+      'Experiente da Adivinhação': 10,
+      'Mestre da Adivinhação': 25,
+      'Fundador': 1,
+      'Participante': 1,
+      'Explorador Cinéfilo': 50,
+      'Entusiasta do Cinema': 100,
+      'Mestre Cinéfilo': 500,
+      'Lenda do Cinema': 1000,
+      'Iniciante': 10,
+      'Experiente': 50,
+      'Mestre': 100
+    };
+    return thresholds[medalName] || 1;
+  }
+
+  getMedalProgressPercentage(current: number, threshold: number): number {
+    return Math.min((current / threshold) * 100, 100);
   }
 }

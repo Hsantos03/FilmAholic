@@ -526,6 +526,40 @@
     {{ feedbackDesafio || (desafioDoDia.acertou ? 'Já respondeste corretamente hoje! 🎉' : 'Já respondeste a este desafio (Incorreto).') }}
   </div>
 
+  <!-- Medal notifications -->
+  <div class="medal-notifications" *ngIf="medalSuccessMessage || medalErrorMessage || medalProgress.target > 0">
+    <div class="state success" *ngIf="medalSuccessMessage">
+      {{ medalSuccessMessage }}
+      <div class="medal-progress" *ngIf="medalProgress.target > 0">
+        <div class="progress-info">
+          <span class="progress-text">{{ medalProgress.current }}/{{ medalProgress.target }} dias</span>
+          <span class="next-medal" *ngIf="medalProgress.nextMedalName !== 'Todas conquistadas!'">Próxima: {{ medalProgress.nextMedalName }}</span>
+          <span class="next-medal" *ngIf="medalProgress.nextMedalName === 'Todas conquistadas!'">🎉 Todas as medalhas conquistadas!</span>
+        </div>
+        <div class="progress-bar">
+          <div class="progress-fill" [style.width.%]="medalProgress.percentage"></div>
+        </div>
+      </div>
+    </div>
+    <div class="state error" *ngIf="medalErrorMessage">
+      {{ medalErrorMessage }}
+    </div>
+    <!-- Progress only (no medal message) -->
+    <div class="state progress-only" *ngIf="!medalSuccessMessage && !medalErrorMessage && medalProgress.target > 0">
+      <div class="progress-title">Progresso dos Desafios Diários</div>
+      <div class="medal-progress">
+        <div class="progress-info">
+          <span class="progress-text">{{ medalProgress.current }}/{{ medalProgress.target }} dias</span>
+          <span class="next-medal" *ngIf="medalProgress.nextMedalName !== 'Todas conquistadas!'">Próxima: {{ medalProgress.nextMedalName }}</span>
+          <span class="next-medal" *ngIf="medalProgress.nextMedalName === 'Todas conquistadas!'">🎉 Todas as medalhas conquistadas!</span>
+        </div>
+        <div class="progress-bar">
+          <div class="progress-fill" [style.width.%]="medalProgress.percentage"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <div class="quiz-footer">
     <div class="quiz-reward-wrapper">
       <span class="quiz-reward">✨ Recompensa: {{ desafioDoDia.xp }} XP</span>

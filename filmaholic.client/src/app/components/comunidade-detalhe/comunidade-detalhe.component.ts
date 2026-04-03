@@ -19,6 +19,11 @@ export class ComunidadeDetalheComponent implements OnInit, OnDestroy {
   isLoading = false;
   error = '';
 
+  // Medal notification properties
+  medalSuccessMessage = '';
+  medalErrorMessage = '';
+  private readonly apiMedalhas = environment.apiBaseUrl ? `${environment.apiBaseUrl}/api/medalhas` : '/api/medalhas';
+
   // ── Ranking ───
   activeTab: 'posts' | 'membros' | 'ranking' = 'posts';
 
@@ -62,6 +67,11 @@ export class ComunidadeDetalheComponent implements OnInit, OnDestroy {
   membroToKick: MembroDto | null = null;
   isKicking = false;
   kickError = '';
+
+  clearMedalMessages(): void {
+    this.medalSuccessMessage = '';
+    this.medalErrorMessage = '';
+  }
 
   // Adiciona estas variáveis na classe
   editingPost: PostDto | null = null;
@@ -179,6 +189,18 @@ export class ComunidadeDetalheComponent implements OnInit, OnDestroy {
         this.isMembro = true;
         if (this.comunidade) this.comunidade.membrosCount = (this.comunidade.membrosCount ?? 0) + 1;
         this.loadMembros();
+
+        this.http.post<any>(`${this.apiMedalhas}/check-comunidade`, {}, { withCredentials: true })
+          .subscribe({
+            next: (medalRes) => {
+              if (medalRes.novasMedalhas > 0) {
+                this.medalSuccessMessage = `Ganhaste a medalha: ${medalRes.medalhas[0].nome}! 🏆`;
+              }
+            },
+            error: (err) => {
+              this.medalErrorMessage = 'Erro ao verificar medalhas.';
+            }
+          });
       },
       error: () => { this.isJuntando = false; }
     });

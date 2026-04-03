@@ -895,6 +895,16 @@
   <div class="medalha-info-centro">
     <span class="medalha-nome">{{ m.nome }}</span>
     <span class="medalha-desc">{{ m.descricao }}</span>
+    
+    <!-- Progress bar for non-conquered medals -->
+    <div class="medalha-progress-mini" *ngIf="!m.conquistada && m.progresso !== undefined">
+      <div class="progress-info-mini">
+        <span class="progress-text-mini">{{ m.progresso }}/{{ getMedalThreshold(m.nome) }}</span>
+      </div>
+      <div class="progress-bar-mini">
+        <div class="progress-fill-mini" [style.width.%]="getMedalProgressPercentage(m.progresso, getMedalThreshold(m.nome))"></div>
+      </div>
+    </div>
   </div>
 
   <div class="medalha-status-direita">

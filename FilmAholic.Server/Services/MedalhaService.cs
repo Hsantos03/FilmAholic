@@ -94,10 +94,14 @@ namespace FilmAholic.Server.Services
                 "favoritos" => await _context.UserMovies.CountAsync(f => f.UtilizadorId == userId && f.Favorito),
                 "filmesVistos" => await _context.UserMovies.CountAsync(f => f.UtilizadorId == userId && f.JaViu),
                 "nivel" => await _context.Users.Where(u => u.Id == userId).Select(u => u.Nivel).FirstOrDefaultAsync(),
-                "desafiosDiarios" => await _context.UserDesafios.CountAsync(ud => ud.UtilizadorId == userId && ud.Respondido && ud.Acertou),
-                "higherOrLower" => await _context.GameHistories.CountAsync(gh => gh.UtilizadorId == userId),
+                "desafiosDiarios" => await _context.UserDesafios
+                .Where(ud => ud.UtilizadorId == userId && ud.Respondido && ud.Acertou)
+                .Select(ud => ud.DataAtualizacao.Date)
+                .Distinct()
+                .CountAsync(),
+                "higherOrLower" => await GetConsecutiveHigherOrLowerWins(userId),
                 "criarComunidade" => await _context.ComunidadeMembros.CountAsync(cm => cm.UtilizadorId == userId && cm.Role == "Admin"),
-                "juntarComunidade" => await _context.ComunidadeMembros.CountAsync(cm => cm.UtilizadorId == userId),
+                "juntarComunidade" => await _context.ComunidadeMembros.CountAsync(cm => cm.UtilizadorId == userId && cm.Role != "Admin"),
                 _ => 0
             };
 
@@ -145,27 +149,82 @@ namespace FilmAholic.Server.Services
                 .ToListAsync<object>();
         }
 
+        private async Task<int> GetConsecutiveHigherOrLowerWins(string userId)
+        {
+            return await _context.GameHistories
+                .Where(gh => gh.UtilizadorId == userId)
+                .MaxAsync(gh => (int?)gh.Score ?? 0);
+        }
+
+        public async Task<int> GetCurrentProgress(string userId, string criterioTipo)
+        {
+            return criterioTipo switch
+            {
+                "desafiosDiarios" => await _context.UserDesafios
+                    .Where(ud => ud.UtilizadorId == userId && ud.Respondido && ud.Acertou)
+                    .Select(ud => ud.DataAtualizacao.Date)
+                    .Distinct()
+                    .CountAsync(),
+                "higherOrLower" => await GetConsecutiveHigherOrLowerWins(userId),
+                "criarComunidade" => await _context.ComunidadeMembros.CountAsync(cm => cm.UtilizadorId == userId && cm.Role == "Admin"),
+                "juntarComunidade" => await _context.ComunidadeMembros.CountAsync(cm => cm.UtilizadorId == userId && cm.Role != "Admin"),
+                "filmesVistos" => await _context.UserMovies.CountAsync(f => f.UtilizadorId == userId && f.JaViu),
+                "favoritos" => await _context.UserMovies.CountAsync(f => f.UtilizadorId == userId && f.Favorito),
+                "avaliacoes" => await _context.MovieRatings.CountAsync(a => a.UserId == userId),
+                "comentarios" => await _context.Comments.CountAsync(c => c.UserId == userId),
+                "nivel" => await _context.Users.Where(u => u.Id == userId).Select(u => u.Nivel).FirstOrDefaultAsync(),
+                _ => 0
+            };
+        }
+
         public async Task<List<MedalhaProgressoDto>> GetTodasComProgresso(string userId)
         {
-            var todas = await _context.Medalhas.Where(m => m.Ativa).ToListAsync();
+            try
+            {
+                var todas = await _context.Medalhas.Where(m => m.Ativa).ToListAsync();
 
-            var conquistadas = await _context.UtilizadorMedalhas
-                .Where(um => um.UtilizadorId == userId)
-                .Include(um => um.Medalha)
-                .ToListAsync();
+                var conquistadas = await _context.UtilizadorMedalhas
+                    .Where(um => um.UtilizadorId == userId)
+                    .Include(um => um.Medalha)
+                    .ToListAsync();
 
-            return todas.Select(m => {
-                var conquistada = conquistadas.FirstOrDefault(c => c.MedalhaId == m.Id);
-                return new MedalhaProgressoDto
+                var result = new List<MedalhaProgressoDto>();
+                
+                foreach (var m in todas)
                 {
-                    Id = m.Id,
-                    Nome = m.Nome,
-                    Descricao = m.Descricao,
-                    IconeUrl = m.IconeUrl,
-                    Conquistada = conquistada != null,
-                    DataConquista = conquistada?.DataConquista
-                };
-            }).ToList();
+                    var conquistada = conquistadas.FirstOrDefault(c => c.MedalhaId == m.Id);
+                    var progresso = 0;
+                    
+                    try
+                    {
+                        progresso = await GetCurrentProgress(userId, m.CriterioTipo);
+                    }
+                    catch (Exception ex)
+                    {
+                        // Log error but continue with 0 progress
+                        Console.WriteLine($"Error getting progress for medal {m.Nome} ({m.CriterioTipo}): {ex.Message}");
+                        progresso = 0;
+                    }
+                    
+                    result.Add(new MedalhaProgressoDto
+                    {
+                        Id = m.Id,
+                        Nome = m.Nome,
+                        Descricao = m.Descricao,
+                        IconeUrl = m.IconeUrl,
+                        Conquistada = conquistada != null,
+                        DataConquista = conquistada?.DataConquista,
+                        Progresso = progresso
+                    });
+                }
+
+                return result;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error in GetTodasComProgresso: {ex.Message}");
+                throw;
+            }
         }
     }
 }

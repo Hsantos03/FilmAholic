@@ -4,6 +4,8 @@ import { FilmesService, Filme, RatingsDto, ActorDto } from '../../services/filme
 import { GameService, GameHistoryEntry, SaveResultResponse, GameStats } from '../../services/game.service';
 import { MenuService } from '../../services/menu.service';
 import { firstValueFrom } from 'rxjs';
+import { HttpClient } from '@angular/common/http';
+import { environment } from '../../../environments/environment';
 
 export type GameDifficulty = 'easy' | 'medium' | 'hard';
 
@@ -50,6 +52,10 @@ export class HigherOrLowerComponent implements OnInit {
   isLoadingPair = false;
   notifier: 'correct' | 'wrong' | null = null;
 
+  medalSuccessMessage = '';
+  medalErrorMessage = '';
+  private readonly apiMedalhas = environment.apiBaseUrl ? `${environment.apiBaseUrl}/api/medalhas` : '/api/medalhas';
+
   score = 0;
   rounds: any[] = [];
 
@@ -93,11 +99,17 @@ export class HigherOrLowerComponent implements OnInit {
     private route: ActivatedRoute,
     private filmesService: FilmesService,
     private gameService: GameService,
-    public menuService: MenuService
+    public menuService: MenuService,
+    private http: HttpClient
   ) { }
 
   toggleMenu(): void {
     this.menuService.toggle();
+  }
+
+  clearMedalMessages(): void {
+    this.medalSuccessMessage = '';
+    this.medalErrorMessage = '';
   }
 
   goToDashboardDesafios(): void {
@@ -199,6 +211,7 @@ export class HigherOrLowerComponent implements OnInit {
     this.resultWinner = null;
     this.chosenSide = null;
     this.nextPair = undefined;
+    this.clearMedalMessages();
     this.holRatingsCache.clear();
     this.holActivePool = [];
     this.holUsedFilmPairKeys.clear();
@@ -806,13 +819,26 @@ export class HigherOrLowerComponent implements OnInit {
     if (userId) {
       this.gameService.saveResult(this.score, roundsJson, currentCategory).subscribe({
         next: (res) => {
-          console.log('✅ [SUCESSO] Pontuação guardada na Base de Dados!', res);
           if (this.endStats) {
             this.endStats.xpGanho = res.xpGanho;
             this.endStats.xpTotal = res.xpTotal;
             this.endStats.nivel = res.nivel;
             this.endStats.xpDiarioRestante = res.xpDiarioRestante;
           }
+          
+          // Check for higher-or-lower medals after successful game save
+          this.http.post<any>(`${this.apiMedalhas}/check-higher-or-lower`, {}, { withCredentials: true })
+            .subscribe({
+              next: (medalRes) => {
+                if (medalRes.novasMedalhas > 0) {
+                  this.medalSuccessMessage = `Ganhaste a medalha: ${medalRes.medalhas[0].nome}! 🏆`;
+                }
+              },
+              error: (err) => {
+                console.error('Error checking higher-or-lower medals:', err);
+                this.medalErrorMessage = 'Erro ao verificar medalhas.';
+              }
+            });
         },
         error: (err) => {
           console.error('❌ [ERRO] Falha ao gravar pontuação na API. A guardar localmente...', err);

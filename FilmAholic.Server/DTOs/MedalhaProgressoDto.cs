@@ -8,5 +8,6 @@ namespace FilmAholic.Server.DTOs
         public string IconeUrl { get; set; } = string.Empty;
         public bool Conquistada { get; set; }
         public DateTime? DataConquista { get; set; }
+        public int Progresso { get; set; }
     }
 }
