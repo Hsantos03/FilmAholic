@@ -168,7 +168,6 @@ export class TopbarActionsComponent implements OnInit, OnDestroy {
   }
 
   // ── Existing methods below unchanged ──
-
   get hasResumoItems(): boolean {
     const u = this.resumoFeed?.unread?.length ?? 0;
     const r = this.resumoFeed?.read?.length ?? 0;

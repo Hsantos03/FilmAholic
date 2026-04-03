@@ -34,7 +34,7 @@ public static class QueroVerEstreiaNotifier
             await db.SaveChangesAsync(ct);
         }
 
-        if (!prefs.NovaEstreiaAtiva)
+        if (!prefs.FilmeDisponivelAtiva)
             return 0;
 
         var nowUtc = DateTime.UtcNow;
@@ -79,8 +79,8 @@ public static class QueroVerEstreiaNotifier
                 FilmeId = filme.Id,
                 Tipo = Tipo,
                 Corpo = estreou
-                    ? $"{filme.Titulo} — disponível em cinema."
-                    : $"{filme.Titulo} — disponível em streaming.",
+                    ? $"🎬 {filme.Titulo} estreou hoje nos cinema!"
+                    : $"📺 {filme.Titulo} já está disponível em streaming!",
                 CriadaEm = nowUtc
             });
             added++;

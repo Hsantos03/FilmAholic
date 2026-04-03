@@ -12,7 +12,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace FilmAholic.Server.Migrations
 {
     [DbContext(typeof(FilmAholicDbContext))]
-    [Migration("20260403195533_FilmAholicMigrations")]
+    [Migration("20260403234341_FilmAholicMigrations")]
     partial class FilmAholicMigrations
     {
         /// <inheritdoc />
@@ -670,6 +670,9 @@ namespace FilmAholic.Server.Migrations
 
                     b.Property<DateTime>("AtualizadaEm")
                         .HasColumnType("datetime2");
+
+                    b.Property<bool>("FilmeDisponivelAtiva")
+                        .HasColumnType("bit");
 
                     b.Property<bool>("NovaEstreiaAtiva")
                         .HasColumnType("bit");

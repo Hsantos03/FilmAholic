@@ -22,7 +22,8 @@ export class NotificacoesConfigComponent implements OnInit {
     novaEstreiaFrequencia: 'Diaria',
     resumoEstatisticasAtiva: true,
     resumoEstatisticasFrequencia: 'Semanal',
-    reminderJogoAtiva: true
+    reminderJogoAtiva: true,
+    filmeDisponivelAtiva: true
   };
 
   readonly frequencias: Array<PreferenciasNotificacaoDto['novaEstreiaFrequencia']> = [
@@ -63,7 +64,8 @@ export class NotificacoesConfigComponent implements OnInit {
           novaEstreiaFrequencia: (res?.novaEstreiaFrequencia as any) || 'Diaria',
           resumoEstatisticasAtiva: res?.resumoEstatisticasAtiva !== false,
           resumoEstatisticasFrequencia: (res?.resumoEstatisticasFrequencia as any) || 'Semanal',
-          reminderJogoAtiva: res?.reminderJogoAtiva !== false
+          reminderJogoAtiva: res?.reminderJogoAtiva !== false,
+          filmeDisponivelAtiva: res?.filmeDisponivelAtiva !== false
         };
         this.isLoading = false;
       },

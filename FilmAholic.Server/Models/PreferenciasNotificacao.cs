@@ -22,6 +22,9 @@ public class PreferenciasNotificacao
     /// Reminder para jogar Higher or Lower.
     public bool ReminderJogoAtiva { get; set; } = true;
 
+    /// Ativa/desativa notificações de filmes da lista "Quero ver" que estrearam.
+    public bool FilmeDisponivelAtiva { get; set; } = true;
+
     public DateTime AtualizadaEm { get; set; } = DateTime.UtcNow;
 }
 

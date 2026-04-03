@@ -46,6 +46,7 @@ namespace FilmAholic.Server.Controllers
                 NovaEstreiaFrequencia = "Diaria",
                 ResumoEstatisticasAtiva = true,
                 ResumoEstatisticasFrequencia = "Semanal",
+                FilmeDisponivelAtiva = true,
                 AtualizadaEm = DateTime.UtcNow
             };
 
@@ -1236,62 +1237,6 @@ namespace FilmAholic.Server.Controllers
             return NoContent();
         }
 
-        [HttpPost("verificar-quero-ver")]
-        public async Task<IActionResult> VerificarQueroVer()
-        {
-            var userId = GetUserId();
-            if (string.IsNullOrEmpty(userId)) return Unauthorized();
-
-            var prefs = await GetOrCreatePreferenciasNotificacaoAsync(userId);
-
-            if (!prefs.NovaEstreiaAtiva)
-            {
-                return Ok("Notificações desativadas");
-            }
-
-            var nowUtc = DateTime.UtcNow;
-
-            var queroVer = await _context.UserMovies
-                .Where(um => um.UtilizadorId == userId && um.JaViu == false)
-                .Include(um => um.Filme)
-                .Select(um => um.Filme)
-                .ToListAsync();
-
-            foreach (var filme in queroVer)
-            {
-                if (string.IsNullOrEmpty(filme.TmdbId)) continue;
-
-                int tmdbId = int.Parse(filme.TmdbId);
-
-                bool estreou = filme.ReleaseDate.HasValue &&
-                               filme.ReleaseDate.Value <= nowUtc;
-
-                bool streaming = !estreou && await _movieService.IsAvailableInStreamingAsync(tmdbId);
-
-                if (!estreou && !streaming) continue;
-
-                var alreadyNotified = await _context.Notificacoes
-                    .AnyAsync(n =>
-                        n.UtilizadorId == userId &&
-                        n.FilmeId == filme.Id &&
-                        n.Tipo == TipoFilmeDisponivel);
-
-                if (alreadyNotified) continue;
-
-                _context.Notificacoes.Add(new Notificacao
-                {
-                    UtilizadorId = userId,
-                    FilmeId = filme.Id,
-                    Tipo = TipoFilmeDisponivel,
-                    Corpo = estreou
-                        ? $"{filme.Titulo} — disponível em cinema."
-                        : $"{filme.Titulo} — disponível em streaming.",
-                    CriadaEm = nowUtc
-                });
-            }
-            await _context.SaveChangesAsync();
-            return Ok("Verificação concluída");
-        }
 
         public class FilmeDisponivelFeedItemDto
         {
@@ -1344,6 +1289,8 @@ namespace FilmAholic.Server.Controllers
             public string? ResumoEstatisticasFrequencia { get; set; }
 
             public bool ReminderJogoAtiva { get; set; } = true;
+
+            public bool FilmeDisponivelAtiva { get; set; } = true;
         }
 
         public class ResumoEstatisticasFeedItemDto

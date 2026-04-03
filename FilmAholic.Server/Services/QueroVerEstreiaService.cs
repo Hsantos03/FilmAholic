@@ -3,9 +3,7 @@ using Microsoft.Extensions.Options;
 
 namespace FilmAholic.Server.Services;
 
-/// <summary>
-/// Verifica periodicamente se filmes na lista "Quero Ver" já estrearam / ficaram em streaming e cria notificações <see cref="QueroVerEstreiaNotifier.Tipo"/>.
-/// </summary>
+/// Verifica periodicamente se filmes na lista "Quero Ver" já estrearam / ficaram em streaming e cria notificações.
 public sealed class QueroVerEstreiaService : BackgroundService
 {
     private readonly IServiceScopeFactory _scopeFactory;

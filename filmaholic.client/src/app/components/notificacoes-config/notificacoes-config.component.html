@@ -51,6 +51,14 @@
 
         <div class="row">
           <label class="switch-row">
+            <input type="checkbox" [(ngModel)]="prefs.filmeDisponivelAtiva" />
+            <span>Receber notificações quando filmes da minha lista "Quero ver" estrearem</span>
+          </label>
+        </div>
+        <p class="hint">Recebes uma notificação quando um filme que queres ver estrear em cinema ou ficar disponível em streaming.</p>
+
+        <div class="row">
+          <label class="switch-row">
             <input type="checkbox" [(ngModel)]="prefs.resumoEstatisticasAtiva" />
             <span>Receber resumo periódico das minhas estatísticas e da comunidade</span>
           </label>

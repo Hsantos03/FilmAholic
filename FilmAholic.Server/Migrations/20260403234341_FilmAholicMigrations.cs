@@ -298,6 +298,7 @@ namespace FilmAholic.Server.Migrations
                     ResumoEstatisticasAtiva = table.Column<bool>(type: "bit", nullable: false),
                     ResumoEstatisticasFrequencia = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: false),
                     ReminderJogoAtiva = table.Column<bool>(type: "bit", nullable: false),
+                    FilmeDisponivelAtiva = table.Column<bool>(type: "bit", nullable: false),
                     AtualizadaEm = table.Column<DateTime>(type: "datetime2", nullable: false)
                 },
                 constraints: table =>

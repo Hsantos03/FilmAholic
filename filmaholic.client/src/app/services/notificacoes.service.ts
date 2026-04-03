@@ -12,6 +12,7 @@ export interface PreferenciasNotificacaoDto {
   resumoEstatisticasAtiva: boolean;
   resumoEstatisticasFrequencia: 'Diaria' | 'Semanal';
   reminderJogoAtiva: boolean;
+  filmeDisponivelAtiva: boolean;
 }
 
 export interface ResumoGeneroContagemDto {
