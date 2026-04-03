@@ -5,10 +5,8 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace FilmAholic.Server.Services;
 
-/// <summary>
 /// Pré-carrega (warm-up) os endpoints TMDB de “upcoming” numa janela de tempo.
 /// Isto reduz a primeira resposta do menu de notificações após abrir o site.
-/// </summary>
 public class TmdbUpcomingPreloadService : BackgroundService
 {
     private readonly IServiceScopeFactory _serviceScopeFactory;

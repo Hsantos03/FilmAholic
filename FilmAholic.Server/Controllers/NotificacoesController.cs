@@ -13,6 +13,7 @@ namespace FilmAholic.Server.Controllers
     public class NotificacoesController : ControllerBase
     {
         private const string TipoNovaEstreia = "NovaEstreia";
+        private const string TipoFilmeDisponivel = "FilmeDisponivel";
         private const string TipoResumoEstatisticas = "ResumoEstatisticas";
         private static readonly string[] FrequenciasPermitidas = ["Imediata", "Diaria", "Semanal"];
         private static readonly string[] ResumoFrequenciasPermitidas = ["Diaria", "Semanal"];
@@ -1194,6 +1195,70 @@ namespace FilmAholic.Server.Controllers
             notif.LidaEm = DateTime.UtcNow;
             await _context.SaveChangesAsync();
             return NoContent();
+        }
+
+
+        [HttpPost("verificar-quero-ver")]
+        public async Task<IActionResult> VerificarQueroVer()
+        {
+            var userId = GetUserId();
+            if (string.IsNullOrEmpty(userId)) return Unauthorized();
+
+            // PREFERÊNCIAS
+            var prefs = await GetOrCreatePreferenciasNotificacaoAsync(userId);
+
+            if (!prefs.NovaEstreiaAtiva)
+            {
+                return Ok("Notificações desativadas");
+            }
+
+            if (!await CanGenerateNovaEstreiaAsync(userId, prefs, DateTime.UtcNow))
+            {
+                return Ok("Frequência não permite");
+            }
+
+            // LISTA "QUERO VER"
+            var queroVer = await _context.UserMovies
+                .Where(um => um.UtilizadorId == userId && um.JaViu == false)
+                .Include(um => um.Filme)
+                .Select(um => um.Filme)
+                .ToListAsync();
+
+            foreach (var filme in queroVer)
+            {
+                if (string.IsNullOrEmpty(filme.TmdbId)) continue;
+
+                int tmdbId = int.Parse(filme.TmdbId);
+
+                // CINEMA
+                bool estreou = filme.ReleaseDate.HasValue &&
+                               filme.ReleaseDate.Value <= DateTime.UtcNow;
+
+                // STREAMING
+                bool streaming = await _movieService.IsAvailableInStreamingAsync(tmdbId);
+
+                if (!estreou && !streaming) continue;
+
+                // EVITA DUPLICADOS
+                var alreadyNotified = await _context.Notificacoes
+                    .AnyAsync(n =>
+                        n.UtilizadorId == userId &&
+                        n.FilmeId == filme.Id &&
+                        n.Tipo == TipoFilmeDisponivel);
+
+                if (alreadyNotified) continue;
+
+                // CRIA A NOTIFICAÇÃO
+                _context.Notificacoes.Add(new Notificacao
+                {
+                    UtilizadorId = userId,
+                    FilmeId = filme.Id,
+                    Tipo = TipoFilmeDisponivel,
+                    CriadaEm = DateTime.UtcNow
+                });
+            }
+            await _context.SaveChangesAsync();
+            return Ok("Verificação concluída");
         }
 
 

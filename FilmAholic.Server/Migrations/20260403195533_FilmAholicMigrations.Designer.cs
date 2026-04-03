@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace FilmAholic.Server.Migrations
 {
     [DbContext(typeof(FilmAholicDbContext))]
-    [Migration("20260402104138_FilmaholicMigration")]
-    partial class FilmaholicMigration
+    [Migration("20260403195533_FilmAholicMigrations")]
+    partial class FilmAholicMigrations
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -678,6 +678,9 @@ namespace FilmAholic.Server.Migrations
                         .IsRequired()
                         .HasMaxLength(20)
                         .HasColumnType("nvarchar(20)");
+
+                    b.Property<bool>("ReminderJogoAtiva")
+                        .HasColumnType("bit");
 
                     b.Property<bool>("ResumoEstatisticasAtiva")
                         .HasColumnType("bit");

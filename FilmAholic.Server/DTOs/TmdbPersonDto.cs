@@ -64,7 +64,7 @@ public class CastMemberDto
     public string? FotoUrl { get; set; }
 }
 
-/// <summary>Response from TMDb GET /search/person</summary>
+/// Response from TMDb GET /search/person
 public class TmdbSearchPersonResponse
 {
     [JsonPropertyName("page")]
@@ -95,7 +95,7 @@ public class TmdbPersonSearchResult
     public double Popularity { get; set; }
 }
 
-/// <summary>Response from TMDb GET /person/{id}/movie_credits</summary>
+/// Response from TMDb GET /person/{id}/movie_credits
 public class TmdbPersonMovieCreditsResponse
 {
     [JsonPropertyName("cast")]
@@ -120,7 +120,7 @@ public class TmdbCastMovieDto
     public string? ReleaseDate { get; set; }
 }
 
-/// <summary>Response from TMDb GET /person/{id}</summary>
+/// Response from TMDb GET /person/{id}
 public class TmdbPersonDetailsDto
 {
     [JsonPropertyName("id")]
@@ -148,7 +148,7 @@ public class TmdbPersonDetailsDto
     public string? Deathday { get; set; }
 }
 
-/// <summary>API response: actor in search results (same shape as PopularActorDto for client)</summary>
+/// API response: actor in search results (same shape as PopularActorDto for client)
 public class ActorSearchResultDto
 {
     public int Id { get; set; }
@@ -157,7 +157,7 @@ public class ActorSearchResultDto
     public double Popularidade { get; set; }
 }
 
-/// <summary>API response: movie in "movies by actor" list</summary>
+/// API response: movie in "movies by actor" list
 public class ActorMovieDto
 {
     public int Id { get; set; }
@@ -167,7 +167,7 @@ public class ActorMovieDto
     public string? DataLancamento { get; set; }
 }
 
-/// <summary>API response: actor details page</summary>
+/// API response: actor details page
 public class ActorDetailsDto
 {
     public int Id { get; set; }

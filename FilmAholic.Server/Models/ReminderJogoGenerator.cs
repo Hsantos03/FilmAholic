@@ -70,10 +70,8 @@ public static class ReminderJogoGenerator
         logger?.LogInformation("ReminderJogoGenerator: cycle complete at {Now}", nowUtc);
     }
 
-    /// <summary>
     /// Garante uma notificação HoL quando elegível (mesmas regras que o ciclo diário),
     /// para não depender só do job em background após login/registo.
-    /// </summary>
     public static async Task EnsureForUserIfEligibleAsync(
         FilmAholicDbContext db,
         string utilizadorId,

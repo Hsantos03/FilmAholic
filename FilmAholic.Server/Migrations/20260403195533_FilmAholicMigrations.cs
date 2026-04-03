@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace FilmAholic.Server.Migrations
 {
     /// <inheritdoc />
-    public partial class FilmaholicMigration : Migration
+    public partial class FilmAholicMigrations : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -297,6 +297,7 @@ namespace FilmAholic.Server.Migrations
                     NovaEstreiaFrequencia = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: false),
                     ResumoEstatisticasAtiva = table.Column<bool>(type: "bit", nullable: false),
                     ResumoEstatisticasFrequencia = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: false),
+                    ReminderJogoAtiva = table.Column<bool>(type: "bit", nullable: false),
                     AtualizadaEm = table.Column<DateTime>(type: "datetime2", nullable: false)
                 },
                 constraints: table =>

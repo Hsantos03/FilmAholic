@@ -182,7 +182,7 @@ public class RecomendacoesController : ControllerBase
 public class RecomendacaoFeedbackRequest
 {
     public int FilmeId { get; set; }
-    /// <summary>true = relevant (👍), false = irrelevant (👎)</summary>
+    /// true = relevant (👍), false = irrelevant (👎)
     public bool Relevante { get; set; }
 }
 

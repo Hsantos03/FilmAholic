@@ -19,22 +19,17 @@ public interface IMovieService
 
     Task<List<Filme>> GetPopularMoviesAsync(int page = 1, int count = 20);
 
-    /// <summary>
     /// TMDB /movie/upcoming — usado para preencher “novas estreias” quando a BD não tem filmes com releaseDate futuro.
-    /// </summary>
     Task<List<Filme>> GetUpcomingMoviesAsync(int page = 1, int count = 20);
 
-    /// <summary>
-    /// Percorre várias páginas do TMDB /movie/upcoming até obter <paramref name="desiredCount"/> filmes
-    /// com data de estreia &gt;= <paramref name="minReleaseDateUtc"/> (só a data, UTC). Útil porque uma
-    /// página costuma misturar estreias já ocorridas em algumas regiões.
-    /// </summary>
+    /// Percorre várias páginas do TMDB
+    /// Útil porque uma página costuma misturar estreias já ocorridas em algumas regiões.
     Task<List<Filme>> GetUpcomingMoviesAccumulatedAsync(int startPage, int desiredCount, DateTime minReleaseDateUtc, int maxPagesToScan = 12);
 
-    /// <summary>TMDB /movie/top_rated — mistura clássicos e filmes muito bem votados.</summary>
+    /// TMDB /movie/top_rated — mistura clássicos e filmes muito bem votados.
     Task<List<Filme>> GetTopRatedMoviesAsync(int page = 1, int count = 20);
 
-    /// <summary>TMDB /discover/movie com filtros tipo “clássicos” (data limite, nota, mín. votos).</summary>
+    /// TMDB /discover/movie com filtros tipo “clássicos” (data limite, nota, mín. votos).
     Task<List<Filme>> GetClassicDiscoverMoviesAsync(int page = 1, int count = 20, string? primaryReleaseDateLte = null, int minVoteCount = 500);
 
     Task<List<PopularActorDto>> GetPopularActorsAsync(int page = 1, int count = 20);
@@ -46,6 +41,10 @@ public interface IMovieService
     Task<List<ActorMovieDto>> GetMoviesByActorAsync(int personId);
 
     Task<RatingsDto> GetRatingsAsync(string? tmdbId, string? title);
+
     Task<List<Filme>> GetRecommendationsAsync(int tmdbId, int count = 10);
+
     Task<List<CastMemberDto>> GetCastAsync(int tmdbId);
+
+    Task<bool> IsAvailableInStreamingAsync(int tmdbId);
 }
