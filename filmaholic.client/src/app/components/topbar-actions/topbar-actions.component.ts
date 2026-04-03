@@ -3,13 +3,16 @@ import { Router } from '@angular/router';
 import { forkJoin, of } from 'rxjs';
 import { catchError, switchMap, tap } from 'rxjs/operators';
 import { FilmesService, Filme } from '../../services/filmes.service';
+import { environment } from '../../../environments/environment';
 import {
   NotificacoesService,
   ResumoEstatisticasFeedDto,
   ResumoEstatisticasFeedItemDto,
   ResumoFilmeComunidadeDto,
   NotificacaoComunidadeFeedDto,
-  NotificacaoComunidadeItemDto
+  NotificacaoComunidadeItemDto,
+  NotificacaoMedalhaFeedDto,
+  NotificacaoMedalhaItemDto
 } from '../../services/notificacoes.service';
 
 @Component({
@@ -48,6 +51,14 @@ export class TopbarActionsComponent implements OnInit, OnDestroy {
   comunidadeFeed: NotificacaoComunidadeFeedDto = { unread: [], read: [] };
   comunidadeUnreadCount = 0;
 
+  // ── Medal notifications ──
+  medalhaFeed: NotificacaoMedalhaFeedDto = { unread: [], read: [] };
+  medalhaUnreadCount = 0;
+
+  readonly API_URL = environment.apiBaseUrl
+    ? environment.apiBaseUrl
+    : '';
+
   constructor(
     private filmesService: FilmesService,
     private notificacoesService: NotificacoesService,
@@ -58,6 +69,7 @@ export class TopbarActionsComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.loadUpcomingFromTmdb();
     this.loadComunidadeUnreadCount();
+    this.loadMedalhaUnreadCount();
   }
 
   ngOnDestroy(): void {}
@@ -77,6 +89,7 @@ export class TopbarActionsComponent implements OnInit, OnDestroy {
       this.loadResumoFeed();
       this.loadUpcomingFromTmdb();
       this.loadComunidadeFeed();
+      this.loadMedalhaFeed();
     }
   }
 
@@ -153,6 +166,64 @@ export class TopbarActionsComponent implements OnInit, OnDestroy {
 
   get hasComunidadeItems(): boolean {
     return ((this.comunidadeFeed?.unread?.length ?? 0) + (this.comunidadeFeed?.read?.length ?? 0)) > 0;
+  }
+
+  // ── Medal notifications ──
+
+  private loadMedalhaUnreadCount(): void {
+    this.notificacoesService.getNotificacoesMedalhaUnreadCount().subscribe({
+      next: (count) => {
+        this.medalhaUnreadCount = count;
+        this.cdr.markForCheck();
+      }
+    });
+  }
+
+  private loadMedalhaFeed(): void {
+    this.notificacoesService.getNotificacoesMedalhaFeed({ unreadLimit: 10, readLimit: 5 }).subscribe({
+      next: (dto) => {
+        this.medalhaFeed = dto ?? { unread: [], read: [] };
+        this.medalhaUnreadCount = (dto?.unread?.length ?? 0);
+        this.cdr.markForCheck();
+      },
+      error: () => {
+        this.medalhaFeed = { unread: [], read: [] };
+        this.medalhaUnreadCount = 0;
+        this.cdr.markForCheck();
+      }
+    });
+  }
+
+  marcarMedalhaComoLida(item: NotificacaoMedalhaItemDto): void {
+    this.notificacoesService.marcarNotificacaoMedalhaComoLida(item.id).subscribe({
+      next: () => {
+        // Remove from unread and decrement count - don't add to read to make it disappear
+        this.medalhaFeed = {
+          unread: (this.medalhaFeed.unread ?? []).filter(x => x.id !== item.id),
+          read: this.medalhaFeed.read ?? []
+        };
+        this.medalhaUnreadCount = Math.max(0, this.medalhaUnreadCount - 1);
+        this.cdr.markForCheck();
+      }
+    });
+  }
+
+  marcarTodasMedalhasComoLidas(): void {
+    this.notificacoesService.marcarTodasNotificacoesMedalhaComoLidas().subscribe({
+      next: () => {
+        // Clear all unread notifications - don't add to read to make them disappear
+        this.medalhaFeed = {
+          unread: [],
+          read: this.medalhaFeed.read ?? []
+        };
+        this.medalhaUnreadCount = 0;
+        this.cdr.markForCheck();
+      }
+    });
+  }
+
+  get hasMedalhaItems(): boolean {
+    return ((this.medalhaFeed?.unread?.length ?? 0) + (this.medalhaFeed?.read?.length ?? 0)) > 0;
   }
 
   // ── Existing methods below unchanged ──

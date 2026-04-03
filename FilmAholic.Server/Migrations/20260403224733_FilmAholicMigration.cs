@@ -3,10 +3,12 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
+#pragma warning disable CA1814 // Prefer jagged arrays over multidimensional
+
 namespace FilmAholic.Server.Migrations
 {
     /// <inheritdoc />
-    public partial class FilmaholicMigration : Migration
+    public partial class FilmAholicMigration : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -178,6 +180,24 @@ namespace FilmAholic.Server.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Generos", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Medalhas",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    Nome = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: false),
+                    Descricao = table.Column<string>(type: "nvarchar(1000)", maxLength: 1000, nullable: false),
+                    IconeUrl = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: false),
+                    CriterioQuantidade = table.Column<int>(type: "int", nullable: false),
+                    CriterioTipo = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
+                    Ativa = table.Column<bool>(type: "bit", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Medalhas", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
@@ -511,6 +531,7 @@ namespace FilmAholic.Server.Migrations
                     UtilizadorId = table.Column<string>(type: "nvarchar(450)", nullable: false),
                     FilmeId = table.Column<int>(type: "int", nullable: false),
                     JaViu = table.Column<bool>(type: "bit", nullable: false),
+                    Favorito = table.Column<bool>(type: "bit", nullable: false),
                     Data = table.Column<DateTime>(type: "datetime2", nullable: false)
                 },
                 constraints: table =>
@@ -551,6 +572,31 @@ namespace FilmAholic.Server.Migrations
                         name: "FK_UtilizadorGeneros_Generos_GeneroId",
                         column: x => x.GeneroId,
                         principalTable: "Generos",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "UtilizadorMedalhas",
+                columns: table => new
+                {
+                    UtilizadorId = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    MedalhaId = table.Column<int>(type: "int", nullable: false),
+                    DataConquista = table.Column<DateTime>(type: "datetime2", nullable: false, defaultValueSql: "CURRENT_TIMESTAMP")
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_UtilizadorMedalhas", x => new { x.UtilizadorId, x.MedalhaId });
+                    table.ForeignKey(
+                        name: "FK_UtilizadorMedalhas_AspNetUsers_UtilizadorId",
+                        column: x => x.UtilizadorId,
+                        principalTable: "AspNetUsers",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_UtilizadorMedalhas_Medalhas_MedalhaId",
+                        column: x => x.MedalhaId,
+                        principalTable: "Medalhas",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                 });
@@ -694,6 +740,28 @@ namespace FilmAholic.Server.Migrations
                         onDelete: ReferentialAction.Cascade);
                 });
 
+            migrationBuilder.InsertData(
+                table: "Medalhas",
+                columns: new[] { "Id", "Ativa", "CriterioQuantidade", "CriterioTipo", "Descricao", "IconeUrl", "Nome" },
+                values: new object[,]
+                {
+                    { 1, true, 50, "filmesVistos", "Viste 50 filmes.", "/uploads/comunidades/icons/filmesVistos/50_FilmesVistos.png", "Explorador Cinéfilo" },
+                    { 2, true, 100, "filmesVistos", "Viste 100 filmes.", "/uploads/comunidades/icons/filmesVistos/100_FilmesVistos.png", "Entusiasta do Cinema" },
+                    { 3, true, 500, "filmesVistos", "Viste 500 filmes.", "/uploads/comunidades/icons/filmesVistos/500_FilmesVistos.png", "Mestre Cinéfilo" },
+                    { 4, true, 1000, "filmesVistos", "Viste 1000 filmes.", "/uploads/comunidades/icons/filmesVistos/1000_FilmesVistos.png", "Lenda do Cinema" },
+                    { 5, true, 10, "nivel", "Alcançaste o nível 10.", "/uploads/comunidades/icons/Nivel/Nivel_10.png", "Iniciante" },
+                    { 6, true, 50, "nivel", "Alcançaste o nível 50.", "/uploads/comunidades/icons/Nivel/Nivel_50.png", "Experiente" },
+                    { 7, true, 100, "nivel", "Alcançaste o nível 100.", "/uploads/comunidades/icons/Nivel/Nivel_100.png", "Mestre" },
+                    { 8, true, 7, "desafiosDiarios", "Completaste 7 desafios diários.", "/uploads/comunidades/icons/DesafiosDiarios/DesafiosDiarios_7.png", "Amador dos Desafios" },
+                    { 9, true, 30, "desafiosDiarios", "Completaste 30 desafios diários.", "/uploads/comunidades/icons/DesafiosDiarios/DesafiosDiarios_30.png", "Experiente em Desafios" },
+                    { 10, true, 150, "desafiosDiarios", "Completaste 150 desafios diários.", "/uploads/comunidades/icons/DesafiosDiarios/DesafiosDiarios_150.png", "Mestre dos Desafios" },
+                    { 11, true, 5, "higherOrLower", "Acertaste 5 vezes seguidas no Higher or Lower.", "/uploads/comunidades/icons/HigherOrLower/HigherOrLower_5.png", "Iniciante da Adivinhação" },
+                    { 12, true, 10, "higherOrLower", "Acertaste 10 vezes seguidas no Higher or Lower.", "/uploads/comunidades/icons/HigherOrLower/HigherOrLower_10.png", "Experiente da Adivinhação" },
+                    { 13, true, 25, "higherOrLower", "Acertaste 25 vezes seguidas no Higher or Lower.", "/uploads/comunidades/icons/HigherOrLower/HigherOrLower_25.png", "Mestre da Adivinhação" },
+                    { 14, true, 1, "criarComunidade", "Criaste a tua primeira comunidade.", "/uploads/comunidades/icons/Comunidades/CriarComunidade.png", "Fundador" },
+                    { 15, true, 1, "juntarComunidade", "Juntaste-te a uma comunidade.", "/uploads/comunidades/icons/Comunidades/JuntarComunidade.png", "Participante" }
+                });
+
             migrationBuilder.CreateIndex(
                 name: "IX_AspNetRoleClaims_RoleId",
                 table: "AspNetRoleClaims",
@@ -819,6 +887,11 @@ namespace FilmAholic.Server.Migrations
                 column: "UtilizadorId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_Medalhas_Ativa",
+                table: "Medalhas",
+                column: "Ativa");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_MovieRatings_FilmeId_UserId",
                 table: "MovieRatings",
                 columns: new[] { "FilmeId", "UserId" },
@@ -894,6 +967,11 @@ namespace FilmAholic.Server.Migrations
                 name: "IX_UtilizadorGeneros_GeneroId",
                 table: "UtilizadorGeneros",
                 column: "GeneroId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_UtilizadorMedalhas_MedalhaId",
+                table: "UtilizadorMedalhas",
+                column: "MedalhaId");
         }
 
         /// <inheritdoc />
@@ -960,6 +1038,9 @@ namespace FilmAholic.Server.Migrations
                 name: "UtilizadorGeneros");
 
             migrationBuilder.DropTable(
+                name: "UtilizadorMedalhas");
+
+            migrationBuilder.DropTable(
                 name: "AspNetRoles");
 
             migrationBuilder.DropTable(
@@ -973,6 +1054,9 @@ namespace FilmAholic.Server.Migrations
 
             migrationBuilder.DropTable(
                 name: "Generos");
+
+            migrationBuilder.DropTable(
+                name: "Medalhas");
 
             migrationBuilder.DropTable(
                 name: "Filmes");

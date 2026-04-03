@@ -27,6 +27,25 @@ namespace FilmAholic.Server.Services
             await _context.SaveChangesAsync();
         }
 
+        private async Task CriarNotificacaoMedalha(string userId, Medalha medalha)
+        {
+            var notificacao = new Notificacao
+            {
+                UtilizadorId = userId,
+                Tipo = "Medalha",
+                Corpo = System.Text.Json.JsonSerializer.Serialize(new {
+                    medalhaId = medalha.Id,
+                    medalhaNome = medalha.Nome,
+                    medalhaDescricao = medalha.Descricao,
+                    medalhaIconeUrl = medalha.IconeUrl
+                }),
+                CriadaEm = DateTime.UtcNow
+            };
+
+            _context.Notificacoes.Add(notificacao);
+            await _context.SaveChangesAsync();
+        }
+
         public async Task<List<Medalha>> VerificarConquistasFilmeVisto(string userId)
         {
             return await VerificarConquistas(userId, "filmesVistos");
@@ -115,6 +134,7 @@ namespace FilmAholic.Server.Services
                 if (count >= medalha.CriterioQuantidade && !jaConquistadas.Contains(medalha.Id))
                 {
                     await AtribuirMedalha(userId, medalha.Id);
+                    await CriarNotificacaoMedalha(userId, medalha);
 
                     medalhasNovas.Add(new Medalha
                     {

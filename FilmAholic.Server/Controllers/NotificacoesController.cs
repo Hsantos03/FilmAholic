@@ -1204,6 +1204,153 @@ namespace FilmAholic.Server.Controllers
             await _context.SaveChangesAsync();
             return NoContent();
         }
+
+        // ── Medal notifications ──
+
+        /// <summary>Feed de notificações de medalhas (lidas + não lidas).</summary>
+        [HttpGet("medalha/feed")]
+        public async Task<ActionResult<NotificacaoMedalhaFeedDto>> GetNotificacoesMedalhaFeed(
+            [FromQuery] int unreadLimit = 20,
+            [FromQuery] int readLimit = 10)
+        {
+            var userId = GetUserId();
+            if (string.IsNullOrWhiteSpace(userId))
+                return Unauthorized();
+
+            if (unreadLimit < 0) unreadLimit = 0;
+            if (unreadLimit > 50) unreadLimit = 50;
+            if (readLimit < 0) readLimit = 0;
+            if (readLimit > 50) readLimit = 50;
+
+            var unreadNotifications = await _context.Notificacoes
+                .AsNoTracking()
+                .Where(n => n.UtilizadorId == userId && n.Tipo == "Medalha" && n.LidaEm == null)
+                .OrderByDescending(n => n.CriadaEm)
+                .Take(unreadLimit)
+                .ToListAsync();
+
+            var unread = unreadNotifications.Select(n => new NotificacaoMedalhaItemDto
+            {
+                Id = n.Id,
+                medalhaId = ParseMedalhaProperty<int>(n.Corpo, "medalhaId", 0),
+                medalhaNome = ParseMedalhaProperty<string>(n.Corpo, "medalhaNome", ""),
+                medalhaDescricao = ParseMedalhaProperty<string>(n.Corpo, "medalhaDescricao", ""),
+                medalhaIconeUrl = ParseMedalhaProperty<string>(n.Corpo, "medalhaIconeUrl", ""),
+                criadaEm = n.CriadaEm.ToString("yyyy-MM-ddTHH:mm:ss"),
+                lidaEm = n.LidaEm != null ? n.LidaEm.Value.ToString("yyyy-MM-ddTHH:mm:ss") : null
+            }).ToList();
+
+            var readNotifications = await _context.Notificacoes
+                .AsNoTracking()
+                .Where(n => n.UtilizadorId == userId && n.Tipo == "Medalha" && n.LidaEm != null)
+                .OrderByDescending(n => n.LidaEm)
+                .Take(readLimit)
+                .ToListAsync();
+
+            var read = readNotifications.Select(n => new NotificacaoMedalhaItemDto
+            {
+                Id = n.Id,
+                medalhaId = ParseMedalhaProperty<int>(n.Corpo, "medalhaId", 0),
+                medalhaNome = ParseMedalhaProperty<string>(n.Corpo, "medalhaNome", ""),
+                medalhaDescricao = ParseMedalhaProperty<string>(n.Corpo, "medalhaDescricao", ""),
+                medalhaIconeUrl = ParseMedalhaProperty<string>(n.Corpo, "medalhaIconeUrl", ""),
+                criadaEm = n.CriadaEm.ToString("yyyy-MM-ddTHH:mm:ss"),
+                lidaEm = n.LidaEm != null ? n.LidaEm.Value.ToString("yyyy-MM-ddTHH:mm:ss") : null
+            }).ToList();
+
+            return Ok(new NotificacaoMedalhaFeedDto { Unread = unread, Read = read });
+        }
+
+        /// <summary>Contagem de notificações de medalhas não lidas.</summary>
+        [HttpGet("medalha/unread-count")]
+        public async Task<ActionResult<int>> GetNotificacoesMedalhaUnreadCount()
+        {
+            var userId = GetUserId();
+            if (string.IsNullOrWhiteSpace(userId))
+                return Unauthorized();
+
+            var count = await _context.Notificacoes
+                .CountAsync(n => n.UtilizadorId == userId && n.Tipo == "Medalha" && n.LidaEm == null);
+
+            return Ok(count);
+        }
+
+        /// <summary>Marcar uma notificação de medalha como lida.</summary>
+        [HttpPut("medalha/{id}/lida")]
+        public async Task<IActionResult> MarcarNotificacaoMedalhaComoLida(int id)
+        {
+            var userId = GetUserId();
+            if (string.IsNullOrWhiteSpace(userId))
+                return Unauthorized();
+
+            var notif = await _context.Notificacoes
+                .FirstOrDefaultAsync(n => n.Id == id && n.UtilizadorId == userId && n.Tipo == "Medalha");
+
+            if (notif == null)
+                return NotFound();
+
+            notif.LidaEm = DateTime.UtcNow;
+            await _context.SaveChangesAsync();
+            return NoContent();
+        }
+
+        /// <summary>Marcar todas as notificações de medalhas como lidas.</summary>
+        [HttpPut("medalha/marcar-todas-lidas")]
+        public async Task<IActionResult> MarcarTodasNotificacoesMedalhaComoLidas()
+        {
+            var userId = GetUserId();
+            if (string.IsNullOrWhiteSpace(userId))
+                return Unauthorized();
+
+            var nowUtc = DateTime.UtcNow;
+            var unread = await _context.Notificacoes
+                .Where(n => n.UtilizadorId == userId && n.Tipo == "Medalha" && n.LidaEm == null)
+                .ToListAsync();
+
+            foreach (var n in unread)
+                n.LidaEm = nowUtc;
+
+            await _context.SaveChangesAsync();
+            return NoContent();
+        }
+
+        public class NotificacaoMedalhaItemDto
+        {
+            public int Id { get; set; }
+            public int medalhaId { get; set; }
+            public string medalhaNome { get; set; } = "";
+            public string medalhaDescricao { get; set; } = "";
+            public string medalhaIconeUrl { get; set; } = "";
+            public string criadaEm { get; set; } = "";
+            public string? lidaEm { get; set; }
+        }
+
+        public class NotificacaoMedalhaFeedDto
+        {
+            public List<NotificacaoMedalhaItemDto> Unread { get; set; } = new();
+            public List<NotificacaoMedalhaItemDto> Read { get; set; } = new();
+        }
+
+        private static T ParseMedalhaProperty<T>(string corpo, string propertyName, T defaultValue)
+        {
+            if (string.IsNullOrEmpty(corpo))
+                return defaultValue;
+
+            try
+            {
+                var dict = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, object>>(corpo);
+                if (dict != null && dict.TryGetValue(propertyName, out var value))
+                {
+                    return System.Text.Json.JsonSerializer.Deserialize<T>(System.Text.Json.JsonSerializer.Serialize(value));
+                }
+            }
+            catch
+            {
+                // Ignore parsing errors
+            }
+
+            return defaultValue;
+        }
     }
 }
 
