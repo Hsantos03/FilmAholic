@@ -74,19 +74,19 @@ builder.Services.ConfigureApplicationCookie(options =>
     options.Cookie.HttpOnly = true;
     options.ExpireTimeSpan = TimeSpan.FromDays(7);
     options.SlidingExpiration = true;
-    options.Cookie.SameSite = SameSiteMode.None; 
-    options.Cookie.SecurePolicy = CookieSecurePolicy.Always; 
+    options.Cookie.SameSite = SameSiteMode.None;
+    options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
 });
 
 builder.Services.ConfigureExternalCookie(options =>
 {
     options.Cookie.HttpOnly = true;
-    options.Cookie.SameSite = SameSiteMode.None; 
+    options.Cookie.SameSite = SameSiteMode.None;
     options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
-    options.ExpireTimeSpan = TimeSpan.FromMinutes(10); 
-    options.Cookie.Name = ".AspNetCore.ExternalAuth"; 
-    options.Cookie.Path = "/"; 
-    options.SlidingExpiration = false; 
+    options.ExpireTimeSpan = TimeSpan.FromMinutes(10);
+    options.Cookie.Name = ".AspNetCore.ExternalAuth";
+    options.Cookie.Path = "/";
+    options.SlidingExpiration = false;
 });
 
 builder.Services.AddScoped<IEmailService, EmailService>();
@@ -109,6 +109,10 @@ builder.Services.AddHostedService<PeriodicStatsNotificationService>();
 builder.Services.Configure<ReminderJogoOptions>(
     builder.Configuration.GetSection("ReminderJogo"));
 builder.Services.AddHostedService<ReminderJogoService>();
+
+builder.Services.Configure<QueroVerEstreiaOptions>(
+    builder.Configuration.GetSection("QueroVerEstreia"));
+builder.Services.AddHostedService<QueroVerEstreiaService>();
 
 builder.Services.AddCors(options => {
     options.AddPolicy("AllowAngular",
@@ -145,7 +149,7 @@ await using (var scope = app.Services.CreateAsyncScope())
 {
     var context = scope.ServiceProvider.GetRequiredService<FilmAholicDbContext>();
     var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
-    
+
     try
     {
         var canConnect = await context.Database.CanConnectAsync();
@@ -182,7 +186,7 @@ await using (var scope = app.Services.CreateAsyncScope())
                     new Genero { Nome = "Guerra" },
                     new Genero { Nome = "Western" }
                 };
-                
+
                 context.Generos.AddRange(generosIniciais);
                 await context.SaveChangesAsync();
                 logger.LogInformation("Géneros iniciais criados com sucesso.");

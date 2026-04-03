@@ -306,7 +306,7 @@ namespace FilmAholic.Server.Controllers
                 .ToListAsync();
 
             // Fallback: se a BD praticamente não tem “estreias” dentro da janela,
-            // buscamos ao TMDB para conseguir ter notificações suficientes.
+            // vamos buscar ao TMDB para conseguir ter notificações suficientes.
             var fallbackThreshold = Math.Max(10, limit * 2);
             if (candidates.Count < fallbackThreshold)
             {
@@ -353,8 +353,6 @@ namespace FilmAholic.Server.Controllers
                 .ToList();
 
             // Cria notificações NovaEstreia para os elegíveis (idempotente pelo índice único).
-            // Nota: se o utilizador já marcou como "lida" vários filmes mais próximos, precisamos de considerar
-            // mais candidatos para existirem sempre "não lidas" suficientes na janela.
             if (await CanGenerateNovaEstreiaAsync(userId, prefs, nowUtc))
             {
                 var desiredCreateCount = Math.Min(Math.Max(limit * 20, 50), 200);
@@ -1198,13 +1196,52 @@ namespace FilmAholic.Server.Controllers
         }
 
 
+        [HttpGet("filme-disponivel/feed")]
+        public async Task<IActionResult> GetFilmeDisponivelFeed()
+        {
+            var userId = GetUserId();
+            if (string.IsNullOrEmpty(userId)) return Unauthorized();
+
+            var items = await _context.Notificacoes
+                .AsNoTracking()
+                .Where(n => n.UtilizadorId == userId && n.Tipo == TipoFilmeDisponivel && n.LidaEm == null)
+                .OrderByDescending(n => n.CriadaEm)
+                .Take(30)
+                .Select(n => new FilmeDisponivelFeedItemDto
+                {
+                    Id = n.Id,
+                    FilmeId = n.FilmeId,
+                    Titulo = n.Filme != null ? n.Filme.Titulo : null,
+                    Corpo = n.Corpo ?? "",
+                    CriadaEm = n.CriadaEm
+                })
+                .ToListAsync();
+
+            return Ok(items);
+        }
+
+        [HttpPut("filme-disponivel/{id:int}/lida")]
+        public async Task<IActionResult> MarcarFilmeDisponivelComoLida([FromRoute] int id)
+        {
+            var userId = GetUserId();
+            if (string.IsNullOrEmpty(userId)) return Unauthorized();
+
+            var notif = await _context.Notificacoes
+                .FirstOrDefaultAsync(n => n.Id == id && n.UtilizadorId == userId && n.Tipo == TipoFilmeDisponivel);
+
+            if (notif == null) return NotFound();
+
+            notif.LidaEm = DateTime.UtcNow;
+            await _context.SaveChangesAsync();
+            return NoContent();
+        }
+
         [HttpPost("verificar-quero-ver")]
         public async Task<IActionResult> VerificarQueroVer()
         {
             var userId = GetUserId();
             if (string.IsNullOrEmpty(userId)) return Unauthorized();
 
-            // PREFERÊNCIAS
             var prefs = await GetOrCreatePreferenciasNotificacaoAsync(userId);
 
             if (!prefs.NovaEstreiaAtiva)
@@ -1212,12 +1249,8 @@ namespace FilmAholic.Server.Controllers
                 return Ok("Notificações desativadas");
             }
 
-            if (!await CanGenerateNovaEstreiaAsync(userId, prefs, DateTime.UtcNow))
-            {
-                return Ok("Frequência não permite");
-            }
+            var nowUtc = DateTime.UtcNow;
 
-            // LISTA "QUERO VER"
             var queroVer = await _context.UserMovies
                 .Where(um => um.UtilizadorId == userId && um.JaViu == false)
                 .Include(um => um.Filme)
@@ -1230,16 +1263,13 @@ namespace FilmAholic.Server.Controllers
 
                 int tmdbId = int.Parse(filme.TmdbId);
 
-                // CINEMA
                 bool estreou = filme.ReleaseDate.HasValue &&
-                               filme.ReleaseDate.Value <= DateTime.UtcNow;
+                               filme.ReleaseDate.Value <= nowUtc;
 
-                // STREAMING
-                bool streaming = await _movieService.IsAvailableInStreamingAsync(tmdbId);
+                bool streaming = !estreou && await _movieService.IsAvailableInStreamingAsync(tmdbId);
 
                 if (!estreou && !streaming) continue;
 
-                // EVITA DUPLICADOS
                 var alreadyNotified = await _context.Notificacoes
                     .AnyAsync(n =>
                         n.UtilizadorId == userId &&
@@ -1248,19 +1278,29 @@ namespace FilmAholic.Server.Controllers
 
                 if (alreadyNotified) continue;
 
-                // CRIA A NOTIFICAÇÃO
                 _context.Notificacoes.Add(new Notificacao
                 {
                     UtilizadorId = userId,
                     FilmeId = filme.Id,
                     Tipo = TipoFilmeDisponivel,
-                    CriadaEm = DateTime.UtcNow
+                    Corpo = estreou
+                        ? $"{filme.Titulo} — disponível em cinema."
+                        : $"{filme.Titulo} — disponível em streaming.",
+                    CriadaEm = nowUtc
                 });
             }
             await _context.SaveChangesAsync();
             return Ok("Verificação concluída");
         }
 
+        public class FilmeDisponivelFeedItemDto
+        {
+            public int Id { get; set; }
+            public int? FilmeId { get; set; }
+            public string? Titulo { get; set; }
+            public string Corpo { get; set; } = "";
+            public DateTime CriadaEm { get; set; }
+        }
 
         public class NovaEstreiaDebugDto
         {

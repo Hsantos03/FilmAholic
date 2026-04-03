@@ -64,12 +64,21 @@ export interface ReminderJogoNotifDto {
   criadaEm: string;
 }
 
+/** Filme da lista Quero ver disponível em cinema ou streaming */
+export interface FilmeDisponivelNotifDto {
+  id: number;
+  filmeId: number | null;
+  titulo: string | null;
+  corpo: string;
+  criadaEm: string;
+}
+
 @Injectable({ providedIn: 'root' })
 export class NotificacoesService {
   private readonly apiBase = environment.apiBaseUrl || '';
   private apiUrl = this.apiBase ? `${this.apiBase}/api/notificacoes` : '/api/notificacoes';
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient) { }
 
   /** TMDB ids (subset of {@param tmdbIds}) que têm NovaEstreia marcada como lida na BD. */
   getLidosTmdbIds(tmdbIds: number[]): Observable<number[]> {
@@ -178,5 +187,15 @@ export class NotificacoesService {
 
   marcarReminderJogoComoLida(id: number): Observable<void> {
     return this.http.put<void>(`${this.apiUrl}/reminder-jogo/${id}/lida`, {}, { withCredentials: true });
+  }
+
+  getFilmeDisponivelFeed(): Observable<FilmeDisponivelNotifDto[]> {
+    return this.http
+      .get<FilmeDisponivelNotifDto[]>(`${this.apiUrl}/filme-disponivel/feed`, { withCredentials: true })
+      .pipe(catchError(() => of([])));
+  }
+
+  marcarFilmeDisponivelComoLida(id: number): Observable<void> {
+    return this.http.put<void>(`${this.apiUrl}/filme-disponivel/${id}/lida`, {}, { withCredentials: true });
   }
 }

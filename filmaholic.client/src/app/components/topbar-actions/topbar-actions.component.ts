@@ -9,6 +9,7 @@ import {
   ResumoEstatisticasFeedItemDto,
   ResumoFilmeComunidadeDto,
   ReminderJogoNotifDto,
+  FilmeDisponivelNotifDto,
   NotificacaoComunidadeFeedDto,
   NotificacaoComunidadeItemDto
 } from '../../services/notificacoes.service';
@@ -47,6 +48,9 @@ export class TopbarActionsComponent implements OnInit, OnDestroy {
 
   reminderJogo: ReminderJogoNotifDto[] = [];
 
+  /** Quero ver: cinema / streaming */
+  filmeDisponivel: FilmeDisponivelNotifDto[] = [];
+
   // ── Community notifications ──
   comunidadeFeed: NotificacaoComunidadeFeedDto = { unread: [], read: [] };
   comunidadeUnreadCount = 0;
@@ -79,6 +83,7 @@ export class TopbarActionsComponent implements OnInit, OnDestroy {
       this.upcomingReadPage = 0;
       this.loadResumoFeed();
       this.loadReminderJogo();
+      this.loadFilmeDisponivel();
       this.loadUpcomingFromTmdb();
       this.loadComunidadeFeed();
     }
@@ -89,6 +94,7 @@ export class TopbarActionsComponent implements OnInit, OnDestroy {
     this.activeNotifTab = tab;
     if (tab === 'notificacoes') {
       this.loadReminderJogo();
+      this.loadFilmeDisponivel();
       this.loadResumoFeed();
       this.loadComunidadeFeed();
     }
@@ -189,6 +195,37 @@ export class TopbarActionsComponent implements OnInit, OnDestroy {
       },
       error: () => { this.reminderJogo = []; }
     });
+  }
+
+  private loadFilmeDisponivel(): void {
+    this.notificacoesService.getFilmeDisponivelFeed().subscribe({
+      next: (data) => {
+        this.filmeDisponivel = data ?? [];
+        this.cdr.markForCheck();
+      },
+      error: () => { this.filmeDisponivel = []; }
+    });
+  }
+
+  marcarFilmeDisponivelLida(e: MouseEvent, item: FilmeDisponivelNotifDto): void {
+    e.preventDefault();
+    e.stopPropagation();
+    this.notificacoesService.marcarFilmeDisponivelComoLida(item.id).subscribe({
+      next: () => {
+        this.filmeDisponivel = this.filmeDisponivel.filter((x) => x.id !== item.id);
+        this.cdr.markForCheck();
+      }
+    });
+  }
+
+  openFilmeDisponivelNotif(e: MouseEvent, item: FilmeDisponivelNotifDto): void {
+    e.preventDefault();
+    e.stopPropagation();
+    const id = item.filmeId;
+    if (id && !isNaN(id)) {
+      this.isNotificationsOpen = false;
+      this.router.navigate(['/movie-detail', id]);
+    }
   }
 
   // Só marca como lido (botão ✓)
