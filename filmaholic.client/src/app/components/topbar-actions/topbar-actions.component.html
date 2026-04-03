@@ -16,7 +16,9 @@
         <button type="button"
                 class="notif-tab-btn"
                 [class.notif-tab-btn--active]="activeNotifTab === 'estreias'"
-                (click)="setActiveNotifTab('estreias', $event)">Próximas estreias</button>
+                (click)="setActiveNotifTab('estreias', $event)">
+          Próximas estreias
+        </button>
         <button type="button"
                 class="notif-tab-btn"
                 [class.notif-tab-btn--active]="activeNotifTab === 'notificacoes'"
@@ -38,11 +40,15 @@
             <button type="button"
                     class="notif-genre-filter-btn"
                     [class.notif-genre-filter-btn--active]="filtrarEstreiasPorGeneros"
-                    (click)="setEstreiasGenreFilter(true, $event)">Os meus géneros</button>
+                    (click)="setEstreiasGenreFilter(true, $event)">
+              Os meus géneros
+            </button>
             <button type="button"
                     class="notif-genre-filter-btn"
                     [class.notif-genre-filter-btn--active]="!filtrarEstreiasPorGeneros"
-                    (click)="setEstreiasGenreFilter(false, $event)">Todos</button>
+                    (click)="setEstreiasGenreFilter(false, $event)">
+              Todos
+            </button>
           </div>
 
           <ng-container *ngIf="upcomingUnreadAll.length > 0; else allReadOrEmpty">
@@ -58,18 +64,24 @@
               <button type="button"
                       class="notification-mark-read"
                       (click)="marcarComoLida($event, m)"
-                      aria-label="Marcar como vista">✓</button>
+                      aria-label="Marcar como vista">
+                ✓
+              </button>
             </div>
             <div *ngIf="upcomingUnreadPagerVisible" class="notif-pager">
               <button type="button"
                       class="notif-pager-btn"
                       (click)="prevUnreadPage($event)"
-                      [disabled]="upcomingUnreadPage === 0">‹</button>
+                      [disabled]="upcomingUnreadPage === 0">
+                ‹
+              </button>
               <span class="notif-pager-label">{{ upcomingUnreadPageLabel }}</span>
               <button type="button"
                       class="notif-pager-btn"
                       (click)="nextUnreadPage($event)"
-                      [disabled]="upcomingUnreadPage >= upcomingUnreadLastPage">›</button>
+                      [disabled]="upcomingUnreadPage >= upcomingUnreadLastPage">
+                ›
+              </button>
             </div>
           </ng-container>
           <ng-template #allReadOrEmpty>
@@ -92,12 +104,16 @@
               <button type="button"
                       class="notif-pager-btn"
                       (click)="prevReadPage($event)"
-                      [disabled]="upcomingReadPage === 0">‹</button>
+                      [disabled]="upcomingReadPage === 0">
+                ‹
+              </button>
               <span class="notif-pager-label">{{ upcomingReadPageLabel }}</span>
               <button type="button"
                       class="notif-pager-btn"
                       (click)="nextReadPage($event)"
-                      [disabled]="upcomingReadPage >= upcomingReadLastPage">›</button>
+                      [disabled]="upcomingReadPage >= upcomingReadLastPage">
+                ›
+              </button>
             </div>
           </ng-container>
         </div>
@@ -106,8 +122,31 @@
         </ng-template>
       </ng-container>
 
-      <!-- ══════ TAB: Notificações (resumo de estatísticas + comunidades) ══════ -->
+      <!-- ══════ TAB: Notificações (reminder HoL + resumo + comunidades) ══════ -->
       <ng-container *ngIf="activeNotifTab === 'notificacoes'">
+        <!-- Reminder Higher or Lower -->
+        <div *ngIf="reminderJogo.length > 0"
+             class="notif-reminder-section"
+             (click)="$event.stopPropagation()">
+          <div class="notifications-title">Higher or Lower</div>
+          <div *ngFor="let r of reminderJogo" class="resumo-card">
+            <div class="resumo-card-body">
+              <p class="resumo-line">🎮 {{ r.corpo }}</p>
+              <button type="button"
+                      class="resumo-link"
+                      (click)="marcarReminderLidoEJogar($event, r.id)">
+                Jogar agora →
+              </button>
+            </div>
+            <button type="button"
+                    class="notification-mark-read"
+                    (click)="marcarReminderLido($event, r.id)"
+                    aria-label="Marcar como lido">
+              ✓
+            </button>
+          </div>
+        </div>
+
         <div *ngIf="hasResumoItems" class="notif-resumo-section" (click)="$event.stopPropagation()">
           <div class="notifications-title">Resumo de estatísticas</div>
           <div *ngFor="let it of resumoFeed.unread" class="resumo-card resumo-card--unread">
@@ -124,11 +163,12 @@
                 <span class="resumo-count">({{ fc.marcacoesNaSemana }} marcações)</span>
               </p>
             </div>
-            <button
-              type="button"
-              class="notification-mark-read"
-              (click)="marcarResumoLida($event, it)"
-              aria-label="Marcar resumo como lido">✓</button>
+            <button type="button"
+                    class="notification-mark-read"
+                    (click)="marcarResumoLida($event, it)"
+                    aria-label="Marcar resumo como lido">
+              ✓
+            </button>
           </div>
           <ng-container *ngIf="resumoFeed.read?.length">
             <div class="notifications-title resumo-subtitle">Resumos anteriores</div>
@@ -155,7 +195,9 @@
             <button type="button"
                     class="notif-mark-all-btn"
                     *ngIf="comunidadeFeed.unread.length > 0"
-                    (click)="marcarTodasComunidadeLidas($event)">Marcar todas como lidas</button>
+                    (click)="marcarTodasComunidadeLidas($event)">
+              Marcar todas como lidas
+            </button>
           </div>
 
           <ng-container *ngIf="comunidadeFeed.unread.length > 0">
@@ -171,7 +213,9 @@
               <button type="button"
                       class="notification-mark-read"
                       (click)="marcarComunidadeNotifLida($event, n)"
-                      aria-label="Marcar como lida">✓</button>
+                      aria-label="Marcar como lida">
+                ✓
+              </button>
             </div>
           </ng-container>
 

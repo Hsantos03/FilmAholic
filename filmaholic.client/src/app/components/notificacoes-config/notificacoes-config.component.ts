@@ -3,11 +3,14 @@ import { Router } from '@angular/router';
 import { MenuService } from '../../services/menu.service';
 import { NotificacoesService, PreferenciasNotificacaoDto } from '../../services/notificacoes.service';
 
+
 @Component({
   selector: 'app-notificacoes-config',
   templateUrl: './notificacoes-config.component.html',
   styleUrls: ['./notificacoes-config.component.css']
 })
+
+
 export class NotificacoesConfigComponent implements OnInit {
   isLoading = true;
   isSaving = false;
@@ -18,7 +21,8 @@ export class NotificacoesConfigComponent implements OnInit {
     novaEstreiaAtiva: true,
     novaEstreiaFrequencia: 'Diaria',
     resumoEstatisticasAtiva: true,
-    resumoEstatisticasFrequencia: 'Semanal'
+    resumoEstatisticasFrequencia: 'Semanal',
+    reminderJogoAtiva: true
   };
 
   readonly frequencias: Array<PreferenciasNotificacaoDto['novaEstreiaFrequencia']> = [
@@ -58,7 +62,8 @@ export class NotificacoesConfigComponent implements OnInit {
           novaEstreiaAtiva: !!res?.novaEstreiaAtiva,
           novaEstreiaFrequencia: (res?.novaEstreiaFrequencia as any) || 'Diaria',
           resumoEstatisticasAtiva: res?.resumoEstatisticasAtiva !== false,
-          resumoEstatisticasFrequencia: (res?.resumoEstatisticasFrequencia as any) || 'Semanal'
+          resumoEstatisticasFrequencia: (res?.resumoEstatisticasFrequencia as any) || 'Semanal',
+          reminderJogoAtiva: res?.reminderJogoAtiva !== false
         };
         this.isLoading = false;
       },

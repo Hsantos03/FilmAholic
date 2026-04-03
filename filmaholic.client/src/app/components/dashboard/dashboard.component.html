@@ -346,78 +346,74 @@
     </div>
 
     <div *ngIf="!isLoadingDesafios && desafioDoDia" class="quiz-container">
-  
-  <h4 class="quiz-question">{{ desafioDoDia.pergunta }}</h4>
 
-  <div class="quiz-options">
-    <button 
-      class="quiz-option-btn" 
-      [class.selected]="opcaoSelecionada === 'A'"
-      [class.correct]="desafioDoDia.respondido && respostaCorretaVisivel === 'A'"
-      [class.wrong]="desafioDoDia.respondido && opcaoSelecionada === 'A' && respostaCorretaVisivel !== 'A'"
-      [disabled]="desafioDoDia.respondido" 
-      (click)="selecionarOpcao('A')">
-      <span class="option-text">{{ desafioDoDia.opcaoA }}</span>
-      <span class="option-icon" *ngIf="desafioDoDia.respondido && respostaCorretaVisivel">
-        <ng-container *ngIf="respostaCorretaVisivel === 'A'">✅</ng-container>
-        <ng-container *ngIf="opcaoSelecionada === 'A' && respostaCorretaVisivel !== 'A'">❌</ng-container>
-      </span>
-    </button>
-    
-    <button 
-      class="quiz-option-btn" 
-      [class.selected]="opcaoSelecionada === 'B'"
-      [class.correct]="desafioDoDia.respondido && respostaCorretaVisivel === 'B'"
-      [class.wrong]="desafioDoDia.respondido && opcaoSelecionada === 'B' && respostaCorretaVisivel !== 'B'"
-      [disabled]="desafioDoDia.respondido" 
-      (click)="selecionarOpcao('B')">
-      <span class="option-text">{{ desafioDoDia.opcaoB }}</span>
-      <span class="option-icon" *ngIf="desafioDoDia.respondido && respostaCorretaVisivel">
-        <ng-container *ngIf="respostaCorretaVisivel === 'B'">✅</ng-container>
-        <ng-container *ngIf="opcaoSelecionada === 'B' && respostaCorretaVisivel !== 'B'">❌</ng-container>
-      </span>
-    </button>
+      <h4 class="quiz-question">{{ desafioDoDia.pergunta }}</h4>
 
-    <button 
-      class="quiz-option-btn" 
-      [class.selected]="opcaoSelecionada === 'C'"
-      [class.correct]="desafioDoDia.respondido && respostaCorretaVisivel === 'C'"
-      [class.wrong]="desafioDoDia.respondido && opcaoSelecionada === 'C' && respostaCorretaVisivel !== 'C'"
-      [disabled]="desafioDoDia.respondido" 
-      (click)="selecionarOpcao('C')">
-      <span class="option-text">{{ desafioDoDia.opcaoC }}</span>
-      <span class="option-icon" *ngIf="desafioDoDia.respondido && respostaCorretaVisivel">
-        <ng-container *ngIf="respostaCorretaVisivel === 'C'">✅</ng-container>
-        <ng-container *ngIf="opcaoSelecionada === 'C' && respostaCorretaVisivel !== 'C'">❌</ng-container>
-      </span>
-    </button>
-  </div>
+      <div class="quiz-options">
+        <button class="quiz-option-btn"
+                [class.selected]="opcaoSelecionada === 'A'"
+                [class.correct]="desafioDoDia.respondido && respostaCorretaVisivel === 'A'"
+                [class.wrong]="desafioDoDia.respondido && opcaoSelecionada === 'A' && respostaCorretaVisivel !== 'A'"
+                [disabled]="desafioDoDia.respondido"
+                (click)="selecionarOpcao('A')">
+          <span class="option-text">{{ desafioDoDia.opcaoA }}</span>
+          <span class="option-icon" *ngIf="desafioDoDia.respondido && respostaCorretaVisivel">
+            <ng-container *ngIf="respostaCorretaVisivel === 'A'">✅</ng-container>
+            <ng-container *ngIf="opcaoSelecionada === 'A' && respostaCorretaVisivel !== 'A'">❌</ng-container>
+          </span>
+        </button>
 
-  <div class="quiz-submit-wrapper" *ngIf="!desafioDoDia.respondido">
-    <button 
-      class="quiz-submit-btn" 
-      [disabled]="!opcaoSelecionada" 
-      (click)="submeterResposta()">
-      Confirmar Resposta
-    </button>
-  </div>
+        <button class="quiz-option-btn"
+                [class.selected]="opcaoSelecionada === 'B'"
+                [class.correct]="desafioDoDia.respondido && respostaCorretaVisivel === 'B'"
+                [class.wrong]="desafioDoDia.respondido && opcaoSelecionada === 'B' && respostaCorretaVisivel !== 'B'"
+                [disabled]="desafioDoDia.respondido"
+                (click)="selecionarOpcao('B')">
+          <span class="option-text">{{ desafioDoDia.opcaoB }}</span>
+          <span class="option-icon" *ngIf="desafioDoDia.respondido && respostaCorretaVisivel">
+            <ng-container *ngIf="respostaCorretaVisivel === 'B'">✅</ng-container>
+            <ng-container *ngIf="opcaoSelecionada === 'B' && respostaCorretaVisivel !== 'B'">❌</ng-container>
+          </span>
+        </button>
 
-  <div *ngIf="desafioDoDia.respondido || feedbackDesafio" 
-       class="quiz-feedback"
-       [ngClass]="desafioDoDia.acertou ? 'success' : 'error'">
-    {{ feedbackDesafio || (desafioDoDia.acertou ? 'Já respondeste corretamente hoje! 🎉' : 'Já respondeste a este desafio (Incorreto).') }}
-  </div>
+        <button class="quiz-option-btn"
+                [class.selected]="opcaoSelecionada === 'C'"
+                [class.correct]="desafioDoDia.respondido && respostaCorretaVisivel === 'C'"
+                [class.wrong]="desafioDoDia.respondido && opcaoSelecionada === 'C' && respostaCorretaVisivel !== 'C'"
+                [disabled]="desafioDoDia.respondido"
+                (click)="selecionarOpcao('C')">
+          <span class="option-text">{{ desafioDoDia.opcaoC }}</span>
+          <span class="option-icon" *ngIf="desafioDoDia.respondido && respostaCorretaVisivel">
+            <ng-container *ngIf="respostaCorretaVisivel === 'C'">✅</ng-container>
+            <ng-container *ngIf="opcaoSelecionada === 'C' && respostaCorretaVisivel !== 'C'">❌</ng-container>
+          </span>
+        </button>
+      </div>
 
-  <div class="quiz-footer">
-    <div class="quiz-reward-wrapper">
-      <span class="quiz-reward">✨ Recompensa: {{ desafioDoDia.xp }} XP</span>
+      <div class="quiz-submit-wrapper" *ngIf="!desafioDoDia.respondido">
+        <button class="quiz-submit-btn"
+                [disabled]="!opcaoSelecionada"
+                (click)="submeterResposta()">
+          Confirmar Resposta
+        </button>
+      </div>
+
+      <div *ngIf="desafioDoDia.respondido || feedbackDesafio"
+           class="quiz-feedback"
+           [ngClass]="desafioDoDia.acertou ? 'success' : 'error'">
+        {{ feedbackDesafio || (desafioDoDia.acertou ? 'Já respondeste corretamente hoje! 🎉' : 'Já respondeste a este desafio (Incorreto).') }}
+      </div>
+
+      <div class="quiz-footer">
+        <div class="quiz-reward-wrapper">
+          <span class="quiz-reward">✨ Recompensa: {{ desafioDoDia.xp }} XP</span>
+        </div>
+
+        <div class="quiz-timer" *ngIf="desafioDoDia.respondido">
+          Próxima pergunta em: <strong>{{ timeUntilNext }}</strong>
+        </div>
+      </div>
+
     </div>
-    
-    <div class="quiz-timer" *ngIf="desafioDoDia.respondido">
-      Próxima pergunta em: <strong>{{ timeUntilNext }}</strong>
-    </div>
-  </div>
-
-</div>
   </div>
 </div>

@@ -8,6 +8,7 @@ import {
   ResumoEstatisticasFeedDto,
   ResumoEstatisticasFeedItemDto,
   ResumoFilmeComunidadeDto,
+  ReminderJogoNotifDto,
   NotificacaoComunidadeFeedDto,
   NotificacaoComunidadeItemDto
 } from '../../services/notificacoes.service';
@@ -44,6 +45,8 @@ export class TopbarActionsComponent implements OnInit, OnDestroy {
 
   resumoFeed: ResumoEstatisticasFeedDto = { unread: [], read: [] };
 
+  reminderJogo: ReminderJogoNotifDto[] = [];
+
   // ── Community notifications ──
   comunidadeFeed: NotificacaoComunidadeFeedDto = { unread: [], read: [] };
   comunidadeUnreadCount = 0;
@@ -53,14 +56,14 @@ export class TopbarActionsComponent implements OnInit, OnDestroy {
     private notificacoesService: NotificacoesService,
     private router: Router,
     private cdr: ChangeDetectorRef
-  ) {}
+  ) { }
 
   ngOnInit(): void {
     this.loadUpcomingFromTmdb();
     this.loadComunidadeUnreadCount();
   }
 
-  ngOnDestroy(): void {}
+  ngOnDestroy(): void { }
 
   @HostListener('document:click', ['$event'])
   onDocumentClick(e: MouseEvent): void {
@@ -75,6 +78,7 @@ export class TopbarActionsComponent implements OnInit, OnDestroy {
       this.upcomingUnreadPage = 0;
       this.upcomingReadPage = 0;
       this.loadResumoFeed();
+      this.loadReminderJogo();
       this.loadUpcomingFromTmdb();
       this.loadComunidadeFeed();
     }
@@ -84,6 +88,7 @@ export class TopbarActionsComponent implements OnInit, OnDestroy {
     e.stopPropagation();
     this.activeNotifTab = tab;
     if (tab === 'notificacoes') {
+      this.loadReminderJogo();
       this.loadResumoFeed();
       this.loadComunidadeFeed();
     }
@@ -174,6 +179,35 @@ export class TopbarActionsComponent implements OnInit, OnDestroy {
         this.resumoFeed = { unread: [], read: [] };
       }
     });
+  }
+
+  private loadReminderJogo(): void {
+    this.notificacoesService.getReminderJogoFeed().subscribe({
+      next: (data) => {
+        this.reminderJogo = data ?? [];
+        this.cdr.markForCheck();
+      },
+      error: () => { this.reminderJogo = []; }
+    });
+  }
+
+  // Só marca como lido (botão ✓)
+  marcarReminderLido(e: MouseEvent, id: number): void {
+    e.preventDefault();
+    e.stopPropagation();
+    this.notificacoesService.marcarReminderJogoComoLida(id).subscribe();
+    this.reminderJogo = this.reminderJogo.filter(r => r.id !== id);
+    this.cdr.markForCheck();
+  }
+
+  // Marca como lido E navega (botão "Jogar agora →")
+  marcarReminderLidoEJogar(e: MouseEvent, id: number): void {
+    e.preventDefault();
+    e.stopPropagation();
+    this.notificacoesService.marcarReminderJogoComoLida(id).subscribe();
+    this.reminderJogo = this.reminderJogo.filter(r => r.id !== id);
+    this.cdr.markForCheck();
+    this.router.navigate(['/higher-or-lower']);
   }
 
   marcarResumoLida(e: MouseEvent, item: ResumoEstatisticasFeedItemDto): void {

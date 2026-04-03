@@ -20,7 +20,7 @@ namespace FilmAholic.Server.Controllers
         private readonly FilmAholicDbContext _context;
 
         public AutenticacaoController(
-            UserManager<Utilizador> userManager, 
+            UserManager<Utilizador> userManager,
             SignInManager<Utilizador> signInManager,
             IEmailService emailService,
             ILogger<AutenticacaoController> logger,
@@ -68,13 +68,13 @@ namespace FilmAholic.Server.Controllers
                 await _context.SaveChangesAsync();
 
                 var token = await _userManager.GenerateEmailConfirmationTokenAsync(user);
-                
+
                 try
                 {
                     await _emailService.SendVerificationEmailAsync(user.Email, token, user.Id);
-                    
-                    return Ok(new 
-                    { 
+
+                    return Ok(new
+                    {
                         message = "Utilizador registado com sucesso! Por favor, verifique o seu email para ativar a conta.",
                         requiresEmailVerification = true
                     });
@@ -82,8 +82,8 @@ namespace FilmAholic.Server.Controllers
                 catch (Exception ex)
                 {
                     _logger.LogError(ex, "Erro ao enviar email de verificação");
-                    return Ok(new 
-                    { 
+                    return Ok(new
+                    {
                         message = "Utilizador registado. Erro ao enviar email. Verifique os logs para o token de verificação.",
                         requiresEmailVerification = true,
                         developmentToken = token
@@ -92,8 +92,8 @@ namespace FilmAholic.Server.Controllers
             }
 
             var errorMessages = result.Errors.Select(e => e.Description).ToList();
-            return BadRequest(new 
-            { 
+            return BadRequest(new
+            {
                 message = "Erro ao registar utilizador.",
                 errors = result.Errors.Select(e => new { code = e.Code, description = e.Description }).ToList(),
                 errorMessage = string.Join(" ", errorMessages)
@@ -108,10 +108,10 @@ namespace FilmAholic.Server.Controllers
 
             if (!await _userManager.IsEmailConfirmedAsync(user))
             {
-                return Unauthorized(new 
-                { 
+                return Unauthorized(new
+                {
                     message = "Por favor, confirme o seu email antes de fazer login. Verifique a sua caixa de entrada.",
-                    requiresEmailConfirmation = true 
+                    requiresEmailConfirmation = true
                 });
             }
 
@@ -119,6 +119,7 @@ namespace FilmAholic.Server.Controllers
 
             if (result.Succeeded)
             {
+                await TryEnsureReminderJogoOnLoginAsync(user.Id);
                 return Ok(new
                 {
                     message = "Login ok",
@@ -321,8 +322,8 @@ namespace FilmAholic.Server.Controllers
             {
                 var errorDescription = Request.Query["error_description"].ToString();
                 var angularUrl = GetFrontendBaseUrl();
-                var errorMessage = string.IsNullOrEmpty(errorDescription) 
-                    ? $"Erro ao autenticar com {provider}. O estado OAuth pode ter expirado. Tenta novamente." 
+                var errorMessage = string.IsNullOrEmpty(errorDescription)
+                    ? $"Erro ao autenticar com {provider}. O estado OAuth pode ter expirado. Tenta novamente."
                     : $"Erro ao autenticar com {provider}: {errorDescription}";
                 return Redirect($"{angularUrl}/login?error={Uri.EscapeDataString(errorMessage)}");
             }
@@ -332,6 +333,8 @@ namespace FilmAholic.Server.Controllers
             if (signInResult.Succeeded)
             {
                 var user = await _userManager.FindByLoginAsync(info.LoginProvider, info.ProviderKey);
+                if (user != null)
+                    await TryEnsureReminderJogoOnLoginAsync(user.Id);
                 var angularUrl = GetFrontendBaseUrl();
                 return Redirect($"{angularUrl}/login?externalSuccess=true&nome={Uri.EscapeDataString(user?.Nome ?? "")}&email={Uri.EscapeDataString(user?.Email ?? "")}&userId={Uri.EscapeDataString(user?.Id ?? "")}");
             }
@@ -344,7 +347,7 @@ namespace FilmAholic.Server.Controllers
 
             var email = info.Principal.FindFirstValue(ClaimTypes.Email) ?? info.Principal.FindFirstValue("email");
             var name = info.Principal.FindFirstValue(ClaimTypes.Name) ?? info.Principal.FindFirstValue("name");
-            
+
             if (string.IsNullOrEmpty(email))
             {
                 var angularUrl = GetFrontendBaseUrl();
@@ -358,6 +361,7 @@ namespace FilmAholic.Server.Controllers
                 if (addLoginResult.Succeeded)
                 {
                     await _signInManager.SignInAsync(existingUser, isPersistent: false);
+                    await TryEnsureReminderJogoOnLoginAsync(existingUser.Id);
                     var angularUrl = GetFrontendBaseUrl();
                     return Redirect($"{angularUrl}/login?externalSuccess=true&nome={Uri.EscapeDataString(existingUser.Nome)}&email={Uri.EscapeDataString(existingUser.Email)}&userId={Uri.EscapeDataString(existingUser.Id)}");
                 }
@@ -371,10 +375,10 @@ namespace FilmAholic.Server.Controllers
             {
                 UserName = email,
                 Email = email,
-                EmailConfirmed = true, 
+                EmailConfirmed = true,
                 Nome = firstName,
                 Sobrenome = lastName,
-                DataNascimento = DateTime.UtcNow.AddYears(-18), 
+                DataNascimento = DateTime.UtcNow.AddYears(-18),
                 DataCriacao = DateTime.UtcNow
             };
 
@@ -385,6 +389,19 @@ namespace FilmAholic.Server.Controllers
                 return Redirect($"{angularUrl}/login?error=Erro ao criar conta: {string.Join(", ", createResult.Errors.Select(e => e.Description))}");
             }
 
+            // Mesmo default que em Registar — contas OAuth não tinham linha em PreferenciasNotificacao,
+            // pelo que o ReminderJogoGenerator nunca as elegia.
+            _context.PreferenciasNotificacao.Add(new PreferenciasNotificacao
+            {
+                UtilizadorId = newUser.Id,
+                NovaEstreiaAtiva = true,
+                NovaEstreiaFrequencia = "Diaria",
+                ResumoEstatisticasAtiva = true,
+                ResumoEstatisticasFrequencia = "Semanal",
+                AtualizadaEm = DateTime.UtcNow
+            });
+            await _context.SaveChangesAsync();
+
             var addLoginResult2 = await _userManager.AddLoginAsync(newUser, info);
             if (!addLoginResult2.Succeeded)
             {
@@ -393,8 +410,21 @@ namespace FilmAholic.Server.Controllers
             }
 
             await _signInManager.SignInAsync(newUser, isPersistent: false);
+            await TryEnsureReminderJogoOnLoginAsync(newUser.Id);
             var angularUrlFinal = GetFrontendBaseUrl();
             return Redirect($"{angularUrlFinal}/login?externalSuccess=true&nome={Uri.EscapeDataString(newUser.Nome)}&email={Uri.EscapeDataString(newUser.Email)}&userId={Uri.EscapeDataString(newUser.Id)}");
+        }
+
+        private async Task TryEnsureReminderJogoOnLoginAsync(string userId)
+        {
+            try
+            {
+                await ReminderJogoGenerator.EnsureForUserIfEligibleAsync(_context, userId, _logger, HttpContext.RequestAborted);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "ReminderJogo ensure on login falhou para {UserId}", userId);
+            }
         }
 
         private string GetFrontendBaseUrl()
