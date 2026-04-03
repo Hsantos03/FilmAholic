@@ -1079,4 +1079,32 @@ public class MovieService : IMovieService
             return new List<CastMemberDto>();
         }
     }
+
+
+    public async Task<bool> IsAvailableInStreamingAsync(int tmdbId)
+    {
+        var apiKey = _configuration["ExternalApis:TmdbApiKey"];
+        var client = _httpClientFactory.CreateClient();
+
+        var url = $"https://api.themoviedb.org/3/movie/{tmdbId}/watch/providers?api_key={apiKey}";
+        var response = await client.GetAsync(url);
+
+        if (!response.IsSuccessStatusCode) return false;
+
+        var json = await response.Content.ReadAsStringAsync();
+        var data = JsonSerializer.Deserialize<JsonElement>(json);
+
+        if (!data.TryGetProperty("results", out var results))
+            return false;
+
+        if (results.TryGetProperty("PT", out var pt))
+        {
+            if (pt.TryGetProperty("flatrate", out var streaming))
+            {
+                return streaming.GetArrayLength() > 0;
+            }
+        }
+
+        return false;
+    }
 }

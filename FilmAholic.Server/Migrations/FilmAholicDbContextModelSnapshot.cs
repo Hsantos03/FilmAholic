@@ -861,6 +861,9 @@ namespace FilmAholic.Server.Migrations
                     b.Property<DateTime>("AtualizadaEm")
                         .HasColumnType("datetime2");
 
+                    b.Property<bool>("FilmeDisponivelAtiva")
+                        .HasColumnType("bit");
+
                     b.Property<bool>("NovaEstreiaAtiva")
                         .HasColumnType("bit");
 

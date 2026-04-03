@@ -3,7 +3,7 @@ using Microsoft.Extensions.Options;
 
 namespace FilmAholic.Server.Services;
 
-/// <summary>FR70: agenda geração periódica de resumos de estatísticas.</summary>
+/// FR70: agenda geração periódica de resumos de estatísticas.
 public sealed class PeriodicStatsNotificationService : BackgroundService
 {
     private readonly IServiceScopeFactory _scopeFactory;

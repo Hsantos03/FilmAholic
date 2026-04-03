@@ -13,6 +13,7 @@ namespace FilmAholic.Server.Controllers
     public class NotificacoesController : ControllerBase
     {
         private const string TipoNovaEstreia = "NovaEstreia";
+        private const string TipoFilmeDisponivel = "FilmeDisponivel";
         private const string TipoResumoEstatisticas = "ResumoEstatisticas";
         private static readonly string[] FrequenciasPermitidas = ["Imediata", "Diaria", "Semanal"];
         private static readonly string[] ResumoFrequenciasPermitidas = ["Diaria", "Semanal"];
@@ -45,6 +46,7 @@ namespace FilmAholic.Server.Controllers
                 NovaEstreiaFrequencia = "Diaria",
                 ResumoEstatisticasAtiva = true,
                 ResumoEstatisticasFrequencia = "Semanal",
+                FilmeDisponivelAtiva = true,
                 AtualizadaEm = DateTime.UtcNow
             };
 
@@ -305,7 +307,7 @@ namespace FilmAholic.Server.Controllers
                 .ToListAsync();
 
             // Fallback: se a BD praticamente não tem “estreias” dentro da janela,
-            // buscamos ao TMDB para conseguir ter notificações suficientes.
+            // vamos buscar ao TMDB para conseguir ter notificações suficientes.
             var fallbackThreshold = Math.Max(10, limit * 2);
             if (candidates.Count < fallbackThreshold)
             {
@@ -352,8 +354,6 @@ namespace FilmAholic.Server.Controllers
                 .ToList();
 
             // Cria notificações NovaEstreia para os elegíveis (idempotente pelo índice único).
-            // Nota: se o utilizador já marcou como "lida" vários filmes mais próximos, precisamos de considerar
-            // mais candidatos para existirem sempre "não lidas" suficientes na janela.
             if (await CanGenerateNovaEstreiaAsync(userId, prefs, nowUtc))
             {
                 var desiredCreateCount = Math.Min(Math.Max(limit * 20, 50), 200);
@@ -1305,6 +1305,56 @@ namespace FilmAholic.Server.Controllers
             return NoContent();
         }
 
+        [HttpGet("filme-disponivel/feed")]
+        public async Task<IActionResult> GetFilmeDisponivelFeed()
+        {
+            var userId = GetUserId();
+            if (string.IsNullOrEmpty(userId)) return Unauthorized();
+
+            var items = await _context.Notificacoes
+                .AsNoTracking()
+                .Where(n => n.UtilizadorId == userId && n.Tipo == TipoFilmeDisponivel && n.LidaEm == null)
+                .OrderByDescending(n => n.CriadaEm)
+                .Take(30)
+                .Select(n => new FilmeDisponivelFeedItemDto
+                {
+                    Id = n.Id,
+                    FilmeId = n.FilmeId,
+                    Titulo = n.Filme != null ? n.Filme.Titulo : null,
+                    Corpo = n.Corpo ?? "",
+                    CriadaEm = n.CriadaEm
+                })
+                .ToListAsync();
+
+            return Ok(items);
+        }
+
+        [HttpPut("filme-disponivel/{id:int}/lida")]
+        public async Task<IActionResult> MarcarFilmeDisponivelComoLida([FromRoute] int id)
+        {
+            var userId = GetUserId();
+            if (string.IsNullOrEmpty(userId)) return Unauthorized();
+
+            var notif = await _context.Notificacoes
+                .FirstOrDefaultAsync(n => n.Id == id && n.UtilizadorId == userId && n.Tipo == TipoFilmeDisponivel);
+
+            if (notif == null) return NotFound();
+
+            notif.LidaEm = DateTime.UtcNow;
+            await _context.SaveChangesAsync();
+            return NoContent();
+        }
+
+
+        public class FilmeDisponivelFeedItemDto
+        {
+            public int Id { get; set; }
+            public int? FilmeId { get; set; }
+            public string? Titulo { get; set; }
+            public string Corpo { get; set; } = "";
+            public DateTime CriadaEm { get; set; }
+        }
+
         public class NovaEstreiaDebugDto
         {
             public string? UserId { get; set; }
@@ -1347,6 +1397,8 @@ namespace FilmAholic.Server.Controllers
             public string? ResumoEstatisticasFrequencia { get; set; }
 
             public bool ReminderJogoAtiva { get; set; } = true;
+
+            public bool FilmeDisponivelAtiva { get; set; } = true;
         }
 
         public class ResumoEstatisticasFeedItemDto

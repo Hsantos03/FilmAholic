@@ -15,10 +15,10 @@ public class Notificacao
 
     public Filme? Filme { get; set; }
 
-    // e.g. "NovaEstreia"
+    // "NovaEstreia"
     public string Tipo { get; set; } = string.Empty;
 
-    /// <summary>Texto/JSON para notificações sem filme associado (ex.: <c>ResumoEstatisticas</c>).</summary>
+    /// Texto/JSON para notificações sem filme associado (ex.: <c>ResumoEstatisticas</c>).
     public string? Corpo { get; set; }
 
     public DateTime CriadaEm { get; set; } = DateTime.UtcNow;

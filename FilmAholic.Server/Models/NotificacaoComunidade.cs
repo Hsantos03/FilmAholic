@@ -6,15 +6,15 @@ public class NotificacaoComunidade
 {
     public int Id { get; set; }
 
-    /// <summary>User who receives the notification.</summary>
+    /// User who receives the notification.
     public string UtilizadorId { get; set; } = string.Empty;
     public Utilizador? Utilizador { get; set; }
 
-    /// <summary>Community where the new post was created.</summary>
+    /// Community where the new post was created.
     public int ComunidadeId { get; set; }
     public Comunidade? Comunidade { get; set; }
 
-    /// <summary>Post that triggered the notification (optional, for direct linking).</summary>
+    /// Post that triggered the notification (optional, for direct linking).
     public int PostId { get; set; }
     public ComunidadePost? Post { get; set; }
 

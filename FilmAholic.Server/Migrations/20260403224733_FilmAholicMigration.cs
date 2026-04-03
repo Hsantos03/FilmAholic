@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
@@ -317,6 +317,8 @@ namespace FilmAholic.Server.Migrations
                     NovaEstreiaFrequencia = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: false),
                     ResumoEstatisticasAtiva = table.Column<bool>(type: "bit", nullable: false),
                     ResumoEstatisticasFrequencia = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: false),
+                    ReminderJogoAtiva = table.Column<bool>(type: "bit", nullable: false),
+                    FilmeDisponivelAtiva = table.Column<bool>(type: "bit", nullable: false),
                     AtualizadaEm = table.Column<DateTime>(type: "datetime2", nullable: false)
                 },
                 constraints: table =>

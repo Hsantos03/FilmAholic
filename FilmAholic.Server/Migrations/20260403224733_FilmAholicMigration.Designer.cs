@@ -864,6 +864,9 @@ namespace FilmAholic.Server.Migrations
                     b.Property<DateTime>("AtualizadaEm")
                         .HasColumnType("datetime2");
 
+                    b.Property<bool>("FilmeDisponivelAtiva")
+                        .HasColumnType("bit");
+
                     b.Property<bool>("NovaEstreiaAtiva")
                         .HasColumnType("bit");
 
@@ -871,6 +874,9 @@ namespace FilmAholic.Server.Migrations
                         .IsRequired()
                         .HasMaxLength(20)
                         .HasColumnType("nvarchar(20)");
+
+                    b.Property<bool>("ReminderJogoAtiva")
+                        .HasColumnType("bit");
 
                     b.Property<bool>("ResumoEstatisticasAtiva")
                         .HasColumnType("bit");

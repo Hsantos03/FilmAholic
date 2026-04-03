@@ -149,6 +149,24 @@
           </div>
         </div>
 
+        <!-- Quero ver: disponível cinema / streaming -->
+        <div *ngIf="filmeDisponivel.length > 0"
+             class="notif-quero-ver-section"
+             (click)="$event.stopPropagation()">
+          <div class="notifications-title">Quero ver</div>
+          <div *ngFor="let it of filmeDisponivel" class="resumo-card">
+            <div class="resumo-card-body" (click)="openFilmeDisponivelNotif($event, it)">
+              <p class="resumo-line">{{ it.corpo || it.titulo }}</p>
+            </div>
+            <button type="button"
+                    class="notification-mark-read"
+                    (click)="marcarFilmeDisponivelLida($event, it)"
+                    aria-label="Marcar como lida">
+              ✓
+            </button>
+          </div>
+        </div>
+
         <div *ngIf="hasResumoItems" class="notif-resumo-section" (click)="$event.stopPropagation()">
           <div class="notifications-title">Resumo de estatísticas</div>
           <div *ngFor="let it of resumoFeed.unread" class="resumo-card resumo-card--unread">
