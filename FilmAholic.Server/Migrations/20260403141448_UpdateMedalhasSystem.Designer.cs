@@ -4,6 +4,7 @@ using FilmAholic.Server.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace FilmAholic.Server.Migrations
 {
     [DbContext(typeof(FilmAholicDbContext))]
-    partial class FilmAholicDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260403141448_UpdateMedalhasSystem")]
+    partial class UpdateMedalhasSystem
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -671,7 +674,7 @@ namespace FilmAholic.Server.Migrations
                             CriterioTipo = "desafiosDiarios",
                             Descricao = "Completaste 7 desafios diários.",
                             IconeUrl = "/uploads/comunidades/icons/DesafiosDiarios/DesafiosDiarios_7.png",
-                            Nome = "Amador dos Desafios"
+                            Nome = "Desafioso Iniciante"
                         },
                         new
                         {
@@ -681,7 +684,7 @@ namespace FilmAholic.Server.Migrations
                             CriterioTipo = "desafiosDiarios",
                             Descricao = "Completaste 30 desafios diários.",
                             IconeUrl = "/uploads/comunidades/icons/DesafiosDiarios/DesafiosDiarios_30.png",
-                            Nome = "Experiente em Desafios"
+                            Nome = "Desafioso Dedicado"
                         },
                         new
                         {
@@ -699,9 +702,9 @@ namespace FilmAholic.Server.Migrations
                             Ativa = true,
                             CriterioQuantidade = 5,
                             CriterioTipo = "higherOrLower",
-                            Descricao = "Acertaste 5 vezes seguidas no Higher or Lower.",
+                            Descricao = "Acertaste 5 vezes no Higher or Lower.",
                             IconeUrl = "/uploads/comunidades/icons/HigherOrLower/HigherOrLower_5.png",
-                            Nome = "Iniciante da Adivinhação"
+                            Nome = "Adivinha Iniciante"
                         },
                         new
                         {
@@ -709,9 +712,9 @@ namespace FilmAholic.Server.Migrations
                             Ativa = true,
                             CriterioQuantidade = 10,
                             CriterioTipo = "higherOrLower",
-                            Descricao = "Acertaste 10 vezes seguidas no Higher or Lower.",
+                            Descricao = "Acertaste 10 vezes no Higher or Lower.",
                             IconeUrl = "/uploads/comunidades/icons/HigherOrLower/HigherOrLower_10.png",
-                            Nome = "Experiente da Adivinhação"
+                            Nome = "Adivinha Experiente"
                         },
                         new
                         {
@@ -719,7 +722,7 @@ namespace FilmAholic.Server.Migrations
                             Ativa = true,
                             CriterioQuantidade = 25,
                             CriterioTipo = "higherOrLower",
-                            Descricao = "Acertaste 25 vezes seguidas no Higher or Lower.",
+                            Descricao = "Acertaste 25 vezes no Higher or Lower.",
                             IconeUrl = "/uploads/comunidades/icons/HigherOrLower/HigherOrLower_25.png",
                             Nome = "Mestre da Adivinhação"
                         },
@@ -731,7 +734,7 @@ namespace FilmAholic.Server.Migrations
                             CriterioTipo = "criarComunidade",
                             Descricao = "Criaste a tua primeira comunidade.",
                             IconeUrl = "/uploads/comunidades/icons/Comunidades/CriarComunidade.png",
-                            Nome = "Fundador"
+                            Nome = "Membro Ativo"
                         },
                         new
                         {

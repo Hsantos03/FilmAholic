@@ -27,10 +27,11 @@ namespace FilmAholic.Tests.ErrorHandlingTests
             var userId = "user-teste-123";
             var nonExistentMovieId = 999;
             var mockMovieService = new Mock<IMovieService>();
+            var mockMedalhaService = new Mock<MedalhaService>(new FilmAholicDbContext(options));
 
             using (var context = new FilmAholicDbContext(options))
             {
-                var controller = new UserMoviesController(context, mockMovieService.Object);
+                var controller = new UserMoviesController(context, mockMovieService.Object, mockMedalhaService.Object);
                 var user = new ClaimsPrincipal(new ClaimsIdentity(new Claim[] {
                     new Claim(ClaimTypes.NameIdentifier, userId)
                 }, "mock"));
@@ -54,13 +55,14 @@ namespace FilmAholic.Tests.ErrorHandlingTests
 
             var filmeId = 100;
             var mockMovieService = new Mock<IMovieService>();
+            var mockMedalhaService = new Mock<MedalhaService>(new FilmAholicDbContext(options));
 
             using (var context = new FilmAholicDbContext(options))
             {
                 context.Filmes.Add(new Filme { Id = filmeId, Titulo = "Test Movie", Genero = "Action" });
                 await context.SaveChangesAsync();
 
-                var controller = new UserMoviesController(context, mockMovieService.Object);
+                var controller = new UserMoviesController(context, mockMovieService.Object, mockMedalhaService.Object);
                 var user = new ClaimsPrincipal(new ClaimsIdentity());
                 controller.ControllerContext = new ControllerContext() { HttpContext = new DefaultHttpContext() { User = user } };
 

@@ -29,13 +29,14 @@ namespace FilmAholic.Tests.UnitTests
             var userId = "user-teste-123";
             var filmeId = 50;
             var mockMovieService = new Mock<IMovieService>();
+            var mockMedalhaService = new Mock<MedalhaService>(new FilmAholicDbContext(options));
 
             using (var context = new FilmAholicDbContext(options))
             {
                 context.Set<Filme>().Add(new Filme { Id = filmeId, Titulo = "Teste", Genero = "Ação" });
                 await context.SaveChangesAsync();
 
-                var controller = new UserMoviesController(context, mockMovieService.Object);
+                var controller = new UserMoviesController(context, mockMovieService.Object, mockMedalhaService.Object);
                 var user = new ClaimsPrincipal(new ClaimsIdentity(new Claim[] {
                     new Claim(ClaimTypes.NameIdentifier, userId)
                 }, "mock"));
@@ -67,6 +68,7 @@ namespace FilmAholic.Tests.UnitTests
             var userId = "user-teste-123";
             var filmeId = 50;
             var mockMovieService = new Mock<IMovieService>();
+            var mockMedalhaService = new Mock<MedalhaService>(new FilmAholicDbContext(options));
 
             using (var context = new FilmAholicDbContext(options))
             {
@@ -82,7 +84,7 @@ namespace FilmAholic.Tests.UnitTests
 
                 await context.SaveChangesAsync();
 
-                var controller = new UserMoviesController(context, mockMovieService.Object);
+                var controller = new UserMoviesController(context, mockMovieService.Object, mockMedalhaService.Object);
                 var user = new ClaimsPrincipal(new ClaimsIdentity(new Claim[] {
                 new Claim(ClaimTypes.NameIdentifier, userId)
                 }, "mock"));
@@ -114,13 +116,14 @@ namespace FilmAholic.Tests.UnitTests
             var userId = "user-teste-123";
             var filmeId = 75;
             var mockMovieService = new Mock<IMovieService>();
+            var mockMedalhaService = new Mock<MedalhaService>(new FilmAholicDbContext(options));
 
             using (var context = new FilmAholicDbContext(options))
             {
                 context.Set<Filme>().Add(new Filme { Id = filmeId, Titulo = "Filme Watch Later", Genero = "Drama" });
                 await context.SaveChangesAsync();
 
-                var controller = new UserMoviesController(context, mockMovieService.Object);
+                var controller = new UserMoviesController(context, mockMovieService.Object, mockMedalhaService.Object);
                 var user = new ClaimsPrincipal(new ClaimsIdentity(new Claim[] {
                     new Claim(ClaimTypes.NameIdentifier, userId)
                 }, "mock"));
@@ -155,6 +158,7 @@ namespace FilmAholic.Tests.UnitTests
             var userId = "user-teste-123";
             var filmeId = 75;
             var mockMovieService = new Mock<IMovieService>();
+            var mockMedalhaService = new Mock<MedalhaService>(new FilmAholicDbContext(options));
 
             using (var context = new FilmAholicDbContext(options))
             {
@@ -169,7 +173,7 @@ namespace FilmAholic.Tests.UnitTests
                 });
                 await context.SaveChangesAsync();
 
-                var controller = new UserMoviesController(context, mockMovieService.Object);
+                var controller = new UserMoviesController(context, mockMovieService.Object, mockMedalhaService.Object);
                 var user = new ClaimsPrincipal(new ClaimsIdentity(new Claim[] {
                 new Claim(ClaimTypes.NameIdentifier, userId)
                 }, "mock"));

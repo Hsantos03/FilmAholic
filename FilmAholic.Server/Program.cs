@@ -4,6 +4,8 @@ using FilmAholic.Server.Services;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.FileProviders;
+using System.IO;
 
 
 var builder = WebApplication.CreateBuilder(args);
@@ -96,6 +98,8 @@ builder.Services.AddScoped<IPreferenciasService, PreferenciasService>();
 builder.Services.AddHttpClient();
 builder.Services.AddScoped<IMovieService, MovieService>();
 
+builder.Services.AddScoped<MedalhaService>();
+
 builder.Services.AddScoped<ICinemaScraperService, CinemaScraperService>();
 builder.Services.AddHostedService<CinemaMovieCacheService>();
 
@@ -118,6 +122,14 @@ var app = builder.Build();
 
 app.UseDefaultFiles();
 app.UseStaticFiles();
+
+// Configure static files for uploads folder
+app.UseStaticFiles(new StaticFileOptions
+{
+    FileProvider = new PhysicalFileProvider(
+        Path.Combine(builder.Environment.ContentRootPath, "wwwroot", "uploads")),
+    RequestPath = "/uploads"
+});
 
 if (app.Environment.IsDevelopment())
 {

@@ -4,6 +4,7 @@ using FilmAholic.Server.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace FilmAholic.Server.Migrations
 {
     [DbContext(typeof(FilmAholicDbContext))]
-    partial class FilmAholicDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260403134327_AddMedalhaSystem")]
+    partial class AddMedalhaSystem
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -597,151 +600,41 @@ namespace FilmAholic.Server.Migrations
                         {
                             Id = 1,
                             Ativa = true,
-                            CriterioQuantidade = 50,
-                            CriterioTipo = "filmesVistos",
-                            Descricao = "Viste 50 filmes.",
-                            IconeUrl = "/uploads/comunidades/icons/filmesVistos/50_FilmesVistos.png",
-                            Nome = "Explorador Cinéfilo"
+                            CriterioQuantidade = 5,
+                            CriterioTipo = "avaliacoes",
+                            Descricao = "Avaliaste 5 filmes.",
+                            IconeUrl = "/icons/medalhas/iniciante.svg",
+                            Nome = "Cinéfilo Iniciante"
                         },
                         new
                         {
                             Id = 2,
                             Ativa = true,
-                            CriterioQuantidade = 100,
-                            CriterioTipo = "filmesVistos",
-                            Descricao = "Viste 100 filmes.",
-                            IconeUrl = "/uploads/comunidades/icons/filmesVistos/100_FilmesVistos.png",
-                            Nome = "Entusiasta do Cinema"
+                            CriterioQuantidade = 25,
+                            CriterioTipo = "avaliacoes",
+                            Descricao = "Avaliaste 25 filmes.",
+                            IconeUrl = "/icons/medalhas/dedicado.svg",
+                            Nome = "Cinéfilo Dedicado"
                         },
                         new
                         {
                             Id = 3,
                             Ativa = true,
-                            CriterioQuantidade = 500,
-                            CriterioTipo = "filmesVistos",
-                            Descricao = "Viste 500 filmes.",
-                            IconeUrl = "/uploads/comunidades/icons/filmesVistos/500_FilmesVistos.png",
-                            Nome = "Mestre Cinéfilo"
+                            CriterioQuantidade = 50,
+                            CriterioTipo = "avaliacoes",
+                            Descricao = "Avaliaste 50 filmes.",
+                            IconeUrl = "/icons/medalhas/critico.svg",
+                            Nome = "Crítico de Cinema"
                         },
                         new
                         {
                             Id = 4,
                             Ativa = true,
-                            CriterioQuantidade = 1000,
-                            CriterioTipo = "filmesVistos",
-                            Descricao = "Viste 1000 filmes.",
-                            IconeUrl = "/uploads/comunidades/icons/filmesVistos/1000_FilmesVistos.png",
-                            Nome = "Lenda do Cinema"
-                        },
-                        new
-                        {
-                            Id = 5,
-                            Ativa = true,
                             CriterioQuantidade = 10,
-                            CriterioTipo = "nivel",
-                            Descricao = "Alcançaste o nível 10.",
-                            IconeUrl = "/uploads/comunidades/icons/Nivel/Nivel_10.png",
-                            Nome = "Iniciante"
-                        },
-                        new
-                        {
-                            Id = 6,
-                            Ativa = true,
-                            CriterioQuantidade = 50,
-                            CriterioTipo = "nivel",
-                            Descricao = "Alcançaste o nível 50.",
-                            IconeUrl = "/uploads/comunidades/icons/Nivel/Nivel_50.png",
-                            Nome = "Experiente"
-                        },
-                        new
-                        {
-                            Id = 7,
-                            Ativa = true,
-                            CriterioQuantidade = 100,
-                            CriterioTipo = "nivel",
-                            Descricao = "Alcançaste o nível 100.",
-                            IconeUrl = "/uploads/comunidades/icons/Nivel/Nivel_100.png",
-                            Nome = "Mestre"
-                        },
-                        new
-                        {
-                            Id = 8,
-                            Ativa = true,
-                            CriterioQuantidade = 7,
-                            CriterioTipo = "desafiosDiarios",
-                            Descricao = "Completaste 7 desafios diários.",
-                            IconeUrl = "/uploads/comunidades/icons/DesafiosDiarios/DesafiosDiarios_7.png",
-                            Nome = "Amador dos Desafios"
-                        },
-                        new
-                        {
-                            Id = 9,
-                            Ativa = true,
-                            CriterioQuantidade = 30,
-                            CriterioTipo = "desafiosDiarios",
-                            Descricao = "Completaste 30 desafios diários.",
-                            IconeUrl = "/uploads/comunidades/icons/DesafiosDiarios/DesafiosDiarios_30.png",
-                            Nome = "Experiente em Desafios"
-                        },
-                        new
-                        {
-                            Id = 10,
-                            Ativa = true,
-                            CriterioQuantidade = 150,
-                            CriterioTipo = "desafiosDiarios",
-                            Descricao = "Completaste 150 desafios diários.",
-                            IconeUrl = "/uploads/comunidades/icons/DesafiosDiarios/DesafiosDiarios_150.png",
-                            Nome = "Mestre dos Desafios"
-                        },
-                        new
-                        {
-                            Id = 11,
-                            Ativa = true,
-                            CriterioQuantidade = 5,
-                            CriterioTipo = "higherOrLower",
-                            Descricao = "Acertaste 5 vezes seguidas no Higher or Lower.",
-                            IconeUrl = "/uploads/comunidades/icons/HigherOrLower/HigherOrLower_5.png",
-                            Nome = "Iniciante da Adivinhação"
-                        },
-                        new
-                        {
-                            Id = 12,
-                            Ativa = true,
-                            CriterioQuantidade = 10,
-                            CriterioTipo = "higherOrLower",
-                            Descricao = "Acertaste 10 vezes seguidas no Higher or Lower.",
-                            IconeUrl = "/uploads/comunidades/icons/HigherOrLower/HigherOrLower_10.png",
-                            Nome = "Experiente da Adivinhação"
-                        },
-                        new
-                        {
-                            Id = 13,
-                            Ativa = true,
-                            CriterioQuantidade = 25,
-                            CriterioTipo = "higherOrLower",
-                            Descricao = "Acertaste 25 vezes seguidas no Higher or Lower.",
-                            IconeUrl = "/uploads/comunidades/icons/HigherOrLower/HigherOrLower_25.png",
-                            Nome = "Mestre da Adivinhação"
-                        },
-                        new
-                        {
-                            Id = 14,
-                            Ativa = true,
-                            CriterioQuantidade = 1,
-                            CriterioTipo = "criarComunidade",
-                            Descricao = "Criaste a tua primeira comunidade.",
-                            IconeUrl = "/uploads/comunidades/icons/Comunidades/CriarComunidade.png",
-                            Nome = "Fundador"
-                        },
-                        new
-                        {
-                            Id = 15,
-                            Ativa = true,
-                            CriterioQuantidade = 1,
-                            CriterioTipo = "juntarComunidade",
-                            Descricao = "Juntaste-te a uma comunidade.",
-                            IconeUrl = "/uploads/comunidades/icons/Comunidades/JuntarComunidade.png",
-                            Nome = "Participante"
+                            CriterioTipo = "comentarios",
+                            Descricao = "Fizeste 10 comentários.",
+                            IconeUrl = "/icons/medalhas/comentador.svg",
+                            Nome = "Comentador"
                         });
                 });
 
@@ -975,9 +868,6 @@ namespace FilmAholic.Server.Migrations
 
                     b.Property<DateTime>("Data")
                         .HasColumnType("datetime2");
-
-                    b.Property<bool>("Favorito")
-                        .HasColumnType("bit");
 
                     b.Property<int>("FilmeId")
                         .HasColumnType("int");
