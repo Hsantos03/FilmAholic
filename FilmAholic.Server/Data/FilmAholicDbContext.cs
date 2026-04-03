@@ -30,6 +30,10 @@ public class FilmAholicDbContext : IdentityDbContext<Utilizador>
     public DbSet<ComunidadePostReport> ComunidadePostReports => Set<ComunidadePostReport>();
     public DbSet<ComunidadePostComentario> ComunidadePostComentarios => Set<ComunidadePostComentario>();
 
+    public DbSet<RecomendacaoFeedback> RecomendacaoFeedbacks => Set<RecomendacaoFeedback>();
+
+    public DbSet<NotificacaoComunidade> NotificacoesComunidade => Set<NotificacaoComunidade>();
+
     protected override void OnModelCreating(ModelBuilder builder)
     {
         builder.Entity<UserMovie>()
@@ -101,12 +105,12 @@ public class FilmAholicDbContext : IdentityDbContext<Utilizador>
             ud.HasIndex(x => new { x.UtilizadorId, x.DesafioId }).IsUnique();
 
             ud.HasOne(x => x.Utilizador)
-              .WithMany() 
+              .WithMany() // no navigation required on Utilizador side; add if you add collection there
               .HasForeignKey(x => x.UtilizadorId)
               .OnDelete(DeleteBehavior.Cascade);
 
             ud.HasOne(x => x.Desafio)
-              .WithMany() 
+              .WithMany() // no navigation required on Desafio side; add if you add collection there
               .HasForeignKey(x => x.DesafioId)
               .OnDelete(DeleteBehavior.Cascade);
 
@@ -209,7 +213,7 @@ public class FilmAholicDbContext : IdentityDbContext<Utilizador>
         {
             e.HasKey(v => v.Id);
             e.HasIndex(v => new { v.PostId, v.UtilizadorId }).IsUnique();
-            
+
             e.HasOne(v => v.Post)
              .WithMany()
              .HasForeignKey(v => v.PostId)
@@ -223,7 +227,7 @@ public class FilmAholicDbContext : IdentityDbContext<Utilizador>
         {
             e.HasKey(r => r.Id);
             e.HasIndex(r => new { r.PostId, r.UtilizadorId }).IsUnique();
-            
+
             e.HasOne(r => r.Post)
              .WithMany()
              .HasForeignKey(r => r.PostId)
@@ -239,7 +243,7 @@ public class FilmAholicDbContext : IdentityDbContext<Utilizador>
             e.Property(c => c.Conteudo).IsRequired().HasMaxLength(2000);
             e.Property(c => c.DataCriacao).HasDefaultValueSql("CURRENT_TIMESTAMP");
             e.HasIndex(c => c.PostId);
-            
+
             e.HasOne(c => c.Post)
              .WithMany()
              .HasForeignKey(c => c.PostId)
@@ -286,6 +290,43 @@ public class FilmAholicDbContext : IdentityDbContext<Utilizador>
                 .WithMany()
                 .HasForeignKey(x => x.UtilizadorId)
                 .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        // RecomendacaoFeedback mapping
+        builder.Entity<RecomendacaoFeedback>(e =>
+        {
+            e.ToTable("RecomendacaoFeedbacks");
+            e.HasKey(x => x.Id);
+            e.Property(x => x.UtilizadorId).IsRequired();
+            e.HasIndex(x => new { x.UtilizadorId, x.FilmeId }).IsUnique();
+
+            e.HasOne(x => x.Filme)
+             .WithMany()
+             .HasForeignKey(x => x.FilmeId)
+             .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        // NotificacaoComunidade mapping
+        builder.Entity<NotificacaoComunidade>(e =>
+        {
+            e.ToTable("NotificacoesComunidade");
+            e.HasKey(x => x.Id);
+            e.HasIndex(x => new { x.UtilizadorId, x.LidaEm });
+
+            e.HasOne(x => x.Utilizador)
+             .WithMany()
+             .HasForeignKey(x => x.UtilizadorId)
+             .OnDelete(DeleteBehavior.Cascade);
+
+            e.HasOne(x => x.Comunidade)
+             .WithMany()
+             .HasForeignKey(x => x.ComunidadeId)
+             .OnDelete(DeleteBehavior.NoAction);
+
+            e.HasOne(x => x.Post)
+             .WithMany()
+             .HasForeignKey(x => x.PostId)
+             .OnDelete(DeleteBehavior.Cascade);
         });
     }
 }

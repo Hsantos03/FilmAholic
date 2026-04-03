@@ -124,7 +124,7 @@ namespace FilmAholic.Server.Migrations
                     b.HasIndex("CommentId", "UserId")
                         .IsUnique();
 
-                    b.ToTable("CommentVotes", (string)null);
+                    b.ToTable("CommentVotes");
                 });
 
             modelBuilder.Entity("FilmAholic.Server.Models.Comments", b =>
@@ -157,7 +157,7 @@ namespace FilmAholic.Server.Migrations
 
                     b.HasIndex("FilmeId");
 
-                    b.ToTable("Comments", (string)null);
+                    b.ToTable("Comments");
                 });
 
             modelBuilder.Entity("FilmAholic.Server.Models.Comunidade", b =>
@@ -460,7 +460,7 @@ namespace FilmAholic.Server.Migrations
 
                     b.HasIndex("Ativo");
 
-                    b.ToTable("Desafios", (string)null);
+                    b.ToTable("Desafios");
                 });
 
             modelBuilder.Entity("FilmAholic.Server.Models.Filme", b =>
@@ -498,7 +498,7 @@ namespace FilmAholic.Server.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Filmes", (string)null);
+                    b.ToTable("Filmes");
                 });
 
             modelBuilder.Entity("FilmAholic.Server.Models.GameHistory", b =>
@@ -549,7 +549,7 @@ namespace FilmAholic.Server.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Generos", (string)null);
+                    b.ToTable("Generos");
                 });
 
             modelBuilder.Entity("FilmAholic.Server.Models.MovieRating", b =>
@@ -578,7 +578,7 @@ namespace FilmAholic.Server.Migrations
                     b.HasIndex("FilmeId", "UserId")
                         .IsUnique();
 
-                    b.ToTable("MovieRatings", (string)null);
+                    b.ToTable("MovieRatings");
                 });
 
             modelBuilder.Entity("FilmAholic.Server.Models.Notificacao", b =>
@@ -622,6 +622,41 @@ namespace FilmAholic.Server.Migrations
                     b.ToTable("Notificacoes", (string)null);
                 });
 
+            modelBuilder.Entity("FilmAholic.Server.Models.NotificacaoComunidade", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("ComunidadeId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("CriadaEm")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("LidaEm")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("PostId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("UtilizadorId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ComunidadeId");
+
+                    b.HasIndex("PostId");
+
+                    b.HasIndex("UtilizadorId", "LidaEm");
+
+                    b.ToTable("NotificacoesComunidade", (string)null);
+                });
+
             modelBuilder.Entity("FilmAholic.Server.Models.PreferenciasNotificacao", b =>
                 {
                     b.Property<int>("Id")
@@ -659,6 +694,37 @@ namespace FilmAholic.Server.Migrations
                         .IsUnique();
 
                     b.ToTable("PreferenciasNotificacao", (string)null);
+                });
+
+            modelBuilder.Entity("FilmAholic.Server.Models.RecomendacaoFeedback", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CriadoEm")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("FilmeId")
+                        .HasColumnType("int");
+
+                    b.Property<bool>("Relevante")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("UtilizadorId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("FilmeId");
+
+                    b.HasIndex("UtilizadorId", "FilmeId")
+                        .IsUnique();
+
+                    b.ToTable("RecomendacaoFeedbacks", (string)null);
                 });
 
             modelBuilder.Entity("FilmAholic.Server.Models.UserDesafio", b =>
@@ -703,7 +769,7 @@ namespace FilmAholic.Server.Migrations
                     b.HasIndex("UtilizadorId", "DesafioId")
                         .IsUnique();
 
-                    b.ToTable("UserDesafios", (string)null);
+                    b.ToTable("UserDesafios");
                 });
 
             modelBuilder.Entity("FilmAholic.Server.Models.UserMovie", b =>
@@ -734,7 +800,7 @@ namespace FilmAholic.Server.Migrations
                     b.HasIndex("UtilizadorId", "FilmeId")
                         .IsUnique();
 
-                    b.ToTable("UserMovies", (string)null);
+                    b.ToTable("UserMovies");
                 });
 
             modelBuilder.Entity("FilmAholic.Server.Models.Utilizador", b =>
@@ -867,7 +933,7 @@ namespace FilmAholic.Server.Migrations
 
                     b.HasIndex("GeneroId");
 
-                    b.ToTable("UtilizadorGeneros", (string)null);
+                    b.ToTable("UtilizadorGeneros");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole", b =>
@@ -1139,6 +1205,33 @@ namespace FilmAholic.Server.Migrations
                     b.Navigation("Utilizador");
                 });
 
+            modelBuilder.Entity("FilmAholic.Server.Models.NotificacaoComunidade", b =>
+                {
+                    b.HasOne("FilmAholic.Server.Models.Comunidade", "Comunidade")
+                        .WithMany()
+                        .HasForeignKey("ComunidadeId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.HasOne("FilmAholic.Server.Models.ComunidadePost", "Post")
+                        .WithMany()
+                        .HasForeignKey("PostId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("FilmAholic.Server.Models.Utilizador", "Utilizador")
+                        .WithMany()
+                        .HasForeignKey("UtilizadorId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Comunidade");
+
+                    b.Navigation("Post");
+
+                    b.Navigation("Utilizador");
+                });
+
             modelBuilder.Entity("FilmAholic.Server.Models.PreferenciasNotificacao", b =>
                 {
                     b.HasOne("FilmAholic.Server.Models.Utilizador", "Utilizador")
@@ -1148,6 +1241,17 @@ namespace FilmAholic.Server.Migrations
                         .IsRequired();
 
                     b.Navigation("Utilizador");
+                });
+
+            modelBuilder.Entity("FilmAholic.Server.Models.RecomendacaoFeedback", b =>
+                {
+                    b.HasOne("FilmAholic.Server.Models.Filme", "Filme")
+                        .WithMany()
+                        .HasForeignKey("FilmeId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Filme");
                 });
 
             modelBuilder.Entity("FilmAholic.Server.Models.UserDesafio", b =>

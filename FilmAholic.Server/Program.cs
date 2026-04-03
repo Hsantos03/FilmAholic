@@ -141,86 +141,86 @@ await using (var scope = app.Services.CreateAsyncScope())
 {
     var context = scope.ServiceProvider.GetRequiredService<FilmAholicDbContext>();
     var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
-
+    
     try
     {
-        logger.LogInformation("A aplicar migrações na base de dados...");
-        await context.Database.MigrateAsync();
-        logger.LogInformation("Migrações aplicadas com sucesso.");
-
-        var generosExist = false;
-        try
+        var canConnect = await context.Database.CanConnectAsync();
+        if (canConnect)
         {
-            generosExist = await context.Generos.AnyAsync();
-        }
-        catch (Exception)
-        {
-            logger.LogWarning("A tabela Generos ainda não existe ou ocorreu um erro.");
-        }
-
-        if (!generosExist)
-        {
-            var generosIniciais = new List<Genero>
+            var generosExist = false;
+            try
             {
-                new Genero { Nome = "Ação" },
-                new Genero { Nome = "Aventura" },
-                new Genero { Nome = "Comédia" },
-                new Genero { Nome = "Crime" },
-                new Genero { Nome = "Drama" },
-                new Genero { Nome = "Fantasia" },
-                new Genero { Nome = "Ficção Científica" },
-                new Genero { Nome = "Horror" },
-                new Genero { Nome = "Mistério" },
-                new Genero { Nome = "Romance" },
-                new Genero { Nome = "Thriller" },
-                new Genero { Nome = "Animação" },
-                new Genero { Nome = "Documentário" },
-                new Genero { Nome = "Família" },
-                new Genero { Nome = "Guerra" },
-                new Genero { Nome = "Western" }
-            };
-
-            context.Generos.AddRange(generosIniciais);
-            await context.SaveChangesAsync();
-            logger.LogInformation("Géneros iniciais criados com sucesso.");
-        }
-
-        var desafiosExist = false;
-        try
-        {
-            desafiosExist = await context.Desafios.AnyAsync();
-        }
-        catch (Exception)
-        {
-            logger.LogWarning("A tabela Desafios ainda não existe.");
-        }
-
-        if (!desafiosExist)
-        {
-            var seedList = DesafioSeed.Desafios.Select(d => new Desafio
+                generosExist = await context.Generos.AnyAsync();
+            }
+            catch (Exception)
             {
-                DataInicio = d.DataInicio,
-                DataFim = d.DataFim,
-                Descricao = d.Descricao,
-                Ativo = d.Ativo,
-                Genero = d.Genero,
-                QuantidadeNecessaria = d.QuantidadeNecessaria,
-                Xp = d.Xp,
-                Pergunta = d.Pergunta,
-                OpcaoA = d.OpcaoA,
-                OpcaoB = d.OpcaoB,
-                OpcaoC = d.OpcaoC,
-                RespostaCorreta = d.RespostaCorreta
-            }).ToList();
+                logger.LogWarning("A tabela Generos ainda não existe. Por favor, aplique as migrações primeiro.");
+            }
 
-            context.Desafios.AddRange(seedList);
-            await context.SaveChangesAsync();
-            logger.LogInformation("Desafios seed inseridos com sucesso.");
+            if (!generosExist)
+            {
+                var generosIniciais = new List<Genero>
+                {
+                    new Genero { Nome = "Ação" },
+                    new Genero { Nome = "Aventura" },
+                    new Genero { Nome = "Comédia" },
+                    new Genero { Nome = "Crime" },
+                    new Genero { Nome = "Drama" },
+                    new Genero { Nome = "Fantasia" },
+                    new Genero { Nome = "Ficção Científica" },
+                    new Genero { Nome = "Horror" },
+                    new Genero { Nome = "Mistério" },
+                    new Genero { Nome = "Romance" },
+                    new Genero { Nome = "Thriller" },
+                    new Genero { Nome = "Animação" },
+                    new Genero { Nome = "Documentário" },
+                    new Genero { Nome = "Família" },
+                    new Genero { Nome = "Guerra" },
+                    new Genero { Nome = "Western" }
+                };
+                
+                context.Generos.AddRange(generosIniciais);
+                await context.SaveChangesAsync();
+                logger.LogInformation("Géneros iniciais criados com sucesso.");
+            }
+
+            var desafiosExist = false;
+            try
+            {
+                desafiosExist = await context.Desafios.AnyAsync();
+            }
+            catch (Exception)
+            {
+                logger.LogWarning("A tabela Desafios ainda não existe. Por favor, aplique as migrações primeiro.");
+            }
+
+            if (!desafiosExist)
+            {
+                var seedList = DesafioSeed.Desafios.Select(d => new Desafio
+                {
+                    DataInicio = d.DataInicio,
+                    DataFim = d.DataFim,
+                    Descricao = d.Descricao,
+                    Ativo = d.Ativo,
+                    Genero = d.Genero,
+                    QuantidadeNecessaria = d.QuantidadeNecessaria,
+                    Xp = d.Xp,
+                    Pergunta = d.Pergunta,
+                    OpcaoA = d.OpcaoA,
+                    OpcaoB = d.OpcaoB,
+                    OpcaoC = d.OpcaoC,
+                    RespostaCorreta = d.RespostaCorreta
+                }).ToList();
+
+                context.Desafios.AddRange(seedList);
+                await context.SaveChangesAsync();
+                logger.LogInformation("Desafios seed inseridos com sucesso.");
+            }
         }
     }
     catch (Exception ex)
     {
-        logger.LogError(ex, "Erro ao popular dados iniciais ou aplicar migrações.");
+        logger.LogError(ex, "Erro ao popular dados iniciais. Certifique-se de que as migrações foram aplicadas.");
     }
 }
 

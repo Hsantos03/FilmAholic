@@ -4,6 +4,7 @@ import { Observable, of } from 'rxjs';
 import { environment } from '../../environments/environment';
 import { catchError } from 'rxjs/operators';
 
+
 export interface ComunidadeDto {
   id?: number;
   nome: string;
@@ -20,6 +21,15 @@ export interface MembroDto {
   role?: string;
   dataEntrada?: string;
   castigadoAte?: string; 
+}
+
+export interface RankingMembroDto {
+  posicao: number;
+  utilizadorId?: string;
+  userName?: string;
+  filmesVistos: number;
+  minutosAssistidos: number;
+  isCurrentUser: boolean;
 }
 
 export interface PostDto {
@@ -150,6 +160,12 @@ export class ComunidadesService {
       .pipe(catchError(() => of([])));
   }
 
+  getRanking(id: number, metrica: 'filmes' | 'tempo' = 'filmes'): Observable<RankingMembroDto[]> {
+    const params = new HttpParams().set('metrica', metrica);
+    return this.http
+      .get<RankingMembroDto[]>(`${this.apiUrl}/${id}/ranking`, { params, withCredentials: true })
+      .pipe(catchError(() => of([])));
+  }
 
   votarPost(comunidadeId: number, postId: number, isLike: boolean): Observable<any> {
     return this.http.post(`${this.apiUrl}/${comunidadeId}/posts/${postId}/votar?isLike=${isLike}`, {}, { withCredentials: true });

@@ -4,7 +4,7 @@ import { take } from 'rxjs/operators';
 import { Subject, Subscription, forkJoin, of } from 'rxjs';
 import { debounceTime, filter, switchMap, catchError, tap } from 'rxjs/operators';
 import { DesafiosService } from '../../services/desafios.service';
-import { Filme, FilmesService } from '../../services/filmes.service';
+import { Filme, FilmesService, RecomendacaoDto } from '../../services/filmes.service';
 import { AtoresService, PopularActor } from '../../services/atores.service';
 import { ProfileService } from '../../services/profile.service';
 import { MenuService } from '../../services/menu.service';
@@ -45,8 +45,8 @@ export class DashboardComponent implements OnInit, OnDestroy {
   searchResultsLoading = false;
   showSearchMenu: boolean = false;
   isLoadingSuggestions = false;
-  isSuggestionsMode = false; 
-  hasGenrePreferences = false; 
+  isSuggestionsMode = false;
+  hasGenrePreferences = false;
 
   private searchTerm$ = new Subject<string>();
   private searchSub?: Subscription;
@@ -87,6 +87,12 @@ export class DashboardComponent implements OnInit, OnDestroy {
   /** Definido pelo servidor: último carregamento foi com sessão em /proximas-estreias. */
   proximasEstreiasSessaoAtiva = false;
 
+  // ── RECOMENDAÇÕES PERSONALIZADAS ──
+  recomendacoes: RecomendacaoDto[] = [];
+  recomendacaoIndex = 0;
+  isLoadingRecomendacoes = false;
+  isSendingFeedback = false;
+
   private onResizeBound = () => this.updateVisibleCount();
   private onDocumentClickBound = (e: MouseEvent) => this.onDocumentClick(e);
 
@@ -112,6 +118,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
     });
     this.loadMovies();
     this.loadAtores();
+    this.loadRecomendacoes();
     this.updateVisibleCount();
     window.addEventListener('resize', this.onResizeBound);
     document.addEventListener('click', this.onDocumentClickBound);
@@ -141,11 +148,81 @@ export class DashboardComponent implements OnInit, OnDestroy {
     this.searchSub?.unsubscribe();
     window.removeEventListener('resize', this.onResizeBound);
     document.removeEventListener('click', this.onDocumentClickBound);
-    
+
     if (this.countdownTimer) {
       clearInterval(this.countdownTimer);
     }
   }
+
+  // ── RECOMENDAÇÕES PERSONALIZADAS ──
+
+  private loadRecomendacoes(): void {
+    const userId = localStorage.getItem('user_id');
+    if (!userId) return;
+
+    this.isLoadingRecomendacoes = true;
+    this.filmesService.getRecomendacoesPersonalizadas(5).subscribe({
+      next: (res) => {
+        this.recomendacoes = res || [];
+        this.recomendacaoIndex = 0;
+        this.isLoadingRecomendacoes = false;
+      },
+      error: () => {
+        this.recomendacoes = [];
+        this.isLoadingRecomendacoes = false;
+      }
+    });
+  }
+
+  public get currentRecomendacao(): RecomendacaoDto | null {
+    if (!this.recomendacoes.length) return null;
+    return this.recomendacoes[this.recomendacaoIndex] ?? null;
+  }
+
+  public prevRecomendacao(): void {
+    if (this.recomendacaoIndex > 0) {
+      this.recomendacaoIndex--;
+    }
+  }
+
+  public nextRecomendacao(): void {
+    if (this.recomendacaoIndex < this.recomendacoes.length - 1) {
+      this.recomendacaoIndex++;
+    }
+  }
+
+  public recomendacaoPoster(r: RecomendacaoDto | null): string {
+    return r?.posterUrl || 'https://via.placeholder.com/300x450?text=Poster';
+  }
+
+  public openRecomendacao(r: RecomendacaoDto | null): void {
+    if (r?.id) {
+      this.router.navigate(['/movie-detail', r.id]);
+    }
+  }
+
+  /**
+   * Submit feedback: relevante=true (👍) boosts similar genres in future recs.
+   * relevante=false (👎) dismisses from future recs.
+   * The movie stays visible — only marked visually. List refreshes on next dashboard load.
+   */
+  public submitFeedback(r: RecomendacaoDto, relevante: boolean, e: MouseEvent): void {
+    e.stopPropagation();
+    if (!r || this.isSendingFeedback || r._voted) return;
+
+    this.isSendingFeedback = true;
+    this.filmesService.submitRecomendacaoFeedback(r.id, relevante).subscribe({
+      next: () => {
+        r._voted = relevante ? 'up' : 'down';
+        this.isSendingFeedback = false;
+      },
+      error: () => {
+        this.isSendingFeedback = false;
+      }
+    });
+  }
+
+  // ── (all existing methods below — unchanged) ──
 
   public openDesafios(): void {
     this.isDesafiosOpen = true;
@@ -154,7 +231,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
   public closeDesafios(): void {
     this.isDesafiosOpen = false;
-    
+
     if (this.countdownTimer) {
       clearInterval(this.countdownTimer);
       this.countdownTimer = null;
@@ -162,7 +239,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
   }
 
   private startCountdown(): void {
-    this.updateCountdown(); 
+    this.updateCountdown();
     this.countdownTimer = setInterval(() => {
       this.updateCountdown();
     }, 1000);
@@ -188,7 +265,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
   private loadDesafiosWithProgress(): void {
     this.isLoadingDesafios = true;
     this.feedbackDesafio = '';
-    
+
     this.desafiosService.getDesafioDiario().subscribe({
       next: (res) => {
         this.desafioDoDia = res;
@@ -254,11 +331,8 @@ export class DashboardComponent implements OnInit, OnDestroy {
     this.filmesService.getAll().subscribe({
       next: (res) => {
         this.movies = res || [];
-
         this.featured = this.movies.slice(0, 12);
-
         this.top10 = this.movies.slice(0, 10);
-
         this.featuredIndex = 0;
         this.top10Index = 0;
         this.isLoadingMovies = false;
