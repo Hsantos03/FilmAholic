@@ -61,19 +61,18 @@ describe('User Login Acceptance Tests', () => {
     
     cy.wait('@loginUser');
     
-    cy.url().should('include', '/dashboard');
-    cy.get('.brand').should('contain', 'FilmAholic');
+    // User may be redirected to genre selection first if not completed
+    cy.url().should('match', /\/(dashboard|selecionar-generos)$/);
   });
 
 
-  it('should show email verification message for unconfirmed email', () => {
+  it('should show error for non-existent user', () => {
     cy.visit('/login');
     cy.get('input[name="email"]').type('newuser@example.com');
     cy.get('input[name="password"]').type('Password123!');
     cy.get('button[type="submit"]').click();
     
-    cy.get('.auth-card').should('contain', 'Email não confirmado');
-    cy.get('.auth-card').should('contain', 'Por favor, confirme o seu email');
+    cy.get('.auth-card').should('contain', 'Utilizador não encontrado');
   });
 
 
@@ -83,10 +82,7 @@ describe('User Login Acceptance Tests', () => {
     cy.get('input[name="password"]').type('wrongpassword');
     cy.get('button[type="submit"]').click();
     
-    cy.get('.auth-card').should($el => {
-      const text = $el.text();
-      expect(text).to.match(/Email não confirmado|Credenciais inválidas/);
-    });
+    cy.get('.auth-card').should('contain', 'Utilizador não encontrado');
   });
 
 

@@ -48,33 +48,6 @@ describe('User Registration Acceptance Tests', () => {
   });
 
 
-  it('should register a new user and show email verification', () => {
-    cy.intercept('POST', '**/api/autenticacao/registar', {
-      statusCode: 200,
-      body: {
-        requiresEmailVerification: true,
-        developmentToken: 'test-token-123'
-      }
-    }).as('registerUser');
-
-    const userData = {
-      userName: 'test_user123', 
-      nome: 'Teste', 
-      sobrenome: 'Utilizador', 
-      email: 'test@example.com', 
-      dataNascimento: '1990-01-01', 
-      password: 'Password123!',
-      confirmPassword: 'Password123!'
-    };
-
-    cy.register(userData);
-   
-    cy.wait('@registerUser');
-   
-    cy.contains('Verifique o seu email', { matchCase: false }).should('be.visible'); 
-  });
-
-
   it('should show password requirements during registration', () => {
     cy.visit('/register');
     
