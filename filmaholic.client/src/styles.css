@@ -386,10 +386,13 @@ app-root {
   display: flex;
   flex-direction: column;
   padding: 16px;
+  /* Fora do ecrã mas ainda a ocupar a hit-area em alguns browsers — não roubar cliques ao conteúdo */
+  pointer-events: none;
 }
 
 .sidebar.open {
   transform: translateX(0);
+  pointer-events: auto;
 }
 
 .sidebar-header {

@@ -167,36 +167,36 @@ namespace FilmAholic.Server.Controllers
                     DataCriacao = DateTime.UtcNow
                 };
 
-                await _context.Comunidades.AddAsync(entity);
-                await _context.SaveChangesAsync();
-
-                if (!string.IsNullOrEmpty(userId))
-                {
-                    var member = new ComunidadeMembro
-                    {
-                        ComunidadeId = entity.Id,
-                        UtilizadorId = userId,
-                        Role = "Admin",
-                        Status = "Ativo",
-                        DataEntrada = DateTime.UtcNow
-                    };
-                    _context.ComunidadeMembros.Add(member);
+                    await _context.Comunidades.AddAsync(entity);
                     await _context.SaveChangesAsync();
-                }
+
+                    if (!string.IsNullOrEmpty(userId))
+                    {
+                        var member = new ComunidadeMembro
+                        {
+                            ComunidadeId = entity.Id,
+                            UtilizadorId = userId,
+                            Role = "Admin",
+                            Status = "Ativo",
+                            DataEntrada = DateTime.UtcNow
+                        };
+                        _context.ComunidadeMembros.Add(member);
+                        await _context.SaveChangesAsync();
+                    }
 
                 var baseUrl = PublicBaseUrl();
-                var dto = new ComunidadeDto
-                {
-                    Id = entity.Id,
-                    Nome = entity.Nome,
-                    Descricao = entity.Descricao,
-                    DataCriacao = entity.DataCriacao,
-                    MembrosCount = await _context.ComunidadeMembros.CountAsync(m => m.ComunidadeId == entity.Id),
+                    var dto = new ComunidadeDto
+                    {
+                        Id = entity.Id,
+                        Nome = entity.Nome,
+                        Descricao = entity.Descricao,
+                        DataCriacao = entity.DataCriacao,
+                        MembrosCount = await _context.ComunidadeMembros.CountAsync(m => m.ComunidadeId == entity.Id),
                     BannerUrl = BannerUrlFromFileName(entity.BannerFileName, baseUrl),
                     IconUrl = IconUrlFromFileName(entity.IconFileName, baseUrl)
-                };
+                    };
 
-                return CreatedAtAction(nameof(GetById), new { id = entity.Id }, dto);
+                    return CreatedAtAction(nameof(GetById), new { id = entity.Id }, dto);
             }
             catch (DbUpdateException ex)
             {

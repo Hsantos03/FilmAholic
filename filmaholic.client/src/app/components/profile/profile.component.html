@@ -61,7 +61,8 @@
      [style.background-size]="'cover'"
      [style.background-position]="'center'">
 
-  <button class="edit-btn"
+  <button type="button"
+          class="edit-btn"
           (click)="openEditCapa()"
           title="Editar capa">
     <span style="display: inline-block; transform: rotate(-45deg);">✏</span>
@@ -76,7 +77,8 @@
       <img *ngIf="fotoPerfilUrl" [src]="fotoPerfilUrl" alt="Foto de perfil" />
       <span *ngIf="!fotoPerfilUrl">👤</span>
 
-      <button class="avatar-edit-btn"
+      <button type="button"
+              class="avatar-edit-btn"
               (click)="openEditAvatar()"
               title="Editar foto de perfil">
         <span style="display: inline-block; transform: rotate(-45deg);">✏</span>
@@ -84,7 +86,7 @@
     </div>
 
     <aside class="profile-sidebar">
-      <button class="primary-btn" (click)="openEdit()">Editar conta</button>
+      <button type="button" class="primary-btn" (click)="openEdit()">Editar conta</button>
 
       <ul class="menu">
         <li class="menu-item" [class.active]="activeSection === 'overview'" (click)="showOverview()">Preferências</li>
@@ -915,6 +917,12 @@
 
 </div>
   </div>
+</div>
+
+      </div>
+    </ng-container>
+
+  </section>
 </div>
 
 <!-- EDITAR a Conta (Username e Bio) -->

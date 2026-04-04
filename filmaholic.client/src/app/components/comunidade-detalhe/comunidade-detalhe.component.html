@@ -57,8 +57,8 @@
   <main class="comunidade-detalhe-wrap">
     <button type="button" class="back-link" (click)="goBack()">← Comunidades</button>
 
-    <div *ngIf="isLoading" class="state">A carregar comunidade…</div>
-    <div *ngIf="error" class="state error">{{ error }}</div>
+  <div *ngIf="isLoading" class="state">A carregar comunidade…</div>
+  <div *ngIf="error" class="state error">{{ error }}</div>
 
     <!-- Medal notifications -->
     <div class="medal-notifications" *ngIf="medalSuccessMessage || medalErrorMessage">
@@ -70,11 +70,11 @@
       </div>
     </div>
 
-    <div *ngIf="comunidade" class="comunidade-card">
-      <div class="banner" *ngIf="comunidade.bannerUrl" [style.background-image]="'url(' + comunidade.bannerUrl + ')'"></div>
+  <div *ngIf="comunidade" class="comunidade-card">
+    <div class="banner" *ngIf="comunidade.bannerUrl" [style.background-image]="'url(' + comunidade.bannerUrl + ')'"></div>
       <div class="banner banner--empty" *ngIf="!comunidade.bannerUrl" aria-hidden="true"></div>
 
-      <div class="content">
+    <div class="content">
         <div class="comunidade-heading">
           <div class="comunidade-badge"
                [class.has-photo]="!!(comunidade.iconUrl || comunidade.bannerUrl)"
@@ -83,17 +83,17 @@
             <span *ngIf="!comunidade.iconUrl && !comunidade.bannerUrl">{{ initialLetra(comunidade.nome) }}</span>
           </div>
           <div class="comunidade-heading-text">
-            <h1>{{ comunidade.nome }}</h1>
-            <div class="meta">
-              <span>{{ comunidade.membrosCount ?? 0 }} membros</span>
-              <span *ngIf="comunidade.dataCriacao"> · Criada {{ comunidade.dataCriacao | date:'shortDate' }}</span>
+      <h1>{{ comunidade.nome }}</h1>
+      <div class="meta">
+        <span>{{ comunidade.membrosCount ?? 0 }} membros</span>
+        <span *ngIf="comunidade.dataCriacao"> · Criada {{ comunidade.dataCriacao | date:'shortDate' }}</span>
             </div>
           </div>
-        </div>
+      </div>
 
-        <p class="descricao">{{ comunidade.descricao || 'Sem descrição' }}</p>
+      <p class="descricao">{{ comunidade.descricao || 'Sem descrição' }}</p>
 
-        <div class="actions">
+      <div class="actions">
           <!-- Utilizador não membro -->
           <button *ngIf="!isMembro" type="button" class="primary-btn" (click)="juntar()" [disabled]="isJuntando">
             {{ isJuntando ? 'A juntar…' : 'Juntar-se' }}
