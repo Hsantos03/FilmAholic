@@ -4,6 +4,7 @@
     <TargetFramework>net8.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
+    <UserSecretsId>7f2c9a1e-4b8d-4e6c-a3f1-9d2e8c5b4a10</UserSecretsId>
     <SpaRoot>..\filmaholic.client</SpaRoot>
     <SpaProxyLaunchCommand>npm start</SpaProxyLaunchCommand>
     <SpaProxyServerUrl>https://localhost:50905</SpaProxyServerUrl>
