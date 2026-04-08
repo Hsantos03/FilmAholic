@@ -11,6 +11,9 @@ import { MenuService } from '../../services/menu.service';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../environments/environment';
 import { OnboardingStep } from '../../services/onboarding.service';
+import { AuthService } from '../../services/auth.service';
+import { NotificacoesService } from '../../services/notificacoes.service';
+import { finalize } from 'rxjs/operators';
 
 export interface SearchResultItem {
   id?: number;
@@ -121,8 +124,14 @@ export class DashboardComponent implements OnInit, OnDestroy {
     private router: Router,
     private route: ActivatedRoute,
     public menuService: MenuService,
-    private http: HttpClient
+    private http: HttpClient,
+    private authService: AuthService,
+    private notificacoesService: NotificacoesService
   ) { }
+
+  get isAdmin(): boolean {
+    return this.authService.isAdministrador();
+  }
 
   ngOnInit(): void {
     this.userName = localStorage.getItem('user_nome') || 'Utilizador';
@@ -330,6 +339,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
           this.feedbackDesafio = `Correto! Ganhaste ${res.xpGanho || this.desafioDoDia.xp} XP! 🎉`;
           
           this.http.post<any>(`${this.apiMedalhas}/check-desafios`, {}, { withCredentials: true })
+            .pipe(finalize(() => this.notificacoesService.refreshNotificationBadges()))
             .subscribe(medalRes => {
               this.updateMedalProgress('', medalRes.progress || 0);
               

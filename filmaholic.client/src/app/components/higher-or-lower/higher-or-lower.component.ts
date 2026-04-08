@@ -7,6 +7,8 @@ import { firstValueFrom } from 'rxjs';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../environments/environment';
 import { OnboardingStep } from '../../services/onboarding.service';
+import { NotificacoesService } from '../../services/notificacoes.service';
+import { finalize } from 'rxjs/operators';
 
 export type GameDifficulty = 'easy' | 'medium' | 'hard';
 
@@ -124,7 +126,8 @@ export class HigherOrLowerComponent implements OnInit {
     private filmesService: FilmesService,
     private gameService: GameService,
     public menuService: MenuService,
-    private http: HttpClient
+    private http: HttpClient,
+    private notificacoesService: NotificacoesService
   ) { }
 
   toggleMenu(): void {
@@ -852,6 +855,7 @@ export class HigherOrLowerComponent implements OnInit {
           
           // Check for higher-or-lower medals after successful game save
           this.http.post<any>(`${this.apiMedalhas}/check-higher-or-lower`, {}, { withCredentials: true })
+            .pipe(finalize(() => this.notificacoesService.refreshNotificationBadges()))
             .subscribe({
               next: (medalRes) => {
                 if (medalRes.novasMedalhas > 0) {

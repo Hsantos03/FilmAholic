@@ -37,7 +37,8 @@ export class LoginComponent implements OnInit {
         this.externalEmail = params['email'] || '';
         const userId = params['userId'] || '';
         
-        // Guardar no localStorage
+        // Foto de perfil vem da BD — não reutilizar cache de outra sessão
+        localStorage.removeItem('fotoPerfilUrl');
         if (this.externalNome) {
           localStorage.setItem('user_nome', this.externalNome);
         }
@@ -47,6 +48,7 @@ export class LoginComponent implements OnInit {
         
         // Verificar se tem géneros favoritos antes de redirecionar
         if (userId) {
+          this.authService.refreshSessaoRoles().subscribe({ error: () => {} });
           this.profileService.obterGenerosFavoritos(userId).subscribe({
             next: (generos) => {
               setTimeout(() => {
@@ -87,10 +89,11 @@ export class LoginComponent implements OnInit {
     this.authService.login(this.loginData).subscribe({
       next: (res) => {
         this.isLoading = false;
-        // Guardamos o nome do utilizador para usar no site
+        localStorage.removeItem('fotoPerfilUrl');
         localStorage.setItem('user_nome', res.nome);
         localStorage.setItem('userName', res.userName);
         localStorage.setItem('user_id', res.id);
+        localStorage.setItem('user_roles', JSON.stringify(res.roles ?? []));
         
         // Verificar se o utilizador já tem géneros favoritos
         this.profileService.obterGenerosFavoritos(res.id).subscribe({

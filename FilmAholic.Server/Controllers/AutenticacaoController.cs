@@ -1,6 +1,7 @@
 using FilmAholic.Server.Models;
 using FilmAholic.Server.Data;
 using FilmAholic.Server.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
@@ -100,6 +101,34 @@ namespace FilmAholic.Server.Controllers
             });
         }
 
+        [HttpGet("sessao")]
+        [AllowAnonymous]
+        public async Task<IActionResult> ObterSessao()
+        {
+            if (User?.Identity?.IsAuthenticated != true)
+                return Ok(new { authenticated = false });
+
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(userId))
+                return Ok(new { authenticated = false });
+
+            var user = await _userManager.FindByIdAsync(userId);
+            if (user == null)
+                return Ok(new { authenticated = false });
+
+            var roles = await _userManager.GetRolesAsync(user);
+            return Ok(new
+            {
+                authenticated = true,
+                id = user.Id,
+                email = user.Email,
+                nome = user.Nome,
+                sobrenome = user.Sobrenome,
+                userName = user.UserName,
+                roles
+            });
+        }
+
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] LoginRequest model)
         {
@@ -120,6 +149,7 @@ namespace FilmAholic.Server.Controllers
             if (result.Succeeded)
             {
                 await TryEnsureReminderJogoOnLoginAsync(user.Id);
+                var roles = await _userManager.GetRolesAsync(user);
                 return Ok(new
                 {
                     message = "Login ok",
@@ -127,7 +157,8 @@ namespace FilmAholic.Server.Controllers
                     sobrenome = user.Sobrenome,
                     userName = user.UserName,
                     id = user.Id,
-                    email = user.Email
+                    email = user.Email,
+                    roles
                 });
             }
 

@@ -2,8 +2,18 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable, of } from 'rxjs';
 import { Router } from '@angular/router';
-import { catchError, finalize } from 'rxjs/operators';
+import { catchError, finalize, map, tap } from 'rxjs/operators';
 import { environment } from '../../environments/environment';
+
+export interface SessaoDto {
+  authenticated: boolean;
+  id?: string;
+  email?: string;
+  nome?: string;
+  sobrenome?: string;
+  userName?: string;
+  roles?: string[];
+}
 
 @Injectable({
   providedIn: 'root'
@@ -21,6 +31,33 @@ export class AuthService {
 
   login(dados: any): Observable<any> {
     return this.http.post(`${this.apiUrl}/login`, dados, { withCredentials: true });
+  }
+
+  obterSessao(): Observable<SessaoDto> {
+    return this.http.get<SessaoDto>(`${this.apiUrl}/sessao`, { withCredentials: true });
+  }
+
+  /** Atualiza <code>user_roles</code> no <code>localStorage</code> a partir do cookie de sessão. */
+  refreshSessaoRoles(): Observable<void> {
+    return this.obterSessao().pipe(
+      tap((s) => {
+        if (s.authenticated)
+          localStorage.setItem('user_roles', JSON.stringify(s.roles ?? []));
+        else
+          localStorage.removeItem('user_roles');
+      }),
+      map(() => void 0)
+    );
+  }
+
+  isAdministrador(): boolean {
+    try {
+      const r = localStorage.getItem('user_roles');
+      if (!r) return false;
+      return (JSON.parse(r) as string[]).includes('Administrador');
+    } catch {
+      return false;
+    }
   }
 
   confirmarEmail(userId: string, token: string): Observable<any> {
@@ -53,6 +90,7 @@ export class AuthService {
         localStorage.removeItem('user_id');
         localStorage.removeItem('nome');
         localStorage.removeItem('fotoPerfilUrl');
+        localStorage.removeItem('user_roles');
 
         this.router.navigate(['/login']);
       })

@@ -753,13 +753,11 @@ public class MovieService : IMovieService
                 return new List<PopularActorDto>();
             }
 
-            var rng = new Random();
-            var shuffled = allPeople
+            // Ordem estável por popularidade (TMDb). Evitar shuffle aleatório — cada pedido devolvia outro “top”.
+            var actors = allPeople
                 .Where(p => !string.IsNullOrEmpty(p.ProfilePath))
-                .OrderBy(_ => rng.Next())
-                .ToList();
-
-            var actors = shuffled
+                .DistinctBy(p => p.Id)
+                .OrderByDescending(p => p.Popularity)
                 .Take(count)
                 .Select(p => new PopularActorDto
                 {
@@ -769,11 +767,6 @@ public class MovieService : IMovieService
                     FotoUrl = $"https://image.tmdb.org/t/p/w500{p.ProfilePath}"
                 })
                 .ToList();
-
-            if (actors.Count > count)
-            {
-                actors = actors.Take(count).ToList();
-            }
 
             return actors;
         }

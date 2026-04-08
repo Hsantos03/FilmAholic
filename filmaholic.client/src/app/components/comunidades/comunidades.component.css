@@ -325,6 +325,18 @@
     display: block;
   }
 
+.banner-preview--icon {
+  max-width: 120px;
+  max-height: 120px;
+  margin-top: 8px;
+}
+
+.banner-preview--icon img {
+  max-height: 120px;
+  object-fit: cover;
+  border-radius: 12px;
+}
+
 .comunidades-page .modal-overlay {
   position: fixed;
   inset: 0;

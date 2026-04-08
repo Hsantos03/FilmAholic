@@ -1332,7 +1332,11 @@ namespace FilmAholic.Server.Controllers
                     AutorNome = _context.Users.OfType<Utilizador>()
                         .Where(u => u.Id == c.UtilizadorId)
                         .Select(u => u.Nome + " " + u.Sobrenome)
-                        .FirstOrDefault() ?? "Utilizador removido"
+                        .FirstOrDefault() ?? "Utilizador removido",
+                    AutorFotoPerfilUrl = _context.Users.OfType<Utilizador>()
+                        .Where(u => u.Id == c.UtilizadorId)
+                        .Select(u => u.FotoPerfilUrl)
+                        .FirstOrDefault()
                 })
                 .ToListAsync();
 
@@ -1388,7 +1392,11 @@ namespace FilmAholic.Server.Controllers
                     AutorNome = _context.Users.OfType<Utilizador>()
                         .Where(u => u.Id == c.UtilizadorId)
                         .Select(u => u.Nome + " " + u.Sobrenome)
-                        .FirstOrDefault() ?? "Desconhecido"
+                        .FirstOrDefault() ?? "Desconhecido",
+                    AutorFotoPerfilUrl = _context.Users.OfType<Utilizador>()
+                        .Where(u => u.Id == c.UtilizadorId)
+                        .Select(u => u.FotoPerfilUrl)
+                        .FirstOrDefault()
                 })
                 .FirstOrDefaultAsync();
 

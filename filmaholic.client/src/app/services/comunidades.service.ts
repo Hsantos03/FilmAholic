@@ -69,6 +69,8 @@ export interface ComentarioDto {
   postId?: number;
   autorId?: string;
   autorNome?: string;
+  /** URL da foto de perfil do autor (opcional). */
+  autorFotoPerfilUrl?: string | null;
   conteudo: string;
   dataCriacao?: string;
 }

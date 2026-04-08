@@ -138,10 +138,10 @@
             <div class="card-banner card-banner--empty" *ngIf="!c.bannerUrl" aria-hidden="true"></div>
             <div class="card-badge-wrap">
               <div class="card-badge"
-                   [class.has-photo]="!!c.bannerUrl"
-                   [style.background-image]="c.bannerUrl ? 'url(' + c.bannerUrl + ')' : 'none'"
+                   [class.has-photo]="!!c.iconUrl"
+                   [style.background-image]="c.iconUrl ? 'url(' + c.iconUrl + ')' : 'none'"
                    aria-hidden="true">
-                <span *ngIf="!c.bannerUrl">{{ initialLetra(c.nome) }}</span>
+                <span *ngIf="!c.iconUrl">{{ initialLetra(c.nome) }}</span>
               </div>
             </div>
             <div class="card-body">
@@ -183,10 +183,10 @@
             <div class="card-banner card-banner--empty" *ngIf="!c.bannerUrl" aria-hidden="true"></div>
             <div class="card-badge-wrap">
               <div class="card-badge"
-                   [class.has-photo]="!!c.bannerUrl"
-                   [style.background-image]="c.bannerUrl ? 'url(' + c.bannerUrl + ')' : 'none'"
+                   [class.has-photo]="!!c.iconUrl"
+                   [style.background-image]="c.iconUrl ? 'url(' + c.iconUrl + ')' : 'none'"
                    aria-hidden="true">
-                <span *ngIf="!c.bannerUrl">{{ initialLetra(c.nome) }}</span>
+                <span *ngIf="!c.iconUrl">{{ initialLetra(c.nome) }}</span>
               </div>
             </div>
             <div class="card-body">
@@ -243,11 +243,18 @@
           </label>
         </div>
 
-        <label for="banner">Imagem da comunidade (aparece como banner e ícone)</label>
+        <label for="banner">Capa / banner (imagem larga no topo da comunidade)</label>
         <input id="banner" name="banner" type="file" accept="image/*" (change)="onBannerSelected($event)" />
 
         <div *ngIf="bannerPreview" class="banner-preview">
           <img [src]="bannerPreview" alt="Pré-visualização do banner" />
+        </div>
+
+        <label for="iconCreate">Foto de perfil / ícone (opcional, aparece no círculo)</label>
+        <input id="iconCreate" name="icon" type="file" accept="image/*" (change)="onIconSelected($event)" />
+
+        <div *ngIf="iconPreview" class="banner-preview banner-preview--icon">
+          <img [src]="iconPreview" alt="Pré-visualização do ícone" />
         </div>
 
         <div *ngIf="createError" class="form-error">{{ createError }}</div>

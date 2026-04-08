@@ -20,6 +20,7 @@ namespace FilmAholic.Server.Controllers
         private readonly FilmAholicDbContext _context;
         private readonly IMovieService _movieService;
         private const string TipoReminderJogo = "ReminderJogo";
+        public const string TipoAnuncioPlataforma = "AnuncioPlataforma";
 
         public NotificacoesController(FilmAholicDbContext context, IMovieService movieService)
         {
@@ -1296,6 +1297,102 @@ namespace FilmAholic.Server.Controllers
             return NoContent();
         }
 
+        /// Feed de anúncios globais da plataforma (admin → todos os utilizadores com email confirmado).
+        [HttpGet("plataforma/feed")]
+        public async Task<ActionResult<NotificacaoPlataformaFeedDto>> GetPlataformaFeed(
+            [FromQuery] int unreadLimit = 20,
+            [FromQuery] int readLimit = 10)
+        {
+            var userId = GetUserId();
+            if (string.IsNullOrWhiteSpace(userId))
+                return Unauthorized();
+
+            if (unreadLimit < 0) unreadLimit = 0;
+            if (unreadLimit > 50) unreadLimit = 50;
+            if (readLimit < 0) readLimit = 0;
+            if (readLimit > 50) readLimit = 50;
+
+            var unreadRaw = await _context.Notificacoes
+                .AsNoTracking()
+                .Where(n => n.UtilizadorId == userId && n.Tipo == TipoAnuncioPlataforma && n.LidaEm == null)
+                .OrderByDescending(n => n.CriadaEm)
+                .Take(unreadLimit)
+                .ToListAsync();
+
+            var readRaw = await _context.Notificacoes
+                .AsNoTracking()
+                .Where(n => n.UtilizadorId == userId && n.Tipo == TipoAnuncioPlataforma && n.LidaEm != null)
+                .OrderByDescending(n => n.LidaEm)
+                .Take(readLimit)
+                .ToListAsync();
+
+            static NotificacaoPlataformaItemDto Map(Notificacao n)
+            {
+                var (titulo, mensagem) = ParseAnuncioPlataformaCorpo(n.Corpo);
+                return new NotificacaoPlataformaItemDto
+                {
+                    Id = n.Id,
+                    Titulo = titulo,
+                    Mensagem = mensagem,
+                    CriadaEm = n.CriadaEm,
+                    LidaEm = n.LidaEm
+                };
+            }
+
+            return Ok(new NotificacaoPlataformaFeedDto
+            {
+                Unread = unreadRaw.Select(Map).ToList(),
+                Read = readRaw.Select(Map).ToList()
+            });
+        }
+
+        [HttpGet("plataforma/unread-count")]
+        public async Task<ActionResult<int>> GetPlataformaUnreadCount()
+        {
+            var userId = GetUserId();
+            if (string.IsNullOrWhiteSpace(userId))
+                return Unauthorized();
+
+            var n = await _context.Notificacoes
+                .CountAsync(x => x.UtilizadorId == userId && x.Tipo == TipoAnuncioPlataforma && x.LidaEm == null);
+            return Ok(n);
+        }
+
+        [HttpPut("plataforma/{id:int}/lida")]
+        public async Task<IActionResult> MarcarPlataformaComoLida([FromRoute] int id)
+        {
+            var userId = GetUserId();
+            if (string.IsNullOrWhiteSpace(userId))
+                return Unauthorized();
+
+            var notif = await _context.Notificacoes
+                .FirstOrDefaultAsync(n => n.Id == id && n.UtilizadorId == userId && n.Tipo == TipoAnuncioPlataforma);
+            if (notif == null) return NotFound();
+
+            notif.LidaEm = DateTime.UtcNow;
+            await _context.SaveChangesAsync();
+            return NoContent();
+        }
+
+        private static (string Titulo, string Mensagem) ParseAnuncioPlataformaCorpo(string? corpo)
+        {
+            if (string.IsNullOrWhiteSpace(corpo))
+                return ("Anúncio", "");
+
+            try
+            {
+                using var doc = JsonDocument.Parse(corpo);
+                var root = doc.RootElement;
+                var titulo = root.TryGetProperty("titulo", out var t) ? (t.GetString() ?? "Anúncio") : "Anúncio";
+                var mensagem = root.TryGetProperty("mensagem", out var m) ? (m.GetString() ?? "") : "";
+                return (titulo.Trim(), mensagem.Trim());
+            }
+            catch
+            {
+                return ("Anúncio", corpo);
+            }
+        }
+
         [HttpGet("filme-disponivel/feed")]
         public async Task<IActionResult> GetFilmeDisponivelFeed()
         {
@@ -1336,6 +1433,21 @@ namespace FilmAholic.Server.Controllers
             return NoContent();
         }
 
+
+        public class NotificacaoPlataformaItemDto
+        {
+            public int Id { get; set; }
+            public string Titulo { get; set; } = "";
+            public string Mensagem { get; set; } = "";
+            public DateTime CriadaEm { get; set; }
+            public DateTime? LidaEm { get; set; }
+        }
+
+        public class NotificacaoPlataformaFeedDto
+        {
+            public List<NotificacaoPlataformaItemDto> Unread { get; set; } = new();
+            public List<NotificacaoPlataformaItemDto> Read { get; set; } = new();
+        }
 
         public class FilmeDisponivelFeedItemDto
         {

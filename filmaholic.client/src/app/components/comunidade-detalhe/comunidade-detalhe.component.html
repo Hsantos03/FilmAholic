@@ -73,16 +73,6 @@
 
   <div *ngIf="!isLoading && !accessDeniedBan && error" class="state error">{{ error }}</div>
 
-    <!-- Medal notifications -->
-    <div class="medal-notifications" *ngIf="!accessDeniedBan && (medalSuccessMessage || medalErrorMessage)">
-      <div class="state success" *ngIf="medalSuccessMessage">
-        {{ medalSuccessMessage }}
-      </div>
-      <div class="state error" *ngIf="medalErrorMessage">
-        {{ medalErrorMessage }}
-      </div>
-    </div>
-
   <div *ngIf="comunidade && !accessDeniedBan" class="comunidade-card">
     <div class="banner" *ngIf="comunidade.bannerUrl" [style.background-image]="'url(' + comunidade.bannerUrl + ')'"></div>
       <div class="banner banner--empty" *ngIf="!comunidade.bannerUrl" aria-hidden="true"></div>
@@ -90,10 +80,10 @@
     <div class="content">
         <div class="comunidade-heading">
           <div class="comunidade-badge"
-               [class.has-photo]="!!(comunidade.iconUrl || comunidade.bannerUrl)"
-               [style.background-image]="(comunidade.iconUrl || comunidade.bannerUrl) ? 'url(' + (comunidade.iconUrl || comunidade.bannerUrl) + ')' : 'none'"
+               [class.has-photo]="!!comunidade.iconUrl"
+               [style.background-image]="comunidade.iconUrl ? 'url(' + comunidade.iconUrl + ')' : 'none'"
                aria-hidden="true">
-            <span *ngIf="!comunidade.iconUrl && !comunidade.bannerUrl">{{ initialLetra(comunidade.nome) }}</span>
+            <span *ngIf="!comunidade.iconUrl">{{ initialLetra(comunidade.nome) }}</span>
           </div>
           <div class="comunidade-heading-text">
       <h1>{{ comunidade.nome }}</h1>
@@ -376,7 +366,13 @@
             <div *ngIf="p.comentarios?.length === 0" class="no-comments">Ainda não há comentários.</div>
 
             <div class="comment-item" *ngFor="let c of p.comentarios">
-              <div class="comment-avatar">{{ getUserInitial(c.autorNome) }}</div>
+              <div class="comment-avatar" [attr.title]="c.autorNome || ''">
+                <img *ngIf="c.autorFotoPerfilUrl?.trim()"
+                     class="comment-avatar-img"
+                     [src]="c.autorFotoPerfilUrl"
+                     [alt]="c.autorNome || ''" />
+                <span *ngIf="!c.autorFotoPerfilUrl?.trim()">{{ getUserInitial(c.autorNome) }}</span>
+              </div>
               <div class="comment-body">
                 <div class="comment-header">
                   <span class="comment-author">{{ c.autorNome }}</span>

@@ -226,10 +226,10 @@
           <div class="comment-row">
             <div class="comment-box">
               <div class="avatar avatar-sm"
-                   [attr.data-deletedd]="userFotoPerfilUrl ? 'false' : (userName === 'Conta Eliminada' ? 'true' : 'false')"
+                   [attr.data-deletedd]="meFotoPerfilUrl ? 'false' : (currentUserDisplayName === 'Conta Eliminada' ? 'true' : 'false')"
                    title="Tu">
-                <img *ngIf="userFotoPerfilUrl" class="avatar-img" [src]="userFotoPerfilUrl" [alt]="userName" />
-                <span *ngIf="!userFotoPerfilUrl">{{ userName.charAt(0) }}</span>
+                <img *ngIf="meFotoPerfilUrl" class="avatar-img" [src]="meFotoPerfilUrl" [alt]="currentUserDisplayName" />
+                <span *ngIf="!meFotoPerfilUrl">{{ commentAvatarInitial(currentUserInitialSource) }}</span>
               </div>
 
               <input class="comment-input"
@@ -261,8 +261,7 @@
                    [attr.data-deletedd]="c.userName === 'Conta Eliminada'"
                    [title]="c.userName">
                 <img *ngIf="c.fotoPerfilUrl" class="avatar-img" [src]="c.fotoPerfilUrl" [alt]="c.userName" />
-                <span *ngIf="c.fotoPerfilUrl && c.userName !== 'Conta Eliminada'">{{ c.userName.charAt(0) }}</span>
-                <span *ngIf="!c.fotoPerfilUrl && c.userName === 'Conta Eliminada'"></span>
+                <span *ngIf="!c.fotoPerfilUrl && c.userName !== 'Conta Eliminada'">{{ commentAvatarInitial(c.userName) }}</span>
               </div>
 
               <div class="comment-content">

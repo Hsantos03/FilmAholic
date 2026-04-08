@@ -6,7 +6,8 @@ import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../environments/environment';
 import { OnboardingStep } from '../../services/onboarding.service';
 import { forkJoin, of } from 'rxjs';
-import { catchError, map } from 'rxjs/operators';
+import { catchError, finalize, map } from 'rxjs/operators';
+import { NotificacoesService } from '../../services/notificacoes.service';
 
 @Component({
   selector: 'app-comunidades',
@@ -55,6 +56,8 @@ export class ComunidadesComponent implements OnInit {
   newIsPrivada = false;
   bannerFile: File | null = null;
   bannerPreview: string | null = null;
+  iconFile: File | null = null;
+  iconPreview: string | null = null;
   isCreating = false;
   createError = '';
 
@@ -67,7 +70,8 @@ export class ComunidadesComponent implements OnInit {
     private service: ComunidadesService,
     private router: Router,
     public menuService: MenuService,
-    private http: HttpClient
+    private http: HttpClient,
+    private notificacoesService: NotificacoesService
   ) { }
 
   toggleMenu(): void {
@@ -166,6 +170,11 @@ export class ComunidadesComponent implements OnInit {
     this.newIsPrivada = false;
     this.bannerFile = null;
     this.bannerPreview = null;
+    this.iconFile = null;
+    if (this.iconPreview) {
+      URL.revokeObjectURL(this.iconPreview);
+      this.iconPreview = null;
+    }
     this.showCreateModal = true;
   }
 
@@ -186,6 +195,18 @@ export class ComunidadesComponent implements OnInit {
     }
   }
 
+  onIconSelected(ev: any): void {
+    const f: File = ev?.target?.files?.[0];
+    this.iconFile = f || null;
+    if (this.iconPreview) {
+      URL.revokeObjectURL(this.iconPreview);
+      this.iconPreview = null;
+    }
+    if (this.iconFile) {
+      this.iconPreview = URL.createObjectURL(this.iconFile);
+    }
+  }
+
   createCommunity(): void {
     this.createError = '';
     if (!this.newNome || !this.newNome.trim()) {
@@ -201,6 +222,7 @@ export class ComunidadesComponent implements OnInit {
     }
     fd.append('isPrivada', String(this.newIsPrivada));
     if (this.bannerFile) fd.append('banner', this.bannerFile, this.bannerFile.name);
+    if (this.iconFile) fd.append('icon', this.iconFile, this.iconFile.name);
 
     this.isCreating = true;
     this.service.create(fd).subscribe({
@@ -214,13 +236,14 @@ export class ComunidadesComponent implements OnInit {
         }
 
         this.http.post<any>(`${this.apiMedalhas}/check-comunidade`, {}, { withCredentials: true })
+          .pipe(finalize(() => this.notificacoesService.refreshNotificationBadges()))
           .subscribe({
             next: (medalRes) => {
               if (medalRes.novasMedalhas > 0) {
                 this.medalSuccessMessage = `Ganhaste a medalha: ${medalRes.medalhas[0].nome}! 🏆`;
               }
             },
-            error: (err) => {
+            error: () => {
               this.medalErrorMessage = 'Erro ao verificar medalhas.';
             }
           });

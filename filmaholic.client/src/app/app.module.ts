@@ -30,6 +30,7 @@ import { ComunidadeDetalheComponent } from './components/comunidade-detalhe/comu
 import { ComunidadesService } from './services/comunidades.service';
 import { NotificacoesConfigComponent } from './components/notificacoes-config/notificacoes-config.component';
 import { OnboardingTourComponent } from './components/onboarding-tour/onboarding-tour.component';
+import { AdminPanelComponent } from './components/admin-panel/admin-panel.component';
 
 registerLocaleData(localePt);
 
@@ -56,7 +57,8 @@ registerLocaleData(localePt);
     ComunidadesComponent,
     ComunidadeDetalheComponent,
     NotificacoesConfigComponent,
-    OnboardingTourComponent
+    OnboardingTourComponent,
+    AdminPanelComponent
   ],
   imports: [
     BrowserModule,

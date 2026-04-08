@@ -236,6 +236,33 @@ await using (var scope = app.Services.CreateAsyncScope())
                 await context.SaveChangesAsync();
                 logger.LogInformation("Desafios seed inseridos com sucesso.");
             }
+
+            var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
+            const string administradorRoleName = "Administrador";
+            if (!await roleManager.RoleExistsAsync(administradorRoleName))
+            {
+                await roleManager.CreateAsync(new IdentityRole(administradorRoleName));
+                logger.LogInformation("Role {Role} criada.", administradorRoleName);
+            }
+
+            var userManagerSeed = scope.ServiceProvider.GetRequiredService<UserManager<Utilizador>>();
+            var seedEmails = builder.Configuration.GetSection("Administration:SeedAdminEmails").Get<List<string>>() ?? new List<string>();
+            var legacySingle = builder.Configuration["Administration:SeedAdminEmail"];
+            if (!string.IsNullOrWhiteSpace(legacySingle))
+                seedEmails.Add(legacySingle.Trim());
+
+            foreach (var raw in seedEmails.Distinct(StringComparer.OrdinalIgnoreCase))
+            {
+                var seedAdminEmail = raw?.Trim();
+                if (string.IsNullOrEmpty(seedAdminEmail)) continue;
+
+                var adminUser = await userManagerSeed.FindByEmailAsync(seedAdminEmail);
+                if (adminUser != null && !await userManagerSeed.IsInRoleAsync(adminUser, administradorRoleName))
+                {
+                    await userManagerSeed.AddToRoleAsync(adminUser, administradorRoleName);
+                    logger.LogInformation("Utilizador {Email} promovido a {Role}.", seedAdminEmail, administradorRoleName);
+                }
+            }
         }
     }
     catch (Exception ex)

@@ -8,7 +8,8 @@ import { Filme, FilmesService, ActorDto } from '../../services/filmes.service';
 import { FavoritesService, FavoritosDTO } from '../../services/favorites.service';
 import { environment } from '../../../environments/environment';
 import { Subject, of } from 'rxjs';
-import { debounceTime, distinctUntilChanged, switchMap } from 'rxjs/operators';
+import { debounceTime, distinctUntilChanged, finalize, switchMap } from 'rxjs/operators';
+import { NotificacoesService } from '../../services/notificacoes.service';
 
 type StatsPeriod = 'all' | '7d' | '30d' | '3m' | '12m';
 type GraphTheme = 'default' | 'dark' | 'force';
@@ -178,7 +179,8 @@ export class ProfileComponent implements OnInit {
     public menuService: MenuService,
     private userMoviesService: UserMoviesService,
     private filmesService: FilmesService,
-    private favoritesService: FavoritesService
+    private favoritesService: FavoritesService,
+    private notificacoesService: NotificacoesService
   ) { }
 
 
@@ -311,6 +313,7 @@ export class ProfileComponent implements OnInit {
 
   private checkLevelMedals(): void {
     this.http.post<any>(`${this.apiMedalhas}/check-level`, {}, { withCredentials: true })
+      .pipe(finalize(() => this.notificacoesService.refreshNotificationBadges()))
       .subscribe({
         next: (response) => {
           if (response && response.novasMedalhas > 0) {

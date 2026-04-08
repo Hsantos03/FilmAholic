@@ -4,7 +4,9 @@ import { ComunidadesService, ComunidadeDto, ComunidadePedidoEntradaDto, MembroDt
 import { MenuService } from '../../services/menu.service';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Subscription } from 'rxjs';
+import { finalize } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
+import { NotificacoesService } from '../../services/notificacoes.service';
 import { OnboardingStep } from '../../services/onboarding.service';
 
 @Component({
@@ -39,9 +41,6 @@ export class ComunidadeDetalheComponent implements OnInit, OnDestroy {
   isLoading = false;
   error = '';
 
-  // Medal notification properties
-  medalSuccessMessage = '';
-  medalErrorMessage = '';
   private readonly apiMedalhas = environment.apiBaseUrl ? `${environment.apiBaseUrl}/api/medalhas` : '/api/medalhas';
 
   // ── Ranking ───
@@ -97,11 +96,6 @@ export class ComunidadeDetalheComponent implements OnInit, OnDestroy {
   /** Vazio ou null = banimento permanente */
   banDuracaoDias: number | null = null;
 
-  clearMedalMessages(): void {
-    this.medalSuccessMessage = '';
-    this.medalErrorMessage = '';
-  }
-
   // Adiciona estas variáveis na classe
   editingPost: PostDto | null = null;
   editPostTitulo = '';
@@ -150,7 +144,8 @@ export class ComunidadeDetalheComponent implements OnInit, OnDestroy {
     private router: Router,
     private service: ComunidadesService,
     public menuService: MenuService,
-    private http: HttpClient
+    private http: HttpClient,
+    private notificacoesService: NotificacoesService
   ) { }
 
   toggleMenu(): void { this.menuService.toggle(); }
@@ -260,17 +255,10 @@ export class ComunidadeDetalheComponent implements OnInit, OnDestroy {
         if (this.comunidade) this.comunidade.membrosCount = (this.comunidade.membrosCount ?? 0) + 1;
         this.loadMembros();
 
-        this.http.post<any>(`${this.apiMedalhas}/check-comunidade`, {}, { withCredentials: true })
-          .subscribe({
-            next: (medalRes) => {
-              if (medalRes.novasMedalhas > 0) {
-                this.medalSuccessMessage = `Ganhaste a medalha: ${medalRes.medalhas[0].nome}! 🏆`;
-              }
-            },
-            error: (err) => {
-              this.medalErrorMessage = 'Erro ao verificar medalhas.';
-            }
-          });
+        // Verifica medalhas no servidor (notificações vêm do feed global)
+        this.http.post(`${this.apiMedalhas}/check-comunidade`, {}, { withCredentials: true })
+          .pipe(finalize(() => this.notificacoesService.refreshNotificationBadges()))
+          .subscribe();
       },
       error: (err) => {
         const msg = err?.error?.message || '';
