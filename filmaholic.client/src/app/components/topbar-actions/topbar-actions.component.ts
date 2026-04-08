@@ -17,11 +17,21 @@ import {
   NotificacaoMedalhaItemDto
 } from '../../services/notificacoes.service';
 
+type NotificacaoUnificada = {
+  id: number;
+  tipo: 'comunidade' | 'medalha' | 'resumo' | 'jogo' | 'filme';
+  texto: string;
+  data: Date;
+  raw: any;
+  lida?: boolean;
+};
+
 @Component({
   selector: 'app-topbar-actions',
   templateUrl: './topbar-actions.component.html',
   styleUrls: ['./topbar-actions.component.css']
 })
+
 export class TopbarActionsComponent implements OnInit, OnDestroy {
   @ViewChild('notificationsContainer', { static: false }) notificationsContainerRef?: ElementRef<HTMLElement>;
 
@@ -65,6 +75,7 @@ export class TopbarActionsComponent implements OnInit, OnDestroy {
   readonly API_URL = environment.apiBaseUrl
     ? environment.apiBaseUrl
     : '';
+
 
   constructor(
     private filmesService: FilmesService,
@@ -113,6 +124,12 @@ export class TopbarActionsComponent implements OnInit, OnDestroy {
     }
   }
 
+  private sortByDateDesc<T extends { criadaEm?: string }>(list: T[]): T[] {
+    return (list || []).sort((a, b) =>
+      new Date(b.criadaEm || 0).getTime() - new Date(a.criadaEm || 0).getTime()
+    );
+  }
+
   // ── Community notifications ──
 
   private loadComunidadeUnreadCount(): void {
@@ -124,10 +141,15 @@ export class TopbarActionsComponent implements OnInit, OnDestroy {
     });
   }
 
+  
+
   private loadComunidadeFeed(): void {
     this.notificacoesService.getNotificacoesComunidadeFeed({ unreadLimit: 10, readLimit: 5 }).subscribe({
       next: (dto) => {
-        this.comunidadeFeed = dto ?? { unread: [], read: [] };
+        this.comunidadeFeed = {
+          unread: this.sortByDateDesc(dto?.unread ?? []),
+          read: this.sortByDateDesc(dto?.read ?? [])
+        };
         this.comunidadeUnreadCount = (dto?.unread?.length ?? 0);
         this.cdr.markForCheck();
       },
@@ -142,12 +164,14 @@ export class TopbarActionsComponent implements OnInit, OnDestroy {
     e.stopPropagation();
     this.notificacoesService.marcarNotificacaoComunidadeComoLida(item.id).subscribe({
       next: () => {
+        // Marcar como lida sem remover da lista - apenas atualiza a propriedade lidaEm
+        const now = new Date().toISOString();
         this.comunidadeFeed = {
           unread: (this.comunidadeFeed.unread ?? []).filter(x => x.id !== item.id),
           read: [
-            { ...item, lidaEm: new Date().toISOString() },
+            { ...item, lidaEm: now },
             ...(this.comunidadeFeed.read ?? []).filter(x => x.id !== item.id)
-          ].slice(0, 10)
+          ].slice(0, 5) // Manter só as 5 mais recentes lidas
         };
         this.comunidadeUnreadCount = Math.max(0, this.comunidadeUnreadCount - 1);
         this.cdr.markForCheck();
@@ -163,7 +187,7 @@ export class TopbarActionsComponent implements OnInit, OnDestroy {
         const allRead = [
           ...(this.comunidadeFeed.unread ?? []).map(x => ({ ...x, lidaEm: now })),
           ...(this.comunidadeFeed.read ?? [])
-        ].slice(0, 15);
+        ].slice(0, 5); // Manter só as 5 mais recentes lidas
         this.comunidadeFeed = { unread: [], read: allRead };
         this.comunidadeUnreadCount = 0;
         this.cdr.markForCheck();
@@ -180,6 +204,114 @@ export class TopbarActionsComponent implements OnInit, OnDestroy {
     return ((this.comunidadeFeed?.unread?.length ?? 0) + (this.comunidadeFeed?.read?.length ?? 0)) > 0;
   }
 
+  get notificacoesOrdenadas(): NotificacaoUnificada[] {
+    const mapa = new Map<string, NotificacaoUnificada>();
+
+    const add = (notif: NotificacaoUnificada, key: string) => {
+      if (!mapa.has(key)) {
+        mapa.set(key, notif);
+      }
+    };
+
+    // Comunidades
+    (this.comunidadeFeed.unread ?? []).forEach(n => {
+      add({
+        id: n.id,
+        tipo: 'comunidade',
+        texto: `Comunidades: novas publicações em ${n.comunidadeNome}`,
+        data: new Date(n.criadaEm),
+        raw: n
+      }, `comunidade-${n.id}`);
+    });
+
+    // Medalhas
+    (this.medalhaFeed.unread ?? []).forEach(n => {
+      add({
+        id: n.id,
+        tipo: 'medalha',
+        texto: `Desbloqueaste ${n.medalhaNome}`,
+        data: new Date(n.criadaEm),
+        raw: n
+      }, `medalha-${n.id}`);
+    });
+
+    // Jogo (verificar se tem lidaEm para determinar se está lido)
+    (this.reminderJogo ?? []).forEach(n => {
+      add({
+        id: n.id,
+        tipo: 'jogo',
+        texto: n.corpo,
+        data: new Date(n.criadaEm),
+        raw: n,
+        lida: !!n.lidaEm
+      } as NotificacaoUnificada, `jogo-${n.id}`);
+    });
+
+    // Filme (verificar se tem lidaEm para determinar se está lido)
+    (this.filmeDisponivel ?? []).forEach(n => {
+      add({
+        id: n.id,
+        tipo: 'filme',
+        texto: n.corpo ?? n.titulo ?? '',
+        data: new Date(n.criadaEm),
+        raw: n,
+        lida: !!n.lidaEm
+      } as NotificacaoUnificada, `filme-${n.id}`);
+    });
+
+    // Comunidades lidas
+    (this.comunidadeFeed.read ?? []).forEach(n => {
+      add({
+        id: n.id,
+        tipo: 'comunidade',
+        texto: `Comunidades: novas publicações em ${n.comunidadeNome}`,
+        data: new Date(n.criadaEm),
+        raw: n,
+        lida: true
+      } as NotificacaoUnificada, `comunidade-read-${n.id}`);
+    });
+
+    // Medalhas lidas
+    (this.medalhaFeed.read ?? []).forEach(n => {
+      add({
+        id: n.id,
+        tipo: 'medalha',
+        texto: `Desbloqueaste ${n.medalhaNome}`,
+        data: new Date(n.criadaEm),
+        raw: n,
+        lida: true
+      } as NotificacaoUnificada, `medalha-read-${n.id}`);
+    });
+
+    // Resumo não lidos
+    (this.resumoFeed.unread ?? []).forEach(n => {
+      add({
+        id: n.id,
+        tipo: 'resumo',
+        texto: 'Resumo semanal',
+        data: new Date(n.criadaEm),
+        raw: n,
+        lida: false
+      } as NotificacaoUnificada, `resumo-${n.id}`);
+    });
+
+    // Resumo lidos
+    (this.resumoFeed.read ?? []).forEach(n => {
+      add({
+        id: n.id,
+        tipo: 'resumo',
+        texto: 'Resumo semanal',
+        data: new Date(n.criadaEm),
+        raw: n,
+        lida: true
+      } as NotificacaoUnificada, `resumo-read-${n.id}`);
+    });
+
+    return Array.from(mapa.values())
+      .sort((a, b) => b.data.getTime() - a.data.getTime())
+      .slice(0, 10); // Limite máximo de 10 notificações
+  }
+
   // ── Medal notifications ──
 
   private loadMedalhaUnreadCount(): void {
@@ -194,7 +326,10 @@ export class TopbarActionsComponent implements OnInit, OnDestroy {
   private loadMedalhaFeed(): void {
     this.notificacoesService.getNotificacoesMedalhaFeed({ unreadLimit: 10, readLimit: 5 }).subscribe({
       next: (dto) => {
-        this.medalhaFeed = dto ?? { unread: [], read: [] };
+        this.medalhaFeed = {
+          unread: this.sortByDateDesc(dto?.unread ?? []),
+          read: this.sortByDateDesc(dto?.read ?? [])
+        };
         this.medalhaUnreadCount = (dto?.unread?.length ?? 0);
         this.cdr.markForCheck();
       },
@@ -209,10 +344,14 @@ export class TopbarActionsComponent implements OnInit, OnDestroy {
   marcarMedalhaComoLida(item: NotificacaoMedalhaItemDto): void {
     this.notificacoesService.marcarNotificacaoMedalhaComoLida(item.id).subscribe({
       next: () => {
-        // Remove from unread and decrement count - don't add to read to make it disappear
+        // Mover para lidas em vez de remover
+        const now = new Date().toISOString();
         this.medalhaFeed = {
           unread: (this.medalhaFeed.unread ?? []).filter(x => x.id !== item.id),
-          read: this.medalhaFeed.read ?? []
+          read: [
+            { ...item, lidaEm: now },
+            ...(this.medalhaFeed.read ?? []).filter(x => x.id !== item.id)
+          ].slice(0, 5) // Manter só as 5 mais recentes lidas
         };
         this.medalhaUnreadCount = Math.max(0, this.medalhaUnreadCount - 1);
         this.cdr.markForCheck();
@@ -223,11 +362,13 @@ export class TopbarActionsComponent implements OnInit, OnDestroy {
   marcarTodasMedalhasComoLidas(): void {
     this.notificacoesService.marcarTodasNotificacoesMedalhaComoLidas().subscribe({
       next: () => {
-        // Clear all unread notifications - don't add to read to make them disappear
-        this.medalhaFeed = {
-          unread: [],
-          read: this.medalhaFeed.read ?? []
-        };
+        // Mover todas as não lidas para lidas
+        const now = new Date().toISOString();
+        const allRead = [
+          ...(this.medalhaFeed.unread ?? []).map(x => ({ ...x, lidaEm: now })),
+          ...(this.medalhaFeed.read ?? [])
+        ].slice(0, 5); // Manter só as 5 mais recentes lidas
+        this.medalhaFeed = { unread: [], read: allRead };
         this.medalhaUnreadCount = 0;
         this.cdr.markForCheck();
       }
@@ -248,7 +389,10 @@ export class TopbarActionsComponent implements OnInit, OnDestroy {
   private loadResumoFeed(): void {
     this.notificacoesService.getResumoEstatisticasFeed({ unreadLimit: 5, readLimit: 4 }).subscribe({
       next: (dto) => {
-        this.resumoFeed = dto ?? { unread: [], read: [] };
+        this.resumoFeed = {
+          unread: this.sortByDateDesc(dto?.unread ?? []),
+          read: this.sortByDateDesc(dto?.read ?? [])
+        };
         this.cdr.markForCheck();
       },
       error: () => {
@@ -260,7 +404,7 @@ export class TopbarActionsComponent implements OnInit, OnDestroy {
   private loadReminderJogo(): void {
     this.notificacoesService.getReminderJogoFeed().subscribe({
       next: (data) => {
-        this.reminderJogo = data ?? [];
+        this.reminderJogo = this.sortByDateDesc(data ?? []);
         this.cdr.markForCheck();
       },
       error: () => { this.reminderJogo = []; }
@@ -270,19 +414,24 @@ export class TopbarActionsComponent implements OnInit, OnDestroy {
   private loadFilmeDisponivel(): void {
     this.notificacoesService.getFilmeDisponivelFeed().subscribe({
       next: (data) => {
-        this.filmeDisponivel = data ?? [];
+        this.filmeDisponivel = this.sortByDateDesc(data ?? []);
         this.cdr.markForCheck();
       },
       error: () => { this.filmeDisponivel = []; }
     });
   }
 
+
+
   marcarFilmeDisponivelLida(e: MouseEvent, item: FilmeDisponivelNotifDto): void {
     e.preventDefault();
     e.stopPropagation();
     this.notificacoesService.marcarFilmeDisponivelComoLida(item.id).subscribe({
       next: () => {
-        this.filmeDisponivel = this.filmeDisponivel.filter((x) => x.id !== item.id);
+        // Marcar como lida mantendo na lista
+        this.filmeDisponivel = this.filmeDisponivel.map((x) =>
+          x.id === item.id ? { ...x, lidaEm: new Date().toISOString() } : x
+        );
         this.cdr.markForCheck();
       }
     });
@@ -298,22 +447,26 @@ export class TopbarActionsComponent implements OnInit, OnDestroy {
     }
   }
 
+  private marcarReminderLidoInterno(id: number): void {
+    this.notificacoesService.marcarReminderJogoComoLida(id).subscribe();
+    this.reminderJogo = this.reminderJogo.map(r =>
+      r.id === id ? { ...r, lidaEm: new Date().toISOString() } : r
+    );
+    this.cdr.markForCheck();
+  }
+
   // Só marca como lido (botão ✓)
   marcarReminderLido(e: MouseEvent, id: number): void {
     e.preventDefault();
     e.stopPropagation();
-    this.notificacoesService.marcarReminderJogoComoLida(id).subscribe();
-    this.reminderJogo = this.reminderJogo.filter(r => r.id !== id);
-    this.cdr.markForCheck();
+    this.marcarReminderLidoInterno(id);
   }
 
   // Marca como lido E navega (botão "Jogar agora →")
   marcarReminderLidoEJogar(e: MouseEvent, id: number): void {
     e.preventDefault();
     e.stopPropagation();
-    this.notificacoesService.marcarReminderJogoComoLida(id).subscribe();
-    this.reminderJogo = this.reminderJogo.filter(r => r.id !== id);
-    this.cdr.markForCheck();
+    this.marcarReminderLidoInterno(id);
     this.router.navigate(['/higher-or-lower']);
   }
 
@@ -327,11 +480,73 @@ export class TopbarActionsComponent implements OnInit, OnDestroy {
           read: [
             { ...item, lidaEm: new Date().toISOString() },
             ...(this.resumoFeed.read ?? []).filter((x) => x.id !== item.id)
-          ].slice(0, 8)
+          ].slice(0, 5) // Manter só as 5 mais recentes lidas
         };
         this.cdr.markForCheck();
       }
     });
+  }
+
+  // ── Unified notification handlers ──
+
+  onNotifClick(e: MouseEvent, n: NotificacaoUnificada): void {
+    e.preventDefault();
+    e.stopPropagation();
+
+    switch (n.tipo) {
+      case 'comunidade':
+        this.openComunidadeFromNotif(n.raw);
+        break;
+      case 'filme':
+        const filmeId = n.raw.filmeId;
+        if (filmeId && !isNaN(filmeId)) {
+          this.isNotificationsOpen = false;
+          this.router.navigate(['/movie-detail', filmeId]);
+        }
+        break;
+      case 'resumo':
+        // Resumo não tem navegação específica, apenas mostra detalhes
+        break;
+      case 'medalha':
+      case 'jogo':
+        // Medalhas e jogo não têm navegação no clique
+        break;
+    }
+  }
+
+  marcarNotifComoLida(e: MouseEvent, n: NotificacaoUnificada): void {
+    e.preventDefault();
+    e.stopPropagation();
+
+    switch (n.tipo) {
+      case 'comunidade':
+        this.marcarComunidadeNotifLida(e, n.raw);
+        break;
+      case 'medalha':
+        this.marcarMedalhaComoLida(n.raw);
+        break;
+      case 'jogo':
+        this.marcarReminderLido(e, n.id);
+        break;
+      case 'filme':
+        this.marcarFilmeDisponivelLida(e, n.raw);
+        break;
+      case 'resumo':
+        this.marcarResumoLida(e, n.raw);
+        break;
+    }
+  }
+
+  marcarTodasNotificacoesLidas(e: MouseEvent): void {
+    e.stopPropagation();
+
+    // Marcar todas as notificações não lidas como lidas
+    if (this.comunidadeUnreadCount > 0) {
+      this.marcarTodasComunidadeLidas(e);
+    }
+    if (this.medalhaUnreadCount > 0) {
+      this.marcarTodasMedalhasComoLidas();
+    }
   }
 
   openResumoCommunityMovie(e: MouseEvent, f: ResumoFilmeComunidadeDto): void {
@@ -340,12 +555,6 @@ export class TopbarActionsComponent implements OnInit, OnDestroy {
     this.isNotificationsOpen = false;
     const id = f?.filmeId;
     if (id && !isNaN(id)) this.router.navigate(['/movie-detail', id]);
-  }
-
-  resumoGenerosLabel(item: ResumoEstatisticasFeedItemDto): string {
-    const list = item.corpo?.generosMaisVistos ?? [];
-    if (!list.length) return '';
-    return list.map((g) => `${g.nome} (${g.filmes})`).join(', ');
   }
 
   get hasUpcomingList(): boolean {

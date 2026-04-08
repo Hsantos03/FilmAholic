@@ -63,6 +63,7 @@ export interface ReminderJogoNotifDto {
   id: number;
   corpo: string;
   criadaEm: string;
+  lidaEm?: string | null;
 }
 
 // ── Medal notification DTOs ──
@@ -88,6 +89,7 @@ export interface FilmeDisponivelNotifDto {
   titulo: string | null;
   corpo: string;
   criadaEm: string;
+  lidaEm?: string | null;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -97,7 +99,7 @@ export class NotificacoesService {
 
   constructor(private http: HttpClient) { }
 
-  /** TMDB ids (subset of {@param tmdbIds}) que têm NovaEstreia marcada como lida na BD. */
+  /** TMDB ids que têm NovaEstreia marcada como lida na BD. */
   getLidosTmdbIds(tmdbIds: number[]): Observable<number[]> {
     const ids = [...new Set(tmdbIds.filter((n) => n > 0))].slice(0, 120);
     if (!ids.length) return of([]);
@@ -119,7 +121,6 @@ export class NotificacoesService {
 
   /**
    * Próximas estreias (TMDB) filtradas por géneros favoritos e filmes já vistos (FR61).
-   * Requer sessão. Em caso de erro, o componente pode fazer fallback para {@link FilmesService.getUpcoming}.
    */
   getProximasEstreiasPersonalizadas(options?: {
     page?: number;
