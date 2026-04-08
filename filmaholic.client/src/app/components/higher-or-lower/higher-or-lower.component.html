@@ -411,7 +411,7 @@
       </div>
 
       <div class="history-list" *ngIf="history.length > 0">
-        <div class="history-item" *ngFor="let h of history">
+        <div class="history-item" *ngFor="let h of paginatedHistory">
           <div class="hi-score">{{ h.score }}</div>
           <div class="hi-info">
             <div class="hi-score-label">Score: {{ h.score }}</div>
@@ -424,6 +424,30 @@
             {{ h.category === 'Atores' ? '🎭 Atores' : '🎬 Filmes' }}
           </div>
         </div>
+      </div>
+
+      <!-- Pagination -->
+      <div class="pagination" *ngIf="totalPages > 1">
+        <button class="page-btn" (click)="prevPage()" [disabled]="currentPage === 1">
+          ←
+        </button>
+
+        <div class="page-numbers">
+          <button *ngFor="let page of [].constructor(totalPages); let i = index"
+                  class="page-number"
+                  [class.active]="currentPage === i + 1"
+                  (click)="goToPage(i + 1)">
+            {{ i + 1 }}
+          </button>
+        </div>
+
+        <button class="page-btn" (click)="nextPage()" [disabled]="currentPage === totalPages">
+          →
+        </button>
+      </div>
+
+      <div class="pagination-info" *ngIf="history.length > 0">
+        Página {{ currentPage }} de {{ totalPages }} · {{ history.length }} jogos
       </div>
     </div>
   </div>

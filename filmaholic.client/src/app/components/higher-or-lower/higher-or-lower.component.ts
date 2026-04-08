@@ -92,7 +92,11 @@ export class HigherOrLowerComponent implements OnInit {
   stats: GameStats | null = null;
 
   // maximum number of entries to keep/display in the history UI / local storage
-  private readonly historyCap = 10;
+  private readonly historyCap = 100;
+
+  // pagination settings
+  currentPage = 1;
+  itemsPerPage = 10;
 
   constructor(
     private router: Router,
@@ -869,6 +873,7 @@ export class HigherOrLowerComponent implements OnInit {
     this.showHistory = true;
     this.isPlaying = false;
     this.history = [];
+    this.currentPage = 1;
 
     const userId = localStorage.getItem('user_id');
     if (userId) {
@@ -948,6 +953,34 @@ export class HigherOrLowerComponent implements OnInit {
 
   goBack(): void {
     this.router.navigate(['/dashboard']);
+  }
+
+  // Pagination helpers
+  get totalPages(): number {
+    return Math.ceil(this.history.length / this.itemsPerPage);
+  }
+
+  get paginatedHistory(): Array<GameHistoryEntry & { roundsCount?: number; category?: string }> {
+    const start = (this.currentPage - 1) * this.itemsPerPage;
+    return this.history.slice(start, start + this.itemsPerPage);
+  }
+
+  goToPage(page: number): void {
+    if (page >= 1 && page <= this.totalPages) {
+      this.currentPage = page;
+    }
+  }
+
+  nextPage(): void {
+    if (this.currentPage < this.totalPages) {
+      this.currentPage++;
+    }
+  }
+
+  prevPage(): void {
+    if (this.currentPage > 1) {
+      this.currentPage--;
+    }
   }
 
   posterOf(f?: Filme): string {

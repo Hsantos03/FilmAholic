@@ -130,17 +130,17 @@ public static class ReminderJogoGenerator
     }
 
     private static readonly string[] Mensagens =
-[
-    "Desafia-te e tenta chegar ao topo da Leaderboard! 🎮",
-    "Já faz alguns dias que não jogas... O teu lugar no ranking está em risco! 👀",
-    "Os teus rivais estão a subir no ranking. Estás à espera de quê? 🏆",
-    "Um novo desafio aguarda-te no Higher or Lower. Consegues bater o teu recorde? 🎯",
-    "A Leaderboard não se conquista a descansar! Volta ao jogo! 💪",
-    "Sentes falta da adrenalina do Higher or Lower? Nós também sentimos a tua falta! 🎬",
-    "Ainda dás para o torcer? Prova isso no Higher or Lower! 😏",
-    "O jogo está à tua espera. Quanto tempo consegues aguentar? ⏱️",
-    "Hoje pode ser o dia em que bates o teu recorde! Vai lá tentar! 🚀",
-    "A tua posição na Leaderboard depende de ti. Não deixes escapar! 🔥"
-];
+    [
+        "Desafia-te e tenta chegar ao topo da Leaderboard! 🎮",
+        "Há alguns dias que não jogas... O teu lugar no ranking está em risco! 👀",
+        "Os teus rivais estão a subir no ranking. Estás à espera de quê? 🏆",
+        "Um novo desafio aguarda-te no Higher or Lower. Consegues bater o teu recorde? 🎯",
+        "A Leaderboard não se conquista a descansar! Volta ao jogo! 💪",
+        "Sentes falta da adrenalina do Higher or Lower? Nós também sentimos a tua falta! 🎬",
+        "Ainda tens o que é preciso? Prova isso no Higher or Lower! 😏",
+        "O jogo está à tua espera. Quanto tempo consegues aguentar? ⏱️",
+        "Hoje pode ser o dia em que bates o teu recorde! Vai lá tentar! 🚀",
+        "A tua posição na Leaderboard depende de ti. Não a deixes escapar! 🔥"
+    ];
     private static readonly Random Rng = new();
 }
