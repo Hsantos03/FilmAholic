@@ -115,28 +115,67 @@
         </div>
       </div>
 
-      <div class="grid" *ngIf="!isLoading && comunidades.length">
-        <article class="card" *ngFor="let c of comunidades" (click)="goToCommunity(c)" role="button" tabindex="0">
-          <div class="card-banner" *ngIf="c.bannerUrl" [style.background-image]="'url(' + c.bannerUrl + ')'"></div>
-          <div class="card-banner card-banner--empty" *ngIf="!c.bannerUrl" aria-hidden="true"></div>
-          <div class="card-badge-wrap">
-            <div class="card-badge"
-                 [class.has-photo]="!!c.bannerUrl"
-                 [style.background-image]="c.bannerUrl ? 'url(' + c.bannerUrl + ')' : 'none'"
-                 aria-hidden="true">
-              <span *ngIf="!c.bannerUrl">{{ initialLetra(c.nome) }}</span>
+      <section class="community-section" *ngIf="!isLoading && comunidadesMembro.length">
+        <div class="community-section-head">
+          <h2>As tuas comunidades</h2>
+          <span class="community-section-count">{{ comunidadesMembro.length }}</span>
+        </div>
+        <p class="community-section-subtitle">Inclui comunidades que criaste e comunidades em que já participas.</p>
+        <div class="grid">
+          <article class="card" *ngFor="let c of comunidadesMembro" (click)="goToCommunity(c)" role="button" tabindex="0">
+            <div class="card-banner" *ngIf="c.bannerUrl" [style.background-image]="'url(' + c.bannerUrl + ')'"></div>
+            <div class="card-banner card-banner--empty" *ngIf="!c.bannerUrl" aria-hidden="true"></div>
+            <div class="card-badge-wrap">
+              <div class="card-badge"
+                   [class.has-photo]="!!c.bannerUrl"
+                   [style.background-image]="c.bannerUrl ? 'url(' + c.bannerUrl + ')' : 'none'"
+                   aria-hidden="true">
+                <span *ngIf="!c.bannerUrl">{{ initialLetra(c.nome) }}</span>
+              </div>
             </div>
-          </div>
-          <div class="card-body">
-            <div class="card-title">{{ c.nome }}</div>
-            <div class="card-desc">{{ c.descricao || 'Sem descrição' }}</div>
-          </div>
-          <div class="card-meta">
-            <span class="members">{{ c.membrosCount ?? 0 }} membros</span>
-            <span class="created" *ngIf="c.dataCriacao">Criada: {{ c.dataCriacao | date:'shortDate' }}</span>
-          </div>
-        </article>
-      </div>
+            <div class="card-body">
+              <div class="card-title">{{ c.nome }}</div>
+              <div class="card-desc">{{ c.descricao || 'Sem descrição' }}</div>
+            </div>
+            <div class="card-meta">
+              <span class="visibility-pill" [class.private]="c.isPrivada">{{ c.isPrivada ? 'Privada' : 'Pública' }}</span>
+              <span class="members">{{ c.membrosCount ?? 0 }}<ng-container *ngIf="c.limiteMembros">/{{ c.limiteMembros }}</ng-container> membros</span>
+              <span class="created" *ngIf="c.dataCriacao">Criada: {{ c.dataCriacao | date:'shortDate' }}</span>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <section class="community-section" *ngIf="!isLoading && comunidadesRestantes.length">
+        <div class="community-section-head">
+          <h2>Outras comunidades</h2>
+          <span class="community-section-count">{{ comunidadesRestantes.length }}</span>
+        </div>
+        <p class="community-section-subtitle">Comunidades onde ainda não és membro.</p>
+        <div class="grid">
+          <article class="card" *ngFor="let c of comunidadesRestantes" (click)="goToCommunity(c)" role="button" tabindex="0">
+            <div class="card-banner" *ngIf="c.bannerUrl" [style.background-image]="'url(' + c.bannerUrl + ')'"></div>
+            <div class="card-banner card-banner--empty" *ngIf="!c.bannerUrl" aria-hidden="true"></div>
+            <div class="card-badge-wrap">
+              <div class="card-badge"
+                   [class.has-photo]="!!c.bannerUrl"
+                   [style.background-image]="c.bannerUrl ? 'url(' + c.bannerUrl + ')' : 'none'"
+                   aria-hidden="true">
+                <span *ngIf="!c.bannerUrl">{{ initialLetra(c.nome) }}</span>
+              </div>
+            </div>
+            <div class="card-body">
+              <div class="card-title">{{ c.nome }}</div>
+              <div class="card-desc">{{ c.descricao || 'Sem descrição' }}</div>
+            </div>
+            <div class="card-meta">
+              <span class="visibility-pill" [class.private]="c.isPrivada">{{ c.isPrivada ? 'Privada' : 'Pública' }}</span>
+              <span class="members">{{ c.membrosCount ?? 0 }}<ng-container *ngIf="c.limiteMembros">/{{ c.limiteMembros }}</ng-container> membros</span>
+              <span class="created" *ngIf="c.dataCriacao">Criada: {{ c.dataCriacao | date:'shortDate' }}</span>
+            </div>
+          </article>
+        </div>
+      </section>
 
       <div *ngIf="!isLoading && !comunidades.length" class="empty">
         Ainda não há comunidades. Sê o primeiro a criar uma!
@@ -156,6 +195,20 @@
 
         <label for="descricao">Descrição</label>
         <textarea id="descricao" name="descricao" rows="4" [(ngModel)]="newDescricao"></textarea>
+
+        <label for="limiteMembros">Limite de membros (opcional)</label>
+        <input id="limiteMembros" name="limiteMembros" type="number" min="1" [(ngModel)]="newLimiteMembros" />
+
+        <div class="spoiler-toggle-container visibility-toggle-container">
+          <div class="spoiler-toggle-info visibility-toggle-info">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-4.33 0-8 2.17-8 4v2h16v-2c0-1.83-3.67-4-8-4z" /></svg>
+            <span>{{ newIsPrivada ? 'Comunidade privada (requer aprovação)' : 'Comunidade pública (entrada imediata)' }}</span>
+          </div>
+          <label class="toggle-switch">
+            <input id="isPrivada" name="isPrivada" type="checkbox" [(ngModel)]="newIsPrivada" />
+            <span class="slider"></span>
+          </label>
+        </div>
 
         <label for="banner">Imagem da comunidade (aparece como banner e ícone)</label>
         <input id="banner" name="banner" type="file" accept="image/*" (change)="onBannerSelected($event)" />

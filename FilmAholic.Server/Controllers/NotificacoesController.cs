@@ -1083,6 +1083,7 @@ namespace FilmAholic.Server.Controllers
                         .Select(c => c.Nome)
                         .FirstOrDefault() ?? "",
                     PostId = n.PostId,
+                    Tipo = n.Tipo,
                     CriadaEm = n.CriadaEm,
                     LidaEm = n.LidaEm
                 })
@@ -1102,6 +1103,7 @@ namespace FilmAholic.Server.Controllers
                         .Select(c => c.Nome)
                         .FirstOrDefault() ?? "",
                     PostId = n.PostId,
+                    Tipo = n.Tipo,
                     CriadaEm = n.CriadaEm,
                     LidaEm = n.LidaEm
                 })
@@ -1420,7 +1422,8 @@ namespace FilmAholic.Server.Controllers
             public int Id { get; set; }
             public int ComunidadeId { get; set; }
             public string ComunidadeNome { get; set; } = "";
-            public int PostId { get; set; }
+            public int? PostId { get; set; }
+            public string Tipo { get; set; } = "post";
             public DateTime CriadaEm { get; set; }
             public DateTime? LidaEm { get; set; }
         }

@@ -4,6 +4,8 @@ import { ComunidadesService, ComunidadeDto, SugestaoFilmeComunidade } from '../.
 import { MenuService } from '../../services/menu.service';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../environments/environment';
+import { forkJoin, of } from 'rxjs';
+import { catchError, map } from 'rxjs/operators';
 
 @Component({
   selector: 'app-comunidades',
@@ -12,6 +14,8 @@ import { environment } from '../../../environments/environment';
 })
 export class ComunidadesComponent implements OnInit {
   comunidades: ComunidadeDto[] = [];
+  comunidadesMembro: ComunidadeDto[] = [];
+  comunidadesRestantes: ComunidadeDto[] = [];
   isLoading = false;
   error = '';
 
@@ -23,6 +27,8 @@ export class ComunidadesComponent implements OnInit {
   showCreateModal = false;
   newNome = '';
   newDescricao = '';
+  newLimiteMembros: number | null = null;
+  newIsPrivada = false;
   bannerFile: File | null = null;
   bannerPreview: string | null = null;
   isCreating = false;
@@ -31,6 +37,7 @@ export class ComunidadesComponent implements OnInit {
   sugestoesFilmes: SugestaoFilmeComunidade[] = [];
   isLoadingSugestoes = false;
   private readonly posterFallback = 'https://via.placeholder.com/300x450?text=Sem+poster';
+  private currentUserId: string | null = null;
 
   constructor(
     private service: ComunidadesService,
@@ -49,6 +56,7 @@ export class ComunidadesComponent implements OnInit {
   }
 
   ngOnInit(): void {
+    this.currentUserId = localStorage.getItem('user_id');
     this.loadComunidades();
     this.loadSugestoesFilmes();
   }
@@ -82,6 +90,7 @@ export class ComunidadesComponent implements OnInit {
     this.service.getAll().subscribe({
       next: (list) => {
         this.comunidades = list || [];
+        this.splitComunidadesPorMembro();
         this.isLoading = false;
       },
       error: (err) => {
@@ -92,10 +101,45 @@ export class ComunidadesComponent implements OnInit {
     });
   }
 
+  private splitComunidadesPorMembro(): void {
+    if (!this.comunidades.length) {
+      this.comunidadesMembro = [];
+      this.comunidadesRestantes = [];
+      return;
+    }
+
+    if (!this.currentUserId) {
+      this.comunidadesMembro = [];
+      this.comunidadesRestantes = [...this.comunidades];
+      return;
+    }
+
+    const checks = this.comunidades.map((comunidade) => {
+      if (!comunidade.id) {
+        return of({ comunidade, isMembro: false });
+      }
+
+      return this.service.getMembros(comunidade.id).pipe(
+        map((membros) => ({
+          comunidade,
+          isMembro: (membros || []).some((m) => m.utilizadorId === this.currentUserId)
+        })),
+        catchError(() => of({ comunidade, isMembro: false }))
+      );
+    });
+
+    forkJoin(checks).subscribe((resultado) => {
+      this.comunidadesMembro = resultado.filter((x) => x.isMembro).map((x) => x.comunidade);
+      this.comunidadesRestantes = resultado.filter((x) => !x.isMembro).map((x) => x.comunidade);
+    });
+  }
+
   openCreate(): void {
     this.createError = '';
     this.newNome = '';
     this.newDescricao = '';
+    this.newLimiteMembros = null;
+    this.newIsPrivada = false;
     this.bannerFile = null;
     this.bannerPreview = null;
     this.showCreateModal = true;
@@ -128,6 +172,10 @@ export class ComunidadesComponent implements OnInit {
     const fd = new FormData();
     fd.append('nome', this.newNome.trim());
     fd.append('descricao', this.newDescricao?.trim() || '');
+    if ((this.newLimiteMembros ?? 0) > 0) {
+      fd.append('limiteMembros', String(this.newLimiteMembros));
+    }
+    fd.append('isPrivada', String(this.newIsPrivada));
     if (this.bannerFile) fd.append('banner', this.bannerFile, this.bannerFile.name);
 
     this.isCreating = true;

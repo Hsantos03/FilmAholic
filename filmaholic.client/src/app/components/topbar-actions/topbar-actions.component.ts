@@ -173,6 +173,10 @@ export class TopbarActionsComponent implements OnInit, OnDestroy {
 
   openComunidadeFromNotif(item: NotificacaoComunidadeItemDto): void {
     this.isNotificationsOpen = false;
+    if (item.tipo === 'pedido_entrada') {
+      this.router.navigate(['/comunidades', item.comunidadeId], { queryParams: { tab: 'membros' } });
+      return;
+    }
     this.router.navigate(['/comunidades', item.comunidadeId]);
   }
 

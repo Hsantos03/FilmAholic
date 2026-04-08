@@ -14,9 +14,12 @@ public class NotificacaoComunidade
     public int ComunidadeId { get; set; }
     public Comunidade? Comunidade { get; set; }
 
-    /// Post that triggered the notification (optional, for direct linking).
-    public int PostId { get; set; }
+    /// Optional post that triggered the notification.
+    public int? PostId { get; set; }
     public ComunidadePost? Post { get; set; }
+
+    /// post, pedido_entrada, etc.
+    public string Tipo { get; set; } = "post";
 
     public DateTime CriadaEm { get; set; } = DateTime.UtcNow;
     public DateTime? LidaEm { get; set; }

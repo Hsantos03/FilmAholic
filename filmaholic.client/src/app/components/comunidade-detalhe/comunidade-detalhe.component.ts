@@ -1,6 +1,6 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { ComunidadesService, ComunidadeDto, MembroDto, PostDto, RankingMembroDto } from '../../services/comunidades.service';
+import { ComunidadesService, ComunidadeDto, ComunidadePedidoEntradaDto, MembroDto, PostDto, RankingMembroDto } from '../../services/comunidades.service';
 import { MenuService } from '../../services/menu.service';
 import { HttpClient } from '@angular/common/http';
 import { Subscription } from 'rxjs';
@@ -44,12 +44,15 @@ export class ComunidadeDetalheComponent implements OnInit, OnDestroy {
   isMembro = false;
   isAdmin = false;
   isJuntando = false;
+  pedidoPendente = false;
   currentUserId: string | null = null;
 
   // ── Edição ───
   showEditModal = false;
   editNome = '';
   editDescricao = '';
+  editLimiteMembros: number | null = null;
+  editIsPrivada = false;
   editBannerFile: File | null = null;
   editBannerPreview: string | null = null;
   editIconFile: File | null = null;
@@ -108,6 +111,8 @@ export class ComunidadeDetalheComponent implements OnInit, OnDestroy {
   currentUserCastigadoAte: Date | null = null;
   castigoCountdown: string = '';
   private timerInterval: any;
+  pedidosPendentes: ComunidadePedidoEntradaDto[] = [];
+  isProcessingPedido = false;
 
   private comunidadeId!: number;
   private sub?: Subscription;
@@ -124,6 +129,10 @@ export class ComunidadeDetalheComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.currentUserId = localStorage.getItem('user_id');
+    const tab = this.route.snapshot.queryParamMap.get('tab');
+    if (tab === 'membros' || tab === 'posts' || tab === 'ranking') {
+      this.activeTab = tab;
+    }
     this.isLoading = true;
     this.sub = this.route.paramMap.subscribe(params => {
       const id = params.get('id');
@@ -147,6 +156,7 @@ export class ComunidadeDetalheComponent implements OnInit, OnDestroy {
         this.isLoading = false;
         if (!c) { this.error = 'Comunidade não encontrada'; return; }
         this.loadMembros();
+        this.loadMeuEstado();
         this.loadPosts();
       },
       error: () => { this.error = 'Erro ao carregar comunidade'; this.isLoading = false; }
@@ -184,9 +194,15 @@ export class ComunidadeDetalheComponent implements OnInit, OnDestroy {
   juntar(): void {
     this.isJuntando = true;
     this.service.juntar(this.comunidadeId).subscribe({
-      next: () => {
+      next: (res) => {
         this.isJuntando = false;
+        if (res?.pendingApproval) {
+          this.pedidoPendente = true;
+          return;
+        }
+
         this.isMembro = true;
+        this.pedidoPendente = false;
         if (this.comunidade) this.comunidade.membrosCount = (this.comunidade.membrosCount ?? 0) + 1;
         this.loadMembros();
 
@@ -202,7 +218,13 @@ export class ComunidadeDetalheComponent implements OnInit, OnDestroy {
             }
           });
       },
-      error: () => { this.isJuntando = false; }
+      error: (err) => {
+        const msg = err?.error?.message || '';
+        if (msg.toLowerCase().includes('pendente')) {
+          this.pedidoPendente = true;
+        }
+        this.isJuntando = false;
+      }
     });
   }
 
@@ -211,6 +233,7 @@ export class ComunidadeDetalheComponent implements OnInit, OnDestroy {
       next: () => {
         this.isMembro = false;
         this.isAdmin = false;
+        this.pedidoPendente = false;
         if (this.comunidade) this.comunidade.membrosCount = Math.max(0, (this.comunidade.membrosCount ?? 1) - 1);
         this.loadMembros();
       }
@@ -297,6 +320,8 @@ export class ComunidadeDetalheComponent implements OnInit, OnDestroy {
     if (!this.comunidade) return;
     this.editNome = this.comunidade.nome;
     this.editDescricao = this.comunidade.descricao ?? '';
+    this.editLimiteMembros = this.comunidade.limiteMembros ?? null;
+    this.editIsPrivada = !!this.comunidade.isPrivada;
     this.editBannerFile = null;
     this.editBannerPreview = null;
     this.editIconFile = null;
@@ -334,6 +359,10 @@ export class ComunidadeDetalheComponent implements OnInit, OnDestroy {
     const fd = new FormData();
     fd.append('nome', this.editNome.trim());
     fd.append('descricao', this.editDescricao?.trim() ?? '');
+    if ((this.editLimiteMembros ?? 0) > 0) {
+      fd.append('limiteMembros', String(this.editLimiteMembros));
+    }
+    fd.append('isPrivada', String(this.editIsPrivada));
     if (this.editBannerFile) fd.append('banner', this.editBannerFile, this.editBannerFile.name);
     if (this.editIconFile) fd.append('icon', this.editIconFile, this.editIconFile.name);
 
@@ -343,12 +372,59 @@ export class ComunidadeDetalheComponent implements OnInit, OnDestroy {
         this.comunidade = { ...this.comunidade, ...updated };
         this.isSavingEdit = false;
         this.showEditModal = false;
+        if (this.isAdmin) this.loadPedidosPendentes();
       },
       error: (err) => {
         const msg = err?.error?.message;
         this.editError = msg || 'Erro ao guardar alterações.';
         this.isSavingEdit = false;
       }
+    });
+  }
+
+  private loadMeuEstado(): void {
+    this.service.getMeuEstado(this.comunidadeId).subscribe({
+      next: (estado) => {
+        this.isMembro = !!estado?.isMembro;
+        this.isAdmin = !!estado?.isAdmin;
+        this.pedidoPendente = !!estado?.pedidoPendente;
+        if (this.isAdmin) this.loadPedidosPendentes();
+      },
+      error: () => {
+        // utilizador não autenticado ou sem sessão
+      }
+    });
+  }
+
+  loadPedidosPendentes(): void {
+    this.service.getPedidosEntrada(this.comunidadeId).subscribe((list) => {
+      this.pedidosPendentes = list || [];
+    });
+  }
+
+  aprovarPedido(pedido: ComunidadePedidoEntradaDto): void {
+    if (!pedido?.id || this.isProcessingPedido) return;
+    this.isProcessingPedido = true;
+    this.service.aprovarPedidoEntrada(this.comunidadeId, pedido.id).subscribe({
+      next: () => {
+        this.pedidosPendentes = this.pedidosPendentes.filter((p) => p.id !== pedido.id);
+        if (this.comunidade) this.comunidade.membrosCount = (this.comunidade.membrosCount ?? 0) + 1;
+        this.loadMembros();
+        this.isProcessingPedido = false;
+      },
+      error: () => { this.isProcessingPedido = false; }
+    });
+  }
+
+  rejeitarPedido(pedido: ComunidadePedidoEntradaDto): void {
+    if (!pedido?.id || this.isProcessingPedido) return;
+    this.isProcessingPedido = true;
+    this.service.rejeitarPedidoEntrada(this.comunidadeId, pedido.id).subscribe({
+      next: () => {
+        this.pedidosPendentes = this.pedidosPendentes.filter((p) => p.id !== pedido.id);
+        this.isProcessingPedido = false;
+      },
+      error: () => { this.isProcessingPedido = false; }
     });
   }
 

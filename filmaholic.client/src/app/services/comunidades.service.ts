@@ -9,6 +9,8 @@ export interface ComunidadeDto {
   id?: number;
   nome: string;
   descricao?: string | null;
+  limiteMembros?: number | null;
+  isPrivada?: boolean;
   dataCriacao?: string;
   membrosCount?: number;
   bannerUrl?: string | null;
@@ -78,6 +80,14 @@ export interface SugestaoFilmeComunidade {
   membrosQueViram: number;
 }
 
+export interface ComunidadePedidoEntradaDto {
+  id: number;
+  comunidadeId: number;
+  utilizadorId: string;
+  userName: string;
+  dataPedido: string;
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -136,6 +146,24 @@ export class ComunidadesService {
 
   juntar(id: number): Observable<any> {
     return this.http.post(`${this.apiUrl}/${id}/juntar`, {}, { withCredentials: true });
+  }
+
+  getMeuEstado(id: number): Observable<{ isMembro: boolean; isAdmin: boolean; pedidoPendente: boolean }> {
+    return this.http.get<{ isMembro: boolean; isAdmin: boolean; pedidoPendente: boolean }>(`${this.apiUrl}/${id}/me/estado`, { withCredentials: true });
+  }
+
+  getPedidosEntrada(id: number): Observable<ComunidadePedidoEntradaDto[]> {
+    return this.http.get<ComunidadePedidoEntradaDto[]>(`${this.apiUrl}/${id}/pedidos`, { withCredentials: true }).pipe(
+      catchError(() => of([]))
+    );
+  }
+
+  aprovarPedidoEntrada(comunidadeId: number, pedidoId: number): Observable<any> {
+    return this.http.post(`${this.apiUrl}/${comunidadeId}/pedidos/${pedidoId}/aprovar`, {}, { withCredentials: true });
+  }
+
+  rejeitarPedidoEntrada(comunidadeId: number, pedidoId: number): Observable<any> {
+    return this.http.post(`${this.apiUrl}/${comunidadeId}/pedidos/${pedidoId}/rejeitar`, {}, { withCredentials: true });
   }
 
   deleteComunidade(id: number): Observable<any> {

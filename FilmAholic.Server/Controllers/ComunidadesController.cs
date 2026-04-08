@@ -80,6 +80,13 @@ namespace FilmAholic.Server.Controllers
                 System.IO.File.Delete(filePath);
         }
 
+        private async Task<bool> IsLimiteAtingidoAsync(int comunidadeId, int? limiteMembros)
+        {
+            if (!limiteMembros.HasValue || limiteMembros.Value <= 0) return false;
+            var membrosAtivos = await _context.ComunidadeMembros.CountAsync(m => m.ComunidadeId == comunidadeId);
+            return membrosAtivos >= limiteMembros.Value;
+        }
+
         // ─── Public list ────
         [HttpGet]
         public async Task<IActionResult> GetAll()
@@ -92,6 +99,8 @@ namespace FilmAholic.Server.Controllers
                     c.Id,
                     c.Nome,
                     c.Descricao,
+                    c.LimiteMembros,
+                    c.IsPrivada,
                     c.DataCriacao,
                     c.BannerFileName,
                     c.IconFileName,
@@ -104,6 +113,8 @@ namespace FilmAholic.Server.Controllers
                 Id = x.Id,
                 Nome = x.Nome,
                 Descricao = x.Descricao,
+                LimiteMembros = x.LimiteMembros,
+                IsPrivada = x.IsPrivada,
                 DataCriacao = x.DataCriacao,
                 MembrosCount = x.MembrosCount,
                 BannerUrl = BannerUrlFromFileName(x.BannerFileName, baseUrl),
@@ -129,6 +140,8 @@ namespace FilmAholic.Server.Controllers
                 Id = c.Id,
                 Nome = c.Nome,
                 Descricao = c.Descricao,
+                LimiteMembros = c.LimiteMembros,
+                IsPrivada = c.IsPrivada,
                 DataCriacao = c.DataCriacao,
                 MembrosCount = await _context.ComunidadeMembros.CountAsync(m => m.ComunidadeId == c.Id),
                 BannerUrl = BannerUrlFromFileName(c.BannerFileName, baseUrl),
@@ -161,6 +174,8 @@ namespace FilmAholic.Server.Controllers
                 {
                     Nome = form.Nome.Trim(),
                     Descricao = string.IsNullOrWhiteSpace(form.Descricao) ? null : form.Descricao.Trim(),
+                    LimiteMembros = form.LimiteMembros is > 0 ? form.LimiteMembros : null,
+                    IsPrivada = form.IsPrivada,
                     BannerFileName = bannerFileName,
                     IconFileName = iconFileName,
                     CreatedById = userId,
@@ -190,6 +205,8 @@ namespace FilmAholic.Server.Controllers
                         Id = entity.Id,
                         Nome = entity.Nome,
                         Descricao = entity.Descricao,
+                        LimiteMembros = entity.LimiteMembros,
+                        IsPrivada = entity.IsPrivada,
                         DataCriacao = entity.DataCriacao,
                         MembrosCount = await _context.ComunidadeMembros.CountAsync(m => m.ComunidadeId == entity.Id),
                     BannerUrl = BannerUrlFromFileName(entity.BannerFileName, baseUrl),
@@ -234,8 +251,17 @@ namespace FilmAholic.Server.Controllers
             if (nomeEmUso)
                 return Conflict(new { message = "Já existe outra comunidade com esse nome." });
 
+            if (form.LimiteMembros is > 0)
+            {
+                var membrosAtuais = await _context.ComunidadeMembros.CountAsync(m => m.ComunidadeId == id);
+                if (form.LimiteMembros.Value < membrosAtuais)
+                    return BadRequest(new { message = "O limite de membros não pode ser inferior ao número atual de membros." });
+            }
+
             comunidade.Nome = form.Nome.Trim();
             comunidade.Descricao = string.IsNullOrWhiteSpace(form.Descricao) ? null : form.Descricao.Trim();
+            comunidade.LimiteMembros = form.LimiteMembros is > 0 ? form.LimiteMembros : null;
+            comunidade.IsPrivada = form.IsPrivada;
 
             if (form.Banner != null && form.Banner.Length > 0)
             {
@@ -257,6 +283,8 @@ namespace FilmAholic.Server.Controllers
                 Id = comunidade.Id,
                 Nome = comunidade.Nome,
                 Descricao = comunidade.Descricao,
+                LimiteMembros = comunidade.LimiteMembros,
+                IsPrivada = comunidade.IsPrivada,
                 DataCriacao = comunidade.DataCriacao,
                 MembrosCount = await _context.ComunidadeMembros.CountAsync(m => m.ComunidadeId == comunidade.Id),
                 BannerUrl = BannerUrlFromFileName(comunidade.BannerFileName, baseUrl),
@@ -501,6 +529,7 @@ namespace FilmAholic.Server.Controllers
                     UtilizadorId = mid,
                     ComunidadeId = id,
                     PostId = post.Id,
+                    Tipo = "post",
                     CriadaEm = DateTime.UtcNow
                 }).ToList();
 
@@ -562,11 +591,66 @@ namespace FilmAholic.Server.Controllers
         public async Task<IActionResult> Juntar(int id)
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue("sub");
+            if (string.IsNullOrWhiteSpace(userId)) return Unauthorized();
+
+            var comunidade = await _context.Comunidades.FirstOrDefaultAsync(c => c.Id == id);
+            if (comunidade == null) return NotFound(new { message = "Comunidade não encontrada." });
 
             var jaExiste = await _context.ComunidadeMembros
                 .AnyAsync(m => m.ComunidadeId == id && m.UtilizadorId == userId);
 
             if (jaExiste) return Conflict(new { message = "Já és membro desta comunidade." });
+
+            if (comunidade.IsPrivada)
+            {
+                var jaPendente = await _context.ComunidadePedidosEntrada
+                    .AnyAsync(p => p.ComunidadeId == id && p.UtilizadorId == userId && p.Status == "Pendente");
+                if (jaPendente)
+                    return Conflict(new { message = "Já tens um pedido pendente para esta comunidade.", pendingApproval = true });
+
+                var pedido = new ComunidadePedidoEntrada
+                {
+                    ComunidadeId = id,
+                    UtilizadorId = userId,
+                    Status = "Pendente",
+                    DataPedido = DateTime.UtcNow
+                };
+
+                _context.ComunidadePedidosEntrada.Add(pedido);
+                await _context.SaveChangesAsync();
+
+                try
+                {
+                    var adminIds = await _context.ComunidadeMembros
+                        .Where(m => m.ComunidadeId == id && m.Role == "Admin" && m.Status == "Ativo")
+                        .Select(m => m.UtilizadorId)
+                        .ToListAsync();
+
+                    if (adminIds.Count > 0)
+                    {
+                        var notifs = adminIds.Select(adminId => new NotificacaoComunidade
+                        {
+                            UtilizadorId = adminId,
+                            ComunidadeId = id,
+                            PostId = null,
+                            Tipo = "pedido_entrada",
+                            CriadaEm = DateTime.UtcNow
+                        }).ToList();
+
+                        _context.NotificacoesComunidade.AddRange(notifs);
+                        await _context.SaveChangesAsync();
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "Falha ao criar notificação de pedido de entrada para admins da comunidade {Id}", id);
+                }
+
+                return Accepted(new { message = "Pedido enviado para aprovação do admin.", pendingApproval = true });
+            }
+
+            if (await IsLimiteAtingidoAsync(id, comunidade.LimiteMembros))
+                return Conflict(new { message = "Esta comunidade já atingiu o limite de membros." });
 
             _context.ComunidadeMembros.Add(new ComunidadeMembro
             {
@@ -579,6 +663,139 @@ namespace FilmAholic.Server.Controllers
 
             await _context.SaveChangesAsync();
             return Ok();
+        }
+
+        [Authorize]
+        [HttpGet("{id:int}/me/estado")]
+        public async Task<IActionResult> GetMeuEstado(int id)
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue("sub");
+            if (string.IsNullOrWhiteSpace(userId)) return Unauthorized();
+
+            var membro = await _context.ComunidadeMembros
+                .AsNoTracking()
+                .FirstOrDefaultAsync(m => m.ComunidadeId == id && m.UtilizadorId == userId);
+
+            var pedidoPendente = await _context.ComunidadePedidosEntrada
+                .AsNoTracking()
+                .AnyAsync(p => p.ComunidadeId == id && p.UtilizadorId == userId && p.Status == "Pendente");
+
+            return Ok(new
+            {
+                isMembro = membro != null,
+                isAdmin = membro?.Role == "Admin",
+                pedidoPendente
+            });
+        }
+
+        [Authorize]
+        [HttpGet("{id:int}/pedidos")]
+        public async Task<IActionResult> GetPedidosEntrada(int id)
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue("sub");
+            var isAdmin = await _context.ComunidadeMembros
+                .AnyAsync(m => m.ComunidadeId == id && m.UtilizadorId == userId && m.Role == "Admin");
+            if (!isAdmin) return Forbid();
+
+            var pedidos = await _context.ComunidadePedidosEntrada
+                .AsNoTracking()
+                .Where(p => p.ComunidadeId == id && p.Status == "Pendente")
+                .OrderByDescending(p => p.DataPedido)
+                .Select(p => new ComunidadePedidoEntradaDto
+                {
+                    Id = p.Id,
+                    ComunidadeId = p.ComunidadeId,
+                    UtilizadorId = p.UtilizadorId,
+                    UserName = _context.Users.OfType<Utilizador>()
+                        .Where(u => u.Id == p.UtilizadorId)
+                        .Select(u => u.Nome + " " + u.Sobrenome)
+                        .FirstOrDefault() ?? "Utilizador removido",
+                    DataPedido = p.DataPedido
+                })
+                .ToListAsync();
+
+            return Ok(pedidos);
+        }
+
+        [Authorize]
+        [HttpPost("{id:int}/pedidos/{pedidoId:int}/aprovar")]
+        public async Task<IActionResult> AprovarPedidoEntrada(int id, int pedidoId)
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue("sub");
+            var isAdmin = await _context.ComunidadeMembros
+                .AnyAsync(m => m.ComunidadeId == id && m.UtilizadorId == userId && m.Role == "Admin");
+            if (!isAdmin) return Forbid();
+
+            var comunidade = await _context.Comunidades.FirstOrDefaultAsync(c => c.Id == id);
+            if (comunidade == null) return NotFound(new { message = "Comunidade não encontrada." });
+
+            var pedido = await _context.ComunidadePedidosEntrada
+                .FirstOrDefaultAsync(p => p.Id == pedidoId && p.ComunidadeId == id && p.Status == "Pendente");
+            if (pedido == null) return NotFound(new { message = "Pedido não encontrado." });
+
+            if (await IsLimiteAtingidoAsync(id, comunidade.LimiteMembros))
+                return Conflict(new { message = "Não é possível aprovar: limite de membros atingido." });
+
+            var jaMembro = await _context.ComunidadeMembros
+                .AnyAsync(m => m.ComunidadeId == id && m.UtilizadorId == pedido.UtilizadorId);
+            if (!jaMembro)
+            {
+                _context.ComunidadeMembros.Add(new ComunidadeMembro
+                {
+                    ComunidadeId = id,
+                    UtilizadorId = pedido.UtilizadorId,
+                    Role = "Membro",
+                    Status = "Ativo",
+                    DataEntrada = DateTime.UtcNow
+                });
+            }
+
+            pedido.Status = "Aprovado";
+            pedido.DataResposta = DateTime.UtcNow;
+            pedido.RespondidoPorId = userId;
+
+            _context.NotificacoesComunidade.Add(new NotificacaoComunidade
+            {
+                UtilizadorId = pedido.UtilizadorId,
+                ComunidadeId = id,
+                PostId = null,
+                Tipo = "pedido_aprovado",
+                CriadaEm = DateTime.UtcNow
+            });
+
+            await _context.SaveChangesAsync();
+            return Ok(new { message = "Pedido aprovado com sucesso." });
+        }
+
+        [Authorize]
+        [HttpPost("{id:int}/pedidos/{pedidoId:int}/rejeitar")]
+        public async Task<IActionResult> RejeitarPedidoEntrada(int id, int pedidoId)
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue("sub");
+            var isAdmin = await _context.ComunidadeMembros
+                .AnyAsync(m => m.ComunidadeId == id && m.UtilizadorId == userId && m.Role == "Admin");
+            if (!isAdmin) return Forbid();
+
+            var pedido = await _context.ComunidadePedidosEntrada
+                .FirstOrDefaultAsync(p => p.Id == pedidoId && p.ComunidadeId == id && p.Status == "Pendente");
+            if (pedido == null) return NotFound(new { message = "Pedido não encontrado." });
+
+            pedido.Status = "Rejeitado";
+            pedido.DataResposta = DateTime.UtcNow;
+            pedido.RespondidoPorId = userId;
+
+            _context.NotificacoesComunidade.Add(new NotificacaoComunidade
+            {
+                UtilizadorId = pedido.UtilizadorId,
+                ComunidadeId = id,
+                PostId = null,
+                Tipo = "pedido_rejeitado",
+                CriadaEm = DateTime.UtcNow
+            });
+
+            await _context.SaveChangesAsync();
+
+            return Ok(new { message = "Pedido rejeitado." });
         }
 
         // ─── DELETE sair da comunidade ────
@@ -1009,10 +1226,21 @@ namespace FilmAholic.Server.Controllers
             public int Id { get; set; }
             public string Nome { get; set; } = "";
             public string? Descricao { get; set; }
+            public int? LimiteMembros { get; set; }
+            public bool IsPrivada { get; set; }
             public DateTime DataCriacao { get; set; }
             public int MembrosCount { get; set; }
             public string? BannerUrl { get; set; }
             public string? IconUrl { get; set; }
+        }
+
+        public class ComunidadePedidoEntradaDto
+        {
+            public int Id { get; set; }
+            public int ComunidadeId { get; set; }
+            public string UtilizadorId { get; set; } = "";
+            public string UserName { get; set; } = "";
+            public DateTime DataPedido { get; set; }
         }
 
         public class PostCreateForm
@@ -1039,6 +1267,12 @@ namespace FilmAholic.Server.Controllers
             [FromForm(Name = "descricao")]
             public string? Descricao { get; set; }
 
+            [FromForm(Name = "limiteMembros")]
+            public int? LimiteMembros { get; set; }
+
+            [FromForm(Name = "isPrivada")]
+            public bool IsPrivada { get; set; }
+
             [FromForm(Name = "banner")]
             public IFormFile? Banner { get; set; }
 
@@ -1053,6 +1287,12 @@ namespace FilmAholic.Server.Controllers
 
             [FromForm(Name = "descricao")]
             public string? Descricao { get; set; }
+
+            [FromForm(Name = "limiteMembros")]
+            public int? LimiteMembros { get; set; }
+
+            [FromForm(Name = "isPrivada")]
+            public bool IsPrivada { get; set; }
 
             [FromForm(Name = "banner")]
             public IFormFile? Banner { get; set; }

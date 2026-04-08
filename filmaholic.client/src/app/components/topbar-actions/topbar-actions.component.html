@@ -190,7 +190,7 @@
               ✓
             </button>
           </div>
-          <ng-container *ngIf="resumoFeed.read?.length">
+          <ng-container *ngIf="resumoFeed.read.length">
             <div class="notifications-title resumo-subtitle">Resumos anteriores</div>
             <div *ngFor="let it of resumoFeed.read" class="resumo-card resumo-card--read">
               <div class="resumo-card-body">
@@ -227,7 +227,14 @@
                  role="menuitem">
               <div class="comunidade-notif-icon">👥</div>
               <div class="comunidade-notif-body">
-                <span class="comunidade-notif-text">Existem novas publicações na comunidade <strong>{{ n.comunidadeNome }}</strong></span>
+                <span class="comunidade-notif-text">
+                  <ng-container [ngSwitch]="n.tipo">
+                    <ng-container *ngSwitchCase="'pedido_entrada'">Novo pedido para entrar na comunidade <strong>{{ n.comunidadeNome }}</strong></ng-container>
+                    <ng-container *ngSwitchCase="'pedido_aprovado'">O teu pedido para entrar na comunidade <strong>{{ n.comunidadeNome }}</strong> foi aprovado ✅</ng-container>
+                    <ng-container *ngSwitchCase="'pedido_rejeitado'">O teu pedido para entrar na comunidade <strong>{{ n.comunidadeNome }}</strong> foi rejeitado ❌</ng-container>
+                    <ng-container *ngSwitchDefault>Existem novas publicações na comunidade <strong>{{ n.comunidadeNome }}</strong></ng-container>
+                  </ng-container>
+                </span>
                 <span class="comunidade-notif-date">{{ n.criadaEm | date:'dd/MM/yyyy HH:mm' }}</span>
               </div>
               <button type="button"
@@ -251,7 +258,14 @@
                  role="menuitem">
               <div class="comunidade-notif-icon">👥</div>
               <div class="comunidade-notif-body">
-                <span class="comunidade-notif-text">Novas publicações na comunidade <strong>{{ n.comunidadeNome }}</strong></span>
+                <span class="comunidade-notif-text">
+                  <ng-container [ngSwitch]="n.tipo">
+                    <ng-container *ngSwitchCase="'pedido_entrada'">Pedido de entrada na comunidade <strong>{{ n.comunidadeNome }}</strong></ng-container>
+                    <ng-container *ngSwitchCase="'pedido_aprovado'">Pedido aprovado na comunidade <strong>{{ n.comunidadeNome }}</strong></ng-container>
+                    <ng-container *ngSwitchCase="'pedido_rejeitado'">Pedido rejeitado na comunidade <strong>{{ n.comunidadeNome }}</strong></ng-container>
+                    <ng-container *ngSwitchDefault>Novas publicações na comunidade <strong>{{ n.comunidadeNome }}</strong></ng-container>
+                  </ng-container>
+                </span>
                 <span class="comunidade-notif-date">{{ n.criadaEm | date:'dd/MM/yyyy HH:mm' }}</span>
               </div>
             </div>

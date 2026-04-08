@@ -49,7 +49,8 @@ export interface NotificacaoComunidadeItemDto {
   id: number;
   comunidadeId: number;
   comunidadeNome: string;
-  tipo: 'post' | 'comentario' | 'juntou';
+  postId?: number | null;
+  tipo: 'post' | 'pedido_entrada' | 'pedido_aprovado' | 'pedido_rejeitado';
   criadaEm: string;
   lidaEm?: string | null;
 }

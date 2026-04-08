@@ -4,6 +4,7 @@ using FilmAholic.Server.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace FilmAholic.Server.Migrations
 {
     [DbContext(typeof(FilmAholicDbContext))]
-    partial class FilmAholicDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260408101740_ComunidadesPrivadasELimites")]
+    partial class ComunidadesPrivadasELimites
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -372,13 +375,8 @@ namespace FilmAholic.Server.Migrations
                         .HasColumnType("datetime2")
                         .HasDefaultValueSql("CURRENT_TIMESTAMP");
 
-                    b.Property<int?>("PostId")
+                    b.Property<int>("PostId")
                         .HasColumnType("int");
-
-                    b.Property<string>("Tipo")
-                        .IsRequired()
-                        .HasMaxLength(40)
-                        .HasColumnType("nvarchar(40)");
 
                     b.Property<string>("UtilizadorId")
                         .HasColumnType("nvarchar(450)");
@@ -1432,7 +1430,7 @@ namespace FilmAholic.Server.Migrations
                         .WithMany()
                         .HasForeignKey("PostId")
                         .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired(false);
+                        .IsRequired();
 
                     b.HasOne("FilmAholic.Server.Models.Utilizador", "Utilizador")
                         .WithMany()

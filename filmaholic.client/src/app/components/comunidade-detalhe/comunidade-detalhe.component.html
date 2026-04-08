@@ -85,7 +85,7 @@
           <div class="comunidade-heading-text">
       <h1>{{ comunidade.nome }}</h1>
       <div class="meta">
-        <span>{{ comunidade.membrosCount ?? 0 }} membros</span>
+        <span> · {{ comunidade.isPrivada ? 'Privada' : 'Pública' }}</span>
         <span *ngIf="comunidade.dataCriacao"> · Criada {{ comunidade.dataCriacao | date:'shortDate' }}</span>
             </div>
           </div>
@@ -95,8 +95,11 @@
 
       <div class="actions">
           <!-- Utilizador não membro -->
-          <button *ngIf="!isMembro" type="button" class="primary-btn" (click)="juntar()" [disabled]="isJuntando">
-            {{ isJuntando ? 'A juntar…' : 'Juntar-se' }}
+          <button *ngIf="!isMembro && !pedidoPendente" type="button" class="primary-btn" (click)="juntar()" [disabled]="isJuntando">
+            {{ isJuntando ? 'A processar…' : (comunidade.isPrivada ? 'Pedir para entrar' : 'Juntar-se') }}
+          </button>
+          <button *ngIf="!isMembro && pedidoPendente" type="button" class="secondary-btn" [disabled]="true">
+            Pedido pendente de aprovação
           </button>
 
           <!-- Membro normal (não admin) -->
@@ -128,9 +131,14 @@
     <!-- Abas -->
     <!-- Abas -->
     <div *ngIf="comunidade" class="tabs">
-      <button class="tab-btn" [class.active]="activeTab === 'posts'" (click)="activeTab = 'posts'">Publicações</button>
-      <button class="tab-btn" [class.active]="activeTab === 'membros'" (click)="activeTab = 'membros'">Membros</button>
-      <button class="tab-btn" [class.active]="activeTab === 'ranking'" (click)="activeTab = 'ranking'; carregarRanking()">🏆 Ranking</button>
+      <div class="tabs-left">
+        <button class="tab-btn" [class.active]="activeTab === 'posts'" (click)="activeTab = 'posts'">Publicações</button>
+        <button class="tab-btn" [class.active]="activeTab === 'membros'" (click)="activeTab = 'membros'">Membros</button>
+        <button class="tab-btn" [class.active]="activeTab === 'ranking'" (click)="activeTab = 'ranking'; carregarRanking()">🏆 Ranking</button>
+      </div>
+      <div class="membros-counter" *ngIf="activeTab === 'membros'">
+        {{ comunidade.membrosCount ?? 0 }}<ng-container *ngIf="comunidade.limiteMembros">/{{ comunidade.limiteMembros }}</ng-container>
+      </div>
     </div>
 
 
@@ -385,6 +393,21 @@
 
     <!-- Tab Membros -->
     <div *ngIf="comunidade && activeTab === 'membros'" class="tab-content">
+      <div *ngIf="isAdmin && comunidade.isPrivada" class="pending-requests">
+        <h3>Pedidos de entrada pendentes</h3>
+        <div *ngIf="!pedidosPendentes.length" class="state">Sem pedidos pendentes.</div>
+        <div *ngFor="let pedido of pedidosPendentes" class="pending-request-row">
+          <div class="pending-request-user">
+            <strong>{{ pedido.userName }}</strong>
+            <span>Pedido em {{ pedido.dataPedido | date:'short' }}</span>
+          </div>
+          <div class="pending-request-actions">
+            <button type="button" class="pending-approve-btn" (click)="aprovarPedido(pedido)" [disabled]="isProcessingPedido">Aprovar</button>
+            <button type="button" class="pending-reject-btn" (click)="rejeitarPedido(pedido)" [disabled]="isProcessingPedido">Rejeitar</button>
+          </div>
+        </div>
+      </div>
+
       <div *ngIf="membros.length === 0" class="empty">Nenhum membro encontrado.</div>
       <div class="membros-list">
         <div class="membro-item" *ngFor="let m of membros">
@@ -422,6 +445,20 @@
 
     <label for="editDescricao">Descrição</label>
     <textarea id="editDescricao" rows="4" [(ngModel)]="editDescricao"></textarea>
+
+    <label for="editLimiteMembros">Limite de membros (opcional)</label>
+    <input id="editLimiteMembros" type="number" min="1" [(ngModel)]="editLimiteMembros" />
+
+    <div class="spoiler-toggle-container" style="margin-top: 12px;">
+      <div class="spoiler-toggle-info">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-4.33 0-8 2.17-8 4v2h16v-2c0-1.83-3.67-4-8-4z" /></svg>
+        <span>{{ editIsPrivada ? 'Comunidade privada (requer aprovação)' : 'Comunidade pública (entrada imediata)' }}</span>
+      </div>
+      <label class="toggle-switch">
+        <input id="editIsPrivada" type="checkbox" [(ngModel)]="editIsPrivada" />
+        <span class="slider"></span>
+      </label>
+    </div>
 
     <label class="imagem-label">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z" /></svg>
