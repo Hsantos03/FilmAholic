@@ -60,7 +60,12 @@ export class DashboardComponent implements OnInit, OnDestroy {
   showSearchMenu: boolean = false;
   isLoadingSuggestions = false;
   isSuggestionsMode = false;
+  isHistoryMode = false;
   hasGenrePreferences = false;
+
+  searchHistory: string[] = [];
+  private readonly HISTORY_KEY = 'search_history';
+  private readonly MAX_HISTORY_ITEMS = 10;
 
   private searchTerm$ = new Subject<string>();
   private searchSub?: Subscription;
@@ -107,6 +112,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.userName = localStorage.getItem('user_nome') || 'Utilizador';
+    this.loadSearchHistory();
     this.route.queryParams.pipe(take(1)).subscribe(params => {
       if (params['openDesafios'] === '1') {
         this.openDesafios();
@@ -408,6 +414,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
     if (q.length === 0) {
       this.isSuggestionsMode = false;
+      this.isHistoryMode = false;
       this.searchResults = [];
       this.searchResultsLoading = false;
       this.showSearchMenu = false;
@@ -415,6 +422,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
     }
 
     this.isSuggestionsMode = false;
+    this.isHistoryMode = false;
     this.showSearchMenu = true;
 
     if (q.length >= 2) {
@@ -437,13 +445,22 @@ export class DashboardComponent implements OnInit, OnDestroy {
     const qlen = (this.searchTerm || '').trim().length;
     if (qlen > 0) {
       this.isSuggestionsMode = false;
+      this.isHistoryMode = false;
       this.showSearchMenu = true;
       return;
     }
-    // Empty search: show suggestions based on user's favorite genres
-    this.isSuggestionsMode = true;
-    this.showSearchMenu = true;
-    this.loadGenreSuggestions();
+    // Empty search: show history first, then suggestions based on user's favorite genres
+    this.loadSearchHistory();
+    if (this.searchHistory.length > 0) {
+      this.isHistoryMode = true;
+      this.isSuggestionsMode = false;
+      this.showSearchMenu = true;
+    } else {
+      this.isHistoryMode = false;
+      this.isSuggestionsMode = true;
+      this.showSearchMenu = true;
+      this.loadGenreSuggestions();
+    }
   }
 
   private static readonly SUGGESTIONS_LIMIT = 5;
@@ -680,6 +697,73 @@ export class DashboardComponent implements OnInit, OnDestroy {
   public doSearch(): void {
     const q = (this.searchTerm || '').trim();
     if (!q) return;
+    this.addToSearchHistory(q);
     this.router.navigate(['/search'], { queryParams: { q } });
+  }
+
+  private loadSearchHistory(): void {
+    try {
+      const stored = localStorage.getItem(this.HISTORY_KEY);
+      if (stored) {
+        this.searchHistory = JSON.parse(stored);
+      }
+    } catch {
+      this.searchHistory = [];
+    }
+  }
+
+  private saveSearchHistory(): void {
+    try {
+      localStorage.setItem(this.HISTORY_KEY, JSON.stringify(this.searchHistory));
+    } catch {
+      // Ignore storage errors
+    }
+  }
+
+  private addToSearchHistory(term: string): void {
+    if (!term || term.trim().length === 0) return;
+    const trimmedTerm = term.trim();
+
+    // Remove if already exists (to move to top)
+    this.searchHistory = this.searchHistory.filter(item => item.toLowerCase() !== trimmedTerm.toLowerCase());
+
+    // Add to beginning
+    this.searchHistory.unshift(trimmedTerm);
+
+    // Limit to max items
+    if (this.searchHistory.length > this.MAX_HISTORY_ITEMS) {
+      this.searchHistory = this.searchHistory.slice(0, this.MAX_HISTORY_ITEMS);
+    }
+
+    this.saveSearchHistory();
+  }
+
+  public selectFromHistory(term: string): void {
+    this.searchTerm = term;
+    this.closeSearchMenu();
+    this.addToSearchHistory(term);
+    this.router.navigate(['/search'], { queryParams: { q: term } });
+  }
+
+  public removeFromHistory(term: string, event: MouseEvent): void {
+    event.stopPropagation();
+    this.searchHistory = this.searchHistory.filter(item => item !== term);
+    this.saveSearchHistory();
+    if (this.searchHistory.length === 0) {
+      this.isHistoryMode = false;
+      // Switch to suggestions mode if history is now empty
+      this.isSuggestionsMode = true;
+      this.loadGenreSuggestions();
+    }
+  }
+
+  public clearSearchHistory(event: MouseEvent): void {
+    event.stopPropagation();
+    this.searchHistory = [];
+    this.saveSearchHistory();
+    this.isHistoryMode = false;
+    // Switch to suggestions mode
+    this.isSuggestionsMode = true;
+    this.loadGenreSuggestions();
   }
 }
