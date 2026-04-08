@@ -132,12 +132,19 @@
         <!-- User Tag Selector -->
         <div class="user-tag-section" *ngIf="medalhasConquistadas.length > 0">
           <h4>Tag</h4>
-          <select class="tag-dropdown" [(ngModel)]="userTag" (change)="onTagChange()">
-            <option [ngValue]="null">Selecionar tag...</option>
-            <option *ngFor="let medal of medalhasConquistadas" [ngValue]="medal.medalha?.nome || medal.nome">
-              {{ medal.medalha?.nome || medal.nome }}
-            </option>
-          </select>
+          <div class="tag-selector-wrap">
+            <button type="button" class="tag-selector-btn" (click)="toggleTagMenu()" [class.active]="showTagMenu">
+              {{ userTag || 'Selecionar tag...' }}
+            </button>
+            <div class="tag-selector-menu" *ngIf="showTagMenu">
+              <button type="button" class="tag-selector-item" (click)="selectTag(null)" [class.selected]="userTag === null">
+                Nenhuma tag
+              </button>
+              <button type="button" class="tag-selector-item" *ngFor="let medal of medalhasConquistadas" (click)="selectTag(medal.medalha?.nome || medal.nome)" [class.selected]="userTag === (medal.medalha?.nome || medal.nome)">
+                {{ medal.medalha?.nome || medal.nome }}
+              </button>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -1185,8 +1192,7 @@
     </div>
 
     <div class="modal-actions">
-      <button type="button" class="cancel-btn" (click)="removeMedalFromSlot(selectedSlotIndex!)">Remover Medalha</button>
-      <button type="button" class="cancel-btn" (click)="closeMedalSelector()">Cancelar</button>
+      <button type="button" class="cancel-btn" style="background: #dc3545; color: white; font-weight: 600;" (click)="removeMedalFromSlot(selectedSlotIndex!)">Remover Medalha</button>
     </div>
   </div>
 </div>

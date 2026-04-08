@@ -1431,9 +1431,16 @@ export class ProfileComponent implements OnInit {
     if (this.selectedSlotIndex === null) return false;
     const slotMedal = this.showcasedMedals[this.selectedSlotIndex];
     if (!slotMedal) return false;
-    const slotId = String(slotMedal.id);
-    const medalId = String(medal.medalha?.id || medal.id);
-    return slotId === medalId;
+
+    // Get the slot medal ID (comes from API as direct properties)
+    const slotId = slotMedal.id;
+
+    // Get the list medal ID - the medal has nested medalha object
+    // medal structure: { dataConquista, medalha: { id, nome, descricao, iconeUrl } }
+    const listMedalId = medal.medalha?.id;
+
+    // Compare as numbers to avoid type issues
+    return Number(slotId) === Number(listMedalId);
   }
 
   selectMedalForSlot(medal: any): void {
@@ -1444,8 +1451,9 @@ export class ProfileComponent implements OnInit {
       this.showcasedMedals.push(null);
     }
 
-    // Get medal ID as string for consistent comparison
-    const medalId = String(medal.id);
+    // Get medal ID - handle both nested (medal.medalha.id) and direct (medal.id) structures
+    const rawMedalId = medal.medalha?.id || medal.id;
+    const medalId = String(rawMedalId);
 
     // Check if medal is already in another slot (compare as strings)
     const existingIndex = this.showcasedMedals.findIndex(m => m && String(m.id) === medalId);
@@ -1461,7 +1469,7 @@ export class ProfileComponent implements OnInit {
     this.showcasedMedals[this.selectedSlotIndex] = medal;
 
     // Save to API - convert id to number
-    const medalIdNum = medal.id ? parseInt(medal.id, 10) : null;
+    const medalIdNum = rawMedalId ? parseInt(rawMedalId, 10) : null;
     this.profileService.atualizarMedalhaExposicao(this.selectedSlotIndex, medalIdNum, medal.tag).subscribe({
       error: (err) => console.error('Erro ao salvar medalha:', err)
     });
@@ -1531,6 +1539,20 @@ export class ProfileComponent implements OnInit {
 
   onTagChange(): void {
     this.profileService.atualizarUserTag(this.userTag).subscribe({
+      error: (err) => console.error('Erro ao atualizar tag:', err)
+    });
+  }
+
+  showTagMenu = false;
+
+  toggleTagMenu(): void {
+    this.showTagMenu = !this.showTagMenu;
+  }
+
+  selectTag(tag: string | null): void {
+    this.userTag = tag;
+    this.showTagMenu = false;
+    this.profileService.atualizarUserTag(tag).subscribe({
       error: (err) => console.error('Erro ao atualizar tag:', err)
     });
   }

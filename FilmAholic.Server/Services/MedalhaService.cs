@@ -161,6 +161,7 @@ namespace FilmAholic.Server.Services
                 .Select(um => new {
             dataConquista = um.DataConquista,
             medalha = new {
+                id = um.Medalha.Id,
                 nome = um.Medalha.Nome,
                 descricao = um.Medalha.Descricao,
                 iconeUrl = um.Medalha.IconeUrl
