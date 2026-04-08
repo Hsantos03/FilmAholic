@@ -498,12 +498,6 @@
   color: rgba(255,255,255,0.35);
 }
 
-.rank-num {
-}
-
-.col-player {
-}
-
 .player-info {
   display: flex;
   align-items: center;
@@ -606,4 +600,198 @@
   border: 1px solid rgba(255,47,109,0.15);
   font-size: 13px;
   color: rgba(255,255,255,0.45);
+}
+
+/* ─── RESPONSIVE STYLES ─── */
+@media (max-width: 768px) {
+  .lb-page {
+    padding: 70px 12px 40px;
+  }
+
+  :host.embed-mode .lb-page {
+    padding-top: 16px;
+  }
+
+  .lb-container {
+    gap: 20px;
+  }
+
+  .lb-title {
+    font-size: clamp(40px, 10vw, 56px);
+  }
+
+  .tab-row {
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 8px;
+  }
+
+  .tab-btn {
+    padding: 8px 20px;
+    font-size: 13px;
+  }
+
+  .podium {
+    gap: 8px;
+  }
+
+  .podium-block {
+    min-width: 90px;
+  }
+
+  .podium-block-1 {
+    height: 70px;
+  }
+
+  .podium-block-2 {
+    height: 52px;
+  }
+
+  .podium-block-3 {
+    height: 40px;
+  }
+
+  .podium-avatar-1st {
+    width: 64px;
+    height: 64px;
+    font-size: 24px;
+  }
+
+  .podium-avatar {
+    width: 52px;
+    height: 52px;
+    font-size: 18px;
+  }
+
+  .podium-name {
+    font-size: 12px;
+    max-width: 70px;
+  }
+
+  .podium-score {
+    font-size: 22px;
+  }
+
+  .list-header {
+    display: none;
+  }
+
+  .list-row {
+    grid-template-columns: 36px 1fr auto;
+    gap: 8px;
+    padding: 12px;
+  }
+
+  .col-games,
+  .col-level {
+    display: none;
+  }
+
+  .col-score {
+    text-align: right;
+  }
+
+  .score-val {
+    font-size: 20px;
+  }
+
+  .player-name {
+    font-size: 13px;
+  }
+
+  .small-avatar {
+    width: 34px;
+    height: 34px;
+    font-size: 13px;
+  }
+}
+
+@media (max-width: 480px) {
+  .lb-page {
+    padding: 65px 10px 30px;
+  }
+
+  :host.embed-mode .lb-page {
+    padding-top: 12px;
+  }
+
+  .lb-title {
+    font-size: 36px;
+  }
+
+  .lb-desc {
+    font-size: 13px;
+  }
+
+  .podium {
+    gap: 6px;
+  }
+
+  .podium-block {
+    min-width: 70px;
+  }
+
+  .podium-block-1 {
+    height: 56px;
+  }
+
+  .podium-block-2 {
+    height: 42px;
+  }
+
+  .podium-block-3 {
+    height: 32px;
+  }
+
+  .podium-avatar-1st {
+    width: 52px;
+    height: 52px;
+    font-size: 20px;
+  }
+
+  .podium-avatar {
+    width: 44px;
+    height: 44px;
+    font-size: 16px;
+  }
+
+  .podium-name {
+    font-size: 11px;
+    max-width: 60px;
+  }
+
+  .podium-score {
+    font-size: 18px;
+  }
+
+  .podium-crown {
+    font-size: 20px;
+  }
+
+  .list-row {
+    padding: 10px;
+    gap: 6px;
+  }
+
+  .col-rank {
+    font-size: 18px;
+  }
+
+  .score-val {
+    font-size: 18px;
+  }
+
+  .player-name {
+    font-size: 12px;
+  }
+
+  .player-xp {
+    font-size: 10px;
+  }
+
+  .small-avatar {
+    width: 30px;
+    height: 30px;
+    font-size: 12px;
+  }
 }

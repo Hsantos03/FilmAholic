@@ -2,12 +2,11 @@
 
 :host {
   display: block;
-  height: 100vh;
-  overflow: hidden;
+  min-height: 100vh;
 }
 
 .hol-page {
-  height: 100vh;
+  min-height: 100vh;
   overflow-y: auto;
 }
 
@@ -29,7 +28,6 @@
   align-items: center;
   justify-content: center;
   padding: 80px 20px 40px;
-  overflow: hidden;
 }
 
 /* ─── BG ORBS ─── */
@@ -176,9 +174,10 @@
 }
 
 .category-row.difficulty-row {
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   justify-content: center;
   max-width: 380px;
+  gap: 10px;
 }
 
 .cat-btn {
@@ -221,8 +220,10 @@
 }
 
 .cat-btn-compact {
-  min-width: 100px;
-  padding: 12px 10px;
+  width: 110px;
+  min-width: 110px;
+  padding: 12px 8px;
+  flex: 1;
 }
 
 .cat-hint {
@@ -231,7 +232,11 @@
   color: rgba(255,255,255,0.38);
   text-align: center;
   line-height: 1.25;
-  max-width: 108px;
+  max-width: 100px;
+  min-height: 25px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 /* ─── BUTTONS ─── */
@@ -1082,5 +1087,257 @@
   to {
     opacity: 1;
     transform: translateY(0);
+  }
+}
+
+/* ─── RESPONSIVE STYLES ─── */
+@media (max-width: 768px) {
+  .hol-page {
+    padding: 70px 12px 20px;
+    align-items: flex-start;
+  }
+
+  .menu-screen {
+    width: 100%;
+    gap: 16px;
+  }
+
+  .menu-title {
+    font-size: clamp(48px, 12vw, 64px);
+  }
+
+  .category-row {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .cat-btn {
+    min-width: 90px;
+    padding: 12px 20px;
+  }
+
+  .cat-btn-compact {
+    width: 100px;
+    min-width: 100px;
+    padding: 10px 6px;
+  }
+
+  .cat-hint {
+    max-width: 90px;
+    min-height: 22px;
+    font-size: 9px;
+  }
+
+  .start-btn,
+  .history-btn {
+    width: 200px;
+  }
+
+  /* Game screen responsive */
+  .game-screen {
+    max-width: 100%;
+    gap: 16px;
+  }
+
+  .game-topbar {
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 8px;
+  }
+
+  .score-chip {
+    padding: 6px 14px;
+  }
+
+  .score-value {
+    font-size: 24px;
+  }
+
+  .duel-row {
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .vs-col {
+    padding-top: 0;
+    order: -1;
+  }
+
+  .vs-ring {
+    width: 48px;
+    height: 48px;
+    font-size: 18px;
+  }
+
+  .duel-card {
+    width: 100%;
+    max-width: 280px;
+  }
+
+  .card-img-wrap {
+    height: 320px;
+  }
+
+  .actor-img-wrap {
+    height: 280px;
+  }
+
+  /* History responsive */
+  .history-screen {
+    max-width: 100%;
+    width: 100%;
+  }
+
+  .history-panel {
+    padding: 16px;
+    border-radius: 16px;
+  }
+
+  .history-header {
+    flex-direction: column;
+    gap: 12px;
+    align-items: flex-start;
+  }
+
+  .history-title {
+    font-size: 24px;
+  }
+
+  .history-actions {
+    width: 100%;
+    justify-content: stretch;
+  }
+
+  .history-actions .start-btn,
+  .history-actions .history-btn {
+    flex: 1;
+    width: auto;
+  }
+
+  .stats-row {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .stat-chip {
+    min-width: 80px;
+    padding: 10px 14px;
+  }
+
+  .stat-value {
+    font-size: 24px;
+  }
+
+  .history-list {
+    max-height: 350px;
+  }
+
+  .history-item {
+    padding: 12px;
+    gap: 10px;
+  }
+
+  .hi-score {
+    font-size: 24px;
+    min-width: 40px;
+  }
+
+  /* Endgame responsive */
+  .endgame-card {
+    padding: 32px 24px;
+    width: 100%;
+    max-width: 340px;
+  }
+
+  .endgame-score {
+    font-size: 72px;
+  }
+
+  .endgame-title {
+    font-size: 32px;
+  }
+}
+
+@media (max-width: 480px) {
+  .hol-page {
+    padding: 65px 10px 16px;
+  }
+
+  .menu-title {
+    font-size: 40px;
+  }
+
+  .menu-desc {
+    font-size: 14px;
+    max-width: 280px;
+  }
+
+  .cat-btn {
+    min-width: 80px;
+    padding: 10px 16px;
+  }
+
+  .cat-icon {
+    font-size: 24px;
+  }
+
+  .cat-label {
+    font-size: 12px;
+  }
+
+  .cat-btn-compact {
+    width: 90px;
+    min-width: 90px;
+    padding: 8px 4px;
+  }
+
+  .cat-hint {
+    max-width: 80px;
+    min-height: 20px;
+    font-size: 8px;
+  }
+
+  .start-btn,
+  .history-btn {
+    width: 180px;
+    padding: 14px 20px;
+    font-size: 14px;
+  }
+
+  .duel-card {
+    max-width: 260px;
+  }
+
+  .card-img-wrap {
+    height: 280px;
+  }
+
+  .actor-img-wrap {
+    height: 240px;
+  }
+
+  .card-title {
+    font-size: 14px;
+  }
+
+  .history-panel {
+    padding: 12px;
+  }
+
+  .history-list {
+    max-height: 300px;
+  }
+
+  .stat-chip {
+    min-width: 70px;
+    padding: 8px 12px;
+  }
+
+  .stat-value {
+    font-size: 20px;
+  }
+
+  .stat-label {
+    font-size: 10px;
   }
 }
