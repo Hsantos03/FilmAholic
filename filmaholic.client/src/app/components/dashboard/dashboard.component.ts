@@ -10,6 +10,7 @@ import { ProfileService } from '../../services/profile.service';
 import { MenuService } from '../../services/menu.service';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../environments/environment';
+import { OnboardingStep } from '../../services/onboarding.service';
 
 export interface SearchResultItem {
   id?: number;
@@ -25,6 +26,24 @@ export interface SearchResultItem {
 })
 export class DashboardComponent implements OnInit, OnDestroy {
   @ViewChild('searchContainer', { static: false }) searchContainerRef?: ElementRef;
+
+  readonly dashboardOnboardingSteps: OnboardingStep[] = [
+    {
+      selector: '[data-tour="dashboard-menu"]',
+      title: 'Menu lateral',
+      body: 'Abre o menu para ires ao perfil, comunidades, cinemas e outras áreas da app.'
+    },
+    {
+      selector: '[data-tour="dashboard-search"]',
+      title: 'Pesquisar filmes',
+      body: 'Escreve um título para encontrar filmes. Com sugestões activas, também vês ideias alinhadas com os teus géneros.'
+    },
+    {
+      selector: '[data-tour="dashboard-descobrir"]',
+      title: 'Descobrir o que ver',
+      body: 'Em “O que vou ver a seguir” podes pedir sugestões para alargar o que queres ver.'
+    }
+  ];
 
   userName: string = '';
 

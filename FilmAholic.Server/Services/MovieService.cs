@@ -306,12 +306,15 @@ public class MovieService : IMovieService
         if (string.IsNullOrEmpty(posterUrl))
             posterUrl = TmdbPosterW500Url(tmdbMovieEn.PosterPath);
 
+        // Runtime: o 1.º argumento costuma ser o item da lista (upcoming/popular) sem "runtime";
+        // o 2.º é o filme completo pt-PT de /movie/{id}, onde o TMDB devolve runtime em minutos.
+        var runtimeMin = tmdbMoviePt.Runtime ?? tmdbMovieEn.Runtime;
         var filme = new Filme
         {
             TmdbId = tmdbMovieEn.Id.ToString(),
             Titulo = !string.IsNullOrEmpty(tmdbMoviePt.Title) ? tmdbMoviePt.Title : tmdbMovieEn.Title,
             PosterUrl = posterUrl,
-            Duracao = tmdbMovieEn.Runtime ?? 0
+            Duracao = runtimeMin ?? 0
         };
 
         if (tmdbMoviePt.Genres != null && tmdbMoviePt.Genres.Any())

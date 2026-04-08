@@ -50,7 +50,8 @@ export interface NotificacaoComunidadeItemDto {
   comunidadeId: number;
   comunidadeNome: string;
   postId?: number | null;
-  tipo: 'post' | 'pedido_entrada' | 'pedido_aprovado' | 'pedido_rejeitado';
+  tipo: 'post' | 'pedido_entrada' | 'pedido_aprovado' | 'pedido_rejeitado' | 'kick' | 'banido';
+  corpo?: string | null;
   criadaEm: string;
   lidaEm?: string | null;
 }
@@ -82,7 +83,6 @@ export interface NotificacaoMedalhaFeedDto {
   read: NotificacaoMedalhaItemDto[];
 }
 
-/** Filme da lista Quero ver disponível em cinema ou streaming */
 export interface FilmeDisponivelNotifDto {
   id: number;
   filmeId: number | null;
@@ -98,7 +98,6 @@ export class NotificacoesService {
 
   constructor(private http: HttpClient) { }
 
-  /** TMDB ids (subset of {@param tmdbIds}) que têm NovaEstreia marcada como lida na BD. */
   getLidosTmdbIds(tmdbIds: number[]): Observable<number[]> {
     const ids = [...new Set(tmdbIds.filter((n) => n > 0))].slice(0, 120);
     if (!ids.length) return of([]);
@@ -118,16 +117,11 @@ export class NotificacoesService {
     return this.http.put<void>(`${this.apiUrl}/nova-estreia/${filmeId}/lida`, {}, { withCredentials: true });
   }
 
-  /**
-   * Próximas estreias (TMDB) filtradas por géneros favoritos e filmes já vistos (FR61).
-   * Requer sessão. Em caso de erro, o componente pode fazer fallback para {@link FilmesService.getUpcoming}.
-   */
   getProximasEstreiasPersonalizadas(options?: {
     page?: number;
     count?: number;
     windowDays?: number;
     maxAnoAhead?: number;
-    /** Default true: só estreias que coincidem com géneros favoritos (regra FR61). */
     filtrarPorGeneros?: boolean;
   }): Observable<Filme[]> {
     const o = options ?? {};

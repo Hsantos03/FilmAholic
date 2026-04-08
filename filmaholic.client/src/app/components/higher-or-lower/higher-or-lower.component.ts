@@ -6,6 +6,7 @@ import { MenuService } from '../../services/menu.service';
 import { firstValueFrom } from 'rxjs';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../environments/environment';
+import { OnboardingStep } from '../../services/onboarding.service';
 
 export type GameDifficulty = 'easy' | 'medium' | 'hard';
 
@@ -21,6 +22,29 @@ interface FilmDifficultyRules {
   styleUrls: ['./higher-or-lower.component.css']
 })
 export class HigherOrLowerComponent implements OnInit {
+  readonly holOnboardingSteps: OnboardingStep[] = [
+    {
+      selector: '[data-tour="hol-topbar-menu"]',
+      title: 'Menu',
+      body: 'Acede ao resto da app a partir daqui.'
+    },
+    {
+      selector: '[data-tour="hol-menu"]',
+      title: 'Higher or Lower',
+      body: 'Mini-jogo: compara ratings de filmes ou popularidade de atores. Escolhe o modo e a dificuldade.'
+    },
+    {
+      selector: '[data-tour="hol-category"]',
+      title: 'Filmes ou atores',
+      body: 'Alterna entre comparar filmes (TMDb) ou atores mais populares.'
+    },
+    {
+      selector: '[data-tour="hol-start"]',
+      title: 'Começar',
+      body: 'Inicia o jogo. Também podes ver histórico ou o leaderboard global.'
+    }
+  ];
+
   isPlaying = false;
   showHistory = false;
   showLeaderboard = false;

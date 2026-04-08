@@ -1,6 +1,6 @@
 <div class="page">
   <header class="topbar topbar-simple">
-    <button class="icon-btn" (click)="toggleMenu()" aria-label="Menu">
+    <button type="button" class="icon-btn" data-tour="notif-menu" (click)="toggleMenu()" aria-label="Menu">
       <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
         <path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z" />
       </svg>
@@ -14,7 +14,7 @@
   </header>
 
   <main class="notif-config-wrap">
-    <section class="notif-config-card">
+    <section class="notif-config-card" data-tour="notif-card">
       <h2>Definições de Notificação</h2>
       <p class="subtitle">Configura os tipos e a frequência das notificações que queres receber.</p>
 
@@ -74,11 +74,18 @@
         </div>
         <p class="hint">O resumo só é gerado se tiveres atividade recente (filmes marcados como vistos).</p>
 
-        <button class="save-btn" type="button" [disabled]="isSaving" (click)="guardar()">
+        <button class="save-btn" type="button" data-tour="notif-save" [disabled]="isSaving" (click)="guardar()">
           {{ isSaving ? 'A guardar...' : 'Guardar preferências' }}
         </button>
       </div>
     </section>
   </main>
+
+  <app-dicas
+    *ngIf="!isLoading"
+    tourId="notificacoes-config-v1"
+    [steps]="notificacoesConfigOnboardingSteps"
+    [startDelayMs]="500">
+  </app-dicas>
 </div>
 

@@ -450,3 +450,15 @@
   margin-top: 2px;
   line-height: 1.3;
 }
+
+.comunidade-notif-desc--kickban {
+  display: block;
+  margin-top: 6px;
+  padding: 8px 10px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.06);
+  border-left: 3px solid rgba(239, 68, 68, 0.65);
+  color: #e5e5e5;
+  white-space: pre-wrap;
+  word-break: break-word;
+}

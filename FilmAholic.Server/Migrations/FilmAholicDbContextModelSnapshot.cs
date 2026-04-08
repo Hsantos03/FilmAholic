@@ -217,6 +217,9 @@ namespace FilmAholic.Server.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
+                    b.Property<DateTime?>("BanidoAte")
+                        .HasColumnType("datetime2");
+
                     b.Property<DateTime?>("CastigadoAte")
                         .HasColumnType("datetime2");
 
@@ -227,6 +230,10 @@ namespace FilmAholic.Server.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("datetime2")
                         .HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+                    b.Property<string>("MotivoBan")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
 
                     b.Property<string>("Role")
                         .IsRequired()
@@ -879,14 +886,23 @@ namespace FilmAholic.Server.Migrations
                     b.Property<int>("ComunidadeId")
                         .HasColumnType("int");
 
+                    b.Property<string>("Corpo")
+                        .HasMaxLength(2000)
+                        .HasColumnType("nvarchar(2000)");
+
                     b.Property<DateTime>("CriadaEm")
                         .HasColumnType("datetime2");
 
                     b.Property<DateTime?>("LidaEm")
                         .HasColumnType("datetime2");
 
-                    b.Property<int>("PostId")
+                    b.Property<int?>("PostId")
                         .HasColumnType("int");
+
+                    b.Property<string>("Tipo")
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("nvarchar(40)");
 
                     b.Property<string>("UtilizadorId")
                         .IsRequired()
@@ -1510,8 +1526,7 @@ namespace FilmAholic.Server.Migrations
                     b.HasOne("FilmAholic.Server.Models.ComunidadePost", "Post")
                         .WithMany()
                         .HasForeignKey("PostId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.Cascade);
 
                     b.HasOne("FilmAholic.Server.Models.Utilizador", "Utilizador")
                         .WithMany()

@@ -1,5 +1,5 @@
 <header class="topbar topbar-simple">
-  <button class="icon-btn" (click)="goBack()" aria-label="Back">&larr;</button>
+  <button type="button" class="icon-btn" data-tour="movie-back" (click)="goBack()" aria-label="Back">&larr;</button>
   <a class="brand" routerLink="/dashboard" routerLinkActive="active">FilmAholic</a>
   <div class="top-actions">
     <app-topbar-actions></app-topbar-actions>
@@ -15,8 +15,14 @@
 
       <!--  CAPA -->
       <aside class="poster-col">
-        <img class="movie-poster" [src]="posterOf()" [alt]="f.titulo" />
-        <button *ngIf="trailerUrl" class="trailer-btn" (click)="openTrailer()">
+        <div class="poster-tour-anchor" data-tour="movie-poster">
+          <img class="movie-poster" [src]="posterOf()" [alt]="f.titulo" />
+        </div>
+        <button *ngIf="trailerUrl"
+                type="button"
+                class="trailer-btn"
+                data-tour="movie-trailer"
+                (click)="openTrailer()">
           ▶ Ver Trailer
         </button>
       </aside>
@@ -41,11 +47,11 @@
         <!-- TÍTULO -->
         <h1 class="movie-title">{{ f.titulo }}</h1>
         <div class="movie-sub">
-          {{ f.ano ? f.ano + ' · ' : '' }}{{ f.genero }} · {{ f.duracao | formatDuration }}
+          {{ f.ano ? f.ano + ' · ' : '' }}{{ f.genero }}<ng-container *ngIf="f.duracao > 0"> · {{ f.duracao | formatDuration }}</ng-container>
         </div>
 
         <!-- AÇÕES -->
-        <div class="actions-row">
+        <div class="actions-row" data-tour="movie-actions">
           <button class="btn ghost"
                   [class.active]="inWatchLater"
                   [attr.aria-pressed]="inWatchLater"
@@ -85,7 +91,7 @@
         </div>
 
         <!-- RATINGS (APIs) -->
-        <div class="ratings-block">
+        <div class="ratings-block" data-tour="movie-ratings">
           <div class="ratings-title">Ratings</div>
 
           <div *ngIf="isLoadingRatings" class="ratings-loading">
@@ -139,7 +145,7 @@
         </div>
 
         <!-- FILMAHOLIC RATING -->
-        <div class="our-rating-block">
+        <div class="our-rating-block" data-tour="movie-filmaholic-rating">
           <div class="our-rating-head">
             <div class="our-rating-title">Classificação FilmAholic</div>
 
@@ -186,13 +192,13 @@
         </div>
 
         <!-- SINOPSE -->
-        <div class="overview" *ngIf="overview">
+        <div class="overview" *ngIf="overview" data-tour="movie-sinopse">
           <h3>Sinopse</h3>
           <p>{{ overview }}</p>
         </div>
 
         <!-- ELENCO -->
-        <div class="cast-section" *ngIf="isLoadingCast || cast.length">
+        <div class="cast-section" *ngIf="isLoadingCast || cast.length" data-tour="movie-elenco">
           <h3>Elenco Principal</h3>
 
           <div *ngIf="isLoadingCast" class="ratings-loading">A carregar elenco…</div>
@@ -213,7 +219,7 @@
         </div>
 
         <!-- COMMENTS -->
-        <div class="comments">
+        <div class="comments" data-tour="movie-comentarios">
           <h3>Comentários</h3>
 
           <!-- WRITE COMMENT -->
@@ -230,7 +236,8 @@
                      type="text"
                      placeholder="Escreve um comentário…"
                      [(ngModel)]="newComment"
-                     [disabled]="isSendingComment" />
+                     [disabled]="isSendingComment"
+                     (keydown.enter)="$event.preventDefault(); sendComment()" />
 
               <button class="send-btn"
                       type="button"
@@ -347,7 +354,9 @@
     </div>
 
     <!-- RELACIONADOS / RECOMENDAÇÕES -->
-    <section class="recommendations-section" *ngIf="!isLoadingRecommendations && recommendations.length">
+    <section class="recommendations-section"
+             *ngIf="!isLoadingRecommendations && recommendations.length"
+             data-tour="movie-relacionados">
       <div class="section-head">
         <h2>Relacionados</h2>
       </div>
@@ -364,4 +373,11 @@
 
     <div class="state" *ngIf="isLoadingRecommendations">A carregar recomendações...</div>
   </div>
+
+  <app-dicas
+    *ngIf="filme && trailerDicaReady"
+    tourId="movie-detail-v1"
+    [steps]="movieDicasSteps"
+    [startDelayMs]="1300">
+  </app-dicas>
 </main>

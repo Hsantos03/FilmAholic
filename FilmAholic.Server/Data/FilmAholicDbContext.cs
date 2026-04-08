@@ -187,6 +187,7 @@ public class FilmAholicDbContext : IdentityDbContext<Utilizador>
             e.HasIndex(m => new { m.UtilizadorId, m.ComunidadeId }).IsUnique();
             e.Property(m => m.Role).IsRequired().HasMaxLength(50);
             e.Property(m => m.Status).IsRequired().HasMaxLength(50);
+            e.Property(m => m.MotivoBan).HasMaxLength(500);
             e.Property(m => m.DataEntrada).HasDefaultValueSql("CURRENT_TIMESTAMP");
 
             // FK to Utilizador; if user removed, cascade to remove membership
@@ -338,6 +339,7 @@ public class FilmAholicDbContext : IdentityDbContext<Utilizador>
             e.HasKey(x => x.Id);
             e.HasIndex(x => new { x.UtilizadorId, x.LidaEm });
             e.Property(x => x.Tipo).HasMaxLength(40).IsRequired();
+            e.Property(x => x.Corpo).HasMaxLength(2000);
 
             e.HasOne(x => x.Utilizador)
              .WithMany()

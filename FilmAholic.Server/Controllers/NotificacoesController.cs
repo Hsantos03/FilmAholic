@@ -414,8 +414,6 @@ namespace FilmAholic.Server.Controllers
             public List<int> LidosTmdbIds { get; set; } = new();
         }
 
-        /// Devolve quais TMDB ids (entre os pedidos) têm notificação NovaEstreia marcada como lida.
-        /// Usado pela lista “upcoming” TMDB na UI (filmes podem ainda não ter linha de notificação).
         [HttpGet("nova-estreia/lidos-tmdb-ids")]
         public async Task<ActionResult<LidosTmdbIdsDto>> GetLidosTmdbIds([FromQuery] string? ids = null)
         {
@@ -475,7 +473,6 @@ namespace FilmAholic.Server.Controllers
             return r.Distinct().ToList();
         }
 
-        /// Lista “Próximas estreias” para a campainha (TMDB): opcionalmente filtrada pelos géneros favoritos do utilizador e exclui filmes já vistos.
         [HttpGet("proximas-estreias")]
         public async Task<ActionResult<List<Filme>>> GetProximasEstreiasPersonalizadas(
             [FromQuery] int page = 1,
@@ -516,8 +513,6 @@ namespace FilmAholic.Server.Controllers
                 .Distinct(StringComparer.OrdinalIgnoreCase)
                 .ToList();
 
-            // Com filtrarPorGeneros=true, aplicamos sempre que existam géneros favoritos na BD.
-            // (A antiga regra "quase todos os géneros = sem filtro" fazia "Os meus géneros" igual a "Todos".)
             var applyGenreFilter = filtrarPorGeneros && favoriteGenres.Count > 0;
 
             var watchedIds = await _context.UserMovies
@@ -735,8 +730,6 @@ namespace FilmAholic.Server.Controllers
 
             dto.CandidatesCount = candidates.Count;
 
-            // Fallback: se a BD praticamente não tem “estreias” dentro da janela,
-            // buscamos ao TMDB e inserimos na BD para permitir mais candidatos.
             var fallbackThreshold = Math.Max(10, limit * 2);
             if (candidates.Count < fallbackThreshold)
             {
@@ -817,8 +810,6 @@ namespace FilmAholic.Server.Controllers
                 .Where(n => n.UtilizadorId == userId && n.Tipo == TipoNovaEstreia && n.LidaEm == null)
                 .CountAsync();
 
-            // Preview dos filmes que de facto seriam devolvidos pelo endpoint principal
-            // (isto explica quando o número de notificações “não lidas” diverge do que a UI mostra).
             var unread = await _context.Notificacoes
                 .Where(n => n.UtilizadorId == userId && n.Tipo == TipoNovaEstreia && n.LidaEm == null)
                 .Include(n => n.Filme)
@@ -1083,7 +1074,8 @@ namespace FilmAholic.Server.Controllers
                         .Select(c => c.Nome)
                         .FirstOrDefault() ?? "",
                     PostId = n.PostId,
-                    Tipo = n.Tipo,
+                    Tipo = (n.Tipo ?? "post").ToLower(),
+                    Corpo = n.Corpo,
                     CriadaEm = n.CriadaEm,
                     LidaEm = n.LidaEm
                 })
@@ -1103,7 +1095,8 @@ namespace FilmAholic.Server.Controllers
                         .Select(c => c.Nome)
                         .FirstOrDefault() ?? "",
                     PostId = n.PostId,
-                    Tipo = n.Tipo,
+                    Tipo = (n.Tipo ?? "post").ToLower(),
+                    Corpo = n.Corpo,
                     CriadaEm = n.CriadaEm,
                     LidaEm = n.LidaEm
                 })
@@ -1145,7 +1138,6 @@ namespace FilmAholic.Server.Controllers
             return NoContent();
         }
 
-        /// Marcar todas as notificações de comunidade como lidas.
         [HttpPut("comunidade/marcar-todas-lidas")]
         public async Task<IActionResult> MarcarTodasNotificacoesComunidadeComoLidas()
         {
@@ -1200,7 +1192,6 @@ namespace FilmAholic.Server.Controllers
 
         // ── Medal notifications ──
 
-        /// <summary>Feed de notificações de medalhas (lidas + não lidas).</summary>
         [HttpGet("medalha/feed")]
         public async Task<ActionResult<NotificacaoMedalhaFeedDto>> GetNotificacoesMedalhaFeed(
             [FromQuery] int unreadLimit = 20,
@@ -1254,7 +1245,6 @@ namespace FilmAholic.Server.Controllers
             return Ok(new NotificacaoMedalhaFeedDto { Unread = unread, Read = read });
         }
 
-        /// <summary>Contagem de notificações de medalhas não lidas.</summary>
         [HttpGet("medalha/unread-count")]
         public async Task<ActionResult<int>> GetNotificacoesMedalhaUnreadCount()
         {
@@ -1268,7 +1258,6 @@ namespace FilmAholic.Server.Controllers
             return Ok(count);
         }
 
-        /// <summary>Marcar uma notificação de medalha como lida.</summary>
         [HttpPut("medalha/{id}/lida")]
         public async Task<IActionResult> MarcarNotificacaoMedalhaComoLida(int id)
         {
@@ -1424,6 +1413,7 @@ namespace FilmAholic.Server.Controllers
             public string ComunidadeNome { get; set; } = "";
             public int? PostId { get; set; }
             public string Tipo { get; set; } = "post";
+            public string? Corpo { get; set; }
             public DateTime CriadaEm { get; set; }
             public DateTime? LidaEm { get; set; }
         }

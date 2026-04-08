@@ -83,8 +83,43 @@ namespace FilmAholic.Server.Controllers
         private async Task<bool> IsLimiteAtingidoAsync(int comunidadeId, int? limiteMembros)
         {
             if (!limiteMembros.HasValue || limiteMembros.Value <= 0) return false;
-            var membrosAtivos = await _context.ComunidadeMembros.CountAsync(m => m.ComunidadeId == comunidadeId);
+            var membrosAtivos = await _context.ComunidadeMembros.CountAsync(m => m.ComunidadeId == comunidadeId && m.Status == "Ativo");
             return membrosAtivos >= limiteMembros.Value;
+        }
+
+        private static bool MembroCastigadoAtivo(ComunidadeMembro? m, DateTime agoraUtc) =>
+            m?.CastigadoAte != null && m.CastigadoAte > agoraUtc;
+
+        private static bool BanimentoAtivo(ComunidadeMembro? m, DateTime agoraUtc) =>
+            m != null && m.Status == "Banido" && (m.BanidoAte == null || m.BanidoAte > agoraUtc);
+
+        private async Task<bool> UtilizadorBanidoAtivoNaComunidadeAsync(int comunidadeId, string? userId)
+        {
+            if (string.IsNullOrWhiteSpace(userId)) return false;
+            var agora = DateTime.UtcNow;
+            return await _context.ComunidadeMembros.AsNoTracking()
+                .AnyAsync(m => m.ComunidadeId == comunidadeId && m.UtilizadorId == userId && m.Status == "Banido"
+                    && (m.BanidoAte == null || m.BanidoAte > agora));
+        }
+
+        private async Task<IActionResult?> ForbidSeBanidoAsync(int comunidadeId, string? userId)
+        {
+            if (!await UtilizadorBanidoAtivoNaComunidadeAsync(comunidadeId, userId)) return null;
+            return StatusCode(StatusCodes.Status403Forbidden,
+                new { message = "Foste banido desta comunidade." });
+        }
+
+        private static string? BuildKickCorpo(string? motivo) =>
+            string.IsNullOrWhiteSpace(motivo) ? null : $"Motivo: {motivo.Trim()}";
+
+        private static string BuildBanCorpo(DateTime? banidoAteUtc, string? motivo)
+        {
+            var duracao = banidoAteUtc == null
+                ? "Duração: permanente."
+                : $"Duração: até {banidoAteUtc.Value:dd/MM/yyyy HH:mm} (UTC).";
+            if (string.IsNullOrWhiteSpace(motivo))
+                return duracao;
+            return $"{duracao} Motivo: {motivo.Trim()}";
         }
 
         // ─── Public list ────
@@ -92,6 +127,8 @@ namespace FilmAholic.Server.Controllers
         public async Task<IActionResult> GetAll()
         {
             var baseUrl = PublicBaseUrl();
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue("sub");
+            var agora = DateTime.UtcNow;
             var rows = await _context.Comunidades
                 .AsNoTracking()
                 .Select(c => new
@@ -104,7 +141,16 @@ namespace FilmAholic.Server.Controllers
                     c.DataCriacao,
                     c.BannerFileName,
                     c.IconFileName,
-                    MembrosCount = _context.ComunidadeMembros.Count(m => m.ComunidadeId == c.Id)
+                    MembrosCount = _context.ComunidadeMembros.Count(m => m.ComunidadeId == c.Id && m.Status == "Ativo"),
+                    IsCurrentUserBanned = !string.IsNullOrWhiteSpace(userId) && _context.ComunidadeMembros.Any(m =>
+                        m.ComunidadeId == c.Id && m.UtilizadorId == userId && m.Status == "Banido"
+                        && (m.BanidoAte == null || m.BanidoAte > agora)),
+                    MeuBanimentoAteUtc = string.IsNullOrWhiteSpace(userId) ? null :
+                        _context.ComunidadeMembros
+                            .Where(m => m.ComunidadeId == c.Id && m.UtilizadorId == userId && m.Status == "Banido"
+                                && (m.BanidoAte == null || m.BanidoAte > agora))
+                            .Select(m => m.BanidoAte)
+                            .FirstOrDefault()
                 })
                 .ToListAsync();
 
@@ -115,6 +161,8 @@ namespace FilmAholic.Server.Controllers
                 Descricao = x.Descricao,
                 LimiteMembros = x.LimiteMembros,
                 IsPrivada = x.IsPrivada,
+                IsCurrentUserBanned = x.IsCurrentUserBanned,
+                MeuBanimentoAteUtc = x.MeuBanimentoAteUtc,
                 DataCriacao = x.DataCriacao,
                 MembrosCount = x.MembrosCount,
                 BannerUrl = BannerUrlFromFileName(x.BannerFileName, baseUrl),
@@ -135,6 +183,24 @@ namespace FilmAholic.Server.Controllers
             if (c == null) return NotFound();
 
             var baseUrl = PublicBaseUrl();
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue("sub");
+            var agora = DateTime.UtcNow;
+
+            if (!string.IsNullOrWhiteSpace(userId))
+            {
+                var membroBan = await _context.ComunidadeMembros.AsNoTracking()
+                    .FirstOrDefaultAsync(m => m.ComunidadeId == id && m.UtilizadorId == userId && m.Status == "Banido");
+                if (BanimentoAtivo(membroBan, agora))
+                {
+                    return StatusCode(StatusCodes.Status403Forbidden, new
+                    {
+                        message = "Foste banido desta comunidade. Não podes ver o conteúdo enquanto o ban estiver ativo.",
+                        comunidadeNome = c.Nome,
+                        banidoAte = membroBan!.BanidoAte
+                    });
+                }
+            }
+
             var dto = new ComunidadeDto
             {
                 Id = c.Id,
@@ -143,7 +209,9 @@ namespace FilmAholic.Server.Controllers
                 LimiteMembros = c.LimiteMembros,
                 IsPrivada = c.IsPrivada,
                 DataCriacao = c.DataCriacao,
-                MembrosCount = await _context.ComunidadeMembros.CountAsync(m => m.ComunidadeId == c.Id),
+                MembrosCount = await _context.ComunidadeMembros.CountAsync(m => m.ComunidadeId == c.Id && m.Status == "Ativo"),
+                IsCurrentUserBanned = false,
+                MeuBanimentoAteUtc = null,
                 BannerUrl = BannerUrlFromFileName(c.BannerFileName, baseUrl),
                 IconUrl = IconUrlFromFileName(c.IconFileName, baseUrl)
             };
@@ -208,7 +276,7 @@ namespace FilmAholic.Server.Controllers
                         LimiteMembros = entity.LimiteMembros,
                         IsPrivada = entity.IsPrivada,
                         DataCriacao = entity.DataCriacao,
-                        MembrosCount = await _context.ComunidadeMembros.CountAsync(m => m.ComunidadeId == entity.Id),
+                        MembrosCount = await _context.ComunidadeMembros.CountAsync(m => m.ComunidadeId == entity.Id && m.Status == "Ativo"),
                     BannerUrl = BannerUrlFromFileName(entity.BannerFileName, baseUrl),
                     IconUrl = IconUrlFromFileName(entity.IconFileName, baseUrl)
                     };
@@ -217,7 +285,9 @@ namespace FilmAholic.Server.Controllers
             }
             catch (DbUpdateException ex)
             {
-                _logger.LogError(ex, "DB error creating comunidade");
+                _logger.LogError(ex,
+                    "DB error creating comunidade: {Inner}",
+                    ex.InnerException?.Message ?? ex.Message);
                 return StatusCode(StatusCodes.Status500InternalServerError, new { message = "Erro ao criar comunidade (BD)." });
             }
             catch (Exception ex)
@@ -275,7 +345,7 @@ namespace FilmAholic.Server.Controllers
                 comunidade.IconFileName = await SaveImageAsync(form.Icon, "comunidades/icons");
             }
 
-            await _context.SaveChangesAsync();
+                    await _context.SaveChangesAsync();
 
             var baseUrl = PublicBaseUrl();
             var dto = new ComunidadeDto
@@ -286,7 +356,7 @@ namespace FilmAholic.Server.Controllers
                 LimiteMembros = comunidade.LimiteMembros,
                 IsPrivada = comunidade.IsPrivada,
                 DataCriacao = comunidade.DataCriacao,
-                MembrosCount = await _context.ComunidadeMembros.CountAsync(m => m.ComunidadeId == comunidade.Id),
+                MembrosCount = await _context.ComunidadeMembros.CountAsync(m => m.ComunidadeId == comunidade.Id && m.Status == "Ativo"),
                 BannerUrl = BannerUrlFromFileName(comunidade.BannerFileName, baseUrl),
                 IconUrl = IconUrlFromFileName(comunidade.IconFileName, baseUrl)
             };
@@ -322,9 +392,13 @@ namespace FilmAholic.Server.Controllers
         [HttpGet("{id:int}/membros")]
         public async Task<IActionResult> GetMembros(int id)
         {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue("sub");
+            var bloqueio = await ForbidSeBanidoAsync(id, userId);
+            if (bloqueio != null) return bloqueio;
+
             var membros = await _context.ComunidadeMembros
                 .AsNoTracking()
-                .Where(m => m.ComunidadeId == id)
+                .Where(m => m.ComunidadeId == id && m.Status == "Ativo")
                 .Select(m => new MembroDto
                 {
                     UtilizadorId = m.UtilizadorId,
@@ -333,6 +407,7 @@ namespace FilmAholic.Server.Controllers
                         .Select(u => u.Nome + " " + u.Sobrenome)
                         .FirstOrDefault() ?? "Utilizador removido",
                     Role = m.Role,
+                    Status = m.Status,
                     DataEntrada = m.DataEntrada,
                     CastigadoAte = m.CastigadoAte
                 })
@@ -348,6 +423,10 @@ namespace FilmAholic.Server.Controllers
         [HttpGet("{id:int}/ranking")]
         public async Task<IActionResult> GetRanking(int id, [FromQuery] string metrica = "filmes")
         {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue("sub");
+            var bloqueio = await ForbidSeBanidoAsync(id, userId);
+            if (bloqueio != null) return bloqueio;
+
             var existe = await _context.Comunidades.AnyAsync(c => c.Id == id);
             if (!existe) return NotFound();
 
@@ -426,6 +505,8 @@ namespace FilmAholic.Server.Controllers
         {
             var baseUrl = PublicBaseUrl();
             var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue("sub");
+            var bloqueio = await ForbidSeBanidoAsync(id, currentUserId);
+            if (bloqueio != null) return bloqueio;
 
             var posts = await _context.ComunidadePosts
                 .AsNoTracking()
@@ -484,14 +565,14 @@ namespace FilmAholic.Server.Controllers
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue("sub");
 
             var isMembro = await _context.ComunidadeMembros
-                .AnyAsync(m => m.ComunidadeId == id && m.UtilizadorId == userId);
+                .AnyAsync(m => m.ComunidadeId == id && m.UtilizadorId == userId && m.Status == "Ativo");
 
             if (!isMembro) return Forbid();
 
             var membroInfo = await _context.ComunidadeMembros
                 .FirstOrDefaultAsync(m => m.ComunidadeId == id && m.UtilizadorId == userId);
 
-            if (membroInfo?.CastigadoAte != null && membroInfo.CastigadoAte > DateTime.UtcNow)
+            if (MembroCastigadoAtivo(membroInfo, DateTime.UtcNow))
             {
                 return BadRequest(new { message = "Estás castigado e não podes publicar no momento." });
             }
@@ -501,7 +582,7 @@ namespace FilmAholic.Server.Controllers
             var post = new ComunidadePost
             {
                 ComunidadeId = id,
-                UtilizadorId = userId,
+                            UtilizadorId = userId,
                 Titulo = form.Titulo.Trim(),
                 Conteudo = form.Conteudo.Trim(),
                 ImagemUrl = imagemFileName != null ? $"/uploads/posts/{imagemFileName}" : null,
@@ -536,7 +617,7 @@ namespace FilmAholic.Server.Controllers
                 if (notifications.Count > 0)
                 {
                     _context.Set<NotificacaoComunidade>().AddRange(notifications);
-                    await _context.SaveChangesAsync();
+                        await _context.SaveChangesAsync();
                 }
             }
             catch (Exception ex)
@@ -596,10 +677,30 @@ namespace FilmAholic.Server.Controllers
             var comunidade = await _context.Comunidades.FirstOrDefaultAsync(c => c.Id == id);
             if (comunidade == null) return NotFound(new { message = "Comunidade não encontrada." });
 
+            var agoraJuntar = DateTime.UtcNow;
+            var banExpirado = await _context.ComunidadeMembros
+                .FirstOrDefaultAsync(m => m.ComunidadeId == id && m.UtilizadorId == userId && m.Status == "Banido"
+                    && m.BanidoAte.HasValue && m.BanidoAte <= agoraJuntar);
+            if (banExpirado != null)
+            {
+                _context.ComunidadeMembros.Remove(banExpirado);
+                await _context.SaveChangesAsync();
+            }
+
             var jaExiste = await _context.ComunidadeMembros
                 .AnyAsync(m => m.ComunidadeId == id && m.UtilizadorId == userId);
 
-            if (jaExiste) return Conflict(new { message = "Já és membro desta comunidade." });
+            if (jaExiste)
+            {
+                var estadoRow = await _context.ComunidadeMembros
+                    .AsNoTracking()
+                    .Where(m => m.ComunidadeId == id && m.UtilizadorId == userId)
+                    .Select(m => new { m.Status, m.BanidoAte })
+                    .FirstOrDefaultAsync();
+                if (estadoRow?.Status == "Banido" && (estadoRow.BanidoAte == null || estadoRow.BanidoAte > agoraJuntar))
+                    return StatusCode(StatusCodes.Status403Forbidden, new { message = "Foste banido desta comunidade." });
+                return Conflict(new { message = "Já és membro desta comunidade." });
+            }
 
             if (comunidade.IsPrivada)
             {
@@ -640,9 +741,9 @@ namespace FilmAholic.Server.Controllers
                         _context.NotificacoesComunidade.AddRange(notifs);
                         await _context.SaveChangesAsync();
                     }
-                }
-                catch (Exception ex)
-                {
+            }
+            catch (Exception ex)
+            {
                     _logger.LogWarning(ex, "Falha ao criar notificação de pedido de entrada para admins da comunidade {Id}", id);
                 }
 
@@ -672,9 +773,18 @@ namespace FilmAholic.Server.Controllers
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue("sub");
             if (string.IsNullOrWhiteSpace(userId)) return Unauthorized();
 
+            var agora = DateTime.UtcNow;
             var membro = await _context.ComunidadeMembros
                 .AsNoTracking()
                 .FirstOrDefaultAsync(m => m.ComunidadeId == id && m.UtilizadorId == userId);
+
+            var banidoAtivo = membro != null && membro.Status == "Banido"
+                && (membro.BanidoAte == null || membro.BanidoAte > agora);
+            var membroAtivo = membro != null && membro.Status == "Ativo";
+
+            DateTime? castigadoAteAtivo = null;
+            if (membroAtivo && MembroCastigadoAtivo(membro, agora))
+                castigadoAteAtivo = membro!.CastigadoAte;
 
             var pedidoPendente = await _context.ComunidadePedidosEntrada
                 .AsNoTracking()
@@ -682,9 +792,12 @@ namespace FilmAholic.Server.Controllers
 
             return Ok(new
             {
-                isMembro = membro != null,
-                isAdmin = membro?.Role == "Admin",
-                pedidoPendente
+                isMembro = membroAtivo,
+                isAdmin = membroAtivo && membro!.Role == "Admin",
+                pedidoPendente,
+                isBanned = banidoAtivo,
+                banidoAte = banidoAtivo ? membro!.BanidoAte : null,
+                castigadoAte = castigadoAteAtivo
             });
         }
 
@@ -693,8 +806,11 @@ namespace FilmAholic.Server.Controllers
         public async Task<IActionResult> GetPedidosEntrada(int id)
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue("sub");
+            var bloqueioPedidos = await ForbidSeBanidoAsync(id, userId);
+            if (bloqueioPedidos != null) return bloqueioPedidos;
+
             var isAdmin = await _context.ComunidadeMembros
-                .AnyAsync(m => m.ComunidadeId == id && m.UtilizadorId == userId && m.Role == "Admin");
+                .AnyAsync(m => m.ComunidadeId == id && m.UtilizadorId == userId && m.Role == "Admin" && m.Status == "Ativo");
             if (!isAdmin) return Forbid();
 
             var pedidos = await _context.ComunidadePedidosEntrada
@@ -722,8 +838,11 @@ namespace FilmAholic.Server.Controllers
         public async Task<IActionResult> AprovarPedidoEntrada(int id, int pedidoId)
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue("sub");
+            var bloqueioApr = await ForbidSeBanidoAsync(id, userId);
+            if (bloqueioApr != null) return bloqueioApr;
+
             var isAdmin = await _context.ComunidadeMembros
-                .AnyAsync(m => m.ComunidadeId == id && m.UtilizadorId == userId && m.Role == "Admin");
+                .AnyAsync(m => m.ComunidadeId == id && m.UtilizadorId == userId && m.Role == "Admin" && m.Status == "Ativo");
             if (!isAdmin) return Forbid();
 
             var comunidade = await _context.Comunidades.FirstOrDefaultAsync(c => c.Id == id);
@@ -772,8 +891,11 @@ namespace FilmAholic.Server.Controllers
         public async Task<IActionResult> RejeitarPedidoEntrada(int id, int pedidoId)
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue("sub");
+            var bloqueioRej = await ForbidSeBanidoAsync(id, userId);
+            if (bloqueioRej != null) return bloqueioRej;
+
             var isAdmin = await _context.ComunidadeMembros
-                .AnyAsync(m => m.ComunidadeId == id && m.UtilizadorId == userId && m.Role == "Admin");
+                .AnyAsync(m => m.ComunidadeId == id && m.UtilizadorId == userId && m.Role == "Admin" && m.Status == "Ativo");
             if (!isAdmin) return Forbid();
 
             var pedido = await _context.ComunidadePedidosEntrada
@@ -818,12 +940,21 @@ namespace FilmAholic.Server.Controllers
         // ─── DELETE remover membro e o seu histórico (apenas Admin) ────
         [Authorize]
         [HttpDelete("{id:int}/membros/{utilizadorId}")]
-        public async Task<IActionResult> RemoverMembro(int id, string utilizadorId)
+        public Task<IActionResult> RemoverMembro(int id, string utilizadorId) =>
+            RemoverMembroComMotivo(id, utilizadorId, null);
+
+        /// <summary>Expulsar membro, com motivo opcional (notificado ao utilizador).</summary>
+        [Authorize]
+        [HttpPost("{id:int}/membros/{utilizadorId}/expulsar")]
+        public Task<IActionResult> ExpulsarMembro(int id, string utilizadorId, [FromBody] ExpulsarMembroForm? form) =>
+            RemoverMembroComMotivo(id, utilizadorId, string.IsNullOrWhiteSpace(form?.Motivo) ? null : form!.Motivo!.Trim());
+
+        private async Task<IActionResult> RemoverMembroComMotivo(int id, string utilizadorId, string? motivo)
         {
             var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue("sub");
 
             var isAdmin = await _context.ComunidadeMembros
-                .AnyAsync(m => m.ComunidadeId == id && m.UtilizadorId == currentUserId && m.Role == "Admin");
+                .AnyAsync(m => m.ComunidadeId == id && m.UtilizadorId == currentUserId && m.Role == "Admin" && m.Status == "Ativo");
 
             if (!isAdmin) return Forbid();
 
@@ -854,9 +985,105 @@ namespace FilmAholic.Server.Controllers
 
             _context.ComunidadeMembros.Remove(membroARemover);
 
+            _context.NotificacoesComunidade.Add(new NotificacaoComunidade
+            {
+                UtilizadorId = utilizadorId,
+                ComunidadeId = id,
+                PostId = null,
+                Tipo = "kick",
+                Corpo = BuildKickCorpo(motivo),
+                CriadaEm = DateTime.UtcNow
+            });
+
             await _context.SaveChangesAsync();
 
             return Ok(new { message = "Membro e respetivo histórico removidos com sucesso." });
+        }
+
+        [Authorize]
+        [HttpPost("{id:int}/membros/{utilizadorId}/banir")]
+        public async Task<IActionResult> BanirMembro(int id, string utilizadorId, [FromBody] BanirMembroForm? form)
+        {
+            var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue("sub");
+            var isAdmin = await _context.ComunidadeMembros
+                .AnyAsync(m => m.ComunidadeId == id && m.UtilizadorId == currentUserId && m.Role == "Admin" && m.Status == "Ativo");
+            if (!isAdmin) return Forbid();
+            if (currentUserId == utilizadorId) return BadRequest(new { message = "Não te podes banir a ti próprio." });
+
+            var motivoBan = string.IsNullOrWhiteSpace(form?.Motivo) ? null : form!.Motivo!.Trim();
+            DateTime? banidoAte = null;
+            if (form?.DuracaoDias is int dias && dias > 0)
+            {
+                if (dias > 3650) dias = 3650;
+                banidoAte = DateTime.UtcNow.AddDays(dias);
+            }
+
+            var membro = await _context.ComunidadeMembros
+                .FirstOrDefaultAsync(m => m.ComunidadeId == id && m.UtilizadorId == utilizadorId);
+
+            if (membro == null)
+            {
+                _context.ComunidadeMembros.Add(new ComunidadeMembro
+                {
+                    ComunidadeId = id,
+                    UtilizadorId = utilizadorId,
+                    Role = "Membro",
+                    Status = "Banido",
+                    DataEntrada = DateTime.UtcNow,
+                    BanidoAte = banidoAte,
+                    MotivoBan = motivoBan
+                });
+            }
+            else
+            {
+                membro.Status = "Banido";
+                membro.CastigadoAte = null;
+                membro.BanidoAte = banidoAte;
+                membro.MotivoBan = motivoBan;
+            }
+
+            _context.NotificacoesComunidade.Add(new NotificacaoComunidade
+            {
+                UtilizadorId = utilizadorId,
+                ComunidadeId = id,
+                PostId = null,
+                Tipo = "banido",
+                Corpo = BuildBanCorpo(banidoAte, motivoBan),
+                CriadaEm = DateTime.UtcNow
+            });
+
+            await _context.SaveChangesAsync();
+            return Ok(new { message = "Membro banido com sucesso." });
+        }
+
+        [Authorize]
+        [HttpGet("{id:int}/banidos")]
+        public async Task<IActionResult> GetBanidos(int id)
+        {
+            var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue("sub");
+            var isAdmin = await _context.ComunidadeMembros
+                .AnyAsync(m => m.ComunidadeId == id && m.UtilizadorId == currentUserId && m.Role == "Admin" && m.Status == "Ativo");
+            if (!isAdmin) return Forbid();
+
+            var banidos = await _context.ComunidadeMembros
+                .AsNoTracking()
+                .Where(m => m.ComunidadeId == id && m.Status == "Banido")
+                .Select(m => new MembroDto
+                {
+                    UtilizadorId = m.UtilizadorId,
+                    UserName = _context.Users.OfType<Utilizador>()
+                        .Where(u => u.Id == m.UtilizadorId)
+                        .Select(u => u.Nome + " " + u.Sobrenome)
+                        .FirstOrDefault() ?? "Utilizador removido",
+                    Role = m.Role,
+                    Status = m.Status,
+                    DataEntrada = m.DataEntrada,
+                    BanidoAte = m.BanidoAte,
+                    MotivoBan = m.MotivoBan
+                })
+                .ToListAsync();
+
+            return Ok(banidos);
         }
 
         // ─── POST Aplicar Castigo (Admin) ────
@@ -992,6 +1219,17 @@ namespace FilmAholic.Server.Controllers
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue("sub");
             if (string.IsNullOrEmpty(userId)) return Unauthorized();
 
+            var postOk = await _context.ComunidadePosts.AsNoTracking()
+                .AnyAsync(p => p.Id == postId && p.ComunidadeId == id);
+            if (!postOk) return NotFound();
+
+            var agora = DateTime.UtcNow;
+            var membroVoto = await _context.ComunidadeMembros.AsNoTracking()
+                .FirstOrDefaultAsync(m => m.ComunidadeId == id && m.UtilizadorId == userId);
+            if (membroVoto == null || membroVoto.Status != "Ativo") return Forbid();
+            if (MembroCastigadoAtivo(membroVoto, agora))
+                return BadRequest(new { message = "Estás castigado e não podes votar nas publicações." });
+
             var votoExistente = await _context.ComunidadePostVotos
                 .FirstOrDefaultAsync(v => v.PostId == postId && v.UtilizadorId == userId);
 
@@ -1032,6 +1270,11 @@ namespace FilmAholic.Server.Controllers
 
             if (post.UtilizadorId != userId) return Forbid();
 
+            var membroEdit = await _context.ComunidadeMembros.AsNoTracking()
+                .FirstOrDefaultAsync(m => m.ComunidadeId == id && m.UtilizadorId == userId);
+            if (MembroCastigadoAtivo(membroEdit, DateTime.UtcNow))
+                return BadRequest(new { message = "Estás castigado e não podes editar publicações." });
+
             if (string.IsNullOrWhiteSpace(form.Titulo) || string.IsNullOrWhiteSpace(form.Conteudo))
                 return BadRequest(new { message = "Título e conteúdo são obrigatórios." });
 
@@ -1058,6 +1301,11 @@ namespace FilmAholic.Server.Controllers
                 .AnyAsync(m => m.ComunidadeId == id && m.UtilizadorId == userId && m.Role == "Admin");
             if (post.UtilizadorId != userId && !isAdmin) return Forbid();
 
+            var membroDel = await _context.ComunidadeMembros.AsNoTracking()
+                .FirstOrDefaultAsync(m => m.ComunidadeId == id && m.UtilizadorId == userId);
+            if (MembroCastigadoAtivo(membroDel, DateTime.UtcNow))
+                return BadRequest(new { message = "Estás castigado e não podes apagar publicações." });
+
             _context.ComunidadePosts.Remove(post);
             await _context.SaveChangesAsync();
             return Ok(new { message = "Publicação apagada com sucesso." });
@@ -1068,6 +1316,8 @@ namespace FilmAholic.Server.Controllers
         public async Task<IActionResult> GetComentarios(int id, int postId)
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue("sub");
+            var bloqueio = await ForbidSeBanidoAsync(id, userId);
+            if (bloqueio != null) return bloqueio;
 
             var comentarios = await _context.ComunidadePostComentarios
                 .AsNoTracking()
@@ -1105,12 +1355,12 @@ namespace FilmAholic.Server.Controllers
             if (!postExists) return NotFound();
 
             var isMembro = await _context.ComunidadeMembros
-                .AnyAsync(m => m.ComunidadeId == id && m.UtilizadorId == userId);
+                .AnyAsync(m => m.ComunidadeId == id && m.UtilizadorId == userId && m.Status == "Ativo");
             if (!isMembro) return Forbid();
 
             var membroInfo = await _context.ComunidadeMembros
                 .FirstOrDefaultAsync(m => m.ComunidadeId == id && m.UtilizadorId == userId);
-            if (membroInfo?.CastigadoAte != null && membroInfo.CastigadoAte > DateTime.UtcNow)
+            if (MembroCastigadoAtivo(membroInfo, DateTime.UtcNow))
             {
                 return BadRequest(new { message = "Estás temporariamente impedido de comentar." });
             }
@@ -1162,6 +1412,12 @@ namespace FilmAholic.Server.Controllers
             if (jaReportou) 
                 return BadRequest(new { message = "Já denunciaste esta publicação." });
 
+            var membroReport = await _context.ComunidadeMembros.AsNoTracking()
+                .FirstOrDefaultAsync(m => m.ComunidadeId == id && m.UtilizadorId == userId);
+            if (membroReport == null || membroReport.Status != "Ativo") return Forbid();
+            if (MembroCastigadoAtivo(membroReport, DateTime.UtcNow))
+                return BadRequest(new { message = "Estás castigado e não podes denunciar publicações." });
+
             _context.ComunidadePostReports.Add(new ComunidadePostReport
             {
                 PostId = postId,
@@ -1206,8 +1462,23 @@ namespace FilmAholic.Server.Controllers
             public string? UtilizadorId { get; set; }
             public string? UserName { get; set; }
             public string? Role { get; set; }
+            public string? Status { get; set; }
             public DateTime DataEntrada { get; set; }
-            public DateTime? CastigadoAte { get; set; } 
+            public DateTime? CastigadoAte { get; set; }
+            public DateTime? BanidoAte { get; set; }
+            public string? MotivoBan { get; set; }
+        }
+
+        public class ExpulsarMembroForm
+        {
+            public string? Motivo { get; set; }
+        }
+
+        public class BanirMembroForm
+        {
+            /// <summary>Se null ou &lt;= 0, banimento permanente (BanidoAte null).</summary>
+            public int? DuracaoDias { get; set; }
+            public string? Motivo { get; set; }
         }
 
 
@@ -1228,6 +1499,9 @@ namespace FilmAholic.Server.Controllers
             public string? Descricao { get; set; }
             public int? LimiteMembros { get; set; }
             public bool IsPrivada { get; set; }
+            public bool IsCurrentUserBanned { get; set; }
+            /// <summary>Se banido: fim do ban em UTC; null na lista significa banimento permanente.</summary>
+            public DateTime? MeuBanimentoAteUtc { get; set; }
             public DateTime DataCriacao { get; set; }
             public int MembrosCount { get; set; }
             public string? BannerUrl { get; set; }

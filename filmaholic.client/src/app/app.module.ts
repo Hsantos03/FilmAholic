@@ -29,6 +29,7 @@ import { ComunidadesComponent } from './components/comunidades/comunidades.compo
 import { ComunidadeDetalheComponent } from './components/comunidade-detalhe/comunidade-detalhe.component';
 import { ComunidadesService } from './services/comunidades.service';
 import { NotificacoesConfigComponent } from './components/notificacoes-config/notificacoes-config.component';
+import { OnboardingTourComponent } from './components/onboarding-tour/onboarding-tour.component';
 
 registerLocaleData(localePt);
 
@@ -54,7 +55,8 @@ registerLocaleData(localePt);
     LeaderboardComponent,
     ComunidadesComponent,
     ComunidadeDetalheComponent,
-    NotificacoesConfigComponent
+    NotificacoesConfigComponent,
+    OnboardingTourComponent
   ],
   imports: [
     BrowserModule,

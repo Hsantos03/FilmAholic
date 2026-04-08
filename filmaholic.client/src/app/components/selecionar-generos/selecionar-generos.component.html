@@ -1,6 +1,6 @@
 <div class="auth-page-wrapper">
   <div class="auth-card auth-card-wide">
-    <div class="header">
+    <div class="header" data-tour="generos-intro">
       <h1>Escolha os seus géneros favoritos</h1>
       <p style="color: #6c757d;">
         Diz-nos se és mais aventura, terror ou romance e vamos transformar o teu feed numa maratona à tua medida.
@@ -24,7 +24,7 @@
       </button>
     </div>
 
-    <div *ngIf="!isLoadingGeneros" class="generos-grid">
+    <div *ngIf="!isLoadingGeneros" class="generos-grid" data-tour="generos-grid">
       <button
         *ngFor="let genero of generos"
         type="button"
@@ -35,7 +35,7 @@
       </button>
     </div>
 
-    <div class="actions" style="margin-top: 30px; display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;">
+    <div class="actions" data-tour="generos-actions" style="margin-top: 30px; display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;">
       <button
         type="button"
         class="btn-secondary"
@@ -56,4 +56,11 @@
       {{ generosSelecionados.length }} género(s) selecionado(s) — o algoritmo já está a preparar recomendações 🔍🎬
     </p>
   </div>
+
+  <app-dicas
+    *ngIf="!isLoadingGeneros"
+    tourId="selecionar-generos-v1"
+    [steps]="generosOnboardingSteps"
+    [startDelayMs]="500">
+  </app-dicas>
 </div>

@@ -1,6 +1,6 @@
 <div class="page comunidades-page">
   <header class="topbar topbar-simple">
-    <button class="icon-btn" (click)="toggleMenu()" aria-label="Menu">
+    <button type="button" class="icon-btn" data-tour="comunidades-menu" (click)="toggleMenu()" aria-label="Menu">
       <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
         <path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z" />
       </svg>
@@ -71,31 +71,36 @@
   <main class="comunidades-wrap">
     <div class="comunidades-inner">
       <header class="comunidades-header">
-        <div class="comunidades-title-block">
+        <div class="comunidades-title-block" data-tour="comunidades-intro">
           <h1>Comunidades</h1>
           <p class="comunidades-subtitle">Explora grupos de cinéfilos e cria a tua.</p>
         </div>
         <div class="actions">
-          <button type="button" class="primary-btn" (click)="openCreate()">Criar comunidade</button>
+          <button type="button" class="primary-btn" data-tour="comunidades-criar" (click)="openCreate()">Criar comunidade</button>
         </div>
       </header>
 
-      <section class="sugestoes-comunidade-block" *ngIf="!isLoadingSugestoes && sugestoesFilmes.length > 0">
+      <section class="sugestoes-comunidade-block" *ngIf="!isLoadingSugestoes && sugestoesFilmes.length > 0" data-tour="comunidades-descoberta">
         <div class="sugestoes-comunidade-head">
           <h2>Descoberta nas tuas comunidades</h2>
-          <p class="sugestoes-comunidade-sub">Filmes que outros membros viram e que ainda não tens como “Já vi”. Cada sugestão indica a comunidade de origem.</p>
+          <p class="sugestoes-comunidade-sub">Sinais vindos das tuas comunidades: filmes que outros membros já marcaram como “Já vi” e que ainda não tens na tua lista. O clique abre os detalhes do filme.</p>
         </div>
         <div class="comunidade-sugestoes-scroll" role="list">
           <a *ngFor="let s of sugestoesFilmes"
              class="comunidade-sugestao-card"
              [routerLink]="['/movie-detail', s.filmeId]"
+             [attr.title]="'Comunidade ' + s.comunidadeNome + ' — ver detalhes: ' + s.titulo"
+             [attr.aria-label]="'Sugestão na comunidade ' + s.comunidadeNome + ': ' + s.titulo + '. Abre os detalhes do filme.'"
              role="listitem">
-            <div class="comunidade-sugestao-poster-wrap">
-              <img [src]="posterSugestao(s)" [alt]="s.titulo" (error)="onPosterSugestaoError($event)" />
+            <div class="comunidade-sugestao-poster-wrap" aria-hidden="true">
+              <img [src]="posterSugestao(s)" [alt]="''" (error)="onPosterSugestaoError($event)" />
             </div>
             <div class="comunidade-sugestao-body">
-              <span class="comunidade-sugestao-title">{{ s.titulo }}</span>
-              <span class="comunidade-pill" [attr.title]="'Sugestão da comunidade ' + s.comunidadeNome">{{ s.comunidadeNome }}</span>
+              <span class="comunidade-sugestao-community">{{ s.comunidadeNome }}</span>
+              <span class="comunidade-sugestao-film-row">
+                <span class="comunidade-sugestao-film-label">Filme</span>
+                <span class="comunidade-sugestao-title">{{ s.titulo }}</span>
+              </span>
               <span class="comunidade-sugestao-count">{{ s.membrosQueViram === 1 ? '1 membro viu' : s.membrosQueViram + ' membros viram' }}</span>
             </div>
           </a>
@@ -122,7 +127,13 @@
         </div>
         <p class="community-section-subtitle">Inclui comunidades que criaste e comunidades em que já participas.</p>
         <div class="grid">
-          <article class="card" *ngFor="let c of comunidadesMembro" (click)="goToCommunity(c)" role="button" tabindex="0">
+          <article class="card"
+                   [class.card--banned]="c.isCurrentUserBanned"
+                   *ngFor="let c of comunidadesMembro"
+                   (click)="goToCommunity(c)"
+                   role="button"
+                   tabindex="0"
+                   [attr.aria-label]="c.isCurrentUserBanned ? (c.nome + ', comunidade onde foste banido') : c.nome">
             <div class="card-banner" *ngIf="c.bannerUrl" [style.background-image]="'url(' + c.bannerUrl + ')'"></div>
             <div class="card-banner card-banner--empty" *ngIf="!c.bannerUrl" aria-hidden="true"></div>
             <div class="card-badge-wrap">
@@ -138,6 +149,14 @@
               <div class="card-desc">{{ c.descricao || 'Sem descrição' }}</div>
             </div>
             <div class="card-meta">
+              <span class="ban-pill" *ngIf="c.isCurrentUserBanned && c.meuBanimentoAteUtc"
+                    [attr.title]="'Banido até ' + (c.meuBanimentoAteUtc | date:'dd/MM/yyyy, HH:mm') + ' (hora local).'">
+                Banido até {{ c.meuBanimentoAteUtc | date:'dd/MM/yyyy, HH:mm' }}
+              </span>
+              <span class="ban-pill" *ngIf="c.isCurrentUserBanned && !c.meuBanimentoAteUtc"
+                    title="Banimento permanente — sem data de fim.">
+                Banimento permanente
+              </span>
               <span class="visibility-pill" [class.private]="c.isPrivada">{{ c.isPrivada ? 'Privada' : 'Pública' }}</span>
               <span class="members">{{ c.membrosCount ?? 0 }}<ng-container *ngIf="c.limiteMembros">/{{ c.limiteMembros }}</ng-container> membros</span>
               <span class="created" *ngIf="c.dataCriacao">Criada: {{ c.dataCriacao | date:'shortDate' }}</span>
@@ -151,9 +170,15 @@
           <h2>Outras comunidades</h2>
           <span class="community-section-count">{{ comunidadesRestantes.length }}</span>
         </div>
-        <p class="community-section-subtitle">Comunidades onde ainda não és membro.</p>
+        <p class="community-section-subtitle">Comunidades onde ainda não és membro ativo. Com banimento ativo, o cartão mostra a data de fim ou «permanente», tem contorno vermelho e não abre a página.</p>
         <div class="grid">
-          <article class="card" *ngFor="let c of comunidadesRestantes" (click)="goToCommunity(c)" role="button" tabindex="0">
+          <article class="card"
+                   [class.card--banned]="c.isCurrentUserBanned"
+                   *ngFor="let c of comunidadesRestantes"
+                   (click)="goToCommunity(c)"
+                   role="button"
+                   tabindex="0"
+                   [attr.aria-label]="c.isCurrentUserBanned ? (c.nome + ', comunidade onde foste banido') : c.nome">
             <div class="card-banner" *ngIf="c.bannerUrl" [style.background-image]="'url(' + c.bannerUrl + ')'"></div>
             <div class="card-banner card-banner--empty" *ngIf="!c.bannerUrl" aria-hidden="true"></div>
             <div class="card-badge-wrap">
@@ -169,6 +194,14 @@
               <div class="card-desc">{{ c.descricao || 'Sem descrição' }}</div>
             </div>
             <div class="card-meta">
+              <span class="ban-pill" *ngIf="c.isCurrentUserBanned && c.meuBanimentoAteUtc"
+                    [attr.title]="'Banido até ' + (c.meuBanimentoAteUtc | date:'dd/MM/yyyy, HH:mm') + ' (hora local).'">
+                Banido até {{ c.meuBanimentoAteUtc | date:'dd/MM/yyyy, HH:mm' }}
+              </span>
+              <span class="ban-pill" *ngIf="c.isCurrentUserBanned && !c.meuBanimentoAteUtc"
+                    title="Banimento permanente — sem data de fim.">
+                Banimento permanente
+              </span>
               <span class="visibility-pill" [class.private]="c.isPrivada">{{ c.isPrivada ? 'Privada' : 'Pública' }}</span>
               <span class="members">{{ c.membrosCount ?? 0 }}<ng-container *ngIf="c.limiteMembros">/{{ c.limiteMembros }}</ng-container> membros</span>
               <span class="created" *ngIf="c.dataCriacao">Criada: {{ c.dataCriacao | date:'shortDate' }}</span>
@@ -228,4 +261,6 @@
       </form>
     </div>
   </div>
+
+  <app-dicas tourId="comunidades-v1" [steps]="comunidadesOnboardingSteps" [startDelayMs]="800"></app-dicas>
 </div>

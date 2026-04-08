@@ -173,11 +173,27 @@ export class TopbarActionsComponent implements OnInit, OnDestroy {
 
   openComunidadeFromNotif(item: NotificacaoComunidadeItemDto): void {
     this.isNotificationsOpen = false;
-    if (item.tipo === 'pedido_entrada') {
+    if (this.comunidadeNotifTipo(item.tipo) === 'pedido_entrada') {
       this.router.navigate(['/comunidades', item.comunidadeId], { queryParams: { tab: 'membros' } });
       return;
     }
     this.router.navigate(['/comunidades', item.comunidadeId]);
+  }
+
+  /** Normaliza o tipo vindo da API (ex.: kick / banido). */
+  comunidadeNotifTipo(tipo: string | undefined | null): string {
+    return (tipo ?? 'post').trim().toLowerCase();
+  }
+
+  /**
+   * Corpo da notificação para expulsão/ban (motivo opcional, duração no ban).
+   * Só devolve texto quando o servidor enviou {@link NotificacaoComunidadeItemDto.corpo}.
+   */
+  comunidadeKickBanCorpo(n: NotificacaoComunidadeItemDto): string | null {
+    const t = this.comunidadeNotifTipo(n.tipo);
+    if (t !== 'kick' && t !== 'banido') return null;
+    const s = n.corpo?.trim();
+    return s && s.length > 0 ? s : null;
   }
 
   get hasComunidadeItems(): boolean {
@@ -507,7 +523,9 @@ export class TopbarActionsComponent implements OnInit, OnDestroy {
 
   private loadUpcomingDetails(): void {
     if (this.isLoadingUpcomingDetails) return;
-    const missing = (this.upcomingTmdb || []).filter((m) => !m.releaseDate && m.tmdbId);
+    const missing = (this.upcomingTmdb || []).filter(
+      (m) => m.tmdbId && (!m.releaseDate || !((m.duracao ?? 0) > 0))
+    );
     if (!missing.length) return;
     this.isLoadingUpcomingDetails = true;
     const requests = missing.map((m) => {
@@ -547,6 +565,10 @@ export class TopbarActionsComponent implements OnInit, OnDestroy {
               const y = Number(yRaw);
               if (!isNaN(y)) local.ano = y;
             }
+          }
+          const remoteDur = anyRes.duracao ?? anyRes.Duracao;
+          if (local && typeof remoteDur === 'number' && remoteDur > 0 && !((local.duracao ?? 0) > 0)) {
+            local.duracao = remoteDur;
           }
         });
       },

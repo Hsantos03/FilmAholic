@@ -7,7 +7,7 @@
 </header>
 <!-- Barra mínima quando embebido -->
 <header class="topbar topbar-embed" *ngIf="embedMode">
-  <button class="back-btn" (click)="goBack()">
+  <button type="button" class="back-btn" data-tour="lb-embed-back" (click)="goBack()">
     <span>←</span> Voltar
   </button>
   <span class="brand-pill">🏆 Leaderboard</span>
@@ -86,7 +86,7 @@
     </div>
 
     <!-- LISTA -->
-    <div class="lb-list">
+    <div class="lb-list" data-tour="lb-ranking">
 
       <div class="lb-loading" *ngIf="isLoading">
         <div class="spinner"></div>
@@ -141,4 +141,11 @@
     </div>
 
   </div>
+
+  <app-dicas
+    *ngIf="embedMode"
+    tourId="leaderboard-embed-v1"
+    [steps]="leaderboardEmbedOnboardingSteps"
+    [startDelayMs]="500">
+  </app-dicas>
 </main>

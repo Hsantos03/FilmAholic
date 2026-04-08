@@ -4,6 +4,7 @@ import { Location } from '@angular/common';
 import { Subscription } from 'rxjs';
 import { AtoresService, ActorDetails, ActorMovie } from '../../services/atores.service';
 import { FilmesService } from '../../services/filmes.service';
+import { OnboardingStep } from '../../services/onboarding.service';
 
 @Component({
   selector: 'app-actor-detail',
@@ -11,6 +12,24 @@ import { FilmesService } from '../../services/filmes.service';
   styleUrls: ['./actor-detail.component.css', '../dashboard/dashboard.component.css']
 })
 export class ActorDetailComponent implements OnInit, OnDestroy {
+  readonly actorOnboardingSteps: OnboardingStep[] = [
+    {
+      selector: '[data-tour="actor-back"]',
+      title: 'Voltar',
+      body: 'Regressa à pesquisa ou à página anterior.'
+    },
+    {
+      selector: '[data-tour="actor-hero"]',
+      title: 'Ficha do ator',
+      body: 'Nome, dados biográficos e departamento (actuação, realização, etc.).'
+    },
+    {
+      selector: '[data-tour="actor-filmografia"]',
+      title: 'Filmografia',
+      body: 'Clica num filme para abrir os detalhes. Vês o papel quando está disponível.'
+    }
+  ];
+
   actor: ActorDetails | null = null;
   movies: ActorMovie[] = [];
   isLoading = false;

@@ -1,6 +1,7 @@
 import { Component, EventEmitter, HostBinding, Input, OnInit, Output } from '@angular/core';
 import { Router } from '@angular/router';
 import { GameService, LeaderboardEntry } from '../../services/game.service';
+import { OnboardingStep } from '../../services/onboarding.service';
 
 @Component({
   selector: 'app-leaderboard',
@@ -13,6 +14,24 @@ export class LeaderboardComponent implements OnInit {
   @Input() embedMode = false;
   @Output() backToMenu = new EventEmitter<void>();
   @HostBinding('class.embed-mode') get isEmbedMode(): boolean { return this.embedMode; }
+
+  readonly leaderboardEmbedOnboardingSteps: OnboardingStep[] = [
+    {
+      selector: '[data-tour="lb-embed-back"]',
+      title: 'Voltar ao jogo',
+      body: 'Fecha o ranking e regressa ao menu do Higher or Lower quando quiseres.'
+    },
+    {
+      selector: '[data-tour="lb-tabs"]',
+      title: 'Filmes ou atores',
+      body: 'Alterna entre o ranking de filmes e o de atores — são pontuações separadas.'
+    },
+    {
+      selector: '[data-tour="lb-ranking"]',
+      title: 'Pódio e lista',
+      body: 'Vê o top 3 em destaque e a lista completa com scores, jogos e nível.'
+    }
+  ];
 
   private _category: 'films' | 'actors' = 'films';
 

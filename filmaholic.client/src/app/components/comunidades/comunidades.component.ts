@@ -4,6 +4,7 @@ import { ComunidadesService, ComunidadeDto, SugestaoFilmeComunidade } from '../.
 import { MenuService } from '../../services/menu.service';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../environments/environment';
+import { OnboardingStep } from '../../services/onboarding.service';
 import { forkJoin, of } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 
@@ -13,6 +14,29 @@ import { catchError, map } from 'rxjs/operators';
   styleUrls: ['./comunidades.component.css']
 })
 export class ComunidadesComponent implements OnInit {
+  readonly comunidadesOnboardingSteps: OnboardingStep[] = [
+    {
+      selector: '[data-tour="comunidades-menu"]',
+      title: 'Menu',
+      body: 'Acede ao resto da app (início, perfil, jogos, cinemas, etc.).'
+    },
+    {
+      selector: '[data-tour="comunidades-intro"]',
+      title: 'As tuas comunidades',
+      body: 'Aqui encontras grupos em que participas ou podes explorar. Os cartões levam-te à página de cada comunidade (exceto se estiveres banido).'
+    },
+    {
+      selector: '[data-tour="comunidades-criar"]',
+      title: 'Criar comunidade',
+      body: 'Abre o formulário para criares um grupo novo, com nome, descrição, privacidade e imagem opcional.'
+    },
+    {
+      selector: '[data-tour="comunidades-descoberta"]',
+      title: 'Descoberta nas comunidades',
+      body: 'Sugestões de filmes vindas das tuas comunidades. O clique abre os detalhes do filme.'
+    }
+  ];
+
   comunidades: ComunidadeDto[] = [];
   comunidadesMembro: ComunidadeDto[] = [];
   comunidadesRestantes: ComunidadeDto[] = [];
@@ -211,6 +235,7 @@ export class ComunidadesComponent implements OnInit {
 
   goToCommunity(c: ComunidadeDto): void {
     if (!c || !c.id) return;
+    if (c.isCurrentUserBanned) return;
     this.router.navigate(['/comunidades', c.id]);
   }
 

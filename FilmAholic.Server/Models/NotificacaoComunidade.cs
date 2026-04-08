@@ -21,6 +21,9 @@ public class NotificacaoComunidade
     /// post, pedido_entrada, etc.
     public string Tipo { get; set; } = "post";
 
+    /// Texto extra (ex.: motivo de kick/ban) para mostrar ao utilizador.
+    public string? Corpo { get; set; }
+
     public DateTime CriadaEm { get; set; } = DateTime.UtcNow;
     public DateTime? LidaEm { get; set; }
 }

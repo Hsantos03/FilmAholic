@@ -55,13 +55,26 @@
   </nav>
 
   <main class="comunidade-detalhe-wrap">
-    <button type="button" class="back-link" (click)="goBack()">← Comunidades</button>
+    <button type="button" class="back-link" data-tour="comunidade-voltar" (click)="goBack()">← Comunidades</button>
 
   <div *ngIf="isLoading" class="state">A carregar comunidade…</div>
-  <div *ngIf="error" class="state error">{{ error }}</div>
+
+  <div *ngIf="!isLoading && accessDeniedBan" class="ban-access-denied">
+    <div class="ban-access-denied__card">
+      <div class="ban-access-denied__icon" aria-hidden="true">⛔</div>
+      <h2 class="ban-access-denied__title">Não tens acesso a esta comunidade</h2>
+      <p *ngIf="banComunidadeNome" class="ban-access-denied__nome"><strong>{{ banComunidadeNome }}</strong></p>
+      <p class="ban-access-denied__msg">{{ banAccessMessage }}</p>
+      <p *ngIf="banAccessAteUtc" class="ban-access-denied__ate">Banimento até: <strong>{{ banAccessAteUtc | date:'dd/MM/yyyy, HH:mm' }}</strong> (hora local)</p>
+      <p *ngIf="!banAccessAteUtc" class="ban-access-denied__ate ban-access-denied__ate--perm">Este banimento é <strong>permanente</strong> (sem data de fim).</p>
+      <button type="button" class="primary-btn ban-access-denied__btn" routerLink="/comunidades">Voltar às comunidades</button>
+    </div>
+  </div>
+
+  <div *ngIf="!isLoading && !accessDeniedBan && error" class="state error">{{ error }}</div>
 
     <!-- Medal notifications -->
-    <div class="medal-notifications" *ngIf="medalSuccessMessage || medalErrorMessage">
+    <div class="medal-notifications" *ngIf="!accessDeniedBan && (medalSuccessMessage || medalErrorMessage)">
       <div class="state success" *ngIf="medalSuccessMessage">
         {{ medalSuccessMessage }}
       </div>
@@ -70,7 +83,7 @@
       </div>
     </div>
 
-  <div *ngIf="comunidade" class="comunidade-card">
+  <div *ngIf="comunidade && !accessDeniedBan" class="comunidade-card">
     <div class="banner" *ngIf="comunidade.bannerUrl" [style.background-image]="'url(' + comunidade.bannerUrl + ')'"></div>
       <div class="banner banner--empty" *ngIf="!comunidade.bannerUrl" aria-hidden="true"></div>
 
@@ -130,7 +143,7 @@
 
     <!-- Abas -->
     <!-- Abas -->
-    <div *ngIf="comunidade" class="tabs">
+    <div *ngIf="comunidade" class="tabs" data-tour="comunidade-tabs">
       <div class="tabs-left">
         <button class="tab-btn" [class.active]="activeTab === 'posts'" (click)="activeTab = 'posts'">Publicações</button>
         <button class="tab-btn" [class.active]="activeTab === 'membros'" (click)="activeTab = 'membros'">Membros</button>
@@ -200,7 +213,7 @@
       <div class="posts-toolbar">
         <div *ngIf="isMembro">
           <div *ngIf="isCurrentCastigado" class="punishment-warning">
-            <span>⚠️ Estás temporariamente castigado e não podes publicar.</span>
+            <span>⚠️ Estás temporariamente castigado: podes ver publicações e comentários, mas não podes publicar, comentar, votar nem denunciar até o tempo acabar.</span>
             <span class="punishment-timer">Tempo restante: {{ castigoCountdown }}</span>
           </div>
 
@@ -298,11 +311,11 @@
               🚩 {{ p.reportsCount }}
             </span>
 
-            <button *ngIf="p.autorId !== currentUserId" class="post-action-btn report-btn" (click)="openReportModal(p)" title="Denunciar publicação" [disabled]="p.jaReportou">🚩</button>
+            <button *ngIf="p.autorId !== currentUserId && !isCurrentCastigado" class="post-action-btn report-btn" (click)="openReportModal(p)" title="Denunciar publicação" [disabled]="p.jaReportou">🚩</button>
 
-            <button *ngIf="p.autorId === currentUserId" class="post-action-btn edit-btn" (click)="openEditPost(p)" title="Editar">✏️</button>
+            <button *ngIf="p.autorId === currentUserId && !isCurrentCastigado" class="post-action-btn edit-btn" (click)="openEditPost(p)" title="Editar">✏️</button>
 
-            <button *ngIf="p.autorId === currentUserId || isAdmin" class="post-action-btn delete-btn" (click)="openDeletePostModal(p)" title="Apagar">🗑️</button>
+            <button *ngIf="(p.autorId === currentUserId || isAdmin) && !isCurrentCastigado" class="post-action-btn delete-btn" (click)="openDeletePostModal(p)" title="Apagar">🗑️</button>
           </div>
         </div>
 
@@ -337,11 +350,11 @@
         </div>
 
         <div class="post-footer">
-          <div class="vote-group">
-            <button class="vote-btn" [class.active-like]="p.userVote === 1" (click)="votar(p, true)">
+          <div class="vote-group" [class.vote-group--disabled]="isCurrentCastigado" [attr.title]="isCurrentCastigado ? 'Castigo ativo: não podes votar.' : null">
+            <button type="button" class="vote-btn" [class.active-like]="p.userVote === 1" [disabled]="isCurrentCastigado" (click)="votar(p, true)">
               👍 <span>{{ p.likesCount || 0 }}</span>
             </button>
-            <button class="vote-btn" [class.active-dislike]="p.userVote === -1" (click)="votar(p, false)">
+            <button type="button" class="vote-btn" [class.active-dislike]="p.userVote === -1" [disabled]="isCurrentCastigado" (click)="votar(p, false)">
               👎 <span>{{ p.dislikesCount || 0 }}</span>
             </button>
           </div>
@@ -415,6 +428,10 @@
           <div class="membro-info">
             <span class="membro-nome">{{ m.userName }}</span>
             <span class="membro-role" [class.admin]="m.role === 'Admin'">{{ m.role }}</span>
+            <span class="membro-castigo-remaining"
+                  *ngIf="m.utilizadorId && membrosCastigoCountdown[m.utilizadorId]">
+              Castigado · tempo restante: <strong>{{ membrosCastigoCountdown[m.utilizadorId] }}</strong>
+            </span>
           </div>
           <span class="membro-data">Entrou {{ m.dataEntrada | date:'shortDate' }}</span>
 
@@ -425,12 +442,39 @@
             <button class="kick-btn" (click)="openKickModal(m)" title="Expulsar membro">
               ✕
             </button>
+            <button class="kick-btn ban-btn" (click)="openBanModal(m)" title="Banir membro">
+              ⛔
+            </button>
           </div>
 
         </div>
       </div>
+
+      <div *ngIf="isAdmin && banidos.length > 0" class="pending-requests" style="margin-top:12px;">
+        <h3>Membros banidos</h3>
+        <div class="membros-list">
+          <div class="membro-item membro-item--banido" *ngFor="let b of banidos">
+            <div class="membro-avatar">{{ getUserInitial(b.userName) }}</div>
+            <div class="membro-info">
+              <span class="membro-nome">{{ b.userName }}</span>
+              <span class="membro-role">BANIDO</span>
+              <span class="membro-ban-meta" *ngIf="!b.banidoAte">Ban: <strong>permanente</strong></span>
+              <span class="membro-ban-meta" *ngIf="b.banidoAte">Ban até: <strong>{{ b.banidoAte | date:'short' }}</strong></span>
+              <span class="membro-ban-motivo" *ngIf="b.motivoBan">{{ b.motivoBan }}</span>
+            </div>
+            <span class="membro-data">Desde {{ b.dataEntrada | date:'shortDate' }}</span>
+          </div>
+        </div>
+      </div>
     </div>
   </main>
+
+  <app-dicas
+    *ngIf="comunidade && !accessDeniedBan"
+    tourId="comunidade-detalhe-v1"
+    [steps]="comunidadeDetalheOnboardingSteps"
+    [startDelayMs]="1000">
+  </app-dicas>
 </div>
 
 
@@ -639,16 +683,48 @@
       </svg>
     </div>
 
-    <h3>Expulsar membro?</h3>
+    <h3>{{ kickMode === 'ban' ? 'Banir membro?' : 'Expulsar membro?' }}</h3>
     <p class="delete-modal-msg">
-      Tens a certeza que queres expulsar o membro <strong>{{ membroToKick?.userName }}</strong> da comunidade?
+      <ng-container *ngIf="kickMode === 'ban'; else kickMsg">
+        Tens a certeza que queres banir o membro <strong>{{ membroToKick?.userName }}</strong> da comunidade?
+      </ng-container>
+      <ng-template #kickMsg>
+        Tens a certeza que queres expulsar o membro <strong>{{ membroToKick?.userName }}</strong> da comunidade?
+      </ng-template>
     </p>
+
+    <ng-container *ngIf="kickMode === 'kick'">
+      <label for="kickMotivo" class="kick-ban-field-label">Motivo (opcional)</label>
+      <textarea id="kickMotivo"
+                class="kick-ban-textarea"
+                rows="3"
+                [(ngModel)]="kickMotivo"
+                placeholder="Só é guardado se quiseres indicar — o membro pode ver na notificação."></textarea>
+    </ng-container>
+
+    <ng-container *ngIf="kickMode === 'ban'">
+      <label for="banDuracaoDias" class="kick-ban-field-label">Duração em dias (opcional)</label>
+      <input id="banDuracaoDias"
+             class="kick-ban-input"
+             type="number"
+             min="1"
+             max="3650"
+             [(ngModel)]="banDuracaoDias"
+             placeholder="Vazio = ban permanente" />
+      <p class="kick-ban-hint">Se não indicares dias, o ban é considerado <strong>permanente</strong>.</p>
+      <label for="banMotivo" class="kick-ban-field-label">Motivo (opcional)</label>
+      <textarea id="banMotivo"
+                class="kick-ban-textarea"
+                rows="3"
+                [(ngModel)]="banMotivo"
+                placeholder="Opcional — pode aparecer na notificação ao membro."></textarea>
+    </ng-container>
 
     <div *ngIf="kickError" class="form-error">{{ kickError }}</div>
 
     <div class="modal-actions" style="justify-content: center;">
       <button type="button" class="delete-confirm-btn" (click)="confirmKick()" [disabled]="isKicking">
-        {{ isKicking ? 'A expulsar…' : 'Sim, expulsar membro' }}
+        {{ isKicking ? (kickMode === 'ban' ? 'A banir…' : 'A expulsar…') : (kickMode === 'ban' ? 'Sim, banir membro' : 'Sim, expulsar membro') }}
       </button>
     </div>
   </div>

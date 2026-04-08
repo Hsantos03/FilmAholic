@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { ProfileService } from '../../services/profile.service';
+import { OnboardingStep } from '../../services/onboarding.service';
 
 @Component({
   selector: 'app-selecionar-generos',
@@ -14,6 +15,24 @@ export class SelecionarGenerosComponent implements OnInit {
   isLoadingGeneros = true;
   error = '';
   userId: string = '';
+
+  readonly generosOnboardingSteps: OnboardingStep[] = [
+    {
+      selector: '[data-tour="generos-intro"]',
+      title: 'Géneros favoritos',
+      body: 'As tuas escolhas ajudam a personalizar recomendações e o feed da app.'
+    },
+    {
+      selector: '[data-tour="generos-grid"]',
+      title: 'Escolhe géneros',
+      body: 'Podes seleccionar vários; usa “Selecionar todos” se quiseres abrir o leque.'
+    },
+    {
+      selector: '[data-tour="generos-actions"]',
+      title: 'Continuar',
+      body: 'Guarda para aplicar já, ou salta se preferires configurar mais tarde.'
+    }
+  ];
 
   constructor(
     private profileService: ProfileService,

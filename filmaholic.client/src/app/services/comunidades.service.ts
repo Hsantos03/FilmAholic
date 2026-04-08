@@ -11,6 +11,9 @@ export interface ComunidadeDto {
   descricao?: string | null;
   limiteMembros?: number | null;
   isPrivada?: boolean;
+  isCurrentUserBanned?: boolean;
+  /** Fim do ban em UTC; ausente ou null com ban = permanente. */
+  meuBanimentoAteUtc?: string | null;
   dataCriacao?: string;
   membrosCount?: number;
   bannerUrl?: string | null;
@@ -21,8 +24,11 @@ export interface MembroDto {
   utilizadorId?: string;
   userName?: string;
   role?: string;
+  status?: string;
   dataEntrada?: string;
-  castigadoAte?: string; 
+  castigadoAte?: string;
+  banidoAte?: string | null;
+  motivoBan?: string | null;
 }
 
 export interface RankingMembroDto {
@@ -98,15 +104,13 @@ export class ComunidadesService {
   constructor(private http: HttpClient) { }
 
   getAll(): Observable<ComunidadeDto[]> {
-    return this.http.get<ComunidadeDto[]>(this.apiUrl).pipe(
+    return this.http.get<ComunidadeDto[]>(this.apiUrl, { withCredentials: true }).pipe(
       catchError(() => of([]))
     );
   }
 
-  getById(id: number | string): Observable<ComunidadeDto | null> {
-    return this.http.get<ComunidadeDto>(`${this.apiUrl}/${id}`).pipe(
-      catchError(() => of(null))
-    );
+  getById(id: number | string): Observable<ComunidadeDto> {
+    return this.http.get<ComunidadeDto>(`${this.apiUrl}/${id}`, { withCredentials: true });
   }
 
   create(formData: FormData): Observable<ComunidadeDto> {
@@ -118,7 +122,7 @@ export class ComunidadesService {
   }
 
   getMembros(id: number): Observable<MembroDto[]> {
-    return this.http.get<MembroDto[]>(`${this.apiUrl}/${id}/membros`).pipe(
+    return this.http.get<MembroDto[]>(`${this.apiUrl}/${id}/membros`, { withCredentials: true }).pipe(
       catchError(() => of([]))
     );
   }
@@ -136,7 +140,6 @@ export class ComunidadesService {
     fd.append('temSpoiler', String(temSpoiler)); 
     if (imagem) fd.append('imagem', imagem, imagem.name);
     
-    // Add movie attachment data
     if (filmeId) fd.append('filmeId', String(filmeId));
     if (filmeTitulo) fd.append('filmeTitulo', filmeTitulo);
     if (filmePosterUrl) fd.append('filmePosterUrl', filmePosterUrl);
@@ -148,8 +151,22 @@ export class ComunidadesService {
     return this.http.post(`${this.apiUrl}/${id}/juntar`, {}, { withCredentials: true });
   }
 
-  getMeuEstado(id: number): Observable<{ isMembro: boolean; isAdmin: boolean; pedidoPendente: boolean }> {
-    return this.http.get<{ isMembro: boolean; isAdmin: boolean; pedidoPendente: boolean }>(`${this.apiUrl}/${id}/me/estado`, { withCredentials: true });
+  getMeuEstado(id: number): Observable<{
+    isMembro: boolean;
+    isAdmin: boolean;
+    pedidoPendente: boolean;
+    isBanned?: boolean;
+    banidoAte?: string | null;
+    castigadoAte?: string | null;
+  }> {
+    return this.http.get<{
+      isMembro: boolean;
+      isAdmin: boolean;
+      pedidoPendente: boolean;
+      isBanned?: boolean;
+      banidoAte?: string | null;
+      castigadoAte?: string | null;
+    }>(`${this.apiUrl}/${id}/me/estado`, { withCredentials: true });
   }
 
   getPedidosEntrada(id: number): Observable<ComunidadePedidoEntradaDto[]> {
@@ -176,6 +193,20 @@ export class ComunidadesService {
 
   removerMembro(comunidadeId: number, utilizadorId: string): Observable<any> {
     return this.http.delete(`${this.apiUrl}/${comunidadeId}/membros/${utilizadorId}`, { withCredentials: true });
+  }
+
+  expulsarMembro(comunidadeId: number, utilizadorId: string, motivo?: string | null): Observable<any> {
+    return this.http.post(`${this.apiUrl}/${comunidadeId}/membros/${utilizadorId}/expulsar`, { motivo: motivo?.trim() || null }, { withCredentials: true });
+  }
+
+  banirMembro(comunidadeId: number, utilizadorId: string, form: { motivo?: string | null; duracaoDias?: number | null }): Observable<any> {
+    return this.http.post(`${this.apiUrl}/${comunidadeId}/membros/${utilizadorId}/banir`, form, { withCredentials: true });
+  }
+
+  getBanidos(id: number): Observable<MembroDto[]> {
+    return this.http.get<MembroDto[]>(`${this.apiUrl}/${id}/banidos`, { withCredentials: true }).pipe(
+      catchError(() => of([]))
+    );
   }
 
   getSugestoesFilmesComunidade(limit: number = 24): Observable<SugestaoFilmeComunidade[]> {

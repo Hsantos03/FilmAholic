@@ -1,6 +1,6 @@
 <div class="page">
   <header class="topbar">
-    <button class="icon-btn" (click)="toggleMenu()" aria-label="Menu">
+    <button type="button" class="icon-btn" data-tour="dashboard-menu" (click)="toggleMenu()" aria-label="Menu">
       <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
         <path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z" />
       </svg>
@@ -9,7 +9,7 @@
 
     <a class="brand" routerLink="/dashboard" routerLinkActive="active" aria-label="Go to dashboard">FilmAholic</a>
 
-    <div class="search" #searchContainer>
+    <div class="search" #searchContainer data-tour="dashboard-search">
       <div class="search-pill" role="search">
         <input type="text"
                [(ngModel)]="searchTerm"
@@ -183,7 +183,7 @@
       </div>
     </section>
 
-    <section class="strip strip-full nextup-strip">
+    <section class="strip strip-full nextup-strip" data-tour="dashboard-descobrir">
       <div class="strip-inner">
         <div class="section-head">
           <h2>O que vou ver a seguir</h2>
@@ -207,7 +207,7 @@
 
             <div class="nextup-meta">
               <h3 class="nextup-title">{{ nextToWatch.titulo }}</h3>
-              <div class="nextup-sub">{{ nextToWatch.genero }} &middot; {{ nextToWatch.duracao | formatDuration }}</div>
+              <div class="nextup-sub">{{ nextToWatch.genero }}<ng-container *ngIf="nextToWatch.duracao > 0"> &middot; {{ nextToWatch.duracao | formatDuration }}</ng-container></div>
               <div class="nextup-actions">
                 <button class="action-btn" (click)="goToMovieDetail(nextToWatch.id)">Ver detalhes</button>
               </div>
@@ -331,6 +331,8 @@
       A carregar recomendações&hellip;
     </div>
   </main>
+
+  <app-dicas tourId="dashboard-v1" [steps]="dashboardOnboardingSteps" [startDelayMs]="900"></app-dicas>
 </div>
 
 <div class="modal-overlay" *ngIf="isDesafiosOpen" (click)="closeDesafios()">

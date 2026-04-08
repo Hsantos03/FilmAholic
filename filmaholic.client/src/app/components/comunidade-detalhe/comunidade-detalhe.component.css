@@ -210,6 +210,65 @@
     color: #ff6b6b;
   }
 
+.ban-access-denied {
+  display: flex;
+  justify-content: center;
+  padding: 24px 16px 32px;
+}
+
+.ban-access-denied__card {
+  max-width: 440px;
+  width: 100%;
+  text-align: center;
+  background: linear-gradient(165deg, rgba(60, 20, 24, 0.45) 0%, #121212 55%);
+  border: 1px solid rgba(220, 38, 38, 0.35);
+  border-radius: 16px;
+  padding: 28px 24px 24px;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.45);
+}
+
+.ban-access-denied__icon {
+  font-size: 2.25rem;
+  line-height: 1;
+  margin-bottom: 12px;
+  filter: grayscale(0.15);
+}
+
+.ban-access-denied__title {
+  margin: 0 0 10px;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #fff;
+  line-height: 1.3;
+}
+
+.ban-access-denied__nome {
+  margin: 0 0 8px;
+  font-size: 1rem;
+  color: #e8e8e8;
+}
+
+.ban-access-denied__msg {
+  margin: 0 0 14px;
+  font-size: 0.95rem;
+  color: #c9c9c9;
+  line-height: 1.45;
+}
+
+.ban-access-denied__ate {
+  margin: 0 0 18px;
+  font-size: 0.88rem;
+  color: #ffb4b4;
+}
+
+.ban-access-denied__ate--perm {
+  color: #fca5a5;
+}
+
+.ban-access-denied__btn {
+  margin-top: 4px;
+}
+
 .comunidade-card {
   background: #101010;
   border: 1px solid rgba(255, 255, 255, 0.08);
@@ -731,6 +790,15 @@
     background: rgba(239, 68, 68, 0.15);
   }
 
+.vote-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.vote-group--disabled {
+  opacity: 0.85;
+}
+
 /* ── Container do Toggle de Spoiler ── */
 .spoiler-toggle-container {
   display: flex;
@@ -1124,6 +1192,20 @@
     color: #ff2f6d;
   }
 
+.membro-castigo-remaining {
+  font-size: 11px;
+  line-height: 1.35;
+  margin-top: 2px;
+  color: #ef4444;
+  font-weight: 500;
+}
+
+.membro-castigo-remaining strong {
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: #ef4444;
+}
+
 .membro-data {
   font-size: 12px;
   color: #9aa0a6;
@@ -1146,6 +1228,12 @@
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+.ban-btn {
+  background: rgba(185, 28, 28, 0.18);
+  border-color: rgba(185, 28, 28, 0.38);
+  color: #f87171;
 }
 
   .kick-btn:hover {
@@ -1509,4 +1597,59 @@
     opacity: 1;
     transform: translateY(0);
   }
+}
+
+/* Kick / ban modal — optional reason & ban duration */
+.modal-box--danger .kick-ban-field-label {
+  display: block;
+  text-align: left;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--text-muted, #aaa);
+  margin: 12px 0 6px;
+}
+
+.modal-box--danger .kick-ban-textarea,
+.modal-box--danger .kick-ban-input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--border, #333);
+  background: var(--surface-2, #1a1a1a);
+  color: var(--text, #fff);
+  font-size: 0.9rem;
+  text-align: left;
+}
+
+.modal-box--danger .kick-ban-textarea {
+  resize: vertical;
+  min-height: 72px;
+}
+
+.modal-box--danger .kick-ban-hint {
+  text-align: left;
+  font-size: 0.78rem;
+  color: var(--text-muted, #888);
+  margin: 6px 0 0;
+  line-height: 1.4;
+}
+
+.membro-item--banido .membro-info {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+}
+
+.membro-ban-meta {
+  font-size: 0.78rem;
+  color: var(--text-muted, #aaa);
+}
+
+.membro-ban-motivo {
+  font-size: 0.8rem;
+  color: var(--text-muted, #bbb);
+  font-style: italic;
+  max-width: 100%;
+  word-break: break-word;
 }
