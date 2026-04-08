@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, Subject } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 import { of } from 'rxjs';
 import { environment } from '../../environments/environment';
@@ -49,7 +49,9 @@ export interface NotificacaoComunidadeItemDto {
   id: number;
   comunidadeId: number;
   comunidadeNome: string;
-  tipo: 'post' | 'comentario' | 'juntou';
+  postId?: number | null;
+  tipo: 'post' | 'pedido_entrada' | 'pedido_aprovado' | 'pedido_rejeitado' | 'kick' | 'banido';
+  corpo?: string | null;
   criadaEm: string;
   lidaEm?: string | null;
 }
@@ -81,7 +83,6 @@ export interface NotificacaoMedalhaFeedDto {
   read: NotificacaoMedalhaItemDto[];
 }
 
-/** Filme da lista Quero ver disponível em cinema ou streaming */
 export interface FilmeDisponivelNotifDto {
   id: number;
   filmeId: number | null;
@@ -90,14 +91,36 @@ export interface FilmeDisponivelNotifDto {
   criadaEm: string;
 }
 
+export interface NotificacaoPlataformaItemDto {
+  id: number;
+  titulo: string;
+  mensagem: string;
+  criadaEm: string;
+  lidaEm?: string | null;
+}
+
+export interface NotificacaoPlataformaFeedDto {
+  unread: NotificacaoPlataformaItemDto[];
+  read: NotificacaoPlataformaItemDto[];
+}
+
 @Injectable({ providedIn: 'root' })
 export class NotificacoesService {
   private readonly apiBase = environment.apiBaseUrl || '';
   private apiUrl = this.apiBase ? `${this.apiBase}/api/notificacoes` : '/api/notificacoes';
 
+  private readonly badgeRefresh$ = new Subject<void>();
+
+  /** O topbar subscreve para atualizar a bolinha e, se o painel estiver aberto, os feeds. */
+  readonly notificationBadgeRefresh$ = this.badgeRefresh$.asObservable();
+
+  /** Chama após ações no cliente que criam notificações no servidor (ex.: medalhas, comunidade). */
+  refreshNotificationBadges(): void {
+    this.badgeRefresh$.next();
+  }
+
   constructor(private http: HttpClient) { }
 
-  /** TMDB ids (subset of {@param tmdbIds}) que têm NovaEstreia marcada como lida na BD. */
   getLidosTmdbIds(tmdbIds: number[]): Observable<number[]> {
     const ids = [...new Set(tmdbIds.filter((n) => n > 0))].slice(0, 120);
     if (!ids.length) return of([]);
@@ -117,16 +140,11 @@ export class NotificacoesService {
     return this.http.put<void>(`${this.apiUrl}/nova-estreia/${filmeId}/lida`, {}, { withCredentials: true });
   }
 
-  /**
-   * Próximas estreias (TMDB) filtradas por géneros favoritos e filmes já vistos (FR61).
-   * Requer sessão. Em caso de erro, o componente pode fazer fallback para {@link FilmesService.getUpcoming}.
-   */
   getProximasEstreiasPersonalizadas(options?: {
     page?: number;
     count?: number;
     windowDays?: number;
     maxAnoAhead?: number;
-    /** Default true: só estreias que coincidem com géneros favoritos (regra FR61). */
     filtrarPorGeneros?: boolean;
   }): Observable<Filme[]> {
     const o = options ?? {};
@@ -241,5 +259,26 @@ export class NotificacoesService {
 
   marcarFilmeDisponivelComoLida(id: number): Observable<void> {
     return this.http.put<void>(`${this.apiUrl}/filme-disponivel/${id}/lida`, {}, { withCredentials: true });
+  }
+
+  getNotificacoesPlataformaFeed(options?: { unreadLimit?: number; readLimit?: number }): Observable<NotificacaoPlataformaFeedDto> {
+    const o = options ?? {};
+    let params = new HttpParams();
+    if (o.unreadLimit != null) params = params.set('unreadLimit', String(o.unreadLimit));
+    if (o.readLimit != null) params = params.set('readLimit', String(o.readLimit));
+    return this.http.get<NotificacaoPlataformaFeedDto>(`${this.apiUrl}/plataforma/feed`, {
+      params,
+      withCredentials: true
+    }).pipe(catchError(() => of({ unread: [], read: [] })));
+  }
+
+  getNotificacoesPlataformaUnreadCount(): Observable<number> {
+    return this.http.get<number>(`${this.apiUrl}/plataforma/unread-count`, {
+      withCredentials: true
+    }).pipe(catchError(() => of(0)));
+  }
+
+  marcarNotificacaoPlataformaComoLida(id: number): Observable<void> {
+    return this.http.put<void>(`${this.apiUrl}/plataforma/${id}/lida`, {}, { withCredentials: true });
   }
 }

@@ -20,6 +20,7 @@ namespace FilmAholic.Server.Controllers
         private readonly FilmAholicDbContext _context;
         private readonly IMovieService _movieService;
         private const string TipoReminderJogo = "ReminderJogo";
+        public const string TipoAnuncioPlataforma = "AnuncioPlataforma";
 
         public NotificacoesController(FilmAholicDbContext context, IMovieService movieService)
         {
@@ -414,8 +415,6 @@ namespace FilmAholic.Server.Controllers
             public List<int> LidosTmdbIds { get; set; } = new();
         }
 
-        /// Devolve quais TMDB ids (entre os pedidos) têm notificação NovaEstreia marcada como lida.
-        /// Usado pela lista “upcoming” TMDB na UI (filmes podem ainda não ter linha de notificação).
         [HttpGet("nova-estreia/lidos-tmdb-ids")]
         public async Task<ActionResult<LidosTmdbIdsDto>> GetLidosTmdbIds([FromQuery] string? ids = null)
         {
@@ -475,7 +474,6 @@ namespace FilmAholic.Server.Controllers
             return r.Distinct().ToList();
         }
 
-        /// Lista “Próximas estreias” para a campainha (TMDB): opcionalmente filtrada pelos géneros favoritos do utilizador e exclui filmes já vistos.
         [HttpGet("proximas-estreias")]
         public async Task<ActionResult<List<Filme>>> GetProximasEstreiasPersonalizadas(
             [FromQuery] int page = 1,
@@ -516,8 +514,6 @@ namespace FilmAholic.Server.Controllers
                 .Distinct(StringComparer.OrdinalIgnoreCase)
                 .ToList();
 
-            // Com filtrarPorGeneros=true, aplicamos sempre que existam géneros favoritos na BD.
-            // (A antiga regra "quase todos os géneros = sem filtro" fazia "Os meus géneros" igual a "Todos".)
             var applyGenreFilter = filtrarPorGeneros && favoriteGenres.Count > 0;
 
             var watchedIds = await _context.UserMovies
@@ -735,8 +731,6 @@ namespace FilmAholic.Server.Controllers
 
             dto.CandidatesCount = candidates.Count;
 
-            // Fallback: se a BD praticamente não tem “estreias” dentro da janela,
-            // buscamos ao TMDB e inserimos na BD para permitir mais candidatos.
             var fallbackThreshold = Math.Max(10, limit * 2);
             if (candidates.Count < fallbackThreshold)
             {
@@ -817,8 +811,6 @@ namespace FilmAholic.Server.Controllers
                 .Where(n => n.UtilizadorId == userId && n.Tipo == TipoNovaEstreia && n.LidaEm == null)
                 .CountAsync();
 
-            // Preview dos filmes que de facto seriam devolvidos pelo endpoint principal
-            // (isto explica quando o número de notificações “não lidas” diverge do que a UI mostra).
             var unread = await _context.Notificacoes
                 .Where(n => n.UtilizadorId == userId && n.Tipo == TipoNovaEstreia && n.LidaEm == null)
                 .Include(n => n.Filme)
@@ -1083,6 +1075,8 @@ namespace FilmAholic.Server.Controllers
                         .Select(c => c.Nome)
                         .FirstOrDefault() ?? "",
                     PostId = n.PostId,
+                    Tipo = (n.Tipo ?? "post").ToLower(),
+                    Corpo = n.Corpo,
                     CriadaEm = n.CriadaEm,
                     LidaEm = n.LidaEm
                 })
@@ -1102,6 +1096,8 @@ namespace FilmAholic.Server.Controllers
                         .Select(c => c.Nome)
                         .FirstOrDefault() ?? "",
                     PostId = n.PostId,
+                    Tipo = (n.Tipo ?? "post").ToLower(),
+                    Corpo = n.Corpo,
                     CriadaEm = n.CriadaEm,
                     LidaEm = n.LidaEm
                 })
@@ -1143,7 +1139,6 @@ namespace FilmAholic.Server.Controllers
             return NoContent();
         }
 
-        /// Marcar todas as notificações de comunidade como lidas.
         [HttpPut("comunidade/marcar-todas-lidas")]
         public async Task<IActionResult> MarcarTodasNotificacoesComunidadeComoLidas()
         {
@@ -1198,7 +1193,6 @@ namespace FilmAholic.Server.Controllers
 
         // ── Medal notifications ──
 
-        /// <summary>Feed de notificações de medalhas (lidas + não lidas).</summary>
         [HttpGet("medalha/feed")]
         public async Task<ActionResult<NotificacaoMedalhaFeedDto>> GetNotificacoesMedalhaFeed(
             [FromQuery] int unreadLimit = 20,
@@ -1252,7 +1246,6 @@ namespace FilmAholic.Server.Controllers
             return Ok(new NotificacaoMedalhaFeedDto { Unread = unread, Read = read });
         }
 
-        /// <summary>Contagem de notificações de medalhas não lidas.</summary>
         [HttpGet("medalha/unread-count")]
         public async Task<ActionResult<int>> GetNotificacoesMedalhaUnreadCount()
         {
@@ -1266,7 +1259,6 @@ namespace FilmAholic.Server.Controllers
             return Ok(count);
         }
 
-        /// <summary>Marcar uma notificação de medalha como lida.</summary>
         [HttpPut("medalha/{id}/lida")]
         public async Task<IActionResult> MarcarNotificacaoMedalhaComoLida(int id)
         {
@@ -1303,6 +1295,102 @@ namespace FilmAholic.Server.Controllers
 
             await _context.SaveChangesAsync();
             return NoContent();
+        }
+
+        /// Feed de anúncios globais da plataforma (admin → todos os utilizadores com email confirmado).
+        [HttpGet("plataforma/feed")]
+        public async Task<ActionResult<NotificacaoPlataformaFeedDto>> GetPlataformaFeed(
+            [FromQuery] int unreadLimit = 20,
+            [FromQuery] int readLimit = 10)
+        {
+            var userId = GetUserId();
+            if (string.IsNullOrWhiteSpace(userId))
+                return Unauthorized();
+
+            if (unreadLimit < 0) unreadLimit = 0;
+            if (unreadLimit > 50) unreadLimit = 50;
+            if (readLimit < 0) readLimit = 0;
+            if (readLimit > 50) readLimit = 50;
+
+            var unreadRaw = await _context.Notificacoes
+                .AsNoTracking()
+                .Where(n => n.UtilizadorId == userId && n.Tipo == TipoAnuncioPlataforma && n.LidaEm == null)
+                .OrderByDescending(n => n.CriadaEm)
+                .Take(unreadLimit)
+                .ToListAsync();
+
+            var readRaw = await _context.Notificacoes
+                .AsNoTracking()
+                .Where(n => n.UtilizadorId == userId && n.Tipo == TipoAnuncioPlataforma && n.LidaEm != null)
+                .OrderByDescending(n => n.LidaEm)
+                .Take(readLimit)
+                .ToListAsync();
+
+            static NotificacaoPlataformaItemDto Map(Notificacao n)
+            {
+                var (titulo, mensagem) = ParseAnuncioPlataformaCorpo(n.Corpo);
+                return new NotificacaoPlataformaItemDto
+                {
+                    Id = n.Id,
+                    Titulo = titulo,
+                    Mensagem = mensagem,
+                    CriadaEm = n.CriadaEm,
+                    LidaEm = n.LidaEm
+                };
+            }
+
+            return Ok(new NotificacaoPlataformaFeedDto
+            {
+                Unread = unreadRaw.Select(Map).ToList(),
+                Read = readRaw.Select(Map).ToList()
+            });
+        }
+
+        [HttpGet("plataforma/unread-count")]
+        public async Task<ActionResult<int>> GetPlataformaUnreadCount()
+        {
+            var userId = GetUserId();
+            if (string.IsNullOrWhiteSpace(userId))
+                return Unauthorized();
+
+            var n = await _context.Notificacoes
+                .CountAsync(x => x.UtilizadorId == userId && x.Tipo == TipoAnuncioPlataforma && x.LidaEm == null);
+            return Ok(n);
+        }
+
+        [HttpPut("plataforma/{id:int}/lida")]
+        public async Task<IActionResult> MarcarPlataformaComoLida([FromRoute] int id)
+        {
+            var userId = GetUserId();
+            if (string.IsNullOrWhiteSpace(userId))
+                return Unauthorized();
+
+            var notif = await _context.Notificacoes
+                .FirstOrDefaultAsync(n => n.Id == id && n.UtilizadorId == userId && n.Tipo == TipoAnuncioPlataforma);
+            if (notif == null) return NotFound();
+
+            notif.LidaEm = DateTime.UtcNow;
+            await _context.SaveChangesAsync();
+            return NoContent();
+        }
+
+        private static (string Titulo, string Mensagem) ParseAnuncioPlataformaCorpo(string? corpo)
+        {
+            if (string.IsNullOrWhiteSpace(corpo))
+                return ("Anúncio", "");
+
+            try
+            {
+                using var doc = JsonDocument.Parse(corpo);
+                var root = doc.RootElement;
+                var titulo = root.TryGetProperty("titulo", out var t) ? (t.GetString() ?? "Anúncio") : "Anúncio";
+                var mensagem = root.TryGetProperty("mensagem", out var m) ? (m.GetString() ?? "") : "";
+                return (titulo.Trim(), mensagem.Trim());
+            }
+            catch
+            {
+                return ("Anúncio", corpo);
+            }
         }
 
         [HttpGet("filme-disponivel/feed")]
@@ -1345,6 +1433,21 @@ namespace FilmAholic.Server.Controllers
             return NoContent();
         }
 
+
+        public class NotificacaoPlataformaItemDto
+        {
+            public int Id { get; set; }
+            public string Titulo { get; set; } = "";
+            public string Mensagem { get; set; } = "";
+            public DateTime CriadaEm { get; set; }
+            public DateTime? LidaEm { get; set; }
+        }
+
+        public class NotificacaoPlataformaFeedDto
+        {
+            public List<NotificacaoPlataformaItemDto> Unread { get; set; } = new();
+            public List<NotificacaoPlataformaItemDto> Read { get; set; } = new();
+        }
 
         public class FilmeDisponivelFeedItemDto
         {
@@ -1420,7 +1523,9 @@ namespace FilmAholic.Server.Controllers
             public int Id { get; set; }
             public int ComunidadeId { get; set; }
             public string ComunidadeNome { get; set; } = "";
-            public int PostId { get; set; }
+            public int? PostId { get; set; }
+            public string Tipo { get; set; } = "post";
+            public string? Corpo { get; set; }
             public DateTime CriadaEm { get; set; }
             public DateTime? LidaEm { get; set; }
         }

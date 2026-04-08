@@ -19,7 +19,8 @@ namespace FilmAholic.Server.Controllers
             _context = context;
         }
 
-        // GET: api/desafios
+        // GET: api/desafios (lista completa — apenas administradores)
+        [Authorize(Roles = "Administrador")]
         [HttpGet]
         public async Task<IActionResult> GetAll()
         {

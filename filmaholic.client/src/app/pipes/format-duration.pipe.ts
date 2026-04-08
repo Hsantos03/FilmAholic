@@ -2,10 +2,21 @@ import { Pipe, PipeTransform } from '@angular/core';
 
 @Pipe({ name: 'formatDuration' })
 export class FormatDurationPipe implements PipeTransform {
-  transform(value: number | null | undefined, unit: 'min' | 'hours' = 'min'): string {
-    if (value == null || value < 0 || isNaN(value)) return '0 min';
+  /**
+   * @param treatZeroAsUnknown quando true, null/0/inválido não mostra texto (duração ainda não divulgada pelo TMDB).
+   */
+  transform(
+    value: number | null | undefined,
+    unit: 'min' | 'hours' = 'min',
+    treatZeroAsUnknown = false
+  ): string {
+    if (value == null || value < 0 || isNaN(value)) {
+      return treatZeroAsUnknown ? '' : '0 min';
+    }
     let totalMin = unit === 'hours' ? Math.round(value * 60) : Math.round(value);
-    if (totalMin === 0) return '0 min';
+    if (totalMin === 0) {
+      return treatZeroAsUnknown ? '' : '0 min';
+    }
 
     const min = totalMin % 60;
     const totalHours = Math.floor(totalMin / 60);

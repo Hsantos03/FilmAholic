@@ -25,6 +25,7 @@ public class FilmAholicDbContext : IdentityDbContext<Utilizador>
 
     public DbSet<Comunidade> Comunidades => Set<Comunidade>();
     public DbSet<ComunidadeMembro> ComunidadeMembros => Set<ComunidadeMembro>();
+    public DbSet<ComunidadePedidoEntrada> ComunidadePedidosEntrada => Set<ComunidadePedidoEntrada>();
     public DbSet<ComunidadePost> ComunidadePosts => Set<ComunidadePost>();
     public DbSet<ComunidadePostVoto> ComunidadePostVotos => Set<ComunidadePostVoto>();
     public DbSet<ComunidadePostReport> ComunidadePostReports => Set<ComunidadePostReport>();
@@ -161,6 +162,8 @@ public class FilmAholicDbContext : IdentityDbContext<Utilizador>
             e.Property(c => c.Descricao).HasMaxLength(2000);
             e.Property(c => c.BannerFileName).HasMaxLength(512);
             e.Property(c => c.IconFileName).HasMaxLength(512);
+            e.Property(c => c.LimiteMembros).IsRequired(false);
+            e.Property(c => c.IsPrivada).HasDefaultValue(false);
             e.Property(c => c.DataCriacao).HasDefaultValueSql("CURRENT_TIMESTAMP");
             e.HasIndex(c => c.Nome).IsUnique();
             e.HasMany(c => c.Membros)
@@ -168,6 +171,10 @@ public class FilmAholicDbContext : IdentityDbContext<Utilizador>
              .HasForeignKey(m => m.ComunidadeId)
              .OnDelete(DeleteBehavior.Cascade);
             e.HasMany(c => c.Posts)
+             .WithOne(p => p.Comunidade)
+             .HasForeignKey(p => p.ComunidadeId)
+             .OnDelete(DeleteBehavior.Cascade);
+            e.HasMany(c => c.PedidosEntrada)
              .WithOne(p => p.Comunidade)
              .HasForeignKey(p => p.ComunidadeId)
              .OnDelete(DeleteBehavior.Cascade);
@@ -181,6 +188,7 @@ public class FilmAholicDbContext : IdentityDbContext<Utilizador>
             e.HasIndex(m => new { m.UtilizadorId, m.ComunidadeId }).IsUnique();
             e.Property(m => m.Role).IsRequired().HasMaxLength(50);
             e.Property(m => m.Status).IsRequired().HasMaxLength(50);
+            e.Property(m => m.MotivoBan).HasMaxLength(500);
             e.Property(m => m.DataEntrada).HasDefaultValueSql("CURRENT_TIMESTAMP");
 
             // FK to Utilizador; if user removed, cascade to remove membership
@@ -190,6 +198,21 @@ public class FilmAholicDbContext : IdentityDbContext<Utilizador>
              .OnDelete(DeleteBehavior.Cascade);
 
             e.ToTable("ComunidadeMembros");
+        });
+
+        builder.Entity<ComunidadePedidoEntrada>(e =>
+        {
+            e.HasKey(p => p.Id);
+            e.Property(p => p.Status).IsRequired().HasMaxLength(30);
+            e.Property(p => p.DataPedido).HasDefaultValueSql("CURRENT_TIMESTAMP");
+            e.HasIndex(p => new { p.ComunidadeId, p.UtilizadorId, p.Status });
+
+            e.HasOne(p => p.Utilizador)
+             .WithMany()
+             .HasForeignKey(p => p.UtilizadorId)
+             .OnDelete(DeleteBehavior.Cascade);
+
+            e.ToTable("ComunidadePedidosEntrada");
         });
 
         // NEW: ComunidadePost mapping
@@ -316,6 +339,8 @@ public class FilmAholicDbContext : IdentityDbContext<Utilizador>
             e.ToTable("NotificacoesComunidade");
             e.HasKey(x => x.Id);
             e.HasIndex(x => new { x.UtilizadorId, x.LidaEm });
+            e.Property(x => x.Tipo).HasMaxLength(40).IsRequired();
+            e.Property(x => x.Corpo).HasMaxLength(2000);
 
             e.HasOne(x => x.Utilizador)
              .WithMany()
@@ -330,6 +355,7 @@ public class FilmAholicDbContext : IdentityDbContext<Utilizador>
             e.HasOne(x => x.Post)
              .WithMany()
              .HasForeignKey(x => x.PostId)
+             .IsRequired(false)
              .OnDelete(DeleteBehavior.Cascade);
         });
 

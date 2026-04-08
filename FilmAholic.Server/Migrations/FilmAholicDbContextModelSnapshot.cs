@@ -188,6 +188,14 @@ namespace FilmAholic.Server.Migrations
                         .HasMaxLength(512)
                         .HasColumnType("nvarchar(512)");
 
+                    b.Property<bool>("IsPrivada")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(false);
+
+                    b.Property<int?>("LimiteMembros")
+                        .HasColumnType("int");
+
                     b.Property<string>("Nome")
                         .IsRequired()
                         .HasMaxLength(200)
@@ -209,6 +217,9 @@ namespace FilmAholic.Server.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
+                    b.Property<DateTime?>("BanidoAte")
+                        .HasColumnType("datetime2");
+
                     b.Property<DateTime?>("CastigadoAte")
                         .HasColumnType("datetime2");
 
@@ -219,6 +230,10 @@ namespace FilmAholic.Server.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("datetime2")
                         .HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+                    b.Property<string>("MotivoBan")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
 
                     b.Property<string>("Role")
                         .IsRequired()
@@ -242,6 +257,46 @@ namespace FilmAholic.Server.Migrations
                         .IsUnique();
 
                     b.ToTable("ComunidadeMembros", (string)null);
+                });
+
+            modelBuilder.Entity("FilmAholic.Server.Models.ComunidadePedidoEntrada", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("ComunidadeId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("DataPedido")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+                    b.Property<DateTime?>("DataResposta")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("RespondidoPorId")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)");
+
+                    b.Property<string>("UtilizadorId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UtilizadorId");
+
+                    b.HasIndex("ComunidadeId", "UtilizadorId", "Status");
+
+                    b.ToTable("ComunidadePedidosEntrada", (string)null);
                 });
 
             modelBuilder.Entity("FilmAholic.Server.Models.ComunidadePost", b =>
@@ -324,8 +379,13 @@ namespace FilmAholic.Server.Migrations
                         .HasColumnType("datetime2")
                         .HasDefaultValueSql("CURRENT_TIMESTAMP");
 
-                    b.Property<int>("PostId")
+                    b.Property<int?>("PostId")
                         .HasColumnType("int");
+
+                    b.Property<string>("Tipo")
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("nvarchar(40)");
 
                     b.Property<string>("UtilizadorId")
                         .HasColumnType("nvarchar(450)");
@@ -826,14 +886,23 @@ namespace FilmAholic.Server.Migrations
                     b.Property<int>("ComunidadeId")
                         .HasColumnType("int");
 
+                    b.Property<string>("Corpo")
+                        .HasMaxLength(2000)
+                        .HasColumnType("nvarchar(2000)");
+
                     b.Property<DateTime>("CriadaEm")
                         .HasColumnType("datetime2");
 
                     b.Property<DateTime?>("LidaEm")
                         .HasColumnType("datetime2");
 
-                    b.Property<int>("PostId")
+                    b.Property<int?>("PostId")
                         .HasColumnType("int");
+
+                    b.Property<string>("Tipo")
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("nvarchar(40)");
 
                     b.Property<string>("UtilizadorId")
                         .IsRequired()
@@ -1364,6 +1433,25 @@ namespace FilmAholic.Server.Migrations
                     b.Navigation("Utilizador");
                 });
 
+            modelBuilder.Entity("FilmAholic.Server.Models.ComunidadePedidoEntrada", b =>
+                {
+                    b.HasOne("FilmAholic.Server.Models.Comunidade", "Comunidade")
+                        .WithMany("PedidosEntrada")
+                        .HasForeignKey("ComunidadeId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("FilmAholic.Server.Models.Utilizador", "Utilizador")
+                        .WithMany()
+                        .HasForeignKey("UtilizadorId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Comunidade");
+
+                    b.Navigation("Utilizador");
+                });
+
             modelBuilder.Entity("FilmAholic.Server.Models.ComunidadePost", b =>
                 {
                     b.HasOne("FilmAholic.Server.Models.Comunidade", "Comunidade")
@@ -1392,7 +1480,7 @@ namespace FilmAholic.Server.Migrations
                         .WithMany()
                         .HasForeignKey("PostId")
                         .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .IsRequired(false);
 
                     b.HasOne("FilmAholic.Server.Models.Utilizador", "Utilizador")
                         .WithMany()
@@ -1470,8 +1558,7 @@ namespace FilmAholic.Server.Migrations
                     b.HasOne("FilmAholic.Server.Models.ComunidadePost", "Post")
                         .WithMany()
                         .HasForeignKey("PostId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.Cascade);
 
                     b.HasOne("FilmAholic.Server.Models.Utilizador", "Utilizador")
                         .WithMany()
@@ -1656,6 +1743,8 @@ namespace FilmAholic.Server.Migrations
             modelBuilder.Entity("FilmAholic.Server.Models.Comunidade", b =>
                 {
                     b.Navigation("Membros");
+
+                    b.Navigation("PedidosEntrada");
 
                     b.Navigation("Posts");
                 });

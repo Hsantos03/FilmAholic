@@ -4,6 +4,7 @@ import { Router } from '@angular/router';
 import { CinemaService, CinemaVenue } from '../../services/cinema.service';
 import { MenuService } from '../../services/menu.service';
 import * as L from 'leaflet';
+import { OnboardingStep } from '../../services/onboarding.service';
 
 // Fix Leaflet default icon 404 in Angular
 const iconUrl = 'leaflet/marker-icon.png';
@@ -31,6 +32,29 @@ export class CinemaMapComponent implements OnInit, AfterViewInit, OnDestroy {
   loading = true;
   geoError: string | null = null;
   cinemasError = false;
+
+  readonly cinemaMapOnboardingSteps: OnboardingStep[] = [
+    {
+      selector: '[data-tour="cinema-map-menu"]',
+      title: 'Menu',
+      body: 'Acede às outras secções da app sem saires do mapa.'
+    },
+    {
+      selector: '[data-tour="cinema-map-hero"]',
+      title: 'Cinemas próximos',
+      body: 'Esta página junta mapa e lista ordenada pela distância à tua localização.'
+    },
+    {
+      selector: '[data-tour="cinema-map-map"]',
+      title: 'Mapa',
+      body: 'Explora marcadores, clica nos cinemas e usa o mapa para te orientares.'
+    },
+    {
+      selector: '[data-tour="cinema-map-list"]',
+      title: 'Lista e favoritos',
+      body: 'Marca favoritos, vê distâncias e abre o site do cinema quando disponível.'
+    }
+  ];
 
   // Favoritos
   favoritosIds: Set<string> = new Set();

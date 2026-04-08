@@ -1,0 +1,34 @@
+<div class="onboarding-root" *ngIf="active" aria-live="polite" data-component="dicas">
+  <div
+    class="onboarding-spotlight"
+    [style.top]="highlightTop"
+    [style.left]="highlightLeft"
+    [style.width]="highlightWidth"
+    [style.height]="highlightHeight"
+    [style.border-radius]="highlightRadius">
+  </div>
+
+  <div
+    class="onboarding-popover"
+    [style.top]="popoverTop"
+    [style.left]="popoverLeft"
+    [style.width.px]="popoverWidth"
+    role="dialog"
+    [attr.aria-label]="currentTitle">
+    <div class="onboarding-popover__meta">Dicas · {{ stepLabel() }}</div>
+    <h3 class="onboarding-popover__title">{{ currentTitle }}</h3>
+    <p class="onboarding-popover__body">{{ currentBody }}</p>
+    <div class="onboarding-popover__actions">
+      <button type="button" class="onboarding-btn onboarding-btn--ghost" (click)="dismissAll()">
+        Não mostrar mais
+      </button>
+      <button type="button" class="onboarding-btn onboarding-btn--ghost" (click)="skipStep()">
+        Ignorar esta dica
+      </button>
+      <button type="button" class="onboarding-btn onboarding-btn--primary" (click)="next()">
+        {{ isLastStep() ? 'Ok, percebi' : 'Seguinte' }}
+      </button>
+    </div>
+    <p class="onboarding-hint"><kbd>Esc</kbd> fecha as dicas.</p>
+  </div>
+</div>

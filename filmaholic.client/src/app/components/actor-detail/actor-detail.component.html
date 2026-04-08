@@ -1,5 +1,5 @@
 <header class="topbar topbar-simple">
-  <button class="icon-btn" (click)="goBack()" aria-label="Back">&larr;</button>
+  <button type="button" class="icon-btn" data-tour="actor-back" (click)="goBack()" aria-label="Back">&larr;</button>
   <a class="brand" routerLink="/dashboard" routerLinkActive="active">FilmAholic</a>
   <div class="top-actions">
     <app-topbar-actions></app-topbar-actions>
@@ -11,7 +11,7 @@
   <div *ngIf="error" class="state error">{{ error }}</div>
 
   <section *ngIf="actor as a" class="actor-page">
-    <div class="actor-hero">
+    <div class="actor-hero" data-tour="actor-hero">
       <div class="actor-photo-wrap">
         <img class="actor-photo" [src]="actorPhoto" [alt]="a.nome" />
       </div>
@@ -42,7 +42,7 @@
       </div>
     </div>
 
-    <div class="filmography">
+    <div class="filmography" data-tour="actor-filmografia">
       <div class="section-head">
         <h2>Filmografia</h2>
         <div class="section-sub">{{ movies.length }} título(s)</div>
@@ -69,5 +69,7 @@
       </div>
     </div>
   </section>
+
+  <app-dicas *ngIf="actor" tourId="actor-v1" [steps]="actorOnboardingSteps" [startDelayMs]="800"></app-dicas>
 </main>
 

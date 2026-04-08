@@ -1,6 +1,6 @@
 import { Component, OnInit, OnDestroy, ViewChild, ElementRef, HostListener, ChangeDetectorRef } from '@angular/core';
 import { Router } from '@angular/router';
-import { forkJoin, of } from 'rxjs';
+import { forkJoin, of, Subscription } from 'rxjs';
 import { catchError, switchMap, tap } from 'rxjs/operators';
 import { FilmesService, Filme } from '../../services/filmes.service';
 import { environment } from '../../../environments/environment';
@@ -14,7 +14,9 @@ import {
   NotificacaoComunidadeFeedDto,
   NotificacaoComunidadeItemDto,
   NotificacaoMedalhaFeedDto,
-  NotificacaoMedalhaItemDto
+  NotificacaoMedalhaItemDto,
+  NotificacaoPlataformaFeedDto,
+  NotificacaoPlataformaItemDto
 } from '../../services/notificacoes.service';
 
 @Component({
@@ -26,6 +28,7 @@ export class TopbarActionsComponent implements OnInit, OnDestroy {
   @ViewChild('notificationsContainer', { static: false }) notificationsContainerRef?: ElementRef<HTMLElement>;
 
   private readonly posterFallback = 'https://via.placeholder.com/300x450?text=Sem+poster';
+  private badgeRefreshSub?: Subscription;
 
   isNotificationsOpen = false;
 
@@ -62,6 +65,10 @@ export class TopbarActionsComponent implements OnInit, OnDestroy {
   medalhaFeed: NotificacaoMedalhaFeedDto = { unread: [], read: [] };
   medalhaUnreadCount = 0;
 
+  // ── Platform-wide announcements (admin) ──
+  plataformaFeed: NotificacaoPlataformaFeedDto = { unread: [], read: [] };
+  plataformaUnreadCount = 0;
+
   readonly API_URL = environment.apiBaseUrl
     ? environment.apiBaseUrl
     : '';
@@ -77,9 +84,36 @@ export class TopbarActionsComponent implements OnInit, OnDestroy {
     this.loadUpcomingFromTmdb();
     this.loadComunidadeUnreadCount();
     this.loadMedalhaUnreadCount();
+    this.loadPlataformaUnreadCount();
+
+    this.badgeRefreshSub = this.notificacoesService.notificationBadgeRefresh$.subscribe(() => {
+      this.refreshNotificationUiAfterExternalAction();
+    });
   }
 
-  ngOnDestroy(): void { }
+  ngOnDestroy(): void {
+    this.badgeRefreshSub?.unsubscribe();
+  }
+
+  /** Atualiza contagens de imediato; se o painel de notificações estiver aberto, recarrega também os feeds. */
+  private refreshNotificationUiAfterExternalAction(): void {
+    this.loadComunidadeUnreadCount();
+    this.loadMedalhaUnreadCount();
+    this.loadPlataformaUnreadCount();
+    if (this.isNotificationsOpen) {
+      if (this.activeNotifTab === 'notificacoes') {
+        this.loadReminderJogo();
+        this.loadFilmeDisponivel();
+        this.loadResumoFeed();
+        this.loadComunidadeFeed();
+        this.loadMedalhaFeed();
+        this.loadPlataformaFeed();
+      } else {
+        this.loadUpcomingFromTmdb();
+      }
+    }
+    this.cdr.markForCheck();
+  }
 
   @HostListener('document:click', ['$event'])
   onDocumentClick(e: MouseEvent): void {
@@ -99,6 +133,7 @@ export class TopbarActionsComponent implements OnInit, OnDestroy {
       this.loadUpcomingFromTmdb();
       this.loadComunidadeFeed();
       this.loadMedalhaFeed();
+      this.loadPlataformaFeed();
     }
   }
 
@@ -110,6 +145,7 @@ export class TopbarActionsComponent implements OnInit, OnDestroy {
       this.loadFilmeDisponivel();
       this.loadResumoFeed();
       this.loadComunidadeFeed();
+      this.loadPlataformaFeed();
     }
   }
 
@@ -173,7 +209,27 @@ export class TopbarActionsComponent implements OnInit, OnDestroy {
 
   openComunidadeFromNotif(item: NotificacaoComunidadeItemDto): void {
     this.isNotificationsOpen = false;
+    if (this.comunidadeNotifTipo(item.tipo) === 'pedido_entrada') {
+      this.router.navigate(['/comunidades', item.comunidadeId], { queryParams: { tab: 'membros' } });
+      return;
+    }
     this.router.navigate(['/comunidades', item.comunidadeId]);
+  }
+
+  /** Normaliza o tipo vindo da API (ex.: kick / banido). */
+  comunidadeNotifTipo(tipo: string | undefined | null): string {
+    return (tipo ?? 'post').trim().toLowerCase();
+  }
+
+  /**
+   * Corpo da notificação para expulsão/ban (motivo opcional, duração no ban).
+   * Só devolve texto quando o servidor enviou {@link NotificacaoComunidadeItemDto.corpo}.
+   */
+  comunidadeKickBanCorpo(n: NotificacaoComunidadeItemDto): string | null {
+    const t = this.comunidadeNotifTipo(n.tipo);
+    if (t !== 'kick' && t !== 'banido') return null;
+    const s = n.corpo?.trim();
+    return s && s.length > 0 ? s : null;
   }
 
   get hasComunidadeItems(): boolean {
@@ -236,6 +292,52 @@ export class TopbarActionsComponent implements OnInit, OnDestroy {
 
   get hasMedalhaItems(): boolean {
     return ((this.medalhaFeed?.unread?.length ?? 0) + (this.medalhaFeed?.read?.length ?? 0)) > 0;
+  }
+
+  // ── Anúncios da plataforma ──
+
+  private loadPlataformaUnreadCount(): void {
+    this.notificacoesService.getNotificacoesPlataformaUnreadCount().subscribe({
+      next: (count) => {
+        this.plataformaUnreadCount = count;
+        this.cdr.markForCheck();
+      }
+    });
+  }
+
+  private loadPlataformaFeed(): void {
+    this.notificacoesService.getNotificacoesPlataformaFeed({ unreadLimit: 12, readLimit: 6 }).subscribe({
+      next: (dto) => {
+        this.plataformaFeed = dto ?? { unread: [], read: [] };
+        this.cdr.markForCheck();
+      },
+      error: () => {
+        this.plataformaFeed = { unread: [], read: [] };
+      }
+    });
+    this.loadPlataformaUnreadCount();
+  }
+
+  marcarPlataformaLida(e: MouseEvent, item: NotificacaoPlataformaItemDto): void {
+    e.preventDefault();
+    e.stopPropagation();
+    this.notificacoesService.marcarNotificacaoPlataformaComoLida(item.id).subscribe({
+      next: () => {
+        this.plataformaFeed = {
+          unread: (this.plataformaFeed.unread ?? []).filter(x => x.id !== item.id),
+          read: [
+            { ...item, lidaEm: new Date().toISOString() },
+            ...(this.plataformaFeed.read ?? []).filter(x => x.id !== item.id)
+          ].slice(0, 12)
+        };
+        this.plataformaUnreadCount = Math.max(0, this.plataformaUnreadCount - 1);
+        this.cdr.markForCheck();
+      }
+    });
+  }
+
+  get hasPlataformaItems(): boolean {
+    return ((this.plataformaFeed?.unread?.length ?? 0) + (this.plataformaFeed?.read?.length ?? 0)) > 0;
   }
 
   // ── Existing methods below unchanged ──
@@ -503,7 +605,9 @@ export class TopbarActionsComponent implements OnInit, OnDestroy {
 
   private loadUpcomingDetails(): void {
     if (this.isLoadingUpcomingDetails) return;
-    const missing = (this.upcomingTmdb || []).filter((m) => !m.releaseDate && m.tmdbId);
+    const missing = (this.upcomingTmdb || []).filter(
+      (m) => m.tmdbId && (!m.releaseDate || !((m.duracao ?? 0) > 0))
+    );
     if (!missing.length) return;
     this.isLoadingUpcomingDetails = true;
     const requests = missing.map((m) => {
@@ -543,6 +647,10 @@ export class TopbarActionsComponent implements OnInit, OnDestroy {
               const y = Number(yRaw);
               if (!isNaN(y)) local.ano = y;
             }
+          }
+          const remoteDur = anyRes.duracao ?? anyRes.Duracao;
+          if (local && typeof remoteDur === 'number' && remoteDur > 0 && !((local.duracao ?? 0) > 0)) {
+            local.duracao = remoteDur;
           }
         });
       },

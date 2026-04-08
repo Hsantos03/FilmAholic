@@ -10,6 +10,10 @@ import { ProfileService } from '../../services/profile.service';
 import { MenuService } from '../../services/menu.service';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../environments/environment';
+import { OnboardingStep } from '../../services/onboarding.service';
+import { AuthService } from '../../services/auth.service';
+import { NotificacoesService } from '../../services/notificacoes.service';
+import { finalize } from 'rxjs/operators';
 
 export interface SearchResultItem {
   id?: number;
@@ -25,6 +29,24 @@ export interface SearchResultItem {
 })
 export class DashboardComponent implements OnInit, OnDestroy {
   @ViewChild('searchContainer', { static: false }) searchContainerRef?: ElementRef;
+
+  readonly dashboardOnboardingSteps: OnboardingStep[] = [
+    {
+      selector: '[data-tour="dashboard-menu"]',
+      title: 'Menu lateral',
+      body: 'Abre o menu para ires ao perfil, comunidades, cinemas e outras áreas da app.'
+    },
+    {
+      selector: '[data-tour="dashboard-search"]',
+      title: 'Pesquisar filmes',
+      body: 'Escreve um título para encontrar filmes. Com sugestões activas, também vês ideias alinhadas com os teus géneros.'
+    },
+    {
+      selector: '[data-tour="dashboard-descobrir"]',
+      title: 'Descobrir o que ver',
+      body: 'Em “O que vou ver a seguir” podes pedir sugestões para alargar o que queres ver.'
+    }
+  ];
 
   userName: string = '';
 
@@ -102,8 +124,14 @@ export class DashboardComponent implements OnInit, OnDestroy {
     private router: Router,
     private route: ActivatedRoute,
     public menuService: MenuService,
-    private http: HttpClient
+    private http: HttpClient,
+    private authService: AuthService,
+    private notificacoesService: NotificacoesService
   ) { }
+
+  get isAdmin(): boolean {
+    return this.authService.isAdministrador();
+  }
 
   ngOnInit(): void {
     this.userName = localStorage.getItem('user_nome') || 'Utilizador';
@@ -311,6 +339,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
           this.feedbackDesafio = `Correto! Ganhaste ${res.xpGanho || this.desafioDoDia.xp} XP! 🎉`;
           
           this.http.post<any>(`${this.apiMedalhas}/check-desafios`, {}, { withCredentials: true })
+            .pipe(finalize(() => this.notificacoesService.refreshNotificationBadges()))
             .subscribe(medalRes => {
               this.updateMedalProgress('', medalRes.progress || 0);
               

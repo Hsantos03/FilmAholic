@@ -1,13 +1,16 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { Location } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
-import { Subscription } from 'rxjs';
+import { Subscription, of } from 'rxjs';
+import { catchError, finalize } from 'rxjs/operators';
+import { ProfileService } from '../../services/profile.service';
 import { Filme, FilmesService, RatingsDto, TmdbSearchResponse, TmdbMovieResult, CastMemberDto } from '../../services/filmes.service';
 import { UserMoviesService } from '../../services/user-movies.service';
 import { FavoritesService } from '../../services/favorites.service';
 import { CommentsService, CommentDTO } from '../../services/comments.service';
 import { MovieRatingService, MovieRatingSummaryDTO } from '../../services/movie-rating.service';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
+import { OnboardingStep } from '../../services/onboarding.service';
 @Component({
   selector: 'app-movie-page',
   templateUrl: './movie-page.component.html',
@@ -17,13 +20,29 @@ export class MoviePageComponent implements OnInit, OnDestroy {
   filme: Filme | null = null;
   overview: string | null = null;
 
-  userName = localStorage.getItem('userName') || 'User';
-
-  /** Foto de perfil do utilizador atual */
-  get userFotoPerfilUrl(): string | null {
-    const u = localStorage.getItem('fotoPerfilUrl');
-    return u && u.trim() ? u : null;
+  /**
+   * Base para a letra do avatar ao escrever comentário: primeiro o nome (`user_nome` do login),
+   * depois o username — evita o fallback antigo "User" que mostrava sempre **U**.
+   */
+  get currentUserInitialSource(): string {
+    const nome = (localStorage.getItem('user_nome') || '').trim();
+    if (nome) return nome;
+    const login = (localStorage.getItem('userName') || '').trim();
+    if (login) return login;
+    return '';
   }
+
+  /** Nome para alt/acessibilidade no teu avatar de comentário. */
+  get currentUserDisplayName(): string {
+    const s = this.currentUserInitialSource;
+    return s || 'Utilizador';
+  }
+
+  /**
+   * Foto do utilizador no campo de comentário — vem da API (`/api/profile/{id}`),
+   * não só do localStorage (evita foto de outra conta em cache).
+   */
+  meFotoPerfilUrl: string | null = null;
 
   ratings: RatingsDto | null = null;
   isLoadingRatings = false;
@@ -65,10 +84,73 @@ export class MoviePageComponent implements OnInit, OnDestroy {
 
   trailerUrl: string | null = null;
 
+  /** Só mostra dicas depois de saber se existe trailer (evita spotlight na zona errada). */
+  trailerDicaReady = false;
+
   showTrailer = false;
   safeTrailerUrl: SafeResourceUrl | null = null;
 
   private routeSub!: Subscription;
+
+  get movieDicasSteps(): OnboardingStep[] {
+    const steps: OnboardingStep[] = [
+      {
+        selector: '[data-tour="movie-back"]',
+        title: 'Voltar',
+        body: 'Regressa à página onde estavas — pesquisa, dashboard ou cinemas.'
+      },
+      {
+        selector: '[data-tour="movie-poster"]',
+        title: 'Capa',
+        body: 'Cartaz do filme. Se a imagem ainda não carregou, o TMDb pode estar a responder — espera um instante ou recarrega a página.'
+      }
+    ];
+    if (this.trailerUrl) {
+      steps.push({
+        selector: '[data-tour="movie-trailer"]',
+        title: 'Trailer',
+        body: 'Abre o vídeo em ecrã grande (YouTube embebido quando o TMDb tem trailer).'
+      });
+    }
+    steps.push(
+      {
+        selector: '[data-tour="movie-actions"]',
+        title: 'As tuas listas',
+        body: '“Quero ver”, “Já vi” e favoritos moldam recomendações e estatísticas na FilmAholic.'
+      },
+      {
+        selector: '[data-tour="movie-ratings"]',
+        title: 'Ratings públicos',
+        body: 'Votações agregadas do TMDb, IMDb, Metacritic e Rotten Tomatoes — úteis para cruzar com a tua opinião.'
+      },
+      {
+        selector: '[data-tour="movie-filmaholic-rating"]',
+        title: 'Classificação FilmAholic',
+        body: 'Avalia com estrelas e vê a média da comunidade. Precisas de sessão iniciada para votar.'
+      }
+    );
+    steps.push({
+      selector: '[data-tour="movie-sinopse"]',
+      title: 'Sinopse',
+      body: 'Resumo da história (TMDb) quando existir — ajuda a perceber o tom sem grandes spoilers.'
+    });
+    steps.push({
+      selector: '[data-tour="movie-elenco"]',
+      title: 'Elenco',
+      body: 'Actores em destaque — toca num nome para abrir a ficha e a filmografia (aparece quando os dados carregarem).'
+    });
+    steps.push({
+      selector: '[data-tour="movie-comentarios"]',
+      title: 'Comentários',
+      body: 'Partilha reviews, curte ou discorda de outros e gere as tuas próprias mensagens.'
+    });
+    steps.push({
+      selector: '[data-tour="movie-relacionados"]',
+      title: 'Relacionados',
+      body: 'Sugestões parecidas — cada cartaz abre outra ficha de filme (aparece quando as recomendações carregarem).'
+    });
+    return steps;
+  }
 
   constructor(
     private location: Location,
@@ -79,10 +161,13 @@ export class MoviePageComponent implements OnInit, OnDestroy {
     private favoritesService: FavoritesService,
     private commentsService: CommentsService,
     private movieRatingService: MovieRatingService,
-    private sanitizer: DomSanitizer
+    private sanitizer: DomSanitizer,
+    private profileService: ProfileService
   ) { }
 
   ngOnInit(): void {
+    this.loadMeProfilePhotoFromServer();
+
     this.routeSub = this.route.paramMap.subscribe(params => {
       const idParam = params.get('id');
       const id = idParam ? Number(idParam) : NaN;
@@ -109,10 +194,9 @@ export class MoviePageComponent implements OnInit, OnDestroy {
           posterUrl: cinemaPoster || 'assets/placeholder-poster.jpg'
         };
         this.isLoading = false;
-        
-        // Load related data
+
+        this.loadTrailer(id);
         this.loadRatings(id);
-        // this.loadOverviewFromTmdb(this.filme); // Skip for now since we have basic data
         return;
       }
 
@@ -152,10 +236,41 @@ export class MoviePageComponent implements OnInit, OnDestroy {
 
     this.cast = [];
     this.isLoadingCast = false;
+
+    this.trailerUrl = null;
+    this.trailerDicaReady = false;
+    this.showTrailer = false;
+    this.safeTrailerUrl = null;
   }
 
   get canComment(): boolean {
     return !!localStorage.getItem('user_id') || !!localStorage.getItem('token');
+  }
+
+  /** Inicial no avatar quando não há foto (ex.: Florian Wirtz → F). */
+  commentAvatarInitial(userName: string | null | undefined): string {
+    const t = (userName || '').trim();
+    if (!t) return '?';
+    return t.charAt(0).toUpperCase();
+  }
+
+  /** Sincroniza foto de perfil com a base de dados para o avatar ao escrever comentário. */
+  private loadMeProfilePhotoFromServer(): void {
+    const userId = localStorage.getItem('user_id');
+    if (!userId) {
+      this.meFotoPerfilUrl = null;
+      return;
+    }
+    this.profileService.obterPerfil(userId).pipe(catchError(() => of(null))).subscribe((res) => {
+      const raw = res?.fotoPerfilUrl ?? res?.FotoPerfilUrl;
+      const url = raw != null ? String(raw).trim() : '';
+      this.meFotoPerfilUrl = url || null;
+      if (url) {
+        localStorage.setItem('fotoPerfilUrl', url);
+      } else {
+        localStorage.removeItem('fotoPerfilUrl');
+      }
+    });
   }
 
 
@@ -278,9 +393,12 @@ export class MoviePageComponent implements OnInit, OnDestroy {
   }
 
   private loadTrailer(id: number): void {
-    this.filmesService.getTrailer(id).subscribe({
-      next: (url) => this.trailerUrl = url,
-      error: () => this.trailerUrl = null
+    this.trailerDicaReady = false;
+    this.filmesService.getTrailer(id).pipe(
+      finalize(() => { this.trailerDicaReady = true; })
+    ).subscribe({
+      next: (url) => { this.trailerUrl = url && String(url).trim() ? url : null; },
+      error: () => { this.trailerUrl = null; }
     });
   }
 
@@ -485,6 +603,7 @@ export class MoviePageComponent implements OnInit, OnDestroy {
   }
 
   sendComment(): void {
+    if (this.isSendingComment) return;
     this.commentError = '';
     if (!this.filme) return;
 

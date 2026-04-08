@@ -4,6 +4,10 @@ import { ComunidadesService, ComunidadeDto, SugestaoFilmeComunidade } from '../.
 import { MenuService } from '../../services/menu.service';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../environments/environment';
+import { OnboardingStep } from '../../services/onboarding.service';
+import { forkJoin, of } from 'rxjs';
+import { catchError, finalize, map } from 'rxjs/operators';
+import { NotificacoesService } from '../../services/notificacoes.service';
 
 @Component({
   selector: 'app-comunidades',
@@ -11,7 +15,32 @@ import { environment } from '../../../environments/environment';
   styleUrls: ['./comunidades.component.css']
 })
 export class ComunidadesComponent implements OnInit {
+  readonly comunidadesOnboardingSteps: OnboardingStep[] = [
+    {
+      selector: '[data-tour="comunidades-menu"]',
+      title: 'Menu',
+      body: 'Acede ao resto da app (início, perfil, jogos, cinemas, etc.).'
+    },
+    {
+      selector: '[data-tour="comunidades-intro"]',
+      title: 'As tuas comunidades',
+      body: 'Aqui encontras grupos em que participas ou podes explorar. Os cartões levam-te à página de cada comunidade (exceto se estiveres banido).'
+    },
+    {
+      selector: '[data-tour="comunidades-criar"]',
+      title: 'Criar comunidade',
+      body: 'Abre o formulário para criares um grupo novo, com nome, descrição, privacidade e imagem opcional.'
+    },
+    {
+      selector: '[data-tour="comunidades-descoberta"]',
+      title: 'Descoberta nas comunidades',
+      body: 'Sugestões de filmes vindas das tuas comunidades. O clique abre os detalhes do filme.'
+    }
+  ];
+
   comunidades: ComunidadeDto[] = [];
+  comunidadesMembro: ComunidadeDto[] = [];
+  comunidadesRestantes: ComunidadeDto[] = [];
   isLoading = false;
   error = '';
 
@@ -23,20 +52,26 @@ export class ComunidadesComponent implements OnInit {
   showCreateModal = false;
   newNome = '';
   newDescricao = '';
+  newLimiteMembros: number | null = null;
+  newIsPrivada = false;
   bannerFile: File | null = null;
   bannerPreview: string | null = null;
+  iconFile: File | null = null;
+  iconPreview: string | null = null;
   isCreating = false;
   createError = '';
 
   sugestoesFilmes: SugestaoFilmeComunidade[] = [];
   isLoadingSugestoes = false;
   private readonly posterFallback = 'https://via.placeholder.com/300x450?text=Sem+poster';
+  private currentUserId: string | null = null;
 
   constructor(
     private service: ComunidadesService,
     private router: Router,
     public menuService: MenuService,
-    private http: HttpClient
+    private http: HttpClient,
+    private notificacoesService: NotificacoesService
   ) { }
 
   toggleMenu(): void {
@@ -49,6 +84,7 @@ export class ComunidadesComponent implements OnInit {
   }
 
   ngOnInit(): void {
+    this.currentUserId = localStorage.getItem('user_id');
     this.loadComunidades();
     this.loadSugestoesFilmes();
   }
@@ -82,6 +118,7 @@ export class ComunidadesComponent implements OnInit {
     this.service.getAll().subscribe({
       next: (list) => {
         this.comunidades = list || [];
+        this.splitComunidadesPorMembro();
         this.isLoading = false;
       },
       error: (err) => {
@@ -92,12 +129,52 @@ export class ComunidadesComponent implements OnInit {
     });
   }
 
+  private splitComunidadesPorMembro(): void {
+    if (!this.comunidades.length) {
+      this.comunidadesMembro = [];
+      this.comunidadesRestantes = [];
+      return;
+    }
+
+    if (!this.currentUserId) {
+      this.comunidadesMembro = [];
+      this.comunidadesRestantes = [...this.comunidades];
+      return;
+    }
+
+    const checks = this.comunidades.map((comunidade) => {
+      if (!comunidade.id) {
+        return of({ comunidade, isMembro: false });
+      }
+
+      return this.service.getMembros(comunidade.id).pipe(
+        map((membros) => ({
+          comunidade,
+          isMembro: (membros || []).some((m) => m.utilizadorId === this.currentUserId)
+        })),
+        catchError(() => of({ comunidade, isMembro: false }))
+      );
+    });
+
+    forkJoin(checks).subscribe((resultado) => {
+      this.comunidadesMembro = resultado.filter((x) => x.isMembro).map((x) => x.comunidade);
+      this.comunidadesRestantes = resultado.filter((x) => !x.isMembro).map((x) => x.comunidade);
+    });
+  }
+
   openCreate(): void {
     this.createError = '';
     this.newNome = '';
     this.newDescricao = '';
+    this.newLimiteMembros = null;
+    this.newIsPrivada = false;
     this.bannerFile = null;
     this.bannerPreview = null;
+    this.iconFile = null;
+    if (this.iconPreview) {
+      URL.revokeObjectURL(this.iconPreview);
+      this.iconPreview = null;
+    }
     this.showCreateModal = true;
   }
 
@@ -118,6 +195,18 @@ export class ComunidadesComponent implements OnInit {
     }
   }
 
+  onIconSelected(ev: any): void {
+    const f: File = ev?.target?.files?.[0];
+    this.iconFile = f || null;
+    if (this.iconPreview) {
+      URL.revokeObjectURL(this.iconPreview);
+      this.iconPreview = null;
+    }
+    if (this.iconFile) {
+      this.iconPreview = URL.createObjectURL(this.iconFile);
+    }
+  }
+
   createCommunity(): void {
     this.createError = '';
     if (!this.newNome || !this.newNome.trim()) {
@@ -128,7 +217,12 @@ export class ComunidadesComponent implements OnInit {
     const fd = new FormData();
     fd.append('nome', this.newNome.trim());
     fd.append('descricao', this.newDescricao?.trim() || '');
+    if ((this.newLimiteMembros ?? 0) > 0) {
+      fd.append('limiteMembros', String(this.newLimiteMembros));
+    }
+    fd.append('isPrivada', String(this.newIsPrivada));
     if (this.bannerFile) fd.append('banner', this.bannerFile, this.bannerFile.name);
+    if (this.iconFile) fd.append('icon', this.iconFile, this.iconFile.name);
 
     this.isCreating = true;
     this.service.create(fd).subscribe({
@@ -142,13 +236,14 @@ export class ComunidadesComponent implements OnInit {
         }
 
         this.http.post<any>(`${this.apiMedalhas}/check-comunidade`, {}, { withCredentials: true })
+          .pipe(finalize(() => this.notificacoesService.refreshNotificationBadges()))
           .subscribe({
             next: (medalRes) => {
               if (medalRes.novasMedalhas > 0) {
                 this.medalSuccessMessage = `Ganhaste a medalha: ${medalRes.medalhas[0].nome}! 🏆`;
               }
             },
-            error: (err) => {
+            error: () => {
               this.medalErrorMessage = 'Erro ao verificar medalhas.';
             }
           });
@@ -163,6 +258,7 @@ export class ComunidadesComponent implements OnInit {
 
   goToCommunity(c: ComunidadeDto): void {
     if (!c || !c.id) return;
+    if (c.isCurrentUserBanned) return;
     this.router.navigate(['/comunidades', c.id]);
   }
 

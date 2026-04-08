@@ -18,6 +18,8 @@ import { LeaderboardComponent } from './components/leaderboard/leaderboard.compo
 import { ComunidadesComponent } from './components/comunidades/comunidades.component';
 import { ComunidadeDetalheComponent } from './components/comunidade-detalhe/comunidade-detalhe.component';
 import { NotificacoesConfigComponent } from './components/notificacoes-config/notificacoes-config.component';
+import { AdminPanelComponent } from './components/admin-panel/admin-panel.component';
+import { AdminGuard } from './guards/admin.guard';
 
 const routes: Routes = [
   { path: 'register', component: RegisterComponent },
@@ -38,6 +40,7 @@ const routes: Routes = [
   { path: 'comunidades', component: ComunidadesComponent },
   { path: 'comunidades/:id', component: ComunidadeDetalheComponent },
   { path: 'definicoes-notificacoes', component: NotificacoesConfigComponent },
+  { path: 'admin', component: AdminPanelComponent, canActivate: [AdminGuard] },
   { path: 'mapa-cinemas', redirectTo: 'cinemas-proximos', pathMatch: 'full' },
   { path: '', redirectTo: '/register', pathMatch: 'full' }
 ];

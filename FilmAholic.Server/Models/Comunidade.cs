@@ -8,6 +8,8 @@ public class Comunidade
     public int Id { get; set; }
     public string Nome { get; set; } = "";
     public string? Descricao { get; set; }
+    public int? LimiteMembros { get; set; }
+    public bool IsPrivada { get; set; }
 
     /// Ficheiro guardado em wwwroot/uploads/comunidades.
     public string? BannerFileName { get; set; }
@@ -20,4 +22,5 @@ public class Comunidade
 
     public ICollection<ComunidadeMembro> Membros { get; set; } = new List<ComunidadeMembro>();
     public ICollection<ComunidadePost> Posts { get; set; } = new List<ComunidadePost>();
+    public ICollection<ComunidadePedidoEntrada> PedidosEntrada { get; set; } = new List<ComunidadePedidoEntrada>();
 }

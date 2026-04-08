@@ -5,6 +5,7 @@ import { MenuService } from '../../services/menu.service';
 import { HttpClient } from '@angular/common/http';
 import { catchError } from 'rxjs/operators';
 import { of } from 'rxjs';
+import { OnboardingStep } from '../../services/onboarding.service';
 
 @Component({
   selector: 'app-cinema-movies',
@@ -28,6 +29,28 @@ export class CinemaMoviesComponent implements OnInit, OnDestroy, AfterViewInit {
   geoError: string | null = null;
   favoritosIds: Set<string> = new Set();
 
+  readonly cinemaMoviesOnboardingSteps: OnboardingStep[] = [
+    {
+      selector: '[data-tour="cinema-movies-menu"]',
+      title: 'Menu',
+      body: 'Abre o menu para navegares para o mapa de cinemas, o jogo, comunidades e outras áreas.'
+    },
+    {
+      selector: '[data-tour="cinema-movies-hero"]',
+      title: 'Filmes em cartaz',
+      body: 'Aqui vês as novidades nas salas — NOS, Cinemacity e outras redes disponíveis na app.'
+    },
+    {
+      selector: '[data-tour="cinema-movies-nearby"]',
+      title: 'Os teus cinemas',
+      body: 'Cinemas favoritos e mais próximos de ti, com atalho para o mapa completo.'
+    },
+    {
+      selector: '[data-tour="cinema-movies-catalog"]',
+      title: 'Carrosséis por rede',
+      body: 'Desliza os filmes, vê sessões externas ou abre a ficha do filme para mais detalhes.'
+    }
+  ];
 
   // Localização + cinemas loading flags
   private geoDone = false;

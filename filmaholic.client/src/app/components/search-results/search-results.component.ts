@@ -4,6 +4,7 @@ import { FilmesService, TmdbSearchResponse, TmdbMovieResult } from '../../servic
 import { AtoresService, ActorSearchResult, ActorMovie } from '../../services/atores.service';
 import { MenuService } from '../../services/menu.service';
 import { DesafiosService } from '../../services/desafios.service';
+import { OnboardingStep } from '../../services/onboarding.service';
 
 export type SearchResultItem = {
   id?: number;
@@ -28,6 +29,24 @@ export type SortOption =
   styleUrls: ['./search-results.component.css', '../dashboard/dashboard.component.css']
 })
 export class SearchResultsComponent implements OnInit, OnDestroy {
+  readonly searchOnboardingSteps: OnboardingStep[] = [
+    {
+      selector: '[data-tour="search-page-menu"]',
+      title: 'Menu',
+      body: 'Abre a navegação para outras áreas da app.'
+    },
+    {
+      selector: '[data-tour="search-page-bar"]',
+      title: 'Refinar a pesquisa',
+      body: 'Ajusta o termo e confirma para atualizar os resultados desta página.'
+    },
+    {
+      selector: '[data-tour="search-page-toolbar"]',
+      title: 'Filtrar e ordenar',
+      body: 'Filtra por género e ano, ou ordena os filmes por data, classificação ou nome.'
+    }
+  ];
+
   @ViewChild('searchContainer', { static: false }) searchContainerRef?: ElementRef;
   @ViewChild('sortWrapper', { static: false }) sortWrapperRef?: ElementRef;
   @ViewChild('filterWrapper', { static: false }) filterWrapperRef?: ElementRef;

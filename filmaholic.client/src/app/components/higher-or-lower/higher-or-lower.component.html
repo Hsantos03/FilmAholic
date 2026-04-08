@@ -1,6 +1,6 @@
 <!-- TOPBAR (igual ao perfil, mapa de cinemas, filmes em cartaz) -->
-<header class="cinema-map-topbar hol-topbar">
-  <button class="icon-btn" (click)="toggleMenu()" aria-label="Menu">
+  <header class="cinema-map-topbar hol-topbar">
+  <button type="button" class="icon-btn" data-tour="hol-topbar-menu" (click)="toggleMenu()" aria-label="Menu">
     <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
       <path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z" />
     </svg>
@@ -63,7 +63,7 @@
   <div class="bg-orb orb3"></div>
 
   <!-- ============ MENU INICIAL ============ -->
-  <div class="menu-screen" *ngIf="!isPlaying && !showHistory && !showEndStats && !showLeaderboard">
+  <div class="menu-screen" *ngIf="!isPlaying && !showHistory && !showEndStats && !showLeaderboard" data-tour="hol-menu">
     <div class="menu-badge">MINI-GAME</div>
     <h1 class="menu-title">Higher<br><span class="title-accent">or Lower</span></h1>
 
@@ -75,14 +75,14 @@
       }}
     </p>
 
-    <div class="category-row">
-      <button class="cat-btn"
+    <div class="category-row" data-tour="hol-category">
+      <button type="button" class="cat-btn"
               [class.cat-active]="gameCategory === 'films' || gameCategory === null"
               (click)="gameCategory = 'films'">
         <span class="cat-icon">🎬</span>
         <span class="cat-label">Filmes</span>
       </button>
-      <button class="cat-btn"
+      <button type="button" class="cat-btn"
               [class.cat-active]="gameCategory === 'actors'"
               (click)="gameCategory = 'actors'">
         <span class="cat-icon">🎭</span>
@@ -115,12 +115,12 @@
       </button>
     </div>
 
-    <button class="start-btn" (click)="startGame(gameCategory ?? 'films')">
+    <button type="button" class="start-btn" data-tour="hol-start" (click)="startGame(gameCategory ?? 'films')">
       <span>Iniciar Jogo</span>
       <span class="btn-arrow">→</span>
     </button>
 
-    <button class="history-btn" (click)="openHistory()">
+    <button type="button" class="history-btn" (click)="openHistory()">
       <span>📜</span> Histórico
     </button>
 
@@ -428,4 +428,10 @@
     </div>
   </div>
 
+  <app-dicas
+    *ngIf="!isPlaying && !showHistory && !showEndStats && !showLeaderboard"
+    tourId="hol-v1"
+    [steps]="holOnboardingSteps"
+    [startDelayMs]="650">
+  </app-dicas>
 </main>

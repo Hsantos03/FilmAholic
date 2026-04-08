@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { MenuService } from '../../services/menu.service';
 import { NotificacoesService, PreferenciasNotificacaoDto } from '../../services/notificacoes.service';
+import { OnboardingStep } from '../../services/onboarding.service';
 
 
 @Component({
@@ -33,6 +34,24 @@ export class NotificacoesConfigComponent implements OnInit {
   ];
 
   readonly frequenciasResumo: Array<PreferenciasNotificacaoDto['resumoEstatisticasFrequencia']> = ['Diaria', 'Semanal'];
+
+  readonly notificacoesConfigOnboardingSteps: OnboardingStep[] = [
+    {
+      selector: '[data-tour="notif-menu"]',
+      title: 'Menu',
+      body: 'Abre o menu lateral para ires ao dashboard, cinemas, jogo ou comunidades.'
+    },
+    {
+      selector: '[data-tour="notif-card"]',
+      title: 'Tipos de notificação',
+      body: 'Activa ou desactiva estreias, lembretes do jogo, filmes da lista e resumos.'
+    },
+    {
+      selector: '[data-tour="notif-save"]',
+      title: 'Guardar',
+      body: 'Confirma aqui para gravar as preferências na tua conta.'
+    }
+  ];
 
   constructor(
     private notificacoesService: NotificacoesService,

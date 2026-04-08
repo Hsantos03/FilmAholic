@@ -1084,6 +1084,9 @@ describe('Community Tests', () => {
 
     cy.get('.modal-overlay').should('not.exist');
 
+    cy.get('.tabs .tab-btn').contains('Membros').click();
+    cy.get('.membro-castigo-remaining').should('be.visible').and('contain', 'tempo restante');
+
     cy.window().then((win) => {
       win.localStorage.setItem('user_id', '2');
       win.localStorage.setItem('userName', 'outromembro');
@@ -1097,9 +1100,15 @@ describe('Community Tests', () => {
       ]
     }).as('getMembrosPunished');
 
+    cy.intercept('GET', '**/api/comunidades/1/me/estado', {
+      statusCode: 200,
+      body: { isMembro: true, isAdmin: false, pedidoPendente: false, castigadoAte }
+    }).as('getMeuEstadoPunished');
+
     cy.visit('/comunidades/1');
     cy.wait('@getCommunity');
     cy.wait('@getMembrosPunished');
+    cy.wait('@getMeuEstadoPunished');
     cy.wait('@getPosts');
 
     cy.get('.punishment-warning').should('be.visible');
@@ -1224,5 +1233,30 @@ describe('Community Tests', () => {
     cy.get('.ranking-row').eq(2).should('contain', '🥉').and('contain', 'filmlover').and('contain', '12.000 min');
     cy.get('.ranking-row').eq(3).should('contain', '#4').and('contain', 'testuser').and('contain', 'Tu').and('contain', '10.000 min');
     cy.get('.ranking-row').eq(4).should('contain', '#5').and('contain', 'casualviewer').and('contain', '3.000 min');
+  });
+
+  it('should block community detail when user is banned (403)', () => {
+    cy.window().then((win) => {
+      win.localStorage.setItem('user_id', '1');
+      win.localStorage.setItem('userName', 'testuser');
+    });
+
+    const ate = '2030-12-31T23:00:00Z';
+    cy.intercept('GET', '**/api/comunidades/99', {
+      statusCode: 403,
+      body: {
+        message: 'Foste banido desta comunidade.',
+        comunidadeNome: 'Comunidade Bloqueada',
+        banidoAte: ate
+      }
+    }).as('getBannedCommunity');
+
+    cy.visit('/comunidades/99');
+    cy.wait('@getBannedCommunity');
+
+    cy.get('.ban-access-denied').should('be.visible');
+    cy.get('.ban-access-denied__title').should('contain', 'Não tens acesso');
+    cy.get('.ban-access-denied__nome').should('contain', 'Comunidade Bloqueada');
+    cy.get('.comunidade-card').should('not.exist');
   });
 });

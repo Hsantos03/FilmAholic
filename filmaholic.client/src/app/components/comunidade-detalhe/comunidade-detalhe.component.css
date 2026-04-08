@@ -210,6 +210,65 @@
     color: #ff6b6b;
   }
 
+.ban-access-denied {
+  display: flex;
+  justify-content: center;
+  padding: 24px 16px 32px;
+}
+
+.ban-access-denied__card {
+  max-width: 440px;
+  width: 100%;
+  text-align: center;
+  background: linear-gradient(165deg, rgba(60, 20, 24, 0.45) 0%, #121212 55%);
+  border: 1px solid rgba(220, 38, 38, 0.35);
+  border-radius: 16px;
+  padding: 28px 24px 24px;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.45);
+}
+
+.ban-access-denied__icon {
+  font-size: 2.25rem;
+  line-height: 1;
+  margin-bottom: 12px;
+  filter: grayscale(0.15);
+}
+
+.ban-access-denied__title {
+  margin: 0 0 10px;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #fff;
+  line-height: 1.3;
+}
+
+.ban-access-denied__nome {
+  margin: 0 0 8px;
+  font-size: 1rem;
+  color: #e8e8e8;
+}
+
+.ban-access-denied__msg {
+  margin: 0 0 14px;
+  font-size: 0.95rem;
+  color: #c9c9c9;
+  line-height: 1.45;
+}
+
+.ban-access-denied__ate {
+  margin: 0 0 18px;
+  font-size: 0.88rem;
+  color: #ffb4b4;
+}
+
+.ban-access-denied__ate--perm {
+  color: #fca5a5;
+}
+
+.ban-access-denied__btn {
+  margin-top: 4px;
+}
+
 .comunidade-card {
   background: #101010;
   border: 1px solid rgba(255, 255, 255, 0.08);
@@ -332,9 +391,15 @@
 /* ── Abas ── */
 .tabs {
   display: flex;
-  gap: 4px;
+  justify-content: space-between;
+  align-items: flex-end;
   margin: 20px 0 0;
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.tabs-left {
+  display: flex;
+  gap: 4px;
 }
 
 .tab-btn {
@@ -357,6 +422,22 @@
 
 .tab-content {
   margin-top: 20px;
+}
+
+.membros-counter {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 64px;
+  height: 30px;
+  padding: 0 12px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #ffd8e7;
+  background: rgba(255, 47, 109, 0.18);
+  border: 1px solid rgba(255, 47, 109, 0.35);
+  margin-bottom: 8px;
 }
 
 /* ── Toolbar de publicações ── */
@@ -581,6 +662,16 @@
   font-size: 12px;
   font-weight: bold;
   flex-shrink: 0;
+  color: #e8e8e8;
+  overflow: hidden;
+}
+
+.comment-avatar-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+  display: block;
 }
 
 .comment-body {
@@ -708,6 +799,15 @@
     color: #ef4444;
     background: rgba(239, 68, 68, 0.15);
   }
+
+.vote-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.vote-group--disabled {
+  opacity: 0.85;
+}
 
 /* ── Container do Toggle de Spoiler ── */
 .spoiler-toggle-container {
@@ -964,6 +1064,97 @@
   gap: 10px;
 }
 
+.pending-requests {
+  margin-bottom: 14px;
+  padding: 12px;
+  border-radius: 10px;
+  background: #101010;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.pending-requests h3 {
+  margin: 0 0 10px;
+  font-size: 14px;
+}
+
+.pending-request-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.pending-request-row:first-of-type {
+  border-top: none;
+}
+
+.pending-request-user {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.pending-request-user span {
+  color: #9aa0a6;
+  font-size: 12px;
+}
+
+.pending-request-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.pending-request-actions button {
+  min-width: 82px;
+  height: 36px;
+  padding: 0 14px;
+  border-radius: 8px;
+  border: none;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.pending-approve-btn {
+  color: #fff;
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  box-shadow: 0 2px 10px rgba(16, 185, 129, 0.35);
+}
+
+.pending-approve-btn:hover {
+  background: linear-gradient(135deg, #1dcf95 0%, #10b981 100%);
+  box-shadow: 0 4px 16px rgba(16, 185, 129, 0.45);
+}
+
+.pending-reject-btn {
+  color: #fff;
+  background: linear-gradient(135deg, #ef4444 0%, #b91c1c 100%);
+  box-shadow: 0 2px 10px rgba(239, 68, 68, 0.35);
+}
+
+.pending-reject-btn:hover {
+  background: linear-gradient(135deg, #f87171 0%, #dc2626 100%);
+  box-shadow: 0 4px 16px rgba(239, 68, 68, 0.45);
+}
+
+.modal-box input[type="number"],
+.modal-box select {
+  width: 100%;
+  box-sizing: border-box;
+  background: #171717;
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 8px;
+  padding: 10px 12px;
+  margin-bottom: 8px;
+}
+
 .membro-item {
   display: flex;
   align-items: center;
@@ -1011,6 +1202,20 @@
     color: #ff2f6d;
   }
 
+.membro-castigo-remaining {
+  font-size: 11px;
+  line-height: 1.35;
+  margin-top: 2px;
+  color: #ef4444;
+  font-weight: 500;
+}
+
+.membro-castigo-remaining strong {
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: #ef4444;
+}
+
 .membro-data {
   font-size: 12px;
   color: #9aa0a6;
@@ -1033,6 +1238,12 @@
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+.ban-btn {
+  background: rgba(185, 28, 28, 0.18);
+  border-color: rgba(185, 28, 28, 0.38);
+  color: #f87171;
 }
 
   .kick-btn:hover {
@@ -1356,44 +1567,57 @@
   gap: 4px;
 }
 
-/* Medal notifications */
-.medal-notifications {
-  margin: 16px 0;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.medal-notifications .state {
-  padding: 12px 16px;
-  border-radius: 8px;
-  font-size: 14px;
+/* Kick / ban modal — optional reason & ban duration */
+.modal-box--danger .kick-ban-field-label {
+  display: block;
+  text-align: left;
+  font-size: 0.82rem;
   font-weight: 600;
-  text-align: center;
-  animation: slideInUp 0.3s ease-out;
+  color: var(--text-muted, #aaa);
+  margin: 12px 0 6px;
 }
 
-.medal-notifications .state.success {
-  background: linear-gradient(135deg, #10b981, #059669);
-  color: white;
-  border: 1px solid #059669;
-  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+.modal-box--danger .kick-ban-textarea,
+.modal-box--danger .kick-ban-input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--border, #333);
+  background: var(--surface-2, #1a1a1a);
+  color: var(--text, #fff);
+  font-size: 0.9rem;
+  text-align: left;
 }
 
-.medal-notifications .state.error {
-  background: linear-gradient(135deg, #ef4444, #dc2626);
-  color: white;
-  border: 1px solid #dc2626;
-  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+.modal-box--danger .kick-ban-textarea {
+  resize: vertical;
+  min-height: 72px;
 }
 
-@keyframes slideInUp {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+.modal-box--danger .kick-ban-hint {
+  text-align: left;
+  font-size: 0.78rem;
+  color: var(--text-muted, #888);
+  margin: 6px 0 0;
+  line-height: 1.4;
+}
+
+.membro-item--banido .membro-info {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+}
+
+.membro-ban-meta {
+  font-size: 0.78rem;
+  color: var(--text-muted, #aaa);
+}
+
+.membro-ban-motivo {
+  font-size: 0.8rem;
+  color: var(--text-muted, #bbb);
+  font-style: italic;
+  max-width: 100%;
+  word-break: break-word;
 }

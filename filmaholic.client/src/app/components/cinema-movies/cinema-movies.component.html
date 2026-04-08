@@ -5,7 +5,7 @@
 
   <!-- TOPBAR -->
   <header class="cinema-map-topbar">
-    <button class="icon-btn" (click)="toggleMenu()" aria-label="Menu">
+    <button type="button" class="icon-btn" data-tour="cinema-movies-menu" (click)="toggleMenu()" aria-label="Menu">
       <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
         <path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z" />
       </svg>
@@ -61,14 +61,14 @@
   </nav>
 
   <!-- HERO -->
-  <header class="cinema-hero">
+  <header class="cinema-hero" data-tour="cinema-movies-hero">
     <div class="hero-badge">🍿 EM CARTAZ</div>
     <h1 class="hero-title">Filmes em<br><span class="title-accent">Cartaz</span></h1>
     <p class="hero-sub">A sua próxima sessão favorita está à sua espera.</p>
   </header>
 
   <!-- ── OS TEUS CINEMAS ── -->
-  <section class="nearby-section">
+  <section class="nearby-section" data-tour="cinema-movies-nearby">
 
     <!-- Aviso sem localização -->
     <div *ngIf="geoError" class="geo-warning">
@@ -141,7 +141,7 @@
   </div>
 
   <!-- CONTEÚDO -->
-  <div *ngIf="!isLoading && !error" class="cinema-content">
+  <div *ngIf="!isLoading && !error" class="cinema-content" data-tour="cinema-movies-catalog">
 
     <!-- ── CINEMA NOS ── -->
     <section *ngIf="nosMovies.length > 0" class="cinema-section">
@@ -300,4 +300,11 @@
     </div>
 
   </div>
+
+  <app-dicas
+    *ngIf="!isLoading && !error"
+    tourId="cinema-movies-v1"
+    [steps]="cinemaMoviesOnboardingSteps"
+    [startDelayMs]="600">
+  </app-dicas>
 </div>

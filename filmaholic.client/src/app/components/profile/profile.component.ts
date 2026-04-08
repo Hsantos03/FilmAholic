@@ -9,7 +9,8 @@ import { FavoritesService, FavoritosDTO } from '../../services/favorites.service
 import { ProfileService } from '../../services/profile.service';
 import { environment } from '../../../environments/environment';
 import { Subject, of } from 'rxjs';
-import { debounceTime, distinctUntilChanged, switchMap } from 'rxjs/operators';
+import { debounceTime, distinctUntilChanged, finalize, switchMap } from 'rxjs/operators';
+import { NotificacoesService } from '../../services/notificacoes.service';
 
 type StatsPeriod = 'all' | '7d' | '30d' | '3m' | '12m';
 type GraphTheme = 'default' | 'dark' | 'force';
@@ -194,7 +195,8 @@ export class ProfileComponent implements OnInit {
     private userMoviesService: UserMoviesService,
     private filmesService: FilmesService,
     private favoritesService: FavoritesService,
-    private profileService: ProfileService
+    private profileService: ProfileService,
+    private notificacoesService: NotificacoesService
   ) { }
 
 
@@ -328,6 +330,7 @@ export class ProfileComponent implements OnInit {
 
   private checkLevelMedals(): void {
     this.http.post<any>(`${this.apiMedalhas}/check-level`, {}, { withCredentials: true })
+      .pipe(finalize(() => this.notificacoesService.refreshNotificationBadges()))
       .subscribe({
         next: (response) => {
           if (response && response.novasMedalhas > 0) {

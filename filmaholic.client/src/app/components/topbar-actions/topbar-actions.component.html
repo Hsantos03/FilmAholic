@@ -7,8 +7,8 @@
       <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
         <path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.64-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.63 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z" />
       </svg>
-      <span class="notif-badge" *ngIf="comunidadeUnreadCount + medalhaUnreadCount > 0">{{ 
-    (comunidadeUnreadCount + medalhaUnreadCount) > 9 ? '9+' : (comunidadeUnreadCount + medalhaUnreadCount) 
+      <span class="notif-badge" *ngIf="comunidadeUnreadCount + medalhaUnreadCount + plataformaUnreadCount > 0">{{
+    (comunidadeUnreadCount + medalhaUnreadCount + plataformaUnreadCount) > 9 ? '9+' : (comunidadeUnreadCount + medalhaUnreadCount + plataformaUnreadCount)
   }}</span>
     </button>
     <div class="notifications-menu" *ngIf="isNotificationsOpen" role="menu">
@@ -126,6 +126,32 @@
 
       <!-- ══════ TAB: Notificações (reminder HoL + resumo + comunidades) ══════ -->
       <ng-container *ngIf="activeNotifTab === 'notificacoes'">
+        <div *ngIf="hasPlataformaItems" class="notif-plataforma-section" (click)="$event.stopPropagation()">
+          <div class="notifications-title">Anúncios FilmAholic</div>
+          <div *ngFor="let it of plataformaFeed.unread" class="resumo-card resumo-card--unread">
+            <div class="resumo-card-body">
+              <p class="resumo-line"><strong>{{ it.titulo }}</strong></p>
+              <p class="resumo-line resumo-line--muted">{{ it.mensagem }}</p>
+              <span class="comunidade-notif-date">{{ it.criadaEm | date:'dd/MM/yyyy HH:mm' }}</span>
+            </div>
+            <button type="button"
+                    class="notification-mark-read"
+                    (click)="marcarPlataformaLida($event, it)"
+                    aria-label="Marcar como lido">
+              ✓
+            </button>
+          </div>
+          <ng-container *ngIf="plataformaFeed.read.length">
+            <div class="notifications-title resumo-subtitle">Anúncios anteriores</div>
+            <div *ngFor="let it of plataformaFeed.read" class="resumo-card resumo-card--read">
+              <div class="resumo-card-body">
+                <p class="resumo-line"><strong>{{ it.titulo }}</strong></p>
+                <p class="resumo-line resumo-line--muted">{{ it.mensagem }}</p>
+              </div>
+            </div>
+          </ng-container>
+        </div>
+
         <!-- Reminder Higher or Lower -->
         <div *ngIf="reminderJogo.length > 0"
              class="notif-reminder-section"
@@ -190,7 +216,7 @@
               ✓
             </button>
           </div>
-          <ng-container *ngIf="resumoFeed.read?.length">
+          <ng-container *ngIf="resumoFeed.read.length">
             <div class="notifications-title resumo-subtitle">Resumos anteriores</div>
             <div *ngFor="let it of resumoFeed.read" class="resumo-card resumo-card--read">
               <div class="resumo-card-body">
@@ -227,7 +253,18 @@
                  role="menuitem">
               <div class="comunidade-notif-icon">👥</div>
               <div class="comunidade-notif-body">
-                <span class="comunidade-notif-text">Existem novas publicações na comunidade <strong>{{ n.comunidadeNome }}</strong></span>
+                <span class="comunidade-notif-text">
+                  <ng-container [ngSwitch]="comunidadeNotifTipo(n.tipo)">
+                    <ng-container *ngSwitchCase="'pedido_entrada'">Novo pedido para entrar na comunidade <strong>{{ n.comunidadeNome }}</strong></ng-container>
+                    <ng-container *ngSwitchCase="'pedido_aprovado'">O teu pedido para entrar na comunidade <strong>{{ n.comunidadeNome }}</strong> foi aprovado ✅</ng-container>
+                    <ng-container *ngSwitchCase="'pedido_rejeitado'">O teu pedido para entrar na comunidade <strong>{{ n.comunidadeNome }}</strong> foi rejeitado ❌</ng-container>
+                    <ng-container *ngSwitchCase="'kick'">Foste expulso da comunidade <strong>{{ n.comunidadeNome }}</strong></ng-container>
+                    <ng-container *ngSwitchCase="'banido'">Foste banido da comunidade <strong>{{ n.comunidadeNome }}</strong></ng-container>
+                    <ng-container *ngSwitchDefault>Existem novas publicações na comunidade <strong>{{ n.comunidadeNome }}</strong></ng-container>
+                  </ng-container>
+                </span>
+                <span class="comunidade-notif-desc comunidade-notif-desc--kickban"
+                      *ngIf="comunidadeKickBanCorpo(n) as kb">{{ kb }}</span>
                 <span class="comunidade-notif-date">{{ n.criadaEm | date:'dd/MM/yyyy HH:mm' }}</span>
               </div>
               <button type="button"
@@ -251,7 +288,18 @@
                  role="menuitem">
               <div class="comunidade-notif-icon">👥</div>
               <div class="comunidade-notif-body">
-                <span class="comunidade-notif-text">Novas publicações na comunidade <strong>{{ n.comunidadeNome }}</strong></span>
+                <span class="comunidade-notif-text">
+                  <ng-container [ngSwitch]="comunidadeNotifTipo(n.tipo)">
+                    <ng-container *ngSwitchCase="'pedido_entrada'">Pedido de entrada na comunidade <strong>{{ n.comunidadeNome }}</strong></ng-container>
+                    <ng-container *ngSwitchCase="'pedido_aprovado'">Pedido aprovado na comunidade <strong>{{ n.comunidadeNome }}</strong></ng-container>
+                    <ng-container *ngSwitchCase="'pedido_rejeitado'">Pedido rejeitado na comunidade <strong>{{ n.comunidadeNome }}</strong></ng-container>
+                    <ng-container *ngSwitchCase="'kick'">Expulso da comunidade <strong>{{ n.comunidadeNome }}</strong></ng-container>
+                    <ng-container *ngSwitchCase="'banido'">Banido da comunidade <strong>{{ n.comunidadeNome }}</strong></ng-container>
+                    <ng-container *ngSwitchDefault>Novas publicações na comunidade <strong>{{ n.comunidadeNome }}</strong></ng-container>
+                  </ng-container>
+                </span>
+                <span class="comunidade-notif-desc comunidade-notif-desc--kickban"
+                      *ngIf="comunidadeKickBanCorpo(n) as kb">{{ kb }}</span>
                 <span class="comunidade-notif-date">{{ n.criadaEm | date:'dd/MM/yyyy HH:mm' }}</span>
               </div>
             </div>

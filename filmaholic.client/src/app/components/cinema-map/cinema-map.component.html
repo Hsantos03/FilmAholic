@@ -6,7 +6,7 @@
 
   <!-- TOPBAR (menu + brand + notificações + perfil) -->
   <header class="cinema-map-topbar">
-    <button class="icon-btn" (click)="toggleMenu()" aria-label="Menu">
+    <button type="button" class="icon-btn" data-tour="cinema-map-menu" (click)="toggleMenu()" aria-label="Menu">
       <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
         <path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z" />
       </svg>
@@ -62,7 +62,7 @@
   </nav>
 
   <!-- HERO HEADER -->
-  <header class="cinema-hero">
+  <header class="cinema-hero" data-tour="cinema-map-hero">
     <div class="hero-badge">📍 LOCALIZAÇÃO</div>
     <h1 class="hero-title">Cinemas<span class="title-accent"> Próximos</span></h1>
     <p class="hero-sub">Encontra o cinema mais perto de ti e planeia a tua próxima sessão.</p>
@@ -91,6 +91,7 @@
   <!-- LISTA DE CINEMAS -->
   <section *ngIf="!loading && cinemas.length > 0"
            class="cinema-list"
+           data-tour="cinema-map-list"
            aria-label="Lista de cinemas por distância">
 
     <div class="list-header">
@@ -152,4 +153,11 @@
       </div>
     </div>
   </section>
+
+  <app-dicas
+    *ngIf="!loading && !cinemasError"
+    tourId="cinema-map-v1"
+    [steps]="cinemaMapOnboardingSteps"
+    [startDelayMs]="650">
+  </app-dicas>
 </div>
