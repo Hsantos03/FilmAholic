@@ -65,7 +65,7 @@
           class="edit-btn"
           (click)="openEditCapa()"
           title="Editar capa">
-    <span style="display: inline-block; transform: rotate(-45deg);">✏</span>
+    <span style="display: inline-block; transform: rotate(135deg);">✏</span>
   </button>
 </div>
 
@@ -81,7 +81,7 @@
               class="avatar-edit-btn"
               (click)="openEditAvatar()"
               title="Editar foto de perfil">
-        <span style="display: inline-block; transform: rotate(-45deg);">✏</span>
+        <span style="display: inline-block; transform: rotate(135deg);">✏</span>
       </button>
     </div>
 
@@ -93,6 +93,7 @@
         <li class="menu-item" [class.active]="activeSection === 'statistics'" (click)="showStatistics()">Estatísticas</li>
         <li class="menu-item" (click)="goToNotificacoesSettings()">Definições de notificações</li>
         <li class="menu-item" [class.active]="activeSection === 'conquistas'" (click)="showConquistas()">Conquistas</li>
+        <li class="menu-item" [class.active]="activeSection === 'generos'" (click)="showGeneros()">Géneros</li>
         <li class="logout" (click)="logout()">Terminar sessão</li>
         <li class="logout" (click)="openDeleteConfirm()">Apagar conta</li>
       </ul>
@@ -111,11 +112,32 @@
         </div>
 
         <div class="xp-bar" aria-hidden="true">
-          <div class="xp-fill" [style.width.%]="(xp % 10) * 10"></div>
+          <div class="xp-fill" [style.width.%]="xpProgressPercent()"></div>
         </div>
 
         <div class="xp-text">
           Faltam {{ xpParaProximoNivel() }} XP para o nível {{ level + 1 }}
+        </div>
+
+        <div class="medals-showcase">
+          <h4>Medalhas em Exposição</h4>
+          <div class="medals-row">
+            <div class="medal-slot" *ngFor="let slot of [0, 1, 2]; let i = index" (click)="openMedalSelector(i)" [class.empty]="!showcasedMedals[i]">
+              <img *ngIf="showcasedMedals[i]?.iconeUrl" [src]="API_URL + showcasedMedals[i].iconeUrl" [alt]="showcasedMedals[i]?.nome" class="medal-img">
+              <div *ngIf="!showcasedMedals[i]" class="medal-placeholder">+</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- User Tag Selector -->
+        <div class="user-tag-section" *ngIf="medalhasConquistadas.length > 0">
+          <h4>Tag</h4>
+          <select class="tag-dropdown" [(ngModel)]="userTag" (change)="onTagChange()">
+            <option [ngValue]="null">Selecionar tag...</option>
+            <option *ngFor="let medal of medalhasConquistadas" [ngValue]="medal.medalha?.nome || medal.nome">
+              {{ medal.medalha?.nome || medal.nome }}
+            </option>
+          </select>
         </div>
       </div>
 
@@ -922,6 +944,67 @@
       </div>
     </ng-container>
 
+    <!-- Géneros -->
+    <ng-container *ngIf="activeSection === 'generos'">
+      <div class="generos-view">
+        <h2>Géneros Favoritos</h2>
+        <p class="generos-desc">Seleciona os teus géneros favoritos para personalizar as tuas recomendações.</p>
+
+        <div *ngIf="generosError" class="error-message">
+          {{ generosError }}
+        </div>
+
+        <div *ngIf="showGenerosSuccess" class="success-message">
+          Géneros guardados com sucesso!
+        </div>
+
+        <div *ngIf="isLoadingGeneros" style="text-align: center; padding: 40px; color: var(--text-muted);">
+          <p>A carregar géneros...</p>
+        </div>
+
+        <div *ngIf="!isLoadingGeneros" style="margin-bottom: 20px; text-align: center;">
+          <button
+            type="button"
+            class="btn-select-all"
+            (click)="selecionarTodosGeneros()">
+            {{ todosGenerosSelecionados ? 'Desselecionar Todos' : 'Selecionar Todos' }}
+          </button>
+        </div>
+
+        <div *ngIf="!isLoadingGeneros" class="generos-grid">
+          <button
+            *ngFor="let genero of generosDisponiveis"
+            type="button"
+            class="genero-button"
+            [class.selected]="isGeneroFavorito(genero.id)"
+            (click)="toggleGeneroFavorito(genero.id)">
+            {{ genero.nome }}
+          </button>
+        </div>
+
+        <div *ngIf="!isLoadingGeneros" class="generos-actions">
+          <p class="generos-count" *ngIf="generosFavoritos.length > 0">
+            {{ generosFavoritos.length }} género(s) selecionado(s)
+          </p>
+          <div class="generos-buttons">
+            <button
+              type="button"
+              class="btn-guardar"
+              (click)="salvarGenerosFavoritos()"
+              [disabled]="isSavingGeneros">
+              {{ isSavingGeneros ? 'A guardar...' : 'Guardar' }}
+            </button>
+            <button
+              type="button"
+              class="btn-cancelar"
+              (click)="showOverview()">
+              Cancelar
+            </button>
+          </div>
+        </div>
+      </div>
+    </ng-container>
+
   </section>
 </div>
 
@@ -963,7 +1046,7 @@
 
       <div class="modal-actions">
         <button type="submit" class="save-btn">Guardar</button>
-        <button type="button" class="cancel-btn" (click)="closeEditCapa()">Cancelar</button>
+        <button type="button" class="save-btn" style="background: #dc3545;" (click)="removeCapa()" *ngIf="editCapaUrl">Remover</button>
       </div>
     </form>
   </div>
@@ -985,7 +1068,7 @@
 
       <div class="modal-actions">
         <button type="submit" class="save-btn">Guardar</button>
-        <button type="button" class="cancel-btn" (click)="closeEditAvatar()">Cancelar</button>
+        <button type="button" class="save-btn" style="background: #dc3545;" (click)="removeAvatar()" *ngIf="editFotoPerfilUrl">Remover</button>
       </div>
     </form>
   </div>
@@ -1078,5 +1161,32 @@
         </button>
       </div>
     </form>
+  </div>
+</div>
+
+<!-- Medal Selector Modal -->
+<div class="modal-overlay" *ngIf="showMedalSelectorModal" (click)="closeMedalSelector()">
+  <div class="modal-box medal-selector-modal" (click)="$event.stopPropagation()">
+    <button class="modal-close" (click)="closeMedalSelector()">&times;</button>
+
+    <h3>Selecionar Medalha</h3>
+    <p class="modal-desc">Escolhe uma medalha para exibir no perfil</p>
+
+    <div class="medals-grid" *ngIf="medalhasConquistadas.length > 0">
+      <div class="medal-option" *ngFor="let medal of medalhasConquistadas" (click)="selectMedalForSlot(medal.medalha || medal)" [class.selected]="isMedalSelectedForSlot(medal)">
+        <img *ngIf="(medal.medalha?.iconeUrl || medal.iconeUrl)" [src]="API_URL + (medal.medalha?.iconeUrl || medal.iconeUrl)" class="medal-option-img">
+        <div *ngIf="!(medal.medalha?.iconeUrl || medal.iconeUrl)" class="medal-option-placeholder">🏅</div>
+        <span class="medal-option-name">{{ medal.medalha?.nome || medal.nome }}</span>
+      </div>
+    </div>
+
+    <div *ngIf="medalhasConquistadas.length === 0" class="no-medals">
+      <p>Ainda não conquistaste nenhuma medalha.</p>
+    </div>
+
+    <div class="modal-actions">
+      <button type="button" class="cancel-btn" (click)="removeMedalFromSlot(selectedSlotIndex!)">Remover Medalha</button>
+      <button type="button" class="cancel-btn" (click)="closeMedalSelector()">Cancelar</button>
+    </div>
   </div>
 </div>

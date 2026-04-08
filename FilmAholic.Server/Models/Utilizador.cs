@@ -24,6 +24,9 @@ public class Utilizador : IdentityUser
     public string? Bio { get; set; } 
     public DateTime DataCriacao { get; set; } = DateTime.UtcNow;
 
+    [MaxLength(100)]
+    public string? UserTag { get; set; } // Selected medal name as tag (e.g., "fundador")
+
     public ICollection<UtilizadorGenero> GenerosFavoritos { get; set; } = new List<UtilizadorGenero>();
 
     public ICollection<UtilizadorMedalha> UtilizadorMedalhas { get; set; } = new List<UtilizadorMedalha>();

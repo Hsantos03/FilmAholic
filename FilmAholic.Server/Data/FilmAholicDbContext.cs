@@ -36,6 +36,7 @@ public class FilmAholicDbContext : IdentityDbContext<Utilizador>
 
     public DbSet<Medalha> Medalhas => Set<Medalha>();
     public DbSet<UtilizadorMedalha> UtilizadorMedalhas => Set<UtilizadorMedalha>();
+    public DbSet<UtilizadorMedalhaExposicao> UtilizadorMedalhasExposicao => Set<UtilizadorMedalhaExposicao>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -363,6 +364,27 @@ public class FilmAholicDbContext : IdentityDbContext<Utilizador>
              .WithMany(m => m.UtilizadorMedalhas)
              .HasForeignKey(x => x.MedalhaId)
              .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        // Configure UtilizadorMedalhaExposicao entity (showcased medals)
+        builder.Entity<UtilizadorMedalhaExposicao>(e =>
+        {
+            e.ToTable("UtilizadorMedalhasExposicao");
+            e.HasKey(x => new { x.UtilizadorId, x.SlotIndex });
+            e.Property(x => x.SlotIndex).HasMaxLength(3); // 0, 1, 2
+            e.Property(x => x.Tag).HasMaxLength(100);
+            e.Property(x => x.DataAtualizacao).HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+            e.HasOne(x => x.Utilizador)
+             .WithMany()
+             .HasForeignKey(x => x.UtilizadorId)
+             .OnDelete(DeleteBehavior.Cascade);
+
+            e.HasOne(x => x.Medalha)
+             .WithMany()
+             .HasForeignKey(x => x.MedalhaId)
+             .IsRequired(false)
+             .OnDelete(DeleteBehavior.SetNull);
         });
     }
 }

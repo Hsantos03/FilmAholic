@@ -84,19 +84,23 @@ namespace FilmAholic.Server.Controllers
                 user.Bio = dto.Bio;
             }
 
-            if (!string.IsNullOrWhiteSpace(dto.FotoPerfilUrl))
+            if (dto.FotoPerfilUrl is not null)
             {
-                user.FotoPerfilUrl = dto.FotoPerfilUrl;
+                user.FotoPerfilUrl = string.IsNullOrWhiteSpace(dto.FotoPerfilUrl) ? null : dto.FotoPerfilUrl;
             }
 
-            if (!string.IsNullOrWhiteSpace(dto.CapaUrl))
+            if (dto.CapaUrl is not null)
             {
-                user.CapaUrl = dto.CapaUrl;
+                user.CapaUrl = string.IsNullOrWhiteSpace(dto.CapaUrl) ? null : dto.CapaUrl;
             }
 
             try
             {
-                await _context.SaveChangesAsync();
+                var updateResult = await _userManager.UpdateAsync(user);
+                if (!updateResult.Succeeded)
+                {
+                    return StatusCode(500, new { message = "Failed to update profile.", errors = updateResult.Errors });
+                }
                 return NoContent();
             }
             catch (DbUpdateException ex)
@@ -260,6 +264,43 @@ namespace FilmAholic.Server.Controllers
             await _context.SaveChangesAsync();
             return Ok();
         }
+
+        // GET: api/Profile/tag
+        [Authorize]
+        [HttpGet("tag")]
+        public async Task<IActionResult> GetUserTag()
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var user = await _context.Users.FindAsync(userId);
+            if (user == null) return NotFound();
+
+            return Ok(new { tag = user.UserTag });
+        }
+
+        // PUT: api/Profile/tag
+        [Authorize]
+        [HttpPut("tag")]
+        public async Task<IActionResult> UpdateUserTag([FromBody] UpdateUserTagDto dto)
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var user = await _context.Users.FindAsync(userId);
+            if (user == null) return NotFound();
+
+            // Validate that the tag is one of the user's earned medals
+            if (!string.IsNullOrEmpty(dto.Tag))
+            {
+                var hasMedal = await _context.UtilizadorMedalhas
+                    .Include(um => um.Medalha)
+                    .AnyAsync(um => um.UtilizadorId == userId && um.Medalha.Nome == dto.Tag);
+                
+                if (!hasMedal)
+                    return BadRequest(new { message = "Tag inválida. Deve ser o nome de uma medalha conquistada." });
+            }
+
+            user.UserTag = dto.Tag;
+            await _context.SaveChangesAsync();
+            return Ok(new { tag = user.UserTag });
+        }
         
 
         // DTOs
@@ -267,13 +308,20 @@ namespace FilmAholic.Server.Controllers
         {
             public string? UserName { get; set; }
             public string? Bio { get; set; }
+            [System.Text.Json.Serialization.JsonPropertyName("fotoPerfilUrl")]
             public string? FotoPerfilUrl { get; set; }
+            [System.Text.Json.Serialization.JsonPropertyName("capaUrl")]
             public string? CapaUrl { get; set; }
         }
 
         public class AtualizarGenerosFavoritosDto
         {
             public List<int>? GeneroIds { get; set; }
+        }
+
+        public class UpdateUserTagDto
+        {
+            public string? Tag { get; set; }
         }
     }
 }

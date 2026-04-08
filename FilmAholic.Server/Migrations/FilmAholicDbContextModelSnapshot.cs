@@ -1101,6 +1101,10 @@ namespace FilmAholic.Server.Migrations
                         .HasMaxLength(256)
                         .HasColumnType("nvarchar(256)");
 
+                    b.Property<string>("UserTag")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
                     b.Property<int>("XP")
                         .HasColumnType("int");
 
@@ -1156,6 +1160,34 @@ namespace FilmAholic.Server.Migrations
                     b.HasIndex("MedalhaId");
 
                     b.ToTable("UtilizadorMedalhas", (string)null);
+                });
+
+            modelBuilder.Entity("FilmAholic.Server.Models.UtilizadorMedalhaExposicao", b =>
+                {
+                    b.Property<string>("UtilizadorId")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<int>("SlotIndex")
+                        .HasMaxLength(3)
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("DataAtualizacao")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+                    b.Property<int?>("MedalhaId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Tag")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.HasKey("UtilizadorId", "SlotIndex");
+
+                    b.HasIndex("MedalhaId");
+
+                    b.ToTable("UtilizadorMedalhasExposicao", (string)null);
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole", b =>
@@ -1543,6 +1575,24 @@ namespace FilmAholic.Server.Migrations
 
                     b.HasOne("FilmAholic.Server.Models.Utilizador", "Utilizador")
                         .WithMany("UtilizadorMedalhas")
+                        .HasForeignKey("UtilizadorId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Medalha");
+
+                    b.Navigation("Utilizador");
+                });
+
+            modelBuilder.Entity("FilmAholic.Server.Models.UtilizadorMedalhaExposicao", b =>
+                {
+                    b.HasOne("FilmAholic.Server.Models.Medalha", "Medalha")
+                        .WithMany()
+                        .HasForeignKey("MedalhaId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("FilmAholic.Server.Models.Utilizador", "Utilizador")
+                        .WithMany()
                         .HasForeignKey("UtilizadorId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();

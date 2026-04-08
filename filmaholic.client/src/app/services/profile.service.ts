@@ -27,4 +27,22 @@ export class ProfileService {
   obterPerfil(userId: string): Observable<any> {
     return this.http.get<any>(`${this.apiUrl}/${userId}`, { withCredentials: true });
   }
+
+  // Showcased medals API
+  obterMedalhasExposicao(): Observable<any[]> {
+    return this.http.get<any[]>(`${this.apiBase}/api/medalhas/exposicao`, { withCredentials: true });
+  }
+
+  atualizarMedalhaExposicao(slotIndex: number, medalhaId: number | null, tag?: string | null): Observable<any> {
+    return this.http.put(`${this.apiBase}/api/medalhas/exposicao`, { slotIndex, medalhaId, tag }, { withCredentials: true });
+  }
+
+  // User tag API
+  obterUserTag(): Observable<{ tag: string | null }> {
+    return this.http.get<{ tag: string | null }>(`${this.apiUrl}/tag`, { withCredentials: true });
+  }
+
+  atualizarUserTag(tag: string | null): Observable<any> {
+    return this.http.put(`${this.apiUrl}/tag`, { tag }, { withCredentials: true });
+  }
 }

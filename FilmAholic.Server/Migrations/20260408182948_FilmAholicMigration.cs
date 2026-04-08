@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
@@ -47,6 +47,7 @@ namespace FilmAholic.Server.Migrations
                     UltimoResetDiario = table.Column<DateTime>(type: "datetime2", nullable: true),
                     Bio = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     DataCriacao = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    UserTag = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: true),
                     UserName = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
                     NormalizedUserName = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
                     Email = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
@@ -604,6 +605,33 @@ namespace FilmAholic.Server.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "UtilizadorMedalhasExposicao",
+                columns: table => new
+                {
+                    UtilizadorId = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    SlotIndex = table.Column<int>(type: "int", maxLength: 3, nullable: false),
+                    MedalhaId = table.Column<int>(type: "int", nullable: true),
+                    Tag = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: true),
+                    DataAtualizacao = table.Column<DateTime>(type: "datetime2", nullable: false, defaultValueSql: "CURRENT_TIMESTAMP")
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_UtilizadorMedalhasExposicao", x => new { x.UtilizadorId, x.SlotIndex });
+                    table.ForeignKey(
+                        name: "FK_UtilizadorMedalhasExposicao_AspNetUsers_UtilizadorId",
+                        column: x => x.UtilizadorId,
+                        principalTable: "AspNetUsers",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_UtilizadorMedalhasExposicao_Medalhas_MedalhaId",
+                        column: x => x.MedalhaId,
+                        principalTable: "Medalhas",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.SetNull);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "ComunidadePostComentarios",
                 columns: table => new
                 {
@@ -974,6 +1002,11 @@ namespace FilmAholic.Server.Migrations
                 name: "IX_UtilizadorMedalhas_MedalhaId",
                 table: "UtilizadorMedalhas",
                 column: "MedalhaId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_UtilizadorMedalhasExposicao_MedalhaId",
+                table: "UtilizadorMedalhasExposicao",
+                column: "MedalhaId");
         }
 
         /// <inheritdoc />
@@ -1041,6 +1074,9 @@ namespace FilmAholic.Server.Migrations
 
             migrationBuilder.DropTable(
                 name: "UtilizadorMedalhas");
+
+            migrationBuilder.DropTable(
+                name: "UtilizadorMedalhasExposicao");
 
             migrationBuilder.DropTable(
                 name: "AspNetRoles");

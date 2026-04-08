@@ -1,8 +1,10 @@
+using FilmAholic.Server.Data;
 using FilmAholic.Server.Models;
 using FilmAholic.Server.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
 
 namespace FilmAholic.Server.Controllers
@@ -14,11 +16,13 @@ namespace FilmAholic.Server.Controllers
     {
         private readonly MedalhaService _medalhaService;
         private readonly UserManager<Utilizador> _userManager;
+        private readonly FilmAholicDbContext _context;
 
-        public MedalhasController(MedalhaService medalhaService, UserManager<Utilizador> userManager)
+        public MedalhasController(MedalhaService medalhaService, UserManager<Utilizador> userManager, FilmAholicDbContext context)
         {
             _medalhaService = medalhaService;
             _userManager = userManager;
+            _context = context;
         }
 
         // GET: api/medalhas/pessoal
@@ -214,5 +218,96 @@ namespace FilmAholic.Server.Controllers
                 return StatusCode(500, new { message = "Erro ao verificar medalhas de higher-or-lower", error = ex.Message });
             }
         }
-    } 
+
+        // GET: api/medalhas/exposicao
+        [HttpGet("exposicao")]
+        public async Task<IActionResult> GetMedalhasExposicao()
+        {
+            var userId = _userManager.GetUserId(User);
+            if (userId == null) return Unauthorized();
+
+            var exposicoes = await _context.UtilizadorMedalhasExposicao
+                .Where(e => e.UtilizadorId == userId)
+                .Include(e => e.Medalha)
+                .OrderBy(e => e.SlotIndex)
+                .ToListAsync();
+
+            var result = new List<object?>();
+            for (int i = 0; i < 3; i++)
+            {
+                var exposicao = exposicoes.FirstOrDefault(e => e.SlotIndex == i);
+                if (exposicao?.Medalha != null)
+                {
+                    result.Add(new
+                    {
+                        id = exposicao.Medalha.Id,
+                        nome = exposicao.Medalha.Nome,
+                        descricao = exposicao.Medalha.Descricao,
+                        iconeUrl = exposicao.Medalha.IconeUrl,
+                        tag = exposicao.Tag
+                    });
+                }
+                else
+                {
+                    result.Add(null);
+                }
+            }
+
+            return Ok(result);
+        }
+
+        // PUT: api/medalhas/exposicao
+        [HttpPut("exposicao")]
+        public async Task<IActionResult> UpdateMedalhasExposicao([FromBody] UpdateExposicaoRequest request)
+        {
+            var userId = _userManager.GetUserId(User);
+            if (userId == null) return Unauthorized();
+
+            // Validate slot index
+            if (request.SlotIndex < 0 || request.SlotIndex > 2)
+                return BadRequest(new { message = "SlotIndex deve ser entre 0 e 2" });
+
+            // Check if user has the medal (if not null)
+            if (request.MedalhaId.HasValue)
+            {
+                var hasMedal = await _context.UtilizadorMedalhas
+                    .AnyAsync(um => um.UtilizadorId == userId && um.MedalhaId == request.MedalhaId.Value);
+                if (!hasMedal)
+                    return BadRequest(new { message = "Medalha não conquistada" });
+            }
+
+            // Get or create the showcase entry
+            var exposicao = await _context.UtilizadorMedalhasExposicao
+                .FirstOrDefaultAsync(e => e.UtilizadorId == userId && e.SlotIndex == request.SlotIndex);
+
+            if (exposicao == null)
+            {
+                exposicao = new UtilizadorMedalhaExposicao
+                {
+                    UtilizadorId = userId,
+                    SlotIndex = request.SlotIndex,
+                    MedalhaId = request.MedalhaId,
+                    Tag = request.Tag,
+                    DataAtualizacao = DateTime.UtcNow
+                };
+                _context.UtilizadorMedalhasExposicao.Add(exposicao);
+            }
+            else
+            {
+                exposicao.MedalhaId = request.MedalhaId;
+                exposicao.Tag = request.Tag;
+                exposicao.DataAtualizacao = DateTime.UtcNow;
+            }
+
+            await _context.SaveChangesAsync();
+            return Ok(new { message = "Medalha em exposição atualizada" });
+        }
+    }
+
+    public class UpdateExposicaoRequest
+    {
+        public int SlotIndex { get; set; }
+        public int? MedalhaId { get; set; }
+        public string? Tag { get; set; }
+    }
 }

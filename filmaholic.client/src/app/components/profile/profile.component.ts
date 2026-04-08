@@ -6,6 +6,7 @@ import { MenuService } from '../../services/menu.service';
 import { UserMoviesService, StatsComparison, StatsCharts, ChartDataPoint } from '../../services/user-movies.service';
 import { Filme, FilmesService, ActorDto } from '../../services/filmes.service';
 import { FavoritesService, FavoritosDTO } from '../../services/favorites.service';
+import { ProfileService } from '../../services/profile.service';
 import { environment } from '../../../environments/environment';
 import { Subject, of } from 'rxjs';
 import { debounceTime, distinctUntilChanged, switchMap } from 'rxjs/operators';
@@ -103,12 +104,26 @@ export class ProfileComponent implements OnInit {
   watchLaterFilter: 'all' | 'newest' | 'oldest' | '7days' | '30days' = 'all';
   watchedFilter: 'all' | 'newest' | 'oldest' | '7days' | '30days' = 'all';
 
-  activeSection: 'overview' | 'statistics' | 'conquistas' = 'overview';
+  activeSection: 'overview' | 'statistics' | 'conquistas' | 'generos' = 'overview';
+
+  // Genres management
+  generosDisponiveis: any[] = [];
+  generosFavoritos: number[] = [];
+  isLoadingGeneros = false;
+  isSavingGeneros = false;
+  generosError = '';
+  showGenerosSuccess = false;
 
   conquistasTab: 'minhas' | 'todas' = 'minhas';
 
   medalhasConquistadas: any[] = [];
   todasMedalhas: any[] = [];
+  showcasedMedals: any[] = [];
+  userTag: string | null = null;
+
+  // Medal selector modal
+  showMedalSelectorModal = false;
+  selectedSlotIndex: number | null = null;
 
   private readonly apiMedalhas = environment.apiBaseUrl
     ? `${environment.apiBaseUrl}/api/medalhas`
@@ -178,7 +193,8 @@ export class ProfileComponent implements OnInit {
     public menuService: MenuService,
     private userMoviesService: UserMoviesService,
     private filmesService: FilmesService,
-    private favoritesService: FavoritesService
+    private favoritesService: FavoritesService,
+    private profileService: ProfileService
   ) { }
 
 
@@ -237,6 +253,7 @@ export class ProfileComponent implements OnInit {
           this.bio = res?.bio ?? '';
           this.fotoPerfilUrl = res?.fotoPerfilUrl ?? null;
           if (this.fotoPerfilUrl != null) localStorage.setItem('fotoPerfilUrl', this.fotoPerfilUrl);
+          else localStorage.removeItem('fotoPerfilUrl');
           this.capaUrl = res?.capaUrl ?? null;
 
           if (res?.dataCriacao) {
@@ -1216,6 +1233,47 @@ export class ProfileComponent implements OnInit {
     reader.readAsDataURL(file);
   }
 
+  removeCapa(): void {
+    this.capaUrl = null;
+    this.editCapaUrl = null;
+    this.isEditingCapa = false;
+
+    const userId = localStorage.getItem('user_id');
+    if (!userId) return;
+
+    this.http
+      .put<any>(
+        `${this.apiBase}/${encodeURIComponent(userId)}`,
+        { capaUrl: '' },
+        { withCredentials: true }
+      )
+      .subscribe({
+        next: () => { },
+        error: (err) => console.warn('Failed to remove capa.', err)
+      });
+  }
+
+  removeAvatar(): void {
+    this.fotoPerfilUrl = null;
+    this.editFotoPerfilUrl = null;
+    localStorage.removeItem('fotoPerfilUrl');
+    this.isEditingAvatar = false;
+
+    const userId = localStorage.getItem('user_id');
+    if (!userId) return;
+
+    this.http
+      .put<any>(
+        `${this.apiBase}/${encodeURIComponent(userId)}`,
+        { fotoPerfilUrl: '' },
+        { withCredentials: true }
+      )
+      .subscribe({
+        next: () => { },
+        error: (err) => console.warn('Failed to remove avatar.', err)
+      });
+  }
+
   onCapaFileSelected(event: any): void {
     const file = event.target.files[0];
     if (!file) return;
@@ -1244,6 +1302,90 @@ export class ProfileComponent implements OnInit {
   showConquistas(): void {
     this.activeSection = 'conquistas';
     this.loadConquistas();
+  }
+
+  showGeneros(): void {
+    this.activeSection = 'generos';
+    this.carregarGeneros();
+  }
+
+  carregarGeneros(): void {
+    this.isLoadingGeneros = true;
+    this.generosError = '';
+
+    const userId = localStorage.getItem('user_id') || '';
+
+    // Load available genres and user's favorite genres in parallel
+    this.profileService.obterTodosGeneros().subscribe({
+      next: (generos) => {
+        this.generosDisponiveis = generos;
+
+        // Load user's favorite genres
+        this.profileService.obterGenerosFavoritos(userId).subscribe({
+          next: (favoritos) => {
+            this.generosFavoritos = favoritos.map((g: any) => g.id || g);
+            this.isLoadingGeneros = false;
+          },
+          error: (err) => {
+            console.error('Erro ao carregar géneros favoritos:', err);
+            this.isLoadingGeneros = false;
+          }
+        });
+      },
+      error: (err) => {
+        console.error('Erro ao carregar géneros:', err);
+        this.generosError = 'Erro ao carregar géneros. Por favor, tente novamente.';
+        this.isLoadingGeneros = false;
+      }
+    });
+  }
+
+  toggleGeneroFavorito(generoId: number): void {
+    const index = this.generosFavoritos.indexOf(generoId);
+    if (index > -1) {
+      this.generosFavoritos.splice(index, 1);
+    } else {
+      this.generosFavoritos.push(generoId);
+    }
+  }
+
+  isGeneroFavorito(generoId: number): boolean {
+    return this.generosFavoritos.includes(generoId);
+  }
+
+  get todosGenerosSelecionados(): boolean {
+    return this.generosDisponiveis.length > 0 && this.generosFavoritos.length === this.generosDisponiveis.length;
+  }
+
+  selecionarTodosGeneros(): void {
+    if (this.todosGenerosSelecionados) {
+      this.generosFavoritos = [];
+    } else {
+      this.generosFavoritos = this.generosDisponiveis.map(g => g.id);
+    }
+  }
+
+  salvarGenerosFavoritos(): void {
+    this.isSavingGeneros = true;
+    this.generosError = '';
+
+    const userId = localStorage.getItem('user_id') || '';
+
+    this.profileService.atualizarGenerosFavoritos(userId, this.generosFavoritos).subscribe({
+      next: () => {
+        this.isSavingGeneros = false;
+        // Show success popup
+        this.showGenerosSuccess = true;
+        setTimeout(() => {
+          this.showGenerosSuccess = false;
+        }, 3000);
+      },
+      error: (err) => {
+        this.isSavingGeneros = false;
+        console.error('Erro ao guardar géneros:', err);
+        this.generosError = err.error?.message || 'Erro ao guardar géneros favoritos. Por favor, tente novamente.';
+      }
+    });
   }
 
 
@@ -1275,6 +1417,123 @@ export class ProfileComponent implements OnInit {
       });
   }
 
+  openMedalSelector(index: number): void {
+    this.selectedSlotIndex = index;
+    this.showMedalSelectorModal = true;
+  }
+
+  closeMedalSelector(): void {
+    this.showMedalSelectorModal = false;
+    this.selectedSlotIndex = null;
+  }
+
+  isMedalSelectedForSlot(medal: any): boolean {
+    if (this.selectedSlotIndex === null) return false;
+    const slotMedal = this.showcasedMedals[this.selectedSlotIndex];
+    if (!slotMedal) return false;
+    const slotId = String(slotMedal.id);
+    const medalId = String(medal.medalha?.id || medal.id);
+    return slotId === medalId;
+  }
+
+  selectMedalForSlot(medal: any): void {
+    if (this.selectedSlotIndex === null) return;
+
+    // Ensure showcasedMedals array has 3 slots
+    while (this.showcasedMedals.length < 3) {
+      this.showcasedMedals.push(null);
+    }
+
+    // Get medal ID as string for consistent comparison
+    const medalId = String(medal.id);
+
+    // Check if medal is already in another slot (compare as strings)
+    const existingIndex = this.showcasedMedals.findIndex(m => m && String(m.id) === medalId);
+    if (existingIndex !== -1 && existingIndex !== this.selectedSlotIndex) {
+      // Swap medals if already in another slot
+      this.showcasedMedals[existingIndex] = this.showcasedMedals[this.selectedSlotIndex];
+      // Update API for the other slot (now empty or swapped) - convert id to number
+      const swappedId = this.showcasedMedals[existingIndex]?.id ? parseInt(this.showcasedMedals[existingIndex].id, 10) : null;
+      this.profileService.atualizarMedalhaExposicao(existingIndex, swappedId, this.showcasedMedals[existingIndex]?.tag).subscribe();
+    }
+
+    // Set the selected medal (tag will be added/edited inline)
+    this.showcasedMedals[this.selectedSlotIndex] = medal;
+
+    // Save to API - convert id to number
+    const medalIdNum = medal.id ? parseInt(medal.id, 10) : null;
+    this.profileService.atualizarMedalhaExposicao(this.selectedSlotIndex, medalIdNum, medal.tag).subscribe({
+      error: (err) => console.error('Erro ao salvar medalha:', err)
+    });
+
+    this.closeMedalSelector();
+  }
+
+  saveMedalTag(index: number): void {
+    const medal = this.showcasedMedals[index];
+    if (!medal) return;
+
+    this.profileService.atualizarMedalhaExposicao(index, medal.id, medal.tag).subscribe({
+      error: (err) => console.error('Erro ao salvar tag:', err)
+    });
+  }
+
+  removeMedalFromSlot(index: number): void {
+    if (index >= 0 && index < this.showcasedMedals.length) {
+      this.showcasedMedals[index] = null;
+      // Save to API
+      this.profileService.atualizarMedalhaExposicao(index, null).subscribe({
+        error: (err) => console.error('Erro ao remover medalha:', err)
+      });
+    }
+    this.closeMedalSelector();
+  }
+
+  loadShowcasedMedals(): void {
+    this.profileService.obterMedalhasExposicao().subscribe({
+      next: (res) => {
+        this.showcasedMedals = res || [null, null, null];
+      },
+      error: (err) => {
+        console.error('Erro ao carregar medalhas em exposição:', err);
+        this.showcasedMedals = [null, null, null];
+      }
+    });
+  }
+
+  loadUserTag(): void {
+    this.profileService.obterUserTag().subscribe({
+      next: (res) => {
+        this.userTag = res.tag;
+      },
+      error: (err) => {
+        console.error('Erro ao carregar tag:', err);
+        this.userTag = null;
+      }
+    });
+  }
+
+  selectUserTag(medal: any): void {
+    const tagName = medal.medalha?.nome || medal.nome;
+    if (this.userTag === tagName) {
+      // Deselect if already selected
+      this.userTag = null;
+      this.profileService.atualizarUserTag(null).subscribe({
+        error: (err) => console.error('Erro ao remover tag:', err)
+      });
+    } else {
+      this.userTag = tagName;
+      this.profileService.atualizarUserTag(tagName).subscribe({
+        error: (err) => console.error('Erro ao salvar tag:', err)
+      });
+    }
+  }
+
+  onTagChange(): void {
+    this.profileService.atualizarUserTag(this.userTag).subscribe({
+      error: (err) => console.error('Erro ao atualizar tag:', err)
+    });
+  }
 
   openListModal(type: 'watchLater' | 'watched'): void {
     this.currentListType = type;
@@ -1457,10 +1716,15 @@ export class ProfileComponent implements OnInit {
       .subscribe({
         next: (res) => {
           this.medalhasConquistadas = res || [];
+          // Load showcased medals from API
+          this.loadShowcasedMedals();
+          // Load user tag
+          this.loadUserTag();
         },
         error: (err) => {
           console.error('Erro ao carregar medalhas:', err);
           this.medalhasConquistadas = [];
+          this.showcasedMedals = [];
         }
       });
 

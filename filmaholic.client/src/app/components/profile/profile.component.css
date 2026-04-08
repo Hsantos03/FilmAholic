@@ -202,7 +202,7 @@
       border-radius: 10px;
       padding: 12px 14px;
       margin: 0 0 10px 0;
-      background: var(--menu-bg-purple);
+      background: var(--card-bg-dark);
       transition: background 0.2s, color 0.2s;
       font-size: 14px;
       font-weight: 500;
@@ -213,7 +213,7 @@
       }
 
       .menu li.menu-item:hover {
-        background: rgba(255, 255, 255, 0.1);
+        background: rgba(244, 114, 182, 0.3);
       }
 
       .menu li.menu-item.active {
@@ -312,7 +312,7 @@
 
 .xp-fill {
   height: 100%;
-  background: linear-gradient(90deg, var(--accent-pink), #ff8a00);
+  background: linear-gradient(90deg, #f472b6, #ec4899);
   width: 0%;
   transition: width 0.35s ease;
 }
@@ -594,6 +594,25 @@
   .cancel-btn:hover:not(:disabled) {
     background-color: #2a3a4a;
     border-color: var(--color-primary);
+    color: white;
+  }
+
+.remove-btn {
+  background-color: #8b0000;
+  color: #ff6b6b;
+  border: 1px solid #8b0000;
+  padding: 10px 16px;
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: background 0.2s, border-color 0.2s, color 0.2s;
+  min-width: 100px;
+}
+
+  .remove-btn:hover {
+    background-color: #a50000;
+    border-color: #ff6b6b;
     color: white;
   }
 
@@ -2565,4 +2584,470 @@
 
 .medalha-card-row:not(.conquistada) .progress-fill-mini {
   background: linear-gradient(90deg, #f472b6, #ec4899);
+}
+
+/* Géneros Section Styles */
+.generos-view {
+  padding: 20px 0;
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.generos-view h2 {
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 8px;
+  text-align: center;
+}
+
+.generos-desc {
+  color: var(--text-muted);
+  margin-bottom: 30px;
+  font-size: 16px;
+  text-align: center;
+}
+
+.generos-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  margin-bottom: 30px;
+}
+
+.genero-button {
+  padding: 16px 20px;
+  border: 1px solid var(--border-dark);
+  background-color: var(--card-bg-dark);
+  border-radius: var(--border-radius-sm);
+  cursor: pointer;
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--text-primary);
+  transition: var(--transition);
+  text-align: center;
+  min-height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.genero-button:hover {
+  border-color: var(--color-primary);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(233, 30, 99, 0.3);
+}
+
+.genero-button.selected {
+  background-color: var(--color-primary-dark);
+  color: var(--text-primary);
+  border-color: var(--color-primary-dark);
+  box-shadow: var(--shadow-primary-strong);
+}
+
+.btn-select-all {
+  padding: 10px 20px;
+  background-color: rgba(255, 255, 255, 0.1);
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.btn-select-all:hover {
+  background-color: rgba(255, 255, 255, 0.15);
+  border-color: #ff6b9d;
+  color: #ff6b9d;
+}
+
+.generos-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 15px;
+  margin-top: 20px;
+}
+
+.generos-count {
+  color: var(--text-muted);
+  font-size: 14px;
+  margin: 0;
+}
+
+.generos-buttons {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  flex-wrap: wrap;
+  width: 100%;
+  max-width: 500px;
+}
+
+.btn-cancelar {
+  flex: 1;
+  min-width: 150px;
+  padding: 15px 30px;
+  background-color: #1a2a3a;
+  color: #6c757d;
+  border: 1px solid #1a2a3a;
+  border-radius: 10px;
+  font-size: 16px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: 0.3s;
+}
+
+.btn-cancelar:hover {
+  border-color: var(--color-primary);
+  color: var(--text-primary);
+}
+
+.btn-guardar {
+  flex: 1;
+  min-width: 150px;
+  padding: 15px 30px;
+  background-color: var(--color-primary-dark);
+  color: var(--text-primary);
+  border: none;
+  border-radius: 10px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: 0.3s;
+}
+
+.btn-guardar:hover:not(:disabled) {
+  background-color: var(--color-primary);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(233, 30, 99, 0.4);
+}
+
+.btn-guardar:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.generos-view .error-message {
+  background-color: rgba(248, 215, 218, 0.9);
+  color: #721c24;
+  padding: 15px;
+  border-radius: 5px;
+  margin-bottom: 20px;
+  border: 1px solid rgba(245, 198, 203, 0.9);
+}
+
+.generos-view .success-message {
+  background-color: #22c55e;
+  color: #ffffff;
+  padding: 15px 25px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+  border: none;
+  text-align: center;
+  font-weight: 600;
+  font-size: 16px;
+  animation: fadeInOut 3s ease-in-out;
+  box-shadow: 0 4px 12px rgba(34, 197, 94, 0.4);
+}
+
+@keyframes fadeInOut {
+  0% { opacity: 0; transform: translateY(-10px); }
+  10% { opacity: 1; transform: translateY(0); }
+  90% { opacity: 1; transform: translateY(0); }
+  100% { opacity: 0; transform: translateY(-10px); }
+}
+
+@media (max-width: 768px) {
+  .generos-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+  }
+
+  .genero-button {
+    padding: 12px 15px;
+    font-size: 14px;
+    min-height: 48px;
+  }
+
+  .generos-buttons {
+    flex-direction: column;
+  }
+
+  .btn-cancelar,
+  .btn-guardar {
+    width: 100%;
+  }
+}
+
+/* Medals Showcase Section */
+.medals-showcase {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.medals-showcase h4 {
+  margin: 0 0 16px;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.medals-row {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+}
+
+.medal-slot {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  width: 70px;
+  height: 70px;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.medal-slot.empty {
+  border: 2px dashed rgba(255, 255, 255, 0.4);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.medal-slot.empty:hover {
+  border-color: var(--color-primary);
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.medal-slot:not(.empty) {
+  border: 2px solid transparent;
+}
+
+.medal-slot:not(.empty):hover {
+  transform: scale(1.05);
+}
+
+.medal-slot .medal-img {
+  width: 120px;
+  height: 120px;
+  object-fit: contain;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+
+.medal-slot .medal-placeholder {
+  font-size: 24px;
+  font-weight: 300;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+/* Medal slot wrapper with tag input */
+.medal-slot-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.medal-tag-input {
+  width: 70px;
+}
+
+.medal-tag-input input {
+  width: 100%;
+  padding: 4px 6px;
+  border: 1px solid var(--border-dark);
+  border-radius: var(--border-radius-sm);
+  background-color: var(--card-bg-dark);
+  color: var(--text-primary);
+  font-size: 11px;
+  text-align: center;
+  transition: var(--transition);
+}
+
+.medal-tag-input input:focus {
+  border-color: var(--color-primary);
+  outline: none;
+}
+
+.medal-tag-input input::placeholder {
+  color: var(--text-muted);
+}
+
+/* Medal Selector Modal */
+.medal-selector-modal {
+  max-width: 500px;
+  max-height: 80vh;
+  overflow-y: auto;
+}
+
+.medal-selector-modal h3 {
+  margin-bottom: 8px;
+}
+
+.medal-selector-modal .modal-desc {
+  color: var(--text-muted);
+  font-size: 14px;
+  margin-bottom: 20px;
+}
+
+.medals-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin-bottom: 20px;
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.medal-option {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: 2px solid transparent;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.medal-option:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: var(--color-primary);
+}
+
+.medal-option.selected {
+  background: rgba(255, 47, 109, 0.2);
+  border-color: var(--color-primary);
+}
+
+.medal-option-img {
+  width: 60px;
+  height: 60px;
+  object-fit: contain;
+  margin-bottom: 8px;
+}
+
+.medal-option-placeholder {
+  width: 60px;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 32px;
+  margin-bottom: 8px;
+}
+
+.medal-option-name {
+  font-size: 11px;
+  text-align: center;
+  color: var(--text-primary);
+  line-height: 1.2;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+.no-medals {
+  text-align: center;
+  padding: 40px;
+  color: var(--text-muted);
+}
+
+.medal-selector-modal .modal-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+}
+
+/* User Tag Section */
+.user-tag-section {
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border-dark);
+}
+
+.user-tag-section h4 {
+  margin: 0 0 12px 0;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.tag-selector {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.tag-option {
+  padding: 6px 12px;
+  border: 1px solid var(--border-dark);
+  border-radius: var(--border-radius-sm);
+  background-color: var(--card-bg-dark);
+  color: var(--text-primary);
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.tag-option:hover {
+  border-color: var(--color-primary);
+  background-color: rgba(255, 47, 109, 0.1);
+}
+
+.tag-option.selected {
+  border-color: var(--color-primary);
+  background-color: rgba(255, 47, 109, 0.2);
+  color: var(--color-primary);
+}
+
+/* Tag Dropdown */
+.tag-dropdown {
+  width: 100%;
+  padding: 10px 12px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-primary);
+  background-color: var(--card-bg-dark);
+  border: 1px solid var(--border-dark);
+  border-radius: var(--border-radius-sm);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  outline: none;
+}
+
+.tag-dropdown:hover {
+  border-color: var(--color-primary);
+}
+
+.tag-dropdown:focus {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 2px rgba(255, 47, 109, 0.2);
+}
+
+.tag-dropdown option {
+  background-color: var(--card-bg-dark);
+  color: var(--text-primary);
+  padding: 8px;
+}
+
+@media (max-width: 600px) {
+  .medals-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
 }
