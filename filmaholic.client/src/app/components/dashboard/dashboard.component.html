@@ -6,7 +6,6 @@
       </svg>
     </button>
 
-
     <a class="brand" routerLink="/dashboard" routerLinkActive="active" aria-label="Go to dashboard">FilmAholic</a>
 
     <div class="search" #searchContainer>
@@ -18,7 +17,6 @@
                (keyup.enter)="doSearch()"
                placeholder="Pesquisar filmes..."
                aria-label="Pesquisar" />
-
         <button class="pill-icon right" type="button" aria-label="Pesquisar" (click)="doSearch()">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
             <path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z" />
@@ -50,7 +48,6 @@
       </div>
     </div>
 
-
     <div class="top-actions">
       <app-topbar-actions></app-topbar-actions>
     </div>
@@ -78,7 +75,9 @@
         <span>Início</span>
       </a>
       <a class="sidebar-item" routerLink="/profile" routerLinkActive="active" (click)="toggleMenu()">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" /></svg>
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
+        </svg>
         <span>Perfil</span>
       </a>
       <a class="sidebar-item" routerLink="/cinema-movies" routerLinkActive="active" (click)="toggleMenu()">
@@ -91,7 +90,6 @@
         <span style="font-size:20px">🎮</span>
         <span>Higher or Lower</span>
       </a>
-
       <button class="sidebar-item" (click)="openDesafios(); toggleMenu()">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
           <path d="M12 2L14.09 8.26L21 9.27L16.5 13.14L17.82 20L12 16.77L6.18 20L7.5 13.14L3 9.27L9.91 8.26L12 2Z" />
@@ -115,126 +113,83 @@
 
   <main class="content">
     <div class="state" *ngIf="isLoadingMovies">A carregar filmes&hellip;</div>
-    <div class="state error" *ngIf="!isLoadingMovies && errorMovies">
-      {{ errorMovies }}
-    </div>
+    <div class="state error" *ngIf="!isLoadingMovies && errorMovies">{{ errorMovies }}</div>
 
+    <!-- ── EM DESTAQUE ── -->
     <section class="strip strip-full" *ngIf="!isLoadingMovies && featured.length">
       <div class="strip-inner">
         <div class="section-head">
           <h2>Em Destaque</h2>
         </div>
-
         <div class="carousel hero">
-          <button class="chevron left"
-                  (click)="prevFeatured()"
-                  [disabled]="featuredIndex === 0"
-                  aria-label="Anterior">
-            &lsaquo;
-          </button>
-
+          <button class="chevron left" (click)="prevFeatured()" [disabled]="featuredIndex === 0" aria-label="Anterior">&lsaquo;</button>
           <div class="carousel-track">
-            <a class="poster-card hero"
-               *ngFor="let f of featuredVisible"
-               [routerLink]="['/movie-detail', f.id]">
+            <a class="poster-card hero" *ngFor="let f of featuredVisible" [routerLink]="['/movie-detail', f.id]">
               <img [src]="posterOf(f)" [alt]="f.titulo" />
             </a>
           </div>
-
-          <button class="chevron right"
-                  (click)="nextFeatured()"
-                  [disabled]="featuredIndex >= (featured.length - featuredVisibleCount)"
-                  aria-label="Seguinte">
-            &rsaquo;
-          </button>
+          <button class="chevron right" (click)="nextFeatured()" [disabled]="featuredIndex >= (featured.length - featuredVisibleCount)" aria-label="Seguinte">&rsaquo;</button>
         </div>
       </div>
     </section>
 
+    <!-- ── TOP 10 FILMES ── -->
     <section class="strip strip-full top10-strip" *ngIf="!isLoadingMovies && top10.length">
       <div class="strip-inner">
         <div class="section-head">
           <h2>Top 10 filmes</h2>
         </div>
-
         <div class="carousel top10">
-          <button class="chevron left"
-                  (click)="prevTop10()"
-                  [disabled]="top10Index === 0"
-                  aria-label="Anterior">
-            &lsaquo;
-          </button>
-
+          <button class="chevron left" (click)="prevTop10()" [disabled]="top10Index === 0" aria-label="Anterior">&lsaquo;</button>
           <div class="carousel-track">
-            <a class="poster-card small"
-               *ngFor="let f of top10Visible"
-               [routerLink]="['/movie-detail', f.id]">
+            <a class="poster-card small" *ngFor="let f of top10Visible" [routerLink]="['/movie-detail', f.id]">
               <img [src]="posterOf(f)" [alt]="f.titulo" />
             </a>
           </div>
-
-          <button class="chevron right"
-                  (click)="nextTop10()"
-                  [disabled]="top10Index >= (top10.length - top10VisibleCount)"
-                  aria-label="Seguinte">
-            &rsaquo;
-          </button>
+          <button class="chevron right" (click)="nextTop10()" [disabled]="top10Index >= (top10.length - top10VisibleCount)" aria-label="Seguinte">&rsaquo;</button>
         </div>
       </div>
     </section>
 
+    <!-- ── O QUE VOU VER A SEGUIR ── -->
     <section class="strip strip-full nextup-strip">
       <div class="strip-inner">
         <div class="section-head">
           <h2>O que vou ver a seguir</h2>
         </div>
-
         <div class="discover-wrap">
           <button class="discover-btn" (click)="discoverNext()" [disabled]="isDiscovering || isLoadingMovies">
             {{ isDiscovering ? 'A descobrir…' : 'Descobrir' }}
           </button>
         </div>
-
         <div class="nextup-content">
           <div *ngIf="!isLoadingMovies && movies.length === 0" class="empty-list-message">
             A lista está em branco como um ecrã antes da sessão. Procura ou escolhe géneros para começar o espetáculo.
           </div>
-
           <div class="nextup-card" *ngIf="nextToWatch">
             <a [routerLink]="['/movie-detail', nextToWatch.id]">
               <img class="nextup-poster" [src]="posterOf(nextToWatch)" [alt]="nextToWatch.titulo" />
             </a>
-
             <div class="nextup-meta">
               <h3 class="nextup-title">{{ nextToWatch.titulo }}</h3>
               <div class="nextup-sub">{{ nextToWatch.genero }} &middot; {{ nextToWatch.duracao | formatDuration }}</div>
-              <div class="nextup-actions">
-                <button class="action-btn" (click)="goToMovieDetail(nextToWatch.id)">Ver detalhes</button>
-              </div>
             </div>
           </div>
         </div>
       </div>
     </section>
 
+    <!-- ── TOP 10 ATORES ── -->
     <div class="state" *ngIf="isLoadingActors">A carregar atores&hellip;</div>
-    <div class="state error" *ngIf="!isLoadingActors && errorActors">
-      {{ errorActors }}
-    </div>
+    <div class="state error" *ngIf="!isLoadingActors && errorActors">{{ errorActors }}</div>
 
     <section class="strip strip-full" *ngIf="!isLoadingActors && atores.length">
       <div class="strip-inner">
         <div class="section-head">
           <h2>Top 10 Atores</h2>
         </div>
-
         <div class="carousel" id="atores-carousel">
-          <button class="chevron left"
-                  (click)="prevAtores()"
-                  aria-label="Anterior">
-            &lsaquo;
-          </button>
-
+          <button class="chevron left" (click)="prevAtores()" aria-label="Anterior">&lsaquo;</button>
           <div class="carousel-track"
                [class.fade-out]="atoresSlideDir === 'fade-out'"
                [class.slide-left]="atoresSlideDir === 'left'"
@@ -251,12 +206,7 @@
               <div class="actor-name">{{ a.nome }}</div>
             </div>
           </div>
-
-          <button class="chevron right"
-                  (click)="nextAtores()"
-                  aria-label="Seguinte">
-            &rsaquo;
-          </button>
+          <button class="chevron right" (click)="nextAtores()" aria-label="Seguinte">&rsaquo;</button>
         </div>
       </div>
     </section>
@@ -282,7 +232,6 @@
                  [src]="recomendacaoPoster(r)"
                  [alt]="r.titulo"
                  (click)="openRecomendacao(r)" />
-
             <div class="rec-bottom">
               <h3 class="rec-title">{{ r.titulo }}</h3>
               <div class="rec-meta">
@@ -293,7 +242,6 @@
                 ⭐ {{ r.communityAverage }}/10
                 <span class="rec-votes">({{ r.communityVotes }} votos)</span>
               </div>
-
               <div class="rec-feedback-row">
                 <button class="rec-fb-btn rec-fb-down"
                         type="button"
@@ -333,10 +281,10 @@
   </main>
 </div>
 
+<!-- ── MODAL DESAFIOS ── -->
 <div class="modal-overlay" *ngIf="isDesafiosOpen" (click)="closeDesafios()">
   <div class="modal-box" (click)="$event.stopPropagation()">
     <button class="modal-close red-cross" (click)="closeDesafios()">&times;</button>
-
     <h3>Desafio Diário</h3>
 
     <div *ngIf="isLoadingDesafios" class="modal-loading" style="padding: 20px;">A carregar desafio...</div>
@@ -346,7 +294,6 @@
     </div>
 
     <div *ngIf="!isLoadingDesafios && desafioDoDia" class="quiz-container">
-
       <h4 class="quiz-question">{{ desafioDoDia.pergunta }}</h4>
 
       <div class="quiz-options">
@@ -362,7 +309,6 @@
             <ng-container *ngIf="opcaoSelecionada === 'A' && respostaCorretaVisivel !== 'A'">❌</ng-container>
           </span>
         </button>
-
         <button class="quiz-option-btn"
                 [class.selected]="opcaoSelecionada === 'B'"
                 [class.correct]="desafioDoDia.respondido && respostaCorretaVisivel === 'B'"
@@ -375,7 +321,6 @@
             <ng-container *ngIf="opcaoSelecionada === 'B' && respostaCorretaVisivel !== 'B'">❌</ng-container>
           </span>
         </button>
-
         <button class="quiz-option-btn"
                 [class.selected]="opcaoSelecionada === 'C'"
                 [class.correct]="desafioDoDia.respondido && respostaCorretaVisivel === 'C'"
@@ -391,9 +336,7 @@
       </div>
 
       <div class="quiz-submit-wrapper" *ngIf="!desafioDoDia.respondido">
-        <button class="quiz-submit-btn"
-                [disabled]="!opcaoSelecionada"
-                (click)="submeterResposta()">
+        <button class="quiz-submit-btn" [disabled]="!opcaoSelecionada" (click)="submeterResposta()">
           Confirmar Resposta
         </button>
       </div>
@@ -408,13 +351,11 @@
         <div class="quiz-reward-wrapper">
           <span class="quiz-reward">✨ Recompensa: {{ desafioDoDia.xp }} XP</span>
         </div>
-
         <div class="quiz-timer" *ngIf="desafioDoDia.respondido">
           Próxima pergunta em: <strong>{{ timeUntilNext }}</strong>
         </div>
       </div>
 
-      <!-- Medal notifications -->
       <div class="medal-notifications" *ngIf="medalSuccessMessage || medalErrorMessage || medalProgress.target > 0">
         <div class="state success" *ngIf="medalSuccessMessage">
           {{ medalSuccessMessage }}
@@ -429,10 +370,7 @@
             </div>
           </div>
         </div>
-        <div class="state error" *ngIf="medalErrorMessage">
-          {{ medalErrorMessage }}
-        </div>
-        <!-- Progress only (no medal message) -->
+        <div class="state error" *ngIf="medalErrorMessage">{{ medalErrorMessage }}</div>
         <div class="state progress-only" *ngIf="!medalSuccessMessage && !medalErrorMessage && medalProgress.target > 0">
           <div class="progress-title">Progresso dos Desafios Diários</div>
           <div class="medal-progress">
@@ -447,7 +385,6 @@
           </div>
         </div>
       </div>
-
     </div>
   </div>
 </div>
