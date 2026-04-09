@@ -431,6 +431,10 @@ namespace FilmAholic.Server.Controllers
                     x => x.Nome,
                     x => x.Descricao,
                     StringComparer.OrdinalIgnoreCase);
+                var iconByTag = medalDescriptions.ToDictionary(
+                    x => x.Nome,
+                    x => x.IconeUrl,
+                    StringComparer.OrdinalIgnoreCase);
 
                 var tagByUserId = userData.ToDictionary(x => x.Id, x => x.UserTag);
 
@@ -442,6 +446,10 @@ namespace FilmAholic.Server.Controllers
                         if (!string.IsNullOrEmpty(tag) && descByTag.TryGetValue(tag, out var desc))
                         {
                             membro.UserTagDescription = desc;
+                        }
+                        if (!string.IsNullOrEmpty(tag) && iconByTag.TryGetValue(tag, out var icon))
+                        {
+                            membro.UserTagIconUrl = icon;
                         }
                     }
                 }
@@ -558,6 +566,10 @@ namespace FilmAholic.Server.Controllers
                         .Where(u => u.Id == p.UtilizadorId)
                         .Select(u => u.Nome + " " + u.Sobrenome)
                         .FirstOrDefault() ?? "Utilizador removido",
+                    AutorFotoPerfilUrl = _context.Users.OfType<Utilizador>()
+                        .Where(u => u.Id == p.UtilizadorId)
+                        .Select(u => u.FotoPerfilUrl)
+                        .FirstOrDefault(),
 
                     LikesCount = _context.ComunidadePostVotos.Count(v => v.PostId == p.Id && v.IsLike),
                     DislikesCount = _context.ComunidadePostVotos.Count(v => v.PostId == p.Id && !v.IsLike),
@@ -599,6 +611,10 @@ namespace FilmAholic.Server.Controllers
                     x => x.Nome,
                     x => x.Descricao,
                     StringComparer.OrdinalIgnoreCase);
+                var iconByTag = medalDescriptions.ToDictionary(
+                    x => x.Nome,
+                    x => x.IconeUrl,
+                    StringComparer.OrdinalIgnoreCase);
 
                 var tagByUserId = userData.ToDictionary(x => x.Id, x => x.UserTag);
 
@@ -610,6 +626,10 @@ namespace FilmAholic.Server.Controllers
                         if (!string.IsNullOrEmpty(tag) && descByTag.TryGetValue(tag, out var desc))
                         {
                             post.AutorUserTagDescription = desc;
+                        }
+                        if (!string.IsNullOrEmpty(tag) && iconByTag.TryGetValue(tag, out var icon))
+                        {
+                            post.AutorUserTagIconUrl = icon;
                         }
                     }
                 }
@@ -731,7 +751,9 @@ namespace FilmAholic.Server.Controllers
                     FilmePosterUrl = post.FilmePosterUrl,
 
                     AutorUserTag = autor?.UserTag,
-                    AutorUserTagDescription = tagDescription
+                    AutorUserTagDescription = tagDescription,
+                    AutorUserTagIconUrl = autor?.UserTag != null ? (await _context.Medalhas.FirstOrDefaultAsync(m => m.Nome == autor.UserTag))?.IconeUrl : null,
+                    AutorFotoPerfilUrl = autor?.FotoPerfilUrl
                 };
 
                 return Ok(dtoCompleto);
@@ -1175,6 +1197,10 @@ namespace FilmAholic.Server.Controllers
                     x => x.Nome,
                     x => x.Descricao,
                     StringComparer.OrdinalIgnoreCase);
+                var iconByTag = medalDescriptions.ToDictionary(
+                    x => x.Nome,
+                    x => x.IconeUrl,
+                    StringComparer.OrdinalIgnoreCase);
 
                 var tagByUserId = userData.ToDictionary(x => x.Id, x => x.UserTag);
 
@@ -1186,6 +1212,10 @@ namespace FilmAholic.Server.Controllers
                         if (!string.IsNullOrEmpty(tag) && descByTag.TryGetValue(tag, out var desc))
                         {
                             membro.UserTagDescription = desc;
+                        }
+                        if (!string.IsNullOrEmpty(tag) && iconByTag.TryGetValue(tag, out var icon))
+                        {
+                            membro.UserTagIconUrl = icon;
                         }
                     }
                 }
@@ -1444,9 +1474,51 @@ namespace FilmAholic.Server.Controllers
                     AutorFotoPerfilUrl = _context.Users.OfType<Utilizador>()
                         .Where(u => u.Id == c.UtilizadorId)
                         .Select(u => u.FotoPerfilUrl)
+                        .FirstOrDefault(),
+                    AutorUserTag = _context.Users.OfType<Utilizador>()
+                        .Where(u => u.Id == c.UtilizadorId)
+                        .Select(u => u.UserTag)
                         .FirstOrDefault()
                 })
                 .ToListAsync();
+
+            // Fetch medal descriptions and icons for comment authors
+            var authorIds = comentarios.Select(c => c.AutorId).Where(id => !string.IsNullOrEmpty(id)).Distinct().ToList();
+            if (authorIds.Count > 0)
+            {
+                var userData = await _context.Set<Utilizador>()
+                    .Where(u => authorIds.Contains(u.Id))
+                    .Select(u => new { u.Id, u.UserTag })
+                    .ToListAsync();
+
+                var tags = userData.Select(x => x.UserTag).Where(t => !string.IsNullOrEmpty(t)).Distinct().ToList();
+                var medalDescriptions = await _context.Medalhas.ToListAsync();
+                var descByTag = medalDescriptions.ToDictionary(
+                    x => x.Nome,
+                    x => x.Descricao,
+                    StringComparer.OrdinalIgnoreCase);
+                var iconByTag = medalDescriptions.ToDictionary(
+                    x => x.Nome,
+                    x => x.IconeUrl,
+                    StringComparer.OrdinalIgnoreCase);
+
+                var tagByUserId = userData.ToDictionary(x => x.Id, x => x.UserTag);
+
+                var comentariosComTags = comentarios.Select(c => new
+                {
+                    c.Id,
+                    c.Conteudo,
+                    c.DataCriacao,
+                    c.AutorId,
+                    c.AutorNome,
+                    c.AutorFotoPerfilUrl,
+                    c.AutorUserTag,
+                    AutorUserTagDescription = !string.IsNullOrEmpty(c.AutorUserTag) && descByTag.TryGetValue(c.AutorUserTag, out var desc) ? desc : null,
+                    AutorUserTagIconUrl = !string.IsNullOrEmpty(c.AutorUserTag) && iconByTag.TryGetValue(c.AutorUserTag, out var icon) ? icon : null
+                }).ToList();
+
+                return Ok(comentariosComTags);
+            }
 
             return Ok(comentarios);
         }
@@ -1488,25 +1560,31 @@ namespace FilmAholic.Server.Controllers
             _context.ComunidadePostComentarios.Add(comentario);
             await _context.SaveChangesAsync();
 
-            var comentarioCriado = await _context.ComunidadePostComentarios
-                .AsNoTracking()
-                .Where(c => c.Id == comentario.Id)
-                .Select(c => new
-                {
-                    c.Id,
-                    c.Conteudo,
-                    c.DataCriacao,
-                    AutorId = c.UtilizadorId,
-                    AutorNome = _context.Users.OfType<Utilizador>()
-                        .Where(u => u.Id == c.UtilizadorId)
-                        .Select(u => u.Nome + " " + u.Sobrenome)
-                        .FirstOrDefault() ?? "Desconhecido",
-                    AutorFotoPerfilUrl = _context.Users.OfType<Utilizador>()
-                        .Where(u => u.Id == c.UtilizadorId)
-                        .Select(u => u.FotoPerfilUrl)
-                        .FirstOrDefault()
-                })
-                .FirstOrDefaultAsync();
+            var autor = await _context.Users.OfType<Utilizador>()
+                .FirstOrDefaultAsync(u => u.Id == userId);
+
+            string? tagDescription = null;
+            string? tagIconUrl = null;
+            if (!string.IsNullOrEmpty(autor?.UserTag))
+            {
+                var medal = await _context.Medalhas
+                    .FirstOrDefaultAsync(m => m.Nome == autor.UserTag);
+                tagDescription = medal?.Descricao;
+                tagIconUrl = medal?.IconeUrl;
+            }
+
+            var comentarioCriado = new
+            {
+                Id = comentario.Id,
+                Conteudo = comentario.Conteudo,
+                DataCriacao = comentario.DataCriacao,
+                AutorId = userId,
+                AutorNome = autor != null ? (autor.Nome + " " + autor.Sobrenome).Trim() : "Desconhecido",
+                AutorFotoPerfilUrl = autor?.FotoPerfilUrl,
+                AutorUserTag = autor?.UserTag,
+                AutorUserTagDescription = tagDescription,
+                AutorUserTagIconUrl = tagIconUrl
+            };
 
             return Ok(comentarioCriado);
         }
@@ -1570,6 +1648,8 @@ namespace FilmAholic.Server.Controllers
             // User medal tag for post author
             public string? AutorUserTag { get; set; }
             public string? AutorUserTagDescription { get; set; }
+            public string? AutorUserTagIconUrl { get; set; }
+            public string? AutorFotoPerfilUrl { get; set; }
         }
 
         public class CreateComentarioDto
@@ -1589,6 +1669,7 @@ namespace FilmAholic.Server.Controllers
             public string? MotivoBan { get; set; }
             public string? UserTag { get; set; }
             public string? UserTagDescription { get; set; }
+            public string? UserTagIconUrl { get; set; }
         }
 
         public class ExpulsarMembroForm

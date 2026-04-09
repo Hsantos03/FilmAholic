@@ -42,6 +42,7 @@ export class ComunidadeDetalheComponent implements OnInit, OnDestroy {
   error = '';
 
   private readonly apiMedalhas = environment.apiBaseUrl ? `${environment.apiBaseUrl}/api/medalhas` : '/api/medalhas';
+  readonly API_URL = environment.apiBaseUrl ? environment.apiBaseUrl : '';
 
   // ── Ranking ───
   activeTab: 'posts' | 'membros' | 'ranking' = 'posts';

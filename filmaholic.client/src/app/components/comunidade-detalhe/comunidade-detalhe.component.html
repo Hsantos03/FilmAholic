@@ -293,10 +293,19 @@
       <article class="post-card" *ngFor="let p of sortedPosts">
         <div class="post-header">
           <div class="post-author-info">
+            <div class="post-avatar" [attr.title]="p.autorNome || ''">
+              <img *ngIf="p.autorFotoPerfilUrl?.trim()"
+                   class="post-avatar-img"
+                   [src]="p.autorFotoPerfilUrl"
+                   [alt]="p.autorNome || ''" />
+              <span *ngIf="!p.autorFotoPerfilUrl?.trim()">{{ getUserInitial(p.autorNome) }}</span>
+            </div>
             <div class="post-autor-wrapper">
               <span class="post-autor">{{ p.autorNome }}</span>
               <span class="post-tag-separator" *ngIf="p.autorUserTag">|</span>
-              <span *ngIf="p.autorUserTag" class="post-autor-tag tooltip-trigger">
+              <span *ngIf="p.autorUserTag" class="post-autor-tag tooltip-trigger post-autor-tag-with-icon">
+                <img *ngIf="p.autorUserTagIconUrl" [src]="API_URL + p.autorUserTagIconUrl" [alt]="p.autorUserTag" class="post-autor-tag-icon">
+                <span *ngIf="!p.autorUserTagIconUrl" class="post-autor-tag-fallback">🏅</span>
                 {{ p.autorUserTag }}
                 <span class="tooltip">
                   <span class="tooltip-label">Como desbloquear</span>
@@ -304,7 +313,6 @@
                 </span>
               </span>
             </div>
-            <span class="post-data"> • {{ p.dataCriacao | date:'short' }}</span>
           </div>
           <div class="post-owner-actions">
             <span *ngIf="isAdmin && (p.reportsCount || 0) > 0" class="admin-report-badge" title="Denúncias recebidas">
@@ -349,6 +357,10 @@
           </a>
         </div>
 
+        <div class="post-meta-footer">
+          <span class="post-data">{{ p.dataCriacao | date:'short' }}</span>
+        </div>
+
         <div class="post-footer">
           <div class="vote-group" [class.vote-group--disabled]="isCurrentCastigado" [attr.title]="isCurrentCastigado ? 'Castigo ativo: não podes votar.' : null">
             <button type="button" class="vote-btn" [class.active-like]="p.userVote === 1" [disabled]="isCurrentCastigado" (click)="votar(p, true)">
@@ -386,9 +398,21 @@
               <div class="comment-body">
                 <div class="comment-header">
                   <span class="comment-author">{{ c.autorNome }}</span>
-                  <span class="comment-date">• {{ c.dataCriacao | date:'short' }}</span>
+                  <span class="comment-tag-separator" *ngIf="c.autorUserTag">|</span>
+                  <span *ngIf="c.autorUserTag" class="comment-autor-tag tooltip-trigger comment-autor-tag-with-icon">
+                    <img *ngIf="c.autorUserTagIconUrl" [src]="API_URL + c.autorUserTagIconUrl" [alt]="c.autorUserTag" class="comment-autor-tag-icon">
+                    <span *ngIf="!c.autorUserTagIconUrl" class="comment-autor-tag-fallback">🏅</span>
+                    {{ c.autorUserTag }}
+                    <span class="tooltip">
+                      <span class="tooltip-label">Como desbloquear</span>
+                      <span class="tooltip-desc">{{ c.autorUserTagDescription || 'Medalha especial desbloqueada!' }}</span>
+                    </span>
+                  </span>
                 </div>
                 <p class="comment-content">{{ c.conteudo }}</p>
+                <div class="comment-meta-footer">
+                  <span class="comment-date">{{ c.dataCriacao | date:'short' }}</span>
+                </div>
               </div>
             </div>
           </div>
@@ -435,7 +459,9 @@
             <div class="membro-nome-wrapper">
               <span class="membro-nome">{{ m.userName }}</span>
               <span class="membro-tag-separator" *ngIf="m.userTag">|</span>
-              <span *ngIf="m.userTag" class="membro-tag tooltip-trigger">
+              <span *ngIf="m.userTag" class="membro-tag tooltip-trigger membro-tag-with-icon">
+                <img *ngIf="m.userTagIconUrl" [src]="API_URL + m.userTagIconUrl" [alt]="m.userTag" class="membro-tag-icon">
+                <span *ngIf="!m.userTagIconUrl" class="membro-tag-fallback">🏅</span>
                 {{ m.userTag }}
                 <span class="tooltip">
                   <span class="tooltip-label">Como desbloquear</span>
@@ -475,7 +501,9 @@
               <div class="membro-nome-wrapper">
                 <span class="membro-nome">{{ b.userName }}</span>
                 <span class="membro-tag-separator" *ngIf="b.userTag">|</span>
-                <span *ngIf="b.userTag" class="membro-tag tooltip-trigger">
+                <span *ngIf="b.userTag" class="membro-tag tooltip-trigger membro-tag-with-icon">
+                  <img *ngIf="b.userTagIconUrl" [src]="API_URL + b.userTagIconUrl" [alt]="b.userTag" class="membro-tag-icon">
+                  <span *ngIf="!b.userTagIconUrl" class="membro-tag-fallback">🏅</span>
                   {{ b.userTag }}
                   <span class="tooltip">
                     <span class="tooltip-label">Como desbloquear</span>

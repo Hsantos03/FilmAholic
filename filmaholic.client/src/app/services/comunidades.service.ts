@@ -33,6 +33,7 @@ export interface MembroDto {
   // User medal tag
   userTag?: string | null;
   userTagDescription?: string | null;
+  userTagIconUrl?: string | null;
 }
 
 export interface RankingMembroDto {
@@ -70,6 +71,8 @@ export interface PostDto {
   // User medal tag for post author
   autorUserTag?: string | null;
   autorUserTagDescription?: string | null;
+  autorUserTagIconUrl?: string | null;
+  autorFotoPerfilUrl?: string | null;
 }
 
 export interface ComentarioDto {
@@ -81,6 +84,10 @@ export interface ComentarioDto {
   autorFotoPerfilUrl?: string | null;
   conteudo: string;
   dataCriacao?: string;
+  // User medal tag for comment author
+  autorUserTag?: string | null;
+  autorUserTagDescription?: string | null;
+  autorUserTagIconUrl?: string | null;
 }
 
 export interface SugestaoFilmeComunidade {

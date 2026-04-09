@@ -687,14 +687,65 @@
 }
 
 .comment-author {
-  color: #ef4444;
+  color: #fff;
   font-weight: 600;
   font-size: 13px;
+}
+
+.comment-tag-separator {
+  opacity: 0.5;
+  font-weight: 300;
+}
+
+.comment-autor-tag {
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  white-space: nowrap;
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  vertical-align: middle;
+  gap: 4px;
+  height: 18px;
+  overflow: visible;
+  background: linear-gradient(90deg, #ff4d8d 0%, #fff 25%, #ff4d8d 50%, #fff 75%, #ff4d8d 100%);
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+  animation: tag-shimmer 8s linear infinite;
+}
+
+.comment-autor-tag-icon {
+  width: 90px;
+  height: 90px;
+  object-fit: contain;
+  filter: drop-shadow(0 0 3px rgba(255, 77, 141, 0.6));
+  margin-left: -35px;
+  margin-right: -30px;
+  transform: translateY(0px);
+}
+
+.comment-autor-tag-fallback {
+  font-size: 14px;
+  filter: drop-shadow(0 0 3px rgba(255, 77, 141, 0.6));
+  -webkit-text-fill-color: initial;
+  color: initial;
 }
 
 .comment-date {
   color: #9aa0a6;
   font-size: 12px;
+}
+
+.comment-meta-footer {
+  display: flex;
+  align-items: center;
+  padding: 4px 0 0;
+  margin-top: 4px;
 }
 
 .comment-content {
@@ -997,7 +1048,8 @@
 
 .post-autor {
   font-weight: 600;
-  color: #ccc;
+  font-size: 14px;
+  color: #fff;
 }
 
 .post-autor-wrapper {
@@ -1007,13 +1059,53 @@
   flex-wrap: wrap;
 }
 
+.post-avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: #2a2a2a;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  font-size: 12px;
+  flex-shrink: 0;
+  color: #e8e8e8;
+  overflow: hidden;
+}
+
+.post-avatar-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.post-author-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.post-meta-footer {
+  display: flex;
+  align-items: center;
+  padding: 8px 0 0;
+  margin-top: 8px;
+}
+
+.post-meta-footer .post-data {
+  font-size: 12px;
+  color: #9aa0a6;
+}
+
 .post-tag-separator {
-  opacity: 0.5;
-  font-weight: 300;
+  opacity: 0.7;
+  font-weight: 400;
+  color: #fff;
 }
 
 .post-autor-tag {
-  font-size: 11px;
+  font-size: 13px;
   font-weight: 800;
   text-transform: uppercase;
   letter-spacing: 0.3px;
@@ -1022,6 +1114,9 @@
   display: inline-flex;
   align-items: center;
   vertical-align: middle;
+  gap: 4px;
+  height: 20px;
+  overflow: visible;
   background: linear-gradient(90deg, #ff4d8d 0%, #fff 25%, #ff4d8d 50%, #fff 75%, #ff4d8d 100%);
   background-size: 200% auto;
   -webkit-background-clip: text;
@@ -1029,6 +1124,23 @@
   -webkit-text-fill-color: transparent;
   color: transparent;
   animation: tag-shimmer 8s linear infinite;
+}
+
+.post-autor-tag-icon {
+  width: 90px;
+  height: 90px;
+  object-fit: contain;
+  filter: drop-shadow(0 0 3px rgba(255, 77, 141, 0.6));
+  margin-left: -35px;
+  margin-right: -30px;
+  transform: translateY(0px);
+}
+
+.post-autor-tag-fallback {
+  font-size: 16px;
+  filter: drop-shadow(0 0 3px rgba(255, 77, 141, 0.6));
+  -webkit-text-fill-color: initial;
+  color: initial;
 }
 
 .post-titulo {
@@ -1260,7 +1372,7 @@
 }
 
 .membro-tag {
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 800;
   text-transform: uppercase;
   letter-spacing: 0.3px;
@@ -1269,6 +1381,9 @@
   display: inline-flex;
   align-items: center;
   vertical-align: middle;
+  gap: 4px;
+  height: 20px;
+  overflow: visible;
   background: linear-gradient(90deg, #ff4d8d 0%, #fff 25%, #ff4d8d 50%, #fff 75%, #ff4d8d 100%);
   background-size: 200% auto;
   -webkit-background-clip: text;
@@ -1276,6 +1391,23 @@
   -webkit-text-fill-color: transparent;
   color: transparent;
   animation: tag-shimmer 8s linear infinite;
+}
+
+.membro-tag-icon {
+  width: 90px;
+  height: 90px;
+  object-fit: contain;
+  filter: drop-shadow(0 0 3px rgba(255, 77, 141, 0.6));
+  margin-left: -35px;
+  margin-right: -30px;
+  transform: translateY(0px);
+}
+
+.membro-tag-fallback {
+  font-size: 16px;
+  filter: drop-shadow(0 0 3px rgba(255, 77, 141, 0.6));
+  -webkit-text-fill-color: initial;
+  color: initial;
 }
 
 @keyframes tag-shimmer {
