@@ -293,7 +293,17 @@
       <article class="post-card" *ngFor="let p of sortedPosts">
         <div class="post-header">
           <div class="post-author-info">
-            <span class="post-autor">{{ p.autorNome }}</span>
+            <div class="post-autor-wrapper">
+              <span class="post-autor">{{ p.autorNome }}</span>
+              <span class="post-tag-separator" *ngIf="p.autorUserTag">|</span>
+              <span *ngIf="p.autorUserTag" class="post-autor-tag tooltip-trigger">
+                {{ p.autorUserTag }}
+                <span class="tooltip">
+                  <span class="tooltip-label">Como desbloquear</span>
+                  <span class="tooltip-desc">{{ p.autorUserTagDescription || 'Medalha especial desbloqueada!' }}</span>
+                </span>
+              </span>
+            </div>
             <span class="post-data"> • {{ p.dataCriacao | date:'short' }}</span>
           </div>
           <div class="post-owner-actions">
@@ -422,7 +432,17 @@
         <div class="membro-item" *ngFor="let m of membros">
           <div class="membro-avatar">{{ getUserInitial(m.userName) }}</div>
           <div class="membro-info">
-            <span class="membro-nome">{{ m.userName }}</span>
+            <div class="membro-nome-wrapper">
+              <span class="membro-nome">{{ m.userName }}</span>
+              <span class="membro-tag-separator" *ngIf="m.userTag">|</span>
+              <span *ngIf="m.userTag" class="membro-tag tooltip-trigger">
+                {{ m.userTag }}
+                <span class="tooltip">
+                  <span class="tooltip-label">Como desbloquear</span>
+                  <span class="tooltip-desc">{{ m.userTagDescription || 'Medalha especial desbloqueada!' }}</span>
+                </span>
+              </span>
+            </div>
             <span class="membro-role" [class.admin]="m.role === 'Admin'">{{ m.role }}</span>
             <span class="membro-castigo-remaining"
                   *ngIf="m.utilizadorId && membrosCastigoCountdown[m.utilizadorId]">
@@ -452,7 +472,17 @@
           <div class="membro-item membro-item--banido" *ngFor="let b of banidos">
             <div class="membro-avatar">{{ getUserInitial(b.userName) }}</div>
             <div class="membro-info">
-              <span class="membro-nome">{{ b.userName }}</span>
+              <div class="membro-nome-wrapper">
+                <span class="membro-nome">{{ b.userName }}</span>
+                <span class="membro-tag-separator" *ngIf="b.userTag">|</span>
+                <span *ngIf="b.userTag" class="membro-tag tooltip-trigger">
+                  {{ b.userTag }}
+                  <span class="tooltip">
+                    <span class="tooltip-label">Como desbloquear</span>
+                    <span class="tooltip-desc">{{ b.userTagDescription || 'Medalha especial desbloqueada!' }}</span>
+                  </span>
+                </span>
+              </div>
               <span class="membro-role">BANIDO</span>
               <span class="membro-ban-meta" *ngIf="!b.banidoAte">Ban: <strong>permanente</strong></span>
               <span class="membro-ban-meta" *ngIf="b.banidoAte">Ban até: <strong>{{ b.banidoAte | date:'short' }}</strong></span>

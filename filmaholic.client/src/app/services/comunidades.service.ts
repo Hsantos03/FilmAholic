@@ -26,9 +26,13 @@ export interface MembroDto {
   role?: string;
   status?: string;
   dataEntrada?: string;
-  castigadoAte?: string;
+  castigadoAte?: string | null;
   banidoAte?: string | null;
   motivoBan?: string | null;
+
+  // User medal tag
+  userTag?: string | null;
+  userTagDescription?: string | null;
 }
 
 export interface RankingMembroDto {
@@ -45,13 +49,13 @@ export interface PostDto {
   titulo: string;
   conteudo: string;
   dataCriacao?: string;
-  autorId?: string; 
+  autorId?: string;
   autorNome?: string;
   imagemUrl?: string | null;
-  likesCount?: number; 
-  dislikesCount?: number; 
-  userVote?: number; 
-  reportsCount?: number; 
+  likesCount?: number;
+  dislikesCount?: number;
+  userVote?: number;
+  reportsCount?: number;
   temSpoiler?: boolean;
   jaReportou?: boolean;
   comentariosCount?: number;
@@ -62,6 +66,10 @@ export interface PostDto {
   filmeId?: number | null;
   filmeTitulo?: string | null;
   filmePosterUrl?: string | null;
+
+  // User medal tag for post author
+  autorUserTag?: string | null;
+  autorUserTagDescription?: string | null;
 }
 
 export interface ComentarioDto {

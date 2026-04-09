@@ -13,6 +13,15 @@ export interface CommentDTO {
   dataEdicao?: string | null;
   canEdit?: boolean;
 
+  // User tag (e.g., "Fundador")
+  userTag?: string | null;
+
+  // Medal description explaining how to unlock it
+  userTagDescription?: string | null;
+
+  // Medal icon URL for the user tag
+  userTagIconUrl?: string | null;
+
   likeCount: number;
   dislikeCount: number;
   myVote: number;

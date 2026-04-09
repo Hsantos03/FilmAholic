@@ -266,7 +266,19 @@
 
               <div class="comment-content">
                 <div class="comment-header">
-                  <strong class="comment-user">{{ c.userName }}</strong>
+                  <div class="comment-user-wrapper">
+                    <strong class="comment-user">{{ c.userName }}</strong>
+                    <span *ngIf="c.userTag" class="tag-separator">|</span>
+                    <span *ngIf="c.userTag" class="user-tag tooltip-trigger user-tag-with-icon" [attr.data-text]="c.userTag">
+                      <img *ngIf="c.userTagIconUrl" [src]="API_URL + c.userTagIconUrl" [alt]="c.userTag" class="user-tag-icon">
+                      <span *ngIf="!c.userTagIconUrl" class="user-tag-fallback">🏅</span>
+                      {{ c.userTag }}
+                      <span class="tooltip">
+                        <span class="tooltip-label">Como desbloquear</span>
+                        <span class="tooltip-desc">{{ c.userTagDescription || 'Medalha especial desbloqueada!' }}</span>
+                      </span>
+                    </span>
+                  </div>
 
                   <!-- AÇÕES + VOTOS (fora do modo edição) -->
                   <div class="comment-actions" *ngIf="editingCommentId !== c.id">

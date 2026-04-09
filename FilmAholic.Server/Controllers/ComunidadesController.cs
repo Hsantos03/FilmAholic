@@ -409,9 +409,43 @@ namespace FilmAholic.Server.Controllers
                     Role = m.Role,
                     Status = m.Status,
                     DataEntrada = m.DataEntrada,
-                    CastigadoAte = m.CastigadoAte
+                    CastigadoAte = m.CastigadoAte,
+                    BanidoAte = m.BanidoAte,
+                    MotivoBan = m.MotivoBan
                 })
                 .ToListAsync();
+
+            // Fetch user tags and medal descriptions
+            var userIds = membros.Select(m => m.UtilizadorId).Where(id => !string.IsNullOrEmpty(id)).ToList();
+            if (userIds.Count > 0)
+            {
+                var userData = await _context.Set<Utilizador>()
+                    .Where(u => userIds.Contains(u.Id))
+                    .Select(u => new { u.Id, u.UserTag })
+                    .ToListAsync();
+
+                var tags = userData.Select(x => x.UserTag).Where(t => !string.IsNullOrEmpty(t)).Distinct().ToList();
+                var medalDescriptions = await _context.Medalhas
+                    .ToListAsync();
+                var descByTag = medalDescriptions.ToDictionary(
+                    x => x.Nome,
+                    x => x.Descricao,
+                    StringComparer.OrdinalIgnoreCase);
+
+                var tagByUserId = userData.ToDictionary(x => x.Id, x => x.UserTag);
+
+                foreach (var membro in membros)
+                {
+                    if (!string.IsNullOrEmpty(membro.UtilizadorId) && tagByUserId.TryGetValue(membro.UtilizadorId, out var tag))
+                    {
+                        membro.UserTag = tag;
+                        if (!string.IsNullOrEmpty(tag) && descByTag.TryGetValue(tag, out var desc))
+                        {
+                            membro.UserTagDescription = desc;
+                        }
+                    }
+                }
+            }
 
             return Ok(membros);
         }
@@ -524,31 +558,62 @@ namespace FilmAholic.Server.Controllers
                         .Where(u => u.Id == p.UtilizadorId)
                         .Select(u => u.Nome + " " + u.Sobrenome)
                         .FirstOrDefault() ?? "Utilizador removido",
-                    
+
                     LikesCount = _context.ComunidadePostVotos.Count(v => v.PostId == p.Id && v.IsLike),
                     DislikesCount = _context.ComunidadePostVotos.Count(v => v.PostId == p.Id && !v.IsLike),
-                    
+
                     ReportsCount = _context.ComunidadePostReports.Count(r => r.PostId == p.Id),
-                    
+
                     ComentariosCount = _context.ComunidadePostComentarios.Count(c => c.PostId == p.Id),
-                    
+
                     FilmeId = p.FilmeId,
                     FilmeTitulo = p.FilmeTitulo,
                     FilmePosterUrl = p.FilmePosterUrl,
-                    
-                    UserVote = currentUserId == null ? 0 : 
+
+                    UserVote = currentUserId == null ? 0 :
                         _context.ComunidadePostVotos
                         .Where(v => v.PostId == p.Id && v.UtilizadorId == currentUserId)
                         .Select(v => v.IsLike ? 1 : -1)
                         .FirstOrDefault(),
-                    
+
                     JaReportou = currentUserId == null ? false :
                         _context.ComunidadePostReports
                         .Any(r => r.PostId == p.Id && r.UtilizadorId == currentUserId),
-                    
+
                     TemSpoiler = p.TemSpoiler
                 })
                 .ToListAsync();
+
+            // Fetch user tags for post authors
+            var authorIds = posts.Select(p => p.AutorId).Where(id => !string.IsNullOrEmpty(id)).Distinct().ToList();
+            if (authorIds.Count > 0)
+            {
+                var userData = await _context.Set<Utilizador>()
+                    .Where(u => authorIds.Contains(u.Id))
+                    .Select(u => new { u.Id, u.UserTag })
+                    .ToListAsync();
+
+                var tags = userData.Select(x => x.UserTag).Where(t => !string.IsNullOrEmpty(t)).Distinct().ToList();
+                var medalDescriptions = await _context.Medalhas.ToListAsync();
+                var descByTag = medalDescriptions.ToDictionary(
+                    x => x.Nome,
+                    x => x.Descricao,
+                    StringComparer.OrdinalIgnoreCase);
+
+                var tagByUserId = userData.ToDictionary(x => x.Id, x => x.UserTag);
+
+                foreach (var post in posts)
+                {
+                    if (!string.IsNullOrEmpty(post.AutorId) && tagByUserId.TryGetValue(post.AutorId, out var tag))
+                    {
+                        post.AutorUserTag = tag;
+                        if (!string.IsNullOrEmpty(tag) && descByTag.TryGetValue(tag, out var desc))
+                        {
+                            post.AutorUserTagDescription = desc;
+                        }
+                    }
+                }
+            }
 
             return Ok(posts);
         }
@@ -634,16 +699,25 @@ namespace FilmAholic.Server.Controllers
 
                 var baseUrl = PublicBaseUrl();
                 
+                // Fetch medal description if user has a tag
+                string? tagDescription = null;
+                if (!string.IsNullOrEmpty(autor?.UserTag))
+                {
+                    var medal = await _context.Medalhas
+                        .FirstOrDefaultAsync(m => m.Nome == autor.UserTag);
+                    tagDescription = medal?.Descricao;
+                }
+
                 var dtoCompleto = new PostDto
                 {
                     Id = post.Id,
                     Titulo = post.Titulo,
                     Conteudo = post.Conteudo,
                     DataCriacao = post.DataCriacao,
-                    AutorId = userId, 
+                    AutorId = userId,
                     AutorNome = autor != null ? (autor.Nome + " " + autor.Sobrenome).Trim() : "Desconhecido",
                     ImagemUrl = post.ImagemUrl != null ? $"{baseUrl}{post.ImagemUrl}" : null,
-                    
+
                     LikesCount = 0,
                     DislikesCount = 0,
                     UserVote = 0,
@@ -654,7 +728,10 @@ namespace FilmAholic.Server.Controllers
 
                     FilmeId = post.FilmeId,
                     FilmeTitulo = post.FilmeTitulo,
-                    FilmePosterUrl = post.FilmePosterUrl
+                    FilmePosterUrl = post.FilmePosterUrl,
+
+                    AutorUserTag = autor?.UserTag,
+                    AutorUserTagDescription = tagDescription
                 };
 
                 return Ok(dtoCompleto);
@@ -954,7 +1031,7 @@ namespace FilmAholic.Server.Controllers
             var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue("sub");
 
             var isAdmin = await _context.ComunidadeMembros
-                .AnyAsync(m => m.ComunidadeId == id && m.UtilizadorId == currentUserId && m.Role == "Admin" && m.Status == "Ativo");
+                .AnyAsync(m => m.ComunidadeId == id && m.UtilizadorId == currentUserId && m.Role == "Admin");
 
             if (!isAdmin) return Forbid();
 
@@ -1006,7 +1083,7 @@ namespace FilmAholic.Server.Controllers
         {
             var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue("sub");
             var isAdmin = await _context.ComunidadeMembros
-                .AnyAsync(m => m.ComunidadeId == id && m.UtilizadorId == currentUserId && m.Role == "Admin" && m.Status == "Ativo");
+                .AnyAsync(m => m.ComunidadeId == id && m.UtilizadorId == currentUserId && m.Role == "Admin");
             if (!isAdmin) return Forbid();
             if (currentUserId == utilizadorId) return BadRequest(new { message = "Não te podes banir a ti próprio." });
 
@@ -1062,7 +1139,7 @@ namespace FilmAholic.Server.Controllers
         {
             var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue("sub");
             var isAdmin = await _context.ComunidadeMembros
-                .AnyAsync(m => m.ComunidadeId == id && m.UtilizadorId == currentUserId && m.Role == "Admin" && m.Status == "Ativo");
+                .AnyAsync(m => m.ComunidadeId == id && m.UtilizadorId == currentUserId && m.Role == "Admin");
             if (!isAdmin) return Forbid();
 
             var banidos = await _context.ComunidadeMembros
@@ -1082,6 +1159,37 @@ namespace FilmAholic.Server.Controllers
                     MotivoBan = m.MotivoBan
                 })
                 .ToListAsync();
+
+            var banidosUserIds = banidos.Select(m => m.UtilizadorId).Where(id => !string.IsNullOrEmpty(id)).ToList();
+            if (banidosUserIds.Count > 0)
+            {
+                var userData = await _context.Set<Utilizador>()
+                    .Where(u => banidosUserIds.Contains(u.Id))
+                    .Select(u => new { u.Id, u.UserTag })
+                    .ToListAsync();
+
+                var tags = userData.Select(x => x.UserTag).Where(t => !string.IsNullOrEmpty(t)).Distinct().ToList();
+                var medalDescriptions = await _context.Medalhas
+                    .ToListAsync();
+                var descByTag = medalDescriptions.ToDictionary(
+                    x => x.Nome,
+                    x => x.Descricao,
+                    StringComparer.OrdinalIgnoreCase);
+
+                var tagByUserId = userData.ToDictionary(x => x.Id, x => x.UserTag);
+
+                foreach (var membro in banidos)
+                {
+                    if (!string.IsNullOrEmpty(membro.UtilizadorId) && tagByUserId.TryGetValue(membro.UtilizadorId, out var tag))
+                    {
+                        membro.UserTag = tag;
+                        if (!string.IsNullOrEmpty(tag) && descByTag.TryGetValue(tag, out var desc))
+                        {
+                            membro.UserTagDescription = desc;
+                        }
+                    }
+                }
+            }
 
             return Ok(banidos);
         }
@@ -1458,6 +1566,10 @@ namespace FilmAholic.Server.Controllers
             public int? FilmeId { get; set; }
             public string? FilmeTitulo { get; set; }
             public string? FilmePosterUrl { get; set; }
+
+            // User medal tag for post author
+            public string? AutorUserTag { get; set; }
+            public string? AutorUserTagDescription { get; set; }
         }
 
         public class CreateComentarioDto
@@ -1475,6 +1587,8 @@ namespace FilmAholic.Server.Controllers
             public DateTime? CastigadoAte { get; set; }
             public DateTime? BanidoAte { get; set; }
             public string? MotivoBan { get; set; }
+            public string? UserTag { get; set; }
+            public string? UserTagDescription { get; set; }
         }
 
         public class ExpulsarMembroForm

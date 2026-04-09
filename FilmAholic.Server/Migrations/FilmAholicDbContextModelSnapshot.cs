@@ -379,13 +379,8 @@ namespace FilmAholic.Server.Migrations
                         .HasColumnType("datetime2")
                         .HasDefaultValueSql("CURRENT_TIMESTAMP");
 
-                    b.Property<int?>("PostId")
+                    b.Property<int>("PostId")
                         .HasColumnType("int");
-
-                    b.Property<string>("Tipo")
-                        .IsRequired()
-                        .HasMaxLength(40)
-                        .HasColumnType("nvarchar(40)");
 
                     b.Property<string>("UtilizadorId")
                         .HasColumnType("nvarchar(450)");
@@ -1480,7 +1475,7 @@ namespace FilmAholic.Server.Migrations
                         .WithMany()
                         .HasForeignKey("PostId")
                         .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired(false);
+                        .IsRequired();
 
                     b.HasOne("FilmAholic.Server.Models.Utilizador", "Utilizador")
                         .WithMany()

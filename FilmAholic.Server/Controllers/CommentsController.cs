@@ -39,13 +39,45 @@ namespace FilmAholic.Server.Controllers
 
                 var userIds = comments.Select(c => c.UserId).Where(uid => uid != null).Distinct().ToList();
                 Dictionary<string, string?> fotoByUserId = new();
+                Dictionary<string, string?> userTagByUserId = new();
+                Dictionary<string, string?> userTagDescByUserId = new();
+                Dictionary<string, string?> userTagIconByUserId = new();
                 if (userIds.Count > 0)
                 {
-                    var userFotos = await _context.Set<Utilizador>()
+                    var userData = await _context.Set<Utilizador>()
                         .Where(u => userIds.Contains(u.Id))
-                        .Select(u => new { u.Id, u.FotoPerfilUrl })
+                        .Select(u => new { u.Id, u.FotoPerfilUrl, u.UserTag })
                         .ToListAsync();
-                    fotoByUserId = userFotos.ToDictionary(x => x.Id, x => x.FotoPerfilUrl);
+                    fotoByUserId = userData.ToDictionary(x => x.Id, x => x.FotoPerfilUrl);
+                    userTagByUserId = userData.ToDictionary(x => x.Id, x => x.UserTag);
+
+                    // Fetch medal descriptions and icons for user tags (case-insensitive)
+                    var tags = userData.Select(x => x.UserTag).Where(t => !string.IsNullOrEmpty(t)).Distinct().ToList();
+                    var medalData = await _context.Medalhas
+                        .ToListAsync();
+                    var descByTag = medalData.ToDictionary(
+                        x => x.Nome,
+                        x => x.Descricao,
+                        StringComparer.OrdinalIgnoreCase);
+                    var iconByTag = medalData.ToDictionary(
+                        x => x.Nome,
+                        x => x.IconeUrl,
+                        StringComparer.OrdinalIgnoreCase);
+
+                    foreach (var user in userData)
+                    {
+                        if (!string.IsNullOrEmpty(user.UserTag))
+                        {
+                            if (descByTag.TryGetValue(user.UserTag, out var desc))
+                            {
+                                userTagDescByUserId[user.Id] = desc;
+                            }
+                            if (iconByTag.TryGetValue(user.UserTag, out var icon))
+                            {
+                                userTagIconByUserId[user.Id] = icon;
+                            }
+                        }
+                    }
                 }
 
                 var likesByComment = new Dictionary<int, int>();
@@ -75,6 +107,9 @@ namespace FilmAholic.Server.Controllers
                     Id = c.Id,
                     UserName = c.UserName,
                     FotoPerfilUrl = c.UserId != null && fotoByUserId.TryGetValue(c.UserId, out var url) ? url : null,
+                    UserTag = c.UserId != null && userTagByUserId.TryGetValue(c.UserId, out var tag) ? tag : null,
+                    UserTagDescription = c.UserId != null && userTagDescByUserId.TryGetValue(c.UserId, out var tagDesc) ? tagDesc : null,
+                    UserTagIconUrl = c.UserId != null && userTagIconByUserId.TryGetValue(c.UserId, out var tagIcon) ? tagIcon : null,
                     Texto = c.Texto,
                     DataCriacao = c.DataCriacao,
                     DataEdicao = c.DataEdicao,
@@ -144,11 +179,25 @@ namespace FilmAholic.Server.Controllers
                 _context.Comments.Add(comment);
                 await _context.SaveChangesAsync();
 
+                // Get medal description and icon for the tag (case-insensitive)
+                string? tagDescription = null;
+                string? tagIconUrl = null;
+                if (!string.IsNullOrEmpty(user?.UserTag))
+                {
+                    var medal = await _context.Medalhas
+                        .FirstOrDefaultAsync(m => m.Nome.ToLower() == user.UserTag.ToLower());
+                    tagDescription = medal?.Descricao;
+                    tagIconUrl = medal?.IconeUrl;
+                }
+
                 var outDto = new CommentDTO
                 {
                     Id = comment.Id,
                     UserName = comment.UserName,
                     FotoPerfilUrl = user?.FotoPerfilUrl,
+                    UserTag = user?.UserTag,
+                    UserTagDescription = tagDescription,
+                    UserTagIconUrl = tagIconUrl,
                     Texto = comment.Texto,
                     DataCriacao = comment.DataCriacao,
                     CanEdit = true,
@@ -191,14 +240,29 @@ namespace FilmAholic.Server.Controllers
                 .Select(v => v.IsLike ? 1 : -1)
                 .FirstOrDefaultAsync();
 
-            var commentUser = await _context.Users.FindAsync(comment.UserId);
-            var fotoUrl = (commentUser as Utilizador)?.FotoPerfilUrl;
+            var commentUser = await _context.Set<Utilizador>().FindAsync(comment.UserId);
+            var fotoUrl = commentUser?.FotoPerfilUrl;
+            var userTag = commentUser?.UserTag;
+
+            // Get medal description and icon (case-insensitive)
+            string? tagDescription = null;
+            string? tagIconUrl = null;
+            if (!string.IsNullOrEmpty(userTag))
+            {
+                var medal = await _context.Medalhas
+                    .FirstOrDefaultAsync(m => m.Nome.ToLower() == userTag.ToLower());
+                tagDescription = medal?.Descricao;
+                tagIconUrl = medal?.IconeUrl;
+            }
 
             return Ok(new CommentDTO
             {
                 Id = comment.Id,
                 UserName = comment.UserName,
                 FotoPerfilUrl = fotoUrl,
+                UserTag = userTag,
+                UserTagDescription = tagDescription,
+                UserTagIconUrl = tagIconUrl,
                 Texto = comment.Texto,
                 DataCriacao = comment.DataCriacao,
                 DataEdicao = comment.DataEdicao,

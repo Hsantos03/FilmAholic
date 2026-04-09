@@ -11,6 +11,15 @@ namespace FilmAholic.Server.DTOs
         public DateTime? DataEdicao { get; set; }
         public bool CanEdit { get; set; }
 
+        // User tag (e.g., "Fundador")
+        public string? UserTag { get; set; }
+
+        // Medal description explaining how to unlock it
+        public string? UserTagDescription { get; set; }
+
+        // Medal icon URL for the user tag
+        public string? UserTagIconUrl { get; set; }
+
         // Votes - Likes/Dislikes/Contagem dos Comments
         public int LikeCount { get; set; }
         public int DislikeCount { get; set; }

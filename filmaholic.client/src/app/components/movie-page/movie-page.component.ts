@@ -11,6 +11,7 @@ import { CommentsService, CommentDTO } from '../../services/comments.service';
 import { MovieRatingService, MovieRatingSummaryDTO } from '../../services/movie-rating.service';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { OnboardingStep } from '../../services/onboarding.service';
+import { environment } from '../../../environments/environment';
 @Component({
   selector: 'app-movie-page',
   templateUrl: './movie-page.component.html',
@@ -43,6 +44,8 @@ export class MoviePageComponent implements OnInit, OnDestroy {
    * não só do localStorage (evita foto de outra conta em cache).
    */
   meFotoPerfilUrl: string | null = null;
+
+  readonly API_URL = environment.apiBaseUrl ? environment.apiBaseUrl : '';
 
   ratings: RatingsDto | null = null;
   isLoadingRatings = false;
