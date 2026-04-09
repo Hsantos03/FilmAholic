@@ -5,20 +5,16 @@
   </button>
   <span class="brand-pill">🏆 FilmAholic</span>
 </header>
-<!-- Barra mínima quando embebido -->
-<header class="topbar topbar-embed" *ngIf="embedMode">
-  <button class="back-btn" (click)="goBack()">
-    <span>←</span> Voltar
-  </button>
-  <span class="brand-pill">🏆 Leaderboard</span>
-</header>
-
-<main class="lb-page">
+<main class="lb-page" [class.lb-page-embed]="embedMode">
   <div class="bg-orb orb1"></div>
   <div class="bg-orb orb2"></div>
   <div class="bg-orb orb3"></div>
 
   <div class="lb-container" [class.tab-atores]="category === 'actors'">
+
+    <div class="lb-embed-bar" *ngIf="embedMode">
+      <button type="button" class="lb-embed-back" (click)="goBack()">← Voltar ao jogo</button>
+    </div>
 
     <!-- HEADER -->
     <div class="lb-header">
