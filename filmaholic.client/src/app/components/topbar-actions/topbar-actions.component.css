@@ -676,7 +676,9 @@
 
 .notif-reminder-section,
 .notif-resumo-section,
-.notif-quero-ver-section {
+.notif-quero-ver-section,
+.notif-plataforma-section,
+.notif-medalha-section {
   padding: 0 8px;
 }
 

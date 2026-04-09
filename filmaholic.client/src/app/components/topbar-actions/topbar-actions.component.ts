@@ -531,6 +531,13 @@ export class TopbarActionsComponent implements OnInit, OnDestroy {
     return u + r > 0;
   }
 
+  /** Texto para linha "Géneros mais vistos" nos cards de resumo; vazio se não houver dados. */
+  resumoGenerosLabel(it: ResumoEstatisticasFeedItemDto): string {
+    const list = it.corpo?.generosMaisVistos;
+    if (!list?.length) return '';
+    return list.map((g) => `${g.nome} (${g.filmes})`).join(', ');
+  }
+
   private loadResumoFeed(): void {
     this.notificacoesService.getResumoEstatisticasFeed({ unreadLimit: 50, readLimit: 50 }).subscribe({
       next: (dto) => {
