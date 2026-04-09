@@ -11,8 +11,8 @@
   /* Cores SecundÃƒÂ¡rias - Azul */
   --color-secondary: #007bff;
   --color-secondary-hover: #0056b3;
-  /* Cores de Fundo */
-  --bg-dark: #000;
+  /* Cores de Fundo (alinhado com topbar/strips #010B15 — evita faixa mais preta no fundo) */
+  --bg-dark: #010B15;
   --bg-dark-secondary: 5c4f4f5d;
   --bg-card: rgba(5, 10, 15, 0.95);
   --bg-input: #0a1118;
