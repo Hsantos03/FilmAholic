@@ -37,6 +37,86 @@
     justify-content: center;
   }
 
+  /* Leaderboard: largura total (classe no <main> — mais fiável que :has) */
+  .hol-page.hol-leaderboard-open {
+    align-items: stretch;
+    justify-content: flex-start;
+    padding: 76px 22px 48px;
+  }
+
+  .hol-page.hol-leaderboard-open .bg-orb {
+    opacity: 0.06;
+  }
+
+/* Menu inicial: centrado na viewport útil, mais compacto para caber tudo visível */
+.hol-page.hol-menu-home {
+  align-items: center;
+  justify-content: center;
+  padding: 12px 20px 16px;
+  min-height: calc(100vh - 56px);
+  min-height: calc(100dvh - 56px);
+  box-sizing: border-box;
+}
+
+.hol-page.hol-menu-home .menu-screen {
+  gap: 10px;
+}
+
+.hol-page.hol-menu-home .menu-title {
+  font-size: clamp(44px, 7.5vw, 76px);
+  line-height: 0.88;
+}
+
+.hol-page.hol-menu-home .menu-desc {
+  font-size: 14px;
+  line-height: 1.3;
+  min-height: 20px;
+}
+
+.hol-page.hol-menu-home .menu-sub {
+  margin: 4px 0 0;
+}
+
+.hol-page.hol-menu-home .category-row {
+  margin: 0;
+  gap: 8px;
+}
+
+.hol-page.hol-menu-home .category-row.difficulty-row {
+  gap: 8px;
+  max-width: 100%;
+}
+
+.hol-page.hol-menu-home .cat-btn {
+  padding: 12px 22px;
+  min-width: 96px;
+}
+
+.hol-page.hol-menu-home .cat-btn-compact {
+  padding: 8px 6px;
+  width: 102px;
+  min-width: 86px;
+}
+
+.hol-page.hol-menu-home .cat-icon {
+  font-size: 24px;
+}
+
+.hol-page.hol-menu-home .cat-hint {
+  min-height: 22px;
+  font-size: 9px;
+  line-height: 1.2;
+}
+
+.hol-page.hol-menu-home .start-btn {
+  padding: 12px 22px;
+  margin-top: 2px;
+}
+
+.hol-page.hol-menu-home .history-btn {
+  padding: 10px 20px;
+}
+
 /* ─── BG ORBS ─── */
 .bg-orb {
   position: fixed;
@@ -759,11 +839,15 @@
   position: relative;
   z-index: 1;
   width: 100%;
+  max-width: none;
+  flex: 1 1 auto;
+  align-self: stretch;
   animation: fadeUp 0.4s ease both;
 }
 
   .leaderboard-screen app-leaderboard {
     display: block;
+    width: 100%;
   }
 
 /* ─── HISTÓRICO ──── */
@@ -1183,6 +1267,26 @@
     align-items: flex-start;
   }
 
+  .hol-page.hol-leaderboard-open {
+    padding: 66px 14px 28px;
+  }
+
+  .hol-page.hol-menu-home {
+    align-items: center;
+    justify-content: center;
+    padding: 10px 12px 14px;
+    min-height: calc(100vh - 52px);
+    min-height: calc(100dvh - 52px);
+  }
+
+  .hol-page.hol-menu-home .menu-screen {
+    gap: 8px;
+  }
+
+  .hol-page.hol-menu-home .menu-title {
+    font-size: clamp(38px, 10vw, 54px);
+  }
+
   .menu-screen {
     width: 100%;
     gap: 16px;
@@ -1369,6 +1473,26 @@
 @media (max-width: 480px) {
   .hol-page {
     padding: 65px 10px 16px;
+  }
+
+  .hol-page.hol-leaderboard-open {
+    padding: 62px 12px 24px;
+  }
+
+  .hol-page.hol-menu-home {
+    align-items: center;
+    justify-content: center;
+    padding: 8px 10px 12px;
+    min-height: calc(100vh - 50px);
+    min-height: calc(100dvh - 50px);
+  }
+
+  .hol-page.hol-menu-home .menu-screen {
+    gap: 6px;
+  }
+
+  .hol-page.hol-menu-home .menu-title {
+    font-size: clamp(34px, 12vw, 48px);
   }
 
   .menu-title {

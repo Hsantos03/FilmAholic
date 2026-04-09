@@ -55,7 +55,9 @@
   </div>
 </nav>
 
-<main class="hol-page">
+<main class="hol-page"
+      [class.hol-leaderboard-open]="showLeaderboard"
+      [class.hol-menu-home]="!isPlaying && !showHistory && !showEndStats && !showLeaderboard">
 
   <!-- PARTÍCULAS DE FUNDO -->
   <div class="bg-orb orb1"></div>
