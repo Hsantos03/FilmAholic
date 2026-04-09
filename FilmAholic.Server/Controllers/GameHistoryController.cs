@@ -69,15 +69,13 @@ namespace FilmAholic.Server.Controllers
                     user.UltimoResetDiario = DateTime.UtcNow;
                 }
 
-                const int limiteDiario = 100;
-                const int xpPorAcerto = 10;
+                const int limiteDiario = 200; // Aumentado para compensar maior ganho de XP com streaks
 
                 if (user.XPDiario < limiteDiario)
                 {
-                    int xpBase = dto.Score * xpPorAcerto;
-
-                    double multiplicador = dto.Score >= 10 ? 2.0 : dto.Score >= 5 ? 1.5 : 1.0;
-                    int xpCalculado = (int)(xpBase * multiplicador);
+                    // Sistema de streak: cada resposta consecutiva dá mais XP
+                    // Streak 1 = 5 XP, Streak 2 = 7 XP, Streak 3 = 9 XP
+                    int xpCalculado = CalcularXPComStreak(dto.Score);
 
                     int xpDisponivel = limiteDiario - user.XPDiario;
                     xpGanho = Math.Min(xpCalculado, xpDisponivel);
@@ -101,7 +99,7 @@ namespace FilmAholic.Server.Controllers
                 xpGanho,
                 xpTotal = user?.XP ?? 0,
                 nivel = user?.Nivel ?? 1,
-                xpDiarioRestante = Math.Max(0, 100 - (user?.XPDiario ?? 0))
+                xpDiarioRestante = Math.Max(0, 200 - (user?.XPDiario ?? 0))
             });
         }
 
@@ -162,11 +160,37 @@ namespace FilmAholic.Server.Controllers
             int nivel = 1;
             while (true)
             {
-                int xpParaProximo = 100 * nivel * (nivel + 1) / 2;
+                // Fórmula: 50 * nível (em vez de 100 * nível * (nível + 1) / 2)
+                // Nível 1→2: 50 XP, Nível 2→3: 100 XP, Nível 3→4: 150 XP...
+                int xpParaProximo = 50 * nivel * nivel;
                 if (xpTotal < xpParaProximo) break;
                 nivel++;
             }
             return nivel;
+        }
+
+        /// Calcula XP com bónus de streak.
+        /// Cada resposta consecutiva correta dá mais XP.
+        /// Streak 1 = 5 XP, Streak 2 = 7 XP, Streak 3 = 9 XP... (progressão: 5 + (streak-1)*2)
+        private static int CalcularXPComStreak(int score)
+        {
+            if (score <= 0) return 0;
+
+            int xpTotal = 0;
+            for (int i = 1; i <= score; i++)
+            {
+                // XP base: 5 XP
+                // Bónus por streak: +2 XP por cada resposta após a primeira
+                int xpPorResposta = 5 + ((i - 1) * 2);
+                xpTotal += xpPorResposta;
+            }
+
+            // Bónus adicional por streak
+            if (score >= 15) xpTotal += 50; // Streak épico: +50 XP
+            else if (score >= 10) xpTotal += 25; // Streak excelente: +25 XP
+            else if (score >= 5) xpTotal += 10;  // Streak bom: +10 XP
+
+            return xpTotal;
         }
 
         [Authorize]
