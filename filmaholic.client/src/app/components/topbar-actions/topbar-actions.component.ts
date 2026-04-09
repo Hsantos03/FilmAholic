@@ -51,6 +51,10 @@ export class TopbarActionsComponent implements OnInit, OnDestroy {
   upcomingUnreadPage = 0;
   upcomingReadPage = 0;
 
+  // ── Paginação das notificações unificadas ──
+  readonly notifPageSize = 10;
+  notifPage = 0;
+
   /** Com sessão (cookie): filtrar lista pelos géneros favoritos (visível no menu). */
   filtrarEstreiasPorGeneros = true;
 
@@ -104,6 +108,7 @@ export class TopbarActionsComponent implements OnInit, OnDestroy {
     if (this.isNotificationsOpen) {
       this.upcomingUnreadPage = 0;
       this.upcomingReadPage = 0;
+      this.notifPage = 0;
       this.loadResumoFeed();
       this.loadReminderJogo();
       this.loadFilmeDisponivel();
@@ -144,7 +149,7 @@ export class TopbarActionsComponent implements OnInit, OnDestroy {
   
 
   private loadComunidadeFeed(): void {
-    this.notificacoesService.getNotificacoesComunidadeFeed({ unreadLimit: 10, readLimit: 5 }).subscribe({
+    this.notificacoesService.getNotificacoesComunidadeFeed({ unreadLimit: 50, readLimit: 50 }).subscribe({
       next: (dto) => {
         this.comunidadeFeed = {
           unread: this.sortByDateDesc(dto?.unread ?? []),
@@ -171,7 +176,7 @@ export class TopbarActionsComponent implements OnInit, OnDestroy {
           read: [
             { ...item, lidaEm: now },
             ...(this.comunidadeFeed.read ?? []).filter(x => x.id !== item.id)
-          ].slice(0, 5) // Manter só as 5 mais recentes lidas
+          ].slice(0, 50) // Manter até 50 notificações lidas
         };
         this.comunidadeUnreadCount = Math.max(0, this.comunidadeUnreadCount - 1);
         this.cdr.markForCheck();
@@ -187,7 +192,7 @@ export class TopbarActionsComponent implements OnInit, OnDestroy {
         const allRead = [
           ...(this.comunidadeFeed.unread ?? []).map(x => ({ ...x, lidaEm: now })),
           ...(this.comunidadeFeed.read ?? [])
-        ].slice(0, 5); // Manter só as 5 mais recentes lidas
+        ].slice(0, 50); // Manter até 50 notificações lidas
         this.comunidadeFeed = { unread: [], read: allRead };
         this.comunidadeUnreadCount = 0;
         this.cdr.markForCheck();
@@ -220,7 +225,8 @@ export class TopbarActionsComponent implements OnInit, OnDestroy {
         tipo: 'comunidade',
         texto: `Comunidades: novas publicações em ${n.comunidadeNome}`,
         data: new Date(n.criadaEm),
-        raw: n
+        raw: n,
+        lida: false
       }, `comunidade-${n.id}`);
     });
 
@@ -231,7 +237,8 @@ export class TopbarActionsComponent implements OnInit, OnDestroy {
         tipo: 'medalha',
         texto: `Desbloqueaste ${n.medalhaNome}`,
         data: new Date(n.criadaEm),
-        raw: n
+        raw: n,
+        lida: false
       }, `medalha-${n.id}`);
     });
 
@@ -308,8 +315,44 @@ export class TopbarActionsComponent implements OnInit, OnDestroy {
     });
 
     return Array.from(mapa.values())
-      .sort((a, b) => b.data.getTime() - a.data.getTime())
-      .slice(0, 10); // Limite máximo de 10 notificações
+      .sort((a, b) => b.data.getTime() - a.data.getTime());
+  }
+
+  // ── Getters para paginação das notificações ──
+  get notificacoesPaged(): NotificacaoUnificada[] {
+    const all = this.notificacoesOrdenadas;
+    const start = this.notifPage * this.notifPageSize;
+    return all.slice(start, start + this.notifPageSize);
+  }
+
+  get notifPagerVisible(): boolean {
+    return this.notificacoesOrdenadas.length > this.notifPageSize;
+  }
+
+  get notifPageLabel(): string {
+    const total = this.notificacoesOrdenadas.length;
+    if (total === 0) return '';
+    const pages = Math.max(1, Math.ceil(total / this.notifPageSize));
+    return `${this.notifPage + 1} / ${pages}`;
+  }
+
+  get notifLastPage(): number {
+    return Math.max(0, Math.ceil(this.notificacoesOrdenadas.length / this.notifPageSize) - 1);
+  }
+
+  prevNotifPage(e: MouseEvent): void {
+    e.stopPropagation();
+    this.notifPage = Math.max(0, this.notifPage - 1);
+  }
+
+  nextNotifPage(e: MouseEvent): void {
+    e.stopPropagation();
+    this.notifPage = Math.min(this.notifLastPage, this.notifPage + 1);
+  }
+
+  private clampNotifPage(): void {
+    const max = this.notifLastPage;
+    if (this.notifPage > max) this.notifPage = max;
   }
 
   // ── Medal notifications ──
@@ -324,7 +367,7 @@ export class TopbarActionsComponent implements OnInit, OnDestroy {
   }
 
   private loadMedalhaFeed(): void {
-    this.notificacoesService.getNotificacoesMedalhaFeed({ unreadLimit: 10, readLimit: 5 }).subscribe({
+    this.notificacoesService.getNotificacoesMedalhaFeed({ unreadLimit: 50, readLimit: 50 }).subscribe({
       next: (dto) => {
         this.medalhaFeed = {
           unread: this.sortByDateDesc(dto?.unread ?? []),
@@ -351,7 +394,7 @@ export class TopbarActionsComponent implements OnInit, OnDestroy {
           read: [
             { ...item, lidaEm: now },
             ...(this.medalhaFeed.read ?? []).filter(x => x.id !== item.id)
-          ].slice(0, 5) // Manter só as 5 mais recentes lidas
+          ].slice(0, 50) // Manter até 50 notificações lidas
         };
         this.medalhaUnreadCount = Math.max(0, this.medalhaUnreadCount - 1);
         this.cdr.markForCheck();
@@ -367,7 +410,7 @@ export class TopbarActionsComponent implements OnInit, OnDestroy {
         const allRead = [
           ...(this.medalhaFeed.unread ?? []).map(x => ({ ...x, lidaEm: now })),
           ...(this.medalhaFeed.read ?? [])
-        ].slice(0, 5); // Manter só as 5 mais recentes lidas
+        ].slice(0, 50); // Manter até 50 notificações lidas
         this.medalhaFeed = { unread: [], read: allRead };
         this.medalhaUnreadCount = 0;
         this.cdr.markForCheck();
@@ -387,7 +430,7 @@ export class TopbarActionsComponent implements OnInit, OnDestroy {
   }
 
   private loadResumoFeed(): void {
-    this.notificacoesService.getResumoEstatisticasFeed({ unreadLimit: 5, readLimit: 4 }).subscribe({
+    this.notificacoesService.getResumoEstatisticasFeed({ unreadLimit: 50, readLimit: 50 }).subscribe({
       next: (dto) => {
         this.resumoFeed = {
           unread: this.sortByDateDesc(dto?.unread ?? []),
@@ -480,7 +523,7 @@ export class TopbarActionsComponent implements OnInit, OnDestroy {
           read: [
             { ...item, lidaEm: new Date().toISOString() },
             ...(this.resumoFeed.read ?? []).filter((x) => x.id !== item.id)
-          ].slice(0, 5) // Manter só as 5 mais recentes lidas
+          ].slice(0, 50) // Manter até 50 notificações lidas
         };
         this.cdr.markForCheck();
       }
@@ -547,6 +590,8 @@ export class TopbarActionsComponent implements OnInit, OnDestroy {
     if (this.medalhaUnreadCount > 0) {
       this.marcarTodasMedalhasComoLidas();
     }
+    // Ajustar página se necessário após reduzir notificações
+    setTimeout(() => this.clampNotifPage(), 0);
   }
 
   openResumoCommunityMovie(e: MouseEvent, f: ResumoFilmeComunidadeDto): void {

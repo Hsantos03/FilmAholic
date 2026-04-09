@@ -163,7 +163,7 @@
               </button>
             </div>
 
-            <div *ngFor="let n of notificacoesOrdenadas"
+            <div *ngFor="let n of notificacoesPaged"
                  class="notif-card"
                  [class.notif-card--read]="n.lida"
                  (click)="onNotifClick($event, n)"
@@ -245,6 +245,21 @@
                       (click)="marcarNotifComoLida($event, n)"
                       aria-label="Marcar como lida">
                 ✓
+              </button>
+            </div>
+
+            <!-- Paginação das notificações -->
+            <div *ngIf="notifPagerVisible" class="notif-pager" style="margin-top: 8px;">
+              <button type="button" class="notif-pager-btn"
+                      (click)="prevNotifPage($event)"
+                      [disabled]="notifPage === 0">
+                ‹
+              </button>
+              <span class="notif-pager-label">{{ notifPageLabel }}</span>
+              <button type="button" class="notif-pager-btn"
+                      (click)="nextNotifPage($event)"
+                      [disabled]="notifPage >= notifLastPage">
+                ›
               </button>
             </div>
           </ng-container>
