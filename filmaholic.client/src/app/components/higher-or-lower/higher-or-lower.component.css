@@ -2,12 +2,11 @@
 
 :host {
   display: block;
-  height: 100vh;
-  overflow: hidden;
+  min-height: 100vh;
 }
 
 .hol-page {
-  height: 100vh;
+  min-height: 100vh;
   overflow-y: auto;
 }
 
@@ -26,10 +25,96 @@
   position: relative;
   min-height: 100vh;
   display: flex;
+  align-items: flex-start; /* ALTERADO: Puxa o conteúdo para cima em vez de centrar */
+  justify-content: center;
+  padding: 120px 20px 40px; /* ALTERADO: Padding ajustado para não colar ao topo */
+}
+
+  /* Página mais compacta durante o jogo - centrar conteúdo */
+  .hol-page:has(.game-screen) {
+    padding-top: 100px; /* ALTERADO: Mantém um espaço confortável no topo durante o jogo */
+    align-items: flex-start; /* ALTERADO: Puxa o jogo para cima */
+    justify-content: center;
+  }
+
+  /* Leaderboard: largura total (classe no <main> — mais fiável que :has) */
+  .hol-page.hol-leaderboard-open {
+    align-items: stretch;
+    justify-content: flex-start;
+    padding: 76px 22px 48px;
+  }
+
+  .hol-page.hol-leaderboard-open .bg-orb {
+    opacity: 0.06;
+  }
+
+/* Menu inicial: centrado na viewport útil, mais compacto para caber tudo visível */
+.hol-page.hol-menu-home {
   align-items: center;
   justify-content: center;
-  padding: 80px 20px 40px;
-  overflow: hidden;
+  padding: 12px 20px 16px;
+  min-height: calc(100vh - 56px);
+  min-height: calc(100dvh - 56px);
+  box-sizing: border-box;
+}
+
+.hol-page.hol-menu-home .menu-screen {
+  gap: 10px;
+}
+
+.hol-page.hol-menu-home .menu-title {
+  font-size: clamp(44px, 7.5vw, 76px);
+  line-height: 0.88;
+}
+
+.hol-page.hol-menu-home .menu-desc {
+  font-size: 14px;
+  line-height: 1.3;
+  min-height: 20px;
+}
+
+.hol-page.hol-menu-home .menu-sub {
+  margin: 4px 0 0;
+}
+
+.hol-page.hol-menu-home .category-row {
+  margin: 0;
+  gap: 8px;
+}
+
+.hol-page.hol-menu-home .category-row.difficulty-row {
+  gap: 8px;
+  max-width: 100%;
+}
+
+.hol-page.hol-menu-home .cat-btn {
+  padding: 12px 22px;
+  min-width: 96px;
+}
+
+.hol-page.hol-menu-home .cat-btn-compact {
+  padding: 8px 6px;
+  width: 102px;
+  min-width: 86px;
+}
+
+.hol-page.hol-menu-home .cat-icon {
+  font-size: 24px;
+}
+
+.hol-page.hol-menu-home .cat-hint {
+  min-height: 22px;
+  font-size: 9px;
+  line-height: 1.2;
+}
+
+.hol-page.hol-menu-home .start-btn {
+  padding: 12px 22px;
+  margin-top: 2px;
+}
+
+.hol-page.hol-menu-home .history-btn {
+  padding: 10px 20px;
 }
 
 /* ─── BG ORBS ─── */
@@ -175,11 +260,12 @@
   margin: 4px 0;
 }
 
-.category-row.difficulty-row {
-  flex-wrap: wrap;
-  justify-content: center;
-  max-width: 380px;
-}
+  .category-row.difficulty-row {
+    flex-wrap: nowrap;
+    justify-content: center;
+    max-width: 380px;
+    gap: 10px;
+  }
 
 .cat-btn {
   display: flex;
@@ -221,8 +307,10 @@
 }
 
 .cat-btn-compact {
-  min-width: 100px;
-  padding: 12px 10px;
+  width: 110px;
+  min-width: 110px;
+  padding: 12px 8px;
+  flex: 1;
 }
 
 .cat-hint {
@@ -231,7 +319,11 @@
   color: rgba(255,255,255,0.38);
   text-align: center;
   line-height: 1.25;
-  max-width: 108px;
+  max-width: 100px;
+  min-height: 25px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 /* ─── BUTTONS ─── */
@@ -306,8 +398,9 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 20px;
+  gap: 12px;
   animation: fadeUp 0.4s ease both;
+  padding-top: 10px;
 }
 
 .game-topbar {
@@ -427,12 +520,13 @@
   letter-spacing: 2px;
   text-transform: uppercase;
   color: rgba(255,255,255,0.4);
+  margin: 0;
 }
 
 .duel-row {
   display: flex;
   gap: 20px;
-  align-items: flex-start;
+  align-items: stretch;
   justify-content: center;
   width: 100%;
 }
@@ -442,6 +536,8 @@
   width: 260px;
   cursor: pointer;
   transition: transform 0.25s ease;
+  display: flex;
+  flex-direction: column;
 }
 
   .duel-card:hover:not(.disabled) {
@@ -602,7 +698,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  padding-top: 150px;
+  padding-top: 40px;
   flex-shrink: 0;
 }
 
@@ -743,12 +839,16 @@
   position: relative;
   z-index: 1;
   width: 100%;
+  max-width: none;
+  flex: 1 1 auto;
+  align-self: stretch;
   animation: fadeUp 0.4s ease both;
 }
 
-.leaderboard-screen app-leaderboard {
-  display: block;
-}
+  .leaderboard-screen app-leaderboard {
+    display: block;
+    width: 100%;
+  }
 
 /* ─── HISTÓRICO ──── */
 .history-screen {
@@ -879,6 +979,80 @@
   border: 1px solid rgba(255,47,109,0.25);
 }
 
+/* ─── PAGINATION ─── */
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid rgba(255,255,255,0.06);
+}
+
+.page-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.1);
+  color: rgba(255,255,255,0.7);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  transition: all 0.2s;
+}
+
+  .page-btn:hover:not(:disabled) {
+    background: rgba(255,255,255,0.1);
+    color: #fff;
+  }
+
+  .page-btn:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+  }
+
+.page-numbers {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.page-number {
+  min-width: 36px;
+  height: 36px;
+  padding: 0 10px;
+  border-radius: 10px;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.1);
+  color: rgba(255,255,255,0.6);
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+  transition: all 0.2s;
+}
+
+  .page-number:hover {
+    background: rgba(255,255,255,0.1);
+    color: #fff;
+  }
+
+  .page-number.active {
+    background: linear-gradient(135deg, rgba(255,47,109,0.25), rgba(255,107,53,0.15));
+    border-color: rgba(255,47,109,0.5);
+    color: #fff;
+  }
+
+.pagination-info {
+  text-align: center;
+  font-size: 12px;
+  color: rgba(255,255,255,0.4);
+  margin-top: 12px;
+}
 
 /* FIL-370 — Animação de card correto */
 @keyframes correctPulse {
@@ -1051,36 +1225,373 @@
   gap: 8px;
 }
 
-.medal-notifications .state {
-  padding: 12px 16px;
-  border-radius: 8px;
-  font-size: 14px;
-  font-weight: 600;
-  text-align: center;
-  animation: slideInUp 0.3s ease-out;
-}
+  .medal-notifications .state {
+    padding: 12px 16px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    text-align: center;
+    animation: slideInUp 0.3s ease-out;
+  }
 
-.medal-notifications .state.success {
-  background: linear-gradient(135deg, #10b981, #059669);
-  color: white;
-  border: 1px solid #059669;
-  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
-}
+    .medal-notifications .state.success {
+      background: linear-gradient(135deg, #10b981, #059669);
+      color: white;
+      border: 1px solid #059669;
+      box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+    }
 
-.medal-notifications .state.error {
-  background: linear-gradient(135deg, #ef4444, #dc2626);
-  color: white;
-  border: 1px solid #dc2626;
-  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
-}
+    .medal-notifications .state.error {
+      background: linear-gradient(135deg, #ef4444, #dc2626);
+      color: white;
+      border: 1px solid #dc2626;
+      box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+    }
 
 @keyframes slideInUp {
   from {
     opacity: 0;
     transform: translateY(20px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
+  }
+}
+
+/* ─── RESPONSIVE STYLES ─── */
+@media (max-width: 768px) {
+  .hol-page {
+    padding: 70px 12px 20px;
+    align-items: flex-start;
+  }
+
+  .hol-page.hol-leaderboard-open {
+    padding: 66px 14px 28px;
+  }
+
+  .hol-page.hol-menu-home {
+    align-items: center;
+    justify-content: center;
+    padding: 10px 12px 14px;
+    min-height: calc(100vh - 52px);
+    min-height: calc(100dvh - 52px);
+  }
+
+  .hol-page.hol-menu-home .menu-screen {
+    gap: 8px;
+  }
+
+  .hol-page.hol-menu-home .menu-title {
+    font-size: clamp(38px, 10vw, 54px);
+  }
+
+  .menu-screen {
+    width: 100%;
+    gap: 16px;
+  }
+
+  .menu-title {
+    font-size: clamp(48px, 12vw, 64px);
+  }
+
+  .category-row {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .cat-btn {
+    min-width: 90px;
+    padding: 12px 20px;
+  }
+
+  .cat-btn-compact {
+    width: 100px;
+    min-width: 100px;
+    padding: 10px 6px;
+  }
+
+  .cat-hint {
+    max-width: 90px;
+    min-height: 22px;
+    font-size: 9px;
+  }
+
+  .start-btn,
+  .history-btn {
+    width: 200px;
+  }
+
+  /* Game screen responsive */
+  .game-screen {
+    max-width: 100%;
+    gap: 16px;
+  }
+
+  .game-topbar {
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 8px;
+  }
+
+  .score-chip {
+    padding: 6px 14px;
+  }
+
+  .score-value {
+    font-size: 24px;
+  }
+
+  .duel-row {
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .vs-col {
+    padding-top: 0;
+    order: -1;
+  }
+
+  .vs-ring {
+    width: 48px;
+    height: 48px;
+    font-size: 18px;
+  }
+
+  .duel-card {
+    width: 100%;
+    max-width: 280px;
+  }
+
+  .card-img-wrap {
+    height: 320px;
+  }
+
+  .actor-img-wrap {
+    height: 280px;
+  }
+
+  /* History responsive */
+  .history-screen {
+    max-width: 100%;
+    width: 100%;
+  }
+
+  .history-panel {
+    padding: 16px;
+    border-radius: 16px;
+  }
+
+  .history-header {
+    flex-direction: column;
+    gap: 12px;
+    align-items: flex-start;
+  }
+
+  .history-title {
+    font-size: 24px;
+  }
+
+  .history-actions {
+    width: 100%;
+    justify-content: stretch;
+  }
+
+    .history-actions .start-btn,
+    .history-actions .history-btn {
+      flex: 1;
+      width: auto;
+    }
+
+  .stats-row {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .stat-chip {
+    min-width: 80px;
+    padding: 10px 14px;
+  }
+
+  .stat-value {
+    font-size: 24px;
+  }
+
+  .history-list {
+    max-height: 350px;
+  }
+
+  .history-item {
+    padding: 12px;
+    gap: 10px;
+  }
+
+  .hi-score {
+    font-size: 24px;
+    min-width: 40px;
+  }
+
+  /* Pagination responsive */
+  .pagination {
+    gap: 8px;
+    margin-top: 16px;
+    padding-top: 12px;
+  }
+
+  .page-btn,
+  .page-number {
+    width: 32px;
+    height: 32px;
+    font-size: 12px;
+  }
+
+  .page-numbers {
+    gap: 4px;
+  }
+
+  .pagination-info {
+    font-size: 11px;
+  }
+
+  /* Endgame responsive */
+  .endgame-card {
+    padding: 32px 24px;
+    width: 100%;
+    max-width: 340px;
+  }
+
+  .endgame-score {
+    font-size: 72px;
+  }
+
+  .endgame-title {
+    font-size: 32px;
+  }
+}
+
+@media (max-width: 480px) {
+  .hol-page {
+    padding: 65px 10px 16px;
+  }
+
+  .hol-page.hol-leaderboard-open {
+    padding: 62px 12px 24px;
+  }
+
+  .hol-page.hol-menu-home {
+    align-items: center;
+    justify-content: center;
+    padding: 8px 10px 12px;
+    min-height: calc(100vh - 50px);
+    min-height: calc(100dvh - 50px);
+  }
+
+  .hol-page.hol-menu-home .menu-screen {
+    gap: 6px;
+  }
+
+  .hol-page.hol-menu-home .menu-title {
+    font-size: clamp(34px, 12vw, 48px);
+  }
+
+  .menu-title {
+    font-size: 40px;
+  }
+
+  .menu-desc {
+    font-size: 14px;
+    max-width: 280px;
+  }
+
+  .cat-btn {
+    min-width: 80px;
+    padding: 10px 16px;
+  }
+
+  .cat-icon {
+    font-size: 24px;
+  }
+
+  .cat-label {
+    font-size: 12px;
+  }
+
+  .cat-btn-compact {
+    width: 90px;
+    min-width: 90px;
+    padding: 8px 4px;
+  }
+
+  .cat-hint {
+    max-width: 80px;
+    min-height: 20px;
+    font-size: 8px;
+  }
+
+  .start-btn,
+  .history-btn {
+    width: 180px;
+    padding: 14px 20px;
+    font-size: 14px;
+  }
+
+  .duel-card {
+    max-width: 260px;
+  }
+
+  .card-img-wrap {
+    height: 280px;
+  }
+
+  .actor-img-wrap {
+    height: 240px;
+  }
+
+  .card-title {
+    font-size: 14px;
+  }
+
+  .history-panel {
+    padding: 12px;
+  }
+
+  .history-list {
+    max-height: 300px;
+  }
+
+  .stat-chip {
+    min-width: 70px;
+    padding: 8px 12px;
+  }
+
+  .stat-value {
+    font-size: 20px;
+  }
+
+  .stat-label {
+    font-size: 10px;
+  }
+
+  /* Pagination responsive for small screens */
+  .pagination {
+    gap: 6px;
+  }
+
+  .page-btn,
+  .page-number {
+    width: 28px;
+    height: 28px;
+    min-width: 28px;
+    font-size: 11px;
+    padding: 0 4px;
+  }
+
+  .page-numbers {
+    gap: 3px;
+  }
+
+  .pagination-info {
+    font-size: 10px;
   }
 }

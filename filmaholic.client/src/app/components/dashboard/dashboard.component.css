@@ -649,6 +649,79 @@ a.brand.active {
   text-align: center;
 }
 
+/* ── SEARCH HISTORY ── */
+.search-history-section {
+  margin-bottom: 8px;
+}
+
+  .search-history-section .search-menu-title {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 10px 6px;
+  }
+
+.clear-history-btn {
+  background: transparent;
+  border: none;
+  color: var(--color-primary, #e91e63);
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 2px 8px;
+  border-radius: 4px;
+  transition: background 150ms ease, color 150ms ease;
+  text-transform: none;
+  letter-spacing: normal;
+}
+
+  .clear-history-btn:hover {
+    background: rgba(233, 30, 99, 0.1);
+    color: #ff5c8d;
+  }
+
+.history-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 8px;
+}
+
+.history-icon {
+  flex: 0 0 auto;
+  color: rgba(255, 255, 255, 0.5);
+  margin-left: 2px;
+}
+
+.history-item .search-title {
+  flex: 1;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.remove-history-item {
+  background: transparent;
+  border: none;
+  color: rgba(255, 255, 255, 0.4);
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 150ms ease, background 150ms ease, color 150ms ease;
+}
+
+.history-item:hover .remove-history-item {
+  opacity: 1;
+}
+
+  .remove-history-item:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: rgba(255, 255, 255, 0.8);
+  }
+
 /* ── NEXT UP STRIP ── */
 .nextup-strip .section-head {
   display: flex;

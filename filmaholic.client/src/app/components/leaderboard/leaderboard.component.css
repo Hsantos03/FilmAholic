@@ -3,10 +3,15 @@
 :host {
   display: block;
   min-height: 100vh;
-  background: #0a0a0f;
+  background: #010b15;
   color: #fff;
   font-family: 'DM Sans', sans-serif;
   overflow-x: hidden;
+}
+
+:host.embed-mode {
+  background: transparent;
+  min-height: 0;
 }
 
 /* ─── TOPBAR ─── */
@@ -54,21 +59,81 @@
   background-clip: text;
 }
 
-/* Quando embebido no Higher or Lower: topbar não fixa e menos padding */
-:host.embed-mode .topbar-embed {
-  position: relative;
+/* Embebido: sem segunda “topbar” — só link de voltar dentro do conteúdo */
+:host.embed-mode .lb-page {
+  padding: 12px 0 48px;
+  min-height: 0;
+  overflow: visible;
+}
+
+/* Brilho de fundo (como no HOL, mas em tons amarelos/dourados) */
+:host.embed-mode .bg-orb {
+  display: block;
+  filter: blur(80px);
+  opacity: 0.16;
+  z-index: 0;
+}
+
+:host.embed-mode .orb1 {
+  width: 480px;
+  height: 480px;
+  background: radial-gradient(circle, rgba(251, 191, 36, 0.95), transparent 68%);
+  top: -120px;
+  right: -100px;
+  left: auto;
+}
+
+:host.embed-mode .orb2 {
+  width: 420px;
+  height: 420px;
+  background: radial-gradient(circle, rgba(245, 158, 11, 0.85), transparent 70%);
+  bottom: -60px;
+  left: -100px;
   top: auto;
 }
-:host.embed-mode .lb-page {
-  padding-top: 24px;
-  min-height: auto;
+
+:host.embed-mode .orb3 {
+  width: 320px;
+  height: 320px;
+  background: radial-gradient(circle, rgba(250, 204, 21, 0.55), transparent 72%);
+  top: 45%;
+  left: 55%;
+  transform: translate(-50%, -50%);
+}
+
+.lb-page-embed {
+  min-height: 0 !important;
+}
+
+.lb-embed-bar {
+  width: 100%;
+  margin-top: 0;
+  margin-bottom: 8px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.lb-embed-back {
+  margin: 0;
+  padding: 0;
+  background: none;
+  border: none;
+  color: rgba(255, 255, 255, 0.72);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.lb-embed-back:hover {
+  color: #fff;
 }
 
 /* ─── PAGE ──── */
 .lb-page {
   position: relative;
   min-height: 100vh;
-  padding: 90px 20px 60px;
+  padding: 90px 22px 60px;
   overflow: hidden;
 }
 
@@ -94,7 +159,7 @@
 .orb2 {
   width: 400px;
   height: 400px;
-  background: radial-gradient(circle, #ff2f6d, transparent 70%);
+  background: radial-gradient(circle, #f59e0b, transparent 70%);
   bottom: 0;
   left: -80px;
   animation: float2 18s ease-in-out infinite;
@@ -103,7 +168,7 @@
 .orb3 {
   width: 300px;
   height: 300px;
-  background: radial-gradient(circle, #6c3fff, transparent 70%);
+  background: radial-gradient(circle, #fcd34d, transparent 70%);
   top: 50%;
   left: 50%;
   transform: translate(-50%,-50%);
@@ -144,12 +209,41 @@
 .lb-container {
   position: relative;
   z-index: 1;
-  max-width: 780px;
+  width: 100%;
+  max-width: min(1120px, 100%);
   margin: 0 auto;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  gap: 28px;
+  align-items: stretch;
+  gap: 24px;
+}
+
+:host.embed-mode .lb-container {
+  max-width: 100%;
+  gap: 20px;
+}
+
+.lb-header,
+.tab-row,
+.podium {
+  align-self: center;
+  width: 100%;
+}
+
+.lb-header,
+.tab-row {
+  max-width: 720px;
+}
+
+.podium {
+  max-width: 640px;
+}
+
+:host.embed-mode .lb-header,
+:host.embed-mode .tab-row,
+:host.embed-mode .podium {
+  max-width: 100%;
+  align-self: stretch;
 }
 
 /* ─── HEADER ───── */
@@ -244,6 +338,8 @@
   display: flex;
   gap: 10px;
   animation: fadeUp 0.5s 0.1s ease both;
+  justify-content: center;
+  flex-wrap: wrap;
 }
 
 .tab-btn {
@@ -382,7 +478,7 @@
   border: 1px solid rgba(205,127,50,0.15);
 }
 
-/* ─── LIST ─── */
+/* ─── LIST ─── (sem caixa — evita aspeto de popup) */
 .lb-list {
   width: 100%;
   display: flex;
@@ -491,17 +587,35 @@
   border-color: rgba(255,47,109,0.2);
 }
 
+:host.embed-mode .list-row {
+  border-radius: 0;
+  border-left: none;
+  border-right: none;
+  background: transparent;
+  border-color: rgba(255, 255, 255, 0.06);
+  padding-left: 0;
+  padding-right: 0;
+}
+
+:host.embed-mode .list-row:hover {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+:host.embed-mode .list-row.row-me {
+  background: rgba(255, 47, 109, 0.06);
+}
+
+:host.embed-mode .list-header {
+  border-radius: 0;
+  padding-left: 0;
+  padding-right: 0;
+}
+
 /* Colunas */
 .col-rank {
   font-family: 'Bebas Neue', sans-serif;
   font-size: 20px;
   color: rgba(255,255,255,0.35);
-}
-
-.rank-num {
-}
-
-.col-player {
 }
 
 .player-info {
@@ -606,4 +720,207 @@
   border: 1px solid rgba(255,47,109,0.15);
   font-size: 13px;
   color: rgba(255,255,255,0.45);
+}
+
+:host.embed-mode .my-position {
+  border-radius: 0;
+  border: none;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  background: transparent;
+  padding: 16px 0 0;
+  margin-top: 20px;
+}
+
+/* ─── RESPONSIVE STYLES ─── */
+@media (max-width: 768px) {
+  .lb-page {
+    padding: 70px 12px 40px;
+  }
+
+  :host.embed-mode .lb-page {
+    padding: 10px 0 36px;
+  }
+
+  .lb-container {
+    gap: 20px;
+  }
+
+  .lb-title {
+    font-size: clamp(40px, 10vw, 56px);
+  }
+
+  .tab-row {
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 8px;
+  }
+
+  .tab-btn {
+    padding: 8px 20px;
+    font-size: 13px;
+  }
+
+  .podium {
+    gap: 8px;
+  }
+
+  .podium-block {
+    min-width: 90px;
+  }
+
+  .podium-block-1 {
+    height: 70px;
+  }
+
+  .podium-block-2 {
+    height: 52px;
+  }
+
+  .podium-block-3 {
+    height: 40px;
+  }
+
+  .podium-avatar-1st {
+    width: 64px;
+    height: 64px;
+    font-size: 24px;
+  }
+
+  .podium-avatar {
+    width: 52px;
+    height: 52px;
+    font-size: 18px;
+  }
+
+  .podium-name {
+    font-size: 12px;
+    max-width: 70px;
+  }
+
+  .podium-score {
+    font-size: 22px;
+  }
+
+  .list-header {
+    display: none;
+  }
+
+  .list-row {
+    grid-template-columns: 36px 1fr auto;
+    gap: 8px;
+    padding: 12px;
+  }
+
+  .col-games,
+  .col-level {
+    display: none;
+  }
+
+  .col-score {
+    text-align: right;
+  }
+
+  .score-val {
+    font-size: 20px;
+  }
+
+  .player-name {
+    font-size: 13px;
+  }
+
+  .small-avatar {
+    width: 34px;
+    height: 34px;
+    font-size: 13px;
+  }
+}
+
+@media (max-width: 480px) {
+  .lb-page {
+    padding: 65px 10px 30px;
+  }
+
+  :host.embed-mode .lb-page {
+    padding: 8px 0 28px;
+  }
+
+  .lb-title {
+    font-size: 36px;
+  }
+
+  .lb-desc {
+    font-size: 13px;
+  }
+
+  .podium {
+    gap: 6px;
+  }
+
+  .podium-block {
+    min-width: 70px;
+  }
+
+  .podium-block-1 {
+    height: 56px;
+  }
+
+  .podium-block-2 {
+    height: 42px;
+  }
+
+  .podium-block-3 {
+    height: 32px;
+  }
+
+  .podium-avatar-1st {
+    width: 52px;
+    height: 52px;
+    font-size: 20px;
+  }
+
+  .podium-avatar {
+    width: 44px;
+    height: 44px;
+    font-size: 16px;
+  }
+
+  .podium-name {
+    font-size: 11px;
+    max-width: 60px;
+  }
+
+  .podium-score {
+    font-size: 18px;
+  }
+
+  .podium-crown {
+    font-size: 20px;
+  }
+
+  .list-row {
+    padding: 10px;
+    gap: 6px;
+  }
+
+  .col-rank {
+    font-size: 18px;
+  }
+
+  .score-val {
+    font-size: 18px;
+  }
+
+  .player-name {
+    font-size: 12px;
+  }
+
+  .player-xp {
+    font-size: 10px;
+  }
+
+  .small-avatar {
+    width: 30px;
+    height: 30px;
+    font-size: 12px;
+  }
 }
