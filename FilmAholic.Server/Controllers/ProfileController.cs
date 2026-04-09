@@ -274,7 +274,7 @@ namespace FilmAholic.Server.Controllers
             var user = await _context.Users.FindAsync(userId);
             if (user == null) return NotFound();
 
-            return Ok(new { tag = user.UserTag });
+            return Ok(new { tag = user.UserTag, primaryColor = user.UserTagPrimaryColor, secondaryColor = user.UserTagSecondaryColor });
         }
 
         // PUT: api/Profile/tag
@@ -298,8 +298,10 @@ namespace FilmAholic.Server.Controllers
             }
 
             user.UserTag = dto.Tag;
+            user.UserTagPrimaryColor = dto.PrimaryColor;
+            user.UserTagSecondaryColor = dto.SecondaryColor;
             await _context.SaveChangesAsync();
-            return Ok(new { tag = user.UserTag });
+            return Ok(new { tag = user.UserTag, primaryColor = user.UserTagPrimaryColor, secondaryColor = user.UserTagSecondaryColor });
         }
         
 
@@ -322,6 +324,8 @@ namespace FilmAholic.Server.Controllers
         public class UpdateUserTagDto
         {
             public string? Tag { get; set; }
+            public string? PrimaryColor { get; set; }
+            public string? SecondaryColor { get; set; }
         }
     }
 }

@@ -38,11 +38,11 @@ export class ProfileService {
   }
 
   // User tag API
-  obterUserTag(): Observable<{ tag: string | null }> {
-    return this.http.get<{ tag: string | null }>(`${this.apiUrl}/tag`, { withCredentials: true });
+  obterUserTag(): Observable<{ tag: string | null; primaryColor: string | null; secondaryColor: string | null }> {
+    return this.http.get<{ tag: string | null; primaryColor: string | null; secondaryColor: string | null }>(`${this.apiUrl}/tag`, { withCredentials: true });
   }
 
-  atualizarUserTag(tag: string | null): Observable<any> {
-    return this.http.put(`${this.apiUrl}/tag`, { tag }, { withCredentials: true });
+  atualizarUserTag(tag: string | null, primaryColor?: string | null, secondaryColor?: string | null): Observable<any> {
+    return this.http.put(`${this.apiUrl}/tag`, { tag, primaryColor, secondaryColor }, { withCredentials: true });
   }
 }

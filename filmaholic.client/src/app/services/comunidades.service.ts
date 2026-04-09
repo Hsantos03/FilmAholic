@@ -34,6 +34,10 @@ export interface MembroDto {
   userTag?: string | null;
   userTagDescription?: string | null;
   userTagIconUrl?: string | null;
+
+  // Tag colors for gradient animation
+  userTagPrimaryColor?: string | null;
+  userTagSecondaryColor?: string | null;
 }
 
 export interface RankingMembroDto {
@@ -72,6 +76,8 @@ export interface PostDto {
   autorUserTag?: string | null;
   autorUserTagDescription?: string | null;
   autorUserTagIconUrl?: string | null;
+  autorUserTagPrimaryColor?: string | null;
+  autorUserTagSecondaryColor?: string | null;
   autorFotoPerfilUrl?: string | null;
 }
 
@@ -88,6 +94,8 @@ export interface ComentarioDto {
   autorUserTag?: string | null;
   autorUserTagDescription?: string | null;
   autorUserTagIconUrl?: string | null;
+  autorUserTagPrimaryColor?: string | null;
+  autorUserTagSecondaryColor?: string | null;
 }
 
 export interface SugestaoFilmeComunidade {

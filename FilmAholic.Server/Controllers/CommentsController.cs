@@ -42,14 +42,18 @@ namespace FilmAholic.Server.Controllers
                 Dictionary<string, string?> userTagByUserId = new();
                 Dictionary<string, string?> userTagDescByUserId = new();
                 Dictionary<string, string?> userTagIconByUserId = new();
+                Dictionary<string, string?> userTagPrimaryColorByUserId = new();
+                Dictionary<string, string?> userTagSecondaryColorByUserId = new();
                 if (userIds.Count > 0)
                 {
                     var userData = await _context.Set<Utilizador>()
                         .Where(u => userIds.Contains(u.Id))
-                        .Select(u => new { u.Id, u.FotoPerfilUrl, u.UserTag })
+                        .Select(u => new { u.Id, u.FotoPerfilUrl, u.UserTag, u.UserTagPrimaryColor, u.UserTagSecondaryColor })
                         .ToListAsync();
                     fotoByUserId = userData.ToDictionary(x => x.Id, x => x.FotoPerfilUrl);
                     userTagByUserId = userData.ToDictionary(x => x.Id, x => x.UserTag);
+                    userTagPrimaryColorByUserId = userData.ToDictionary(x => x.Id, x => x.UserTagPrimaryColor);
+                    userTagSecondaryColorByUserId = userData.ToDictionary(x => x.Id, x => x.UserTagSecondaryColor);
 
                     // Fetch medal descriptions and icons for user tags (case-insensitive)
                     var tags = userData.Select(x => x.UserTag).Where(t => !string.IsNullOrEmpty(t)).Distinct().ToList();
@@ -110,6 +114,8 @@ namespace FilmAholic.Server.Controllers
                     UserTag = c.UserId != null && userTagByUserId.TryGetValue(c.UserId, out var tag) ? tag : null,
                     UserTagDescription = c.UserId != null && userTagDescByUserId.TryGetValue(c.UserId, out var tagDesc) ? tagDesc : null,
                     UserTagIconUrl = c.UserId != null && userTagIconByUserId.TryGetValue(c.UserId, out var tagIcon) ? tagIcon : null,
+                    UserTagPrimaryColor = c.UserId != null && userTagPrimaryColorByUserId.TryGetValue(c.UserId, out var tagPrimary) ? tagPrimary : null,
+                    UserTagSecondaryColor = c.UserId != null && userTagSecondaryColorByUserId.TryGetValue(c.UserId, out var tagSecondary) ? tagSecondary : null,
                     Texto = c.Texto,
                     DataCriacao = c.DataCriacao,
                     DataEdicao = c.DataEdicao,
@@ -198,6 +204,8 @@ namespace FilmAholic.Server.Controllers
                     UserTag = user?.UserTag,
                     UserTagDescription = tagDescription,
                     UserTagIconUrl = tagIconUrl,
+                    UserTagPrimaryColor = user?.UserTagPrimaryColor,
+                    UserTagSecondaryColor = user?.UserTagSecondaryColor,
                     Texto = comment.Texto,
                     DataCriacao = comment.DataCriacao,
                     CanEdit = true,
@@ -263,6 +271,8 @@ namespace FilmAholic.Server.Controllers
                 UserTag = userTag,
                 UserTagDescription = tagDescription,
                 UserTagIconUrl = tagIconUrl,
+                UserTagPrimaryColor = commentUser?.UserTagPrimaryColor,
+                UserTagSecondaryColor = commentUser?.UserTagSecondaryColor,
                 Texto = comment.Texto,
                 DataCriacao = comment.DataCriacao,
                 DataEdicao = comment.DataEdicao,
