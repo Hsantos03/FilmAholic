@@ -188,9 +188,9 @@ export class DashboardComponent implements OnInit, OnDestroy {
   // ── RECOMENDAÇÕES PERSONALIZADAS ──
 
   private loadRecomendacoes(): void {
-    const userId = localStorage.getItem('user_id');
-    if (!userId) return;
-
+    // Não depender de user_id no localStorage: a API usa o cookie de sessão.
+    // Se exigirmos user_id aqui, utilizadores com sessão válida mas sem chave no storage
+    // (OAuth, storage limpo, primeira pintura) ficam sem recomendações até recarregar.
     this.isLoadingRecomendacoes = true;
     this.filmesService.getRecomendacoesPersonalizadas(5).subscribe({
       next: (res) => {
