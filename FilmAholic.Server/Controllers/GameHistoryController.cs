@@ -69,7 +69,7 @@ namespace FilmAholic.Server.Controllers
                     user.UltimoResetDiario = DateTime.UtcNow;
                 }
 
-                const int limiteDiario = 200; // Aumentado para compensar maior ganho de XP com streaks
+                const int limiteDiario = 1000; // Limite diário para boa progressão
 
                 if (user.XPDiario < limiteDiario)
                 {
@@ -99,7 +99,7 @@ namespace FilmAholic.Server.Controllers
                 xpGanho,
                 xpTotal = user?.XP ?? 0,
                 nivel = user?.Nivel ?? 1,
-                xpDiarioRestante = Math.Max(0, 200 - (user?.XPDiario ?? 0))
+                xpDiarioRestante = Math.Max(0, 1000 - (user?.XPDiario ?? 0))
             });
         }
 
@@ -160,9 +160,9 @@ namespace FilmAholic.Server.Controllers
             int nivel = 1;
             while (true)
             {
-                // Fórmula: 50 * nível (em vez de 100 * nível * (nível + 1) / 2)
-                // Nível 1→2: 50 XP, Nível 2→3: 100 XP, Nível 3→4: 150 XP...
-                int xpParaProximo = 50 * nivel * nivel;
+                // Fórmula: XP acumulado para nível N = 50×(2+3+...+(N+1)) = 25×N×(N+3)
+                // Nível 1→2: 100 XP, Nível 2→3: 150 XP adicional, Nível 3→4: 200 XP adicional...
+                int xpParaProximo = 25 * nivel * (nivel + 3);
                 if (xpTotal < xpParaProximo) break;
                 nivel++;
             }
