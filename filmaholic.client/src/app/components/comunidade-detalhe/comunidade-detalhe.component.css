@@ -479,6 +479,23 @@
   align-self: flex-end;
 }
 
+.cancel-btn {
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  padding: 10px 18px;
+  background: transparent;
+  color: #fff;
+  font-weight: 600;
+  cursor: pointer;
+  align-self: flex-end;
+  transition: background 0.2s ease, border-color 0.2s ease;
+}
+
+.cancel-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.4);
+}
+
 /* ── Imagem no formulário ── */
 .imagem-label {
   display: flex;
@@ -1543,6 +1560,23 @@
     border: 1px solid var(--border, #333);
     flex-shrink: 0;
   }
+
+.remove-current-img-btn {
+  margin-left: 8px;
+  padding: 4px 10px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #fff;
+  background: rgba(220, 38, 38, 0.85);
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.remove-current-img-btn:hover {
+  background: rgba(220, 38, 38, 1);
+}
 
 /* Pré-visualização da nova imagem seleccionada */
 .imagem-preview {

@@ -339,10 +339,22 @@ namespace FilmAholic.Server.Controllers
                 comunidade.BannerFileName = await SaveImageAsync(form.Banner, "comunidades");
             }
 
+            if (form.RemoveBanner)
+            {
+                DeleteImageFile(comunidade.BannerFileName, "comunidades");
+                comunidade.BannerFileName = null;
+            }
+
             if (form.Icon != null && form.Icon.Length > 0)
             {
                 DeleteImageFile(comunidade.IconFileName, "comunidades/icons");
                 comunidade.IconFileName = await SaveImageAsync(form.Icon, "comunidades/icons");
+            }
+
+            if (form.RemoveIcon)
+            {
+                DeleteImageFile(comunidade.IconFileName, "comunidades/icons");
+                comunidade.IconFileName = null;
             }
 
                     await _context.SaveChangesAsync();
@@ -1817,6 +1829,12 @@ namespace FilmAholic.Server.Controllers
 
             [FromForm(Name = "icon")]
             public IFormFile? Icon { get; set; }
+
+            [FromForm(Name = "removeBanner")]
+            public bool RemoveBanner { get; set; }
+
+            [FromForm(Name = "removeIcon")]
+            public bool RemoveIcon { get; set; }
         }
     }
 }

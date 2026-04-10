@@ -78,6 +78,8 @@ export class ComunidadeDetalheComponent implements OnInit, OnDestroy {
   editBannerPreview: string | null = null;
   editIconFile: File | null = null;
   editIconPreview: string | null = null;
+  editRemoveBanner = false;
+  editRemoveIcon = false;
   isSavingEdit = false;
   editError = '';
 
@@ -377,6 +379,8 @@ export class ComunidadeDetalheComponent implements OnInit, OnDestroy {
     this.editBannerPreview = null;
     this.editIconFile = null;
     this.editIconPreview = null;
+    this.editRemoveBanner = false;
+    this.editRemoveIcon = false;
     this.editError = '';
     this.showEditModal = true;
   }
@@ -400,6 +404,14 @@ export class ComunidadeDetalheComponent implements OnInit, OnDestroy {
     if (this.editIconFile) this.editIconPreview = URL.createObjectURL(this.editIconFile);
   }
 
+  removeCurrentBanner(): void {
+    this.editRemoveBanner = true;
+  }
+
+  removeCurrentIcon(): void {
+    this.editRemoveIcon = true;
+  }
+
   saveEdit(): void {
     this.editError = '';
     if (!this.editNome.trim()) {
@@ -416,6 +428,8 @@ export class ComunidadeDetalheComponent implements OnInit, OnDestroy {
     fd.append('isPrivada', String(this.editIsPrivada));
     if (this.editBannerFile) fd.append('banner', this.editBannerFile, this.editBannerFile.name);
     if (this.editIconFile) fd.append('icon', this.editIconFile, this.editIconFile.name);
+    if (this.editRemoveBanner) fd.append('removeBanner', 'true');
+    if (this.editRemoveIcon) fd.append('removeIcon', 'true');
 
     this.isSavingEdit = true;
     this.service.update(this.comunidadeId, fd).subscribe({

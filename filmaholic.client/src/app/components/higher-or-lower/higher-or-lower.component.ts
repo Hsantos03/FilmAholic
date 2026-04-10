@@ -867,10 +867,8 @@ export class HigherOrLowerComponent implements OnInit {
           this.http.post<any>(`${this.apiMedalhas}/check-higher-or-lower`, {}, { withCredentials: true })
             .pipe(finalize(() => this.notificacoesService.refreshNotificationBadges()))
             .subscribe({
-              next: (medalRes) => {
-                if (medalRes.novasMedalhas > 0) {
-                  this.medalSuccessMessage = `Ganhaste a medalha: ${medalRes.medalhas[0].nome}! 🏆`;
-                }
+              next: () => {
+                // Medal popup removed - using notifications instead
               },
               error: (err) => {
                 console.error('Error checking higher-or-lower medals:', err);

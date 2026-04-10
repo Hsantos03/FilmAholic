@@ -244,10 +244,8 @@ export class ComunidadesComponent implements OnInit {
         this.http.post<any>(`${this.apiMedalhas}/check-comunidade`, {}, { withCredentials: true })
           .pipe(finalize(() => this.notificacoesService.refreshNotificationBadges()))
           .subscribe({
-            next: (medalRes) => {
-              if (medalRes.novasMedalhas > 0) {
-                this.medalSuccessMessage = `Ganhaste a medalha: ${medalRes.medalhas[0].nome}! 🏆`;
-              }
+            next: () => {
+              // Medal popup removed - using notifications instead
             },
             error: () => {
               this.medalErrorMessage = 'Erro ao verificar medalhas.';

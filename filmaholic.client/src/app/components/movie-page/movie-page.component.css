@@ -403,6 +403,7 @@
   font-weight: 900;
   background: rgba(255,255,255,0.08);
   color: #fff;
+  overflow: hidden;
 }
 
   /* Special avatar for deleted accounts */
@@ -442,7 +443,6 @@
   width: 100%;
   height: 100%;
   object-fit: cover;
-  border-radius: 999px;
 }
 
 .stars-box {

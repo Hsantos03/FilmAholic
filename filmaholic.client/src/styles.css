@@ -57,7 +57,7 @@ html, body {
   height: 100%;
   display: block;
   background-color: var(--bg-dark);
-  overflow-x: hidden;
+  
   font-family: 'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif
 }
 
@@ -78,6 +78,7 @@ app-root {
   width: 100%;
   max-width: 100%;
   box-sizing: border-box;
+  overflow-x: hidden;
 }
 
 /* Rotas: o host do componente deve esticar à largura do viewport (senão a topbar fica mais estreita e “falta” rosa à direita). */

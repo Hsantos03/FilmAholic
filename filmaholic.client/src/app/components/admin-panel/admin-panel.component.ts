@@ -318,7 +318,7 @@ export class AdminPanelComponent implements OnInit {
     this.medalhasLoading = true;
     this.admin.listarMedalhas().subscribe({
       next: (m) => {
-        this.medalhas = m ?? [];
+        this.medalhas = (m ?? []).sort((a: any, b: any) => (a.id ?? 0) - (b.id ?? 0));
         this.medalhasLoading = false;
       },
       error: () => {

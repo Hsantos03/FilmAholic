@@ -348,10 +348,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
             .pipe(finalize(() => this.notificacoesService.refreshNotificationBadges()))
             .subscribe(medalRes => {
               this.updateMedalProgress('', medalRes.progress || 0);
-              
-              if (medalRes.novasMedalhas > 0) {
-                this.medalSuccessMessage = `Ganhaste a medalha: ${medalRes.medalhas[0].nome}! 🏆`;
-              }
+              // Medal popup removed - using notifications instead
             });
         } else {
           this.feedbackDesafio = 'Incorreto! Tenta novamente amanhã. 🎬';
