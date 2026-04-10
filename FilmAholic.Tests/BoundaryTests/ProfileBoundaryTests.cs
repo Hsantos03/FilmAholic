@@ -15,6 +15,7 @@ using System.Security.Claims;
 using System.Text.Json;
 using System.Threading.Tasks;
 using Xunit;
+using static Moq.It;
 
 namespace FilmAholic.Tests.BoundaryTests
 {
@@ -45,7 +46,12 @@ namespace FilmAholic.Tests.BoundaryTests
                 context.Users.Add(utilizador);
                 await context.SaveChangesAsync();
 
-                var controller = new ProfileController(context, null, null);
+                var mockUserStore = new Mock<IUserStore<Utilizador>>();
+                var mockUserManager = new Mock<UserManager<Utilizador>>(
+                    mockUserStore.Object, null, null, null, null, null, null, null, null);
+                mockUserManager.Setup(um => um.UpdateAsync(It.IsAny<Utilizador>())).ReturnsAsync(IdentityResult.Success);
+
+                var controller = new ProfileController(context, null, mockUserManager.Object);
 
                 // Act
                 var dto = new ProfileController.UpdateProfileDto
@@ -89,7 +95,12 @@ namespace FilmAholic.Tests.BoundaryTests
                 context.Users.Add(utilizador);
                 await context.SaveChangesAsync();
 
-                var controller = new ProfileController(context, null, null);
+                var mockUserStore = new Mock<IUserStore<Utilizador>>();
+                var mockUserManager = new Mock<UserManager<Utilizador>>(
+                    mockUserStore.Object, null, null, null, null, null, null, null, null);
+                mockUserManager.Setup(um => um.UpdateAsync(It.IsAny<Utilizador>())).ReturnsAsync(IdentityResult.Success);
+
+                var controller = new ProfileController(context, null, mockUserManager.Object);
 
                 // Act
                 var dto = new ProfileController.UpdateProfileDto
