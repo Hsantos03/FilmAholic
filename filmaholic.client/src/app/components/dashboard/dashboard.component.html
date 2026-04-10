@@ -165,6 +165,11 @@
           </div>
           <button class="chevron right" (click)="nextFeatured()" [disabled]="featuredIndex >= (featured.length - featuredVisibleCount)" aria-label="Seguinte">&rsaquo;</button>
         </div>
+        <div class="carousel-indicators" *ngIf="featuredPageCount > 1">
+          <span class="indicator-dot"
+                *ngFor="let page of featuredPages"
+                [class.active]="page === featuredActivePage"></span>
+        </div>
       </div>
     </section>
 
@@ -186,36 +191,10 @@
           </div>
           <button class="chevron right" (click)="nextTop10()" [disabled]="top10Index >= (top10.length - top10VisibleCount)" aria-label="Seguinte">&rsaquo;</button>
         </div>
-      </div>
-    </section>
-
-    <!-- ── O QUE VOU VER A SEGUIR ── -->
-    <section class="strip strip-full nextup-strip" data-tour="dashboard-descobrir">
-      <div class="strip-inner">
-        <div class="section-head">
-          <h2>O que vou ver a seguir</h2>
-        </div>
-        <div class="discover-wrap">
-          <button class="discover-btn" (click)="discoverNext()" [disabled]="isDiscovering || isLoadingMovies">
-            {{ isDiscovering ? 'A descobrir…' : 'Descobrir' }}
-          </button>
-        </div>
-        <div class="nextup-content">
-          <div *ngIf="!isLoadingMovies && movies.length === 0" class="empty-list-message">
-            A lista está em branco como um ecrã antes da sessão. Procura ou escolhe géneros para começar o espetáculo.
-          </div>
-          <div class="nextup-card" *ngIf="nextToWatch">
-            <a [routerLink]="['/movie-detail', nextToWatch.id]">
-              <img class="nextup-poster" [src]="posterOf(nextToWatch)" [alt]="nextToWatch.titulo" />
-            </a>
-            <div class="nextup-meta">
-              <h3 class="nextup-title">{{ nextToWatch.titulo }}</h3>
-              <div class="nextup-sub">{{ nextToWatch.genero }}<ng-container *ngIf="nextToWatch.duracao > 0"> &middot; {{ nextToWatch.duracao | formatDuration }}</ng-container></div>
-              <div class="nextup-actions">
-                <button class="action-btn" (click)="goToMovieDetail(nextToWatch.id)">Ver detalhes</button>
-              </div>
-            </div>
-          </div>
+        <div class="carousel-indicators" *ngIf="top10PageCount > 1">
+          <span class="indicator-dot"
+                *ngFor="let page of top10Pages"
+                [class.active]="page === top10ActivePage"></span>
         </div>
       </div>
     </section>
@@ -248,6 +227,11 @@
             </div>
           </div>
           <button class="chevron right" (click)="nextAtores()" [disabled]="atoresIndex >= (atores.length - atoresVisibleCount)" aria-label="Seguinte">&rsaquo;</button>
+        </div>
+        <div class="carousel-indicators" *ngIf="atoresPageCount > 1">
+          <span class="indicator-dot"
+                *ngFor="let page of atoresPages"
+                [class.active]="page === atoresActivePage"></span>
         </div>
       </div>
     </section>
@@ -316,6 +300,42 @@
                   aria-label="Seguinte">
             &rsaquo;
           </button>
+        </div>
+        <div class="carousel-indicators" *ngIf="recomendacoes.length > 1">
+          <span class="indicator-dot"
+                *ngFor="let page of recomendacaoPages"
+                [class.active]="page === recomendacaoIndex"></span>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── O QUE VOU VER A SEGUIR ── -->
+    <section class="strip strip-full nextup-strip" data-tour="dashboard-descobrir">
+      <div class="strip-inner">
+        <div class="section-head">
+          <h2>O que vou ver a seguir</h2>
+        </div>
+        <div class="discover-wrap">
+          <button class="discover-btn" (click)="discoverNext()" [disabled]="isDiscovering || isLoadingMovies">
+            {{ isDiscovering ? 'A descobrir…' : 'Descobrir' }}
+          </button>
+        </div>
+        <div class="nextup-content">
+          <div *ngIf="!isLoadingMovies && movies.length === 0" class="empty-list-message">
+            A lista está em branco como um ecrã antes da sessão. Procura ou escolhe géneros para começar o espetáculo.
+          </div>
+          <div class="nextup-card" *ngIf="nextToWatch">
+            <a [routerLink]="['/movie-detail', nextToWatch.id]">
+              <img class="nextup-poster" [src]="posterOf(nextToWatch)" [alt]="nextToWatch.titulo" />
+            </a>
+            <div class="nextup-meta">
+              <h3 class="nextup-title">{{ nextToWatch.titulo }}</h3>
+              <div class="nextup-sub">{{ nextToWatch.genero }}<ng-container *ngIf="nextToWatch.duracao > 0"> &middot; {{ nextToWatch.duracao | formatDuration }}</ng-container></div>
+              <div class="nextup-actions">
+                <button class="action-btn" (click)="goToMovieDetail(nextToWatch.id)">Ver detalhes</button>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </section>

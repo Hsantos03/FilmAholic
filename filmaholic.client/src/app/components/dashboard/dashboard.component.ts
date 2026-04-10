@@ -615,6 +615,18 @@ export class DashboardComponent implements OnInit, OnDestroy {
     return this.featured.slice(this.featuredIndex, this.featuredIndex + this.featuredVisibleCount);
   }
 
+  get featuredPageCount(): number {
+    return Math.max(1, Math.ceil(this.featured.length / this.featuredVisibleCount));
+  }
+
+  get featuredActivePage(): number {
+    return Math.floor(this.featuredIndex / this.featuredVisibleCount);
+  }
+
+  get featuredPages(): number[] {
+    return Array.from({ length: this.featuredPageCount }, (_, i) => i);
+  }
+
   prevFeatured(): void {
     if (this.isFeaturedAnimating || this.featuredIndex === 0) return;
     this.isFeaturedAnimating = true;
@@ -647,6 +659,18 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
   get top10Visible(): Filme[] {
     return this.top10.slice(this.top10Index, this.top10Index + this.top10VisibleCount);
+  }
+
+  get top10PageCount(): number {
+    return Math.max(1, Math.ceil(this.top10.length / this.top10VisibleCount));
+  }
+
+  get top10ActivePage(): number {
+    return Math.floor(this.top10Index / this.top10VisibleCount);
+  }
+
+  get top10Pages(): number[] {
+    return Array.from({ length: this.top10PageCount }, (_, i) => i);
   }
 
   prevTop10(): void {
@@ -683,6 +707,18 @@ export class DashboardComponent implements OnInit, OnDestroy {
     return this.atores.slice(this.atoresIndex, this.atoresIndex + this.atoresVisibleCount);
   }
 
+  get atoresPageCount(): number {
+    return Math.max(1, Math.ceil(this.atores.length / this.atoresVisibleCount));
+  }
+
+  get atoresActivePage(): number {
+    return Math.floor(this.atoresIndex / this.atoresVisibleCount);
+  }
+
+  get atoresPages(): number[] {
+    return Array.from({ length: this.atoresPageCount }, (_, i) => i);
+  }
+
   prevAtores(): void {
     if (this.isAtoresAnimating || this.atoresIndex === 0) return;
     this.isAtoresAnimating = true;
@@ -715,6 +751,11 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
   fotoAtor(a: PopularActor): string {
     return a?.fotoUrl || 'https://via.placeholder.com/300x300?text=Actor';
+  }
+
+  get recomendacaoPages(): number[] {
+    const count = Math.max(1, this.recomendacoes.length);
+    return Array.from({ length: count }, (_, i) => i);
   }
 
   openActor(a: PopularActor): void {
