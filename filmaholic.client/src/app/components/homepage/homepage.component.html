@@ -1,0 +1,100 @@
+<div class="landing-container">
+  <!-- Background with gradient overlay -->
+  <div class="background-overlay"></div>
+  
+  <!-- Animated film strips -->
+  <div class="film-strips">
+    <div class="film-strip film-strip-1"></div>
+    <div class="film-strip film-strip-2"></div>
+  </div>
+
+  <!-- Main content -->
+  <div class="content-wrapper">
+    <!-- Logo Section -->
+    <div class="logo-section">
+      <div class="logo-container">
+        <!-- COLOCAR A IMAGEM DO LOGO AQUI: filmaholic.client/src/assets/logo.png -->
+        <img src="assets/logo.png" alt="FilmAholic Logo" class="main-logo" 
+             onerror="this.style.display='none'; this.nextElementSibling.style.display='flex'">
+        <!-- Logo Fallback (CSS/SVG) quando a imagem não existe -->
+        <div class="logo-fallback" style="display: none;">
+          <div class="logo-icon"></div>
+          <span class="logo-text">FILMAHOLIC</span>
+        </div>
+      </div>
+      <h1 class="tagline">O vício perfeito para cinéfilos</h1>
+    </div>
+
+    <!-- Features Preview -->
+    <div class="features-section">
+      <div class="feature-card">
+        <span class="feature-icon">🎬</span>
+        <h3>Descobre Filmes</h3>
+        <p>Explora milhares de filmes e encontra os teus favoritos</p>
+      </div>
+      <div class="feature-card">
+        <span class="feature-icon">⭐</span>
+        <h3>Avalia & Comenta</h3>
+        <p>Partilha as tuas opiniões e lê as de outros cinéfilos</p>
+      </div>
+      <div class="feature-card">
+        <span class="feature-icon">🍿</span>
+        <h3>Jogos & Desafios</h3>
+        <p>Participa em jogos e desafios com a comunidade</p>
+      </div>
+    </div>
+
+    <!-- CTA Buttons -->
+    <div class="cta-section">
+      <button class="btn btn-primary" (click)="navigateToRegister()">
+        <span>Começar Agora</span>
+        <span class="arrow">→</span>
+      </button>
+      <button class="btn btn-secondary" (click)="navigateToLogin()">
+        <span>Já tenho conta</span>
+      </button>
+    </div>
+
+    <!-- Featured Movies Preview -->
+    <div class="movies-preview">
+      <h2>Filmes em Destaque</h2>
+      
+      <!-- Loading State -->
+      <div *ngIf="isLoading" class="carousel-loading">
+        <div class="loading-spinner"></div>
+        <span>A carregar filmes...</span>
+      </div>
+      
+      <!-- Carousel -->
+      <div *ngIf="!isLoading" class="carousel-container">
+        <div class="carousel-track">
+          <!-- First set of movies -->
+          <div class="movie-card" *ngFor="let movie of featuredMovies">
+            <div class="movie-poster">
+              <img [src]="movie.posterUrl || 'assets/placeholder-logo.png'" [alt]="movie.titulo">
+            </div>
+            <div class="movie-info">
+              <h4>{{ movie.titulo }}</h4>
+              <span class="movie-year">{{ movie.ano || movie.releaseDate?.substring(0,4) || 'N/A' }}</span>
+            </div>
+          </div>
+          <!-- Duplicate set for infinite scroll effect -->
+          <div class="movie-card" *ngFor="let movie of featuredMovies">
+            <div class="movie-poster">
+              <img [src]="movie.posterUrl || 'assets/placeholder-logo.png'" [alt]="movie.titulo">
+            </div>
+            <div class="movie-info">
+              <h4>{{ movie.titulo }}</h4>
+              <span class="movie-year">{{ movie.ano || movie.releaseDate?.substring(0,4) || 'N/A' }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer class="landing-footer">
+    <p>© 2026 FilmAholic - A tua paixão pelo cinema</p>
+  </footer>
+</div>

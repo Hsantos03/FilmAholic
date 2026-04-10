@@ -171,7 +171,12 @@ namespace FilmAholic.Tests.UnitTests
                 context.Users.Add(utilizador);
                 await context.SaveChangesAsync();
 
-                var controller = new ProfileController(context, null, null);
+                var mockUserStore = new Mock<IUserStore<Utilizador>>();
+                var mockUserManager = new Mock<UserManager<Utilizador>>(
+                    mockUserStore.Object, null, null, null, null, null, null, null, null);
+                mockUserManager.Setup(um => um.UpdateAsync(It.IsAny<Utilizador>())).ReturnsAsync(IdentityResult.Success);
+
+                var controller = new ProfileController(context, null, mockUserManager.Object);
 
                 // Act
                 var dto = new ProfileController.UpdateProfileDto
@@ -217,7 +222,12 @@ namespace FilmAholic.Tests.UnitTests
                 context.Users.Add(utilizador);
                 await context.SaveChangesAsync();
 
-                var controller = new ProfileController(context, null, null);
+                var mockUserStore = new Mock<IUserStore<Utilizador>>();
+                var mockUserManager = new Mock<UserManager<Utilizador>>(
+                    mockUserStore.Object, null, null, null, null, null, null, null, null);
+                mockUserManager.Setup(um => um.UpdateAsync(It.IsAny<Utilizador>())).ReturnsAsync(IdentityResult.Success);
+
+                var controller = new ProfileController(context, null, mockUserManager.Object);
 
                 // Act
                 var dto = new ProfileController.UpdateProfileDto

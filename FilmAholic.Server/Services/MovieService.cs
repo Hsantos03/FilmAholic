@@ -414,6 +414,79 @@ public class MovieService : IMovieService
         }
     }
 
+    /// <summary>
+    /// Filmes populares do TMDB com mínimo de votos (vote_count).
+    /// Percorre várias páginas até encontrar suficientes filmes que satisfaçam o critério.
+    /// </summary>
+    public async Task<List<Filme>> GetPopularMoviesWithMinVotesAsync(int count = 10, int minVoteCount = 500, int maxPages = 5)
+    {
+        if (string.IsNullOrEmpty(_tmdbApiKey))
+        {
+            _logger.LogWarning("TMDb API key is not configured. Cannot fetch popular movies.");
+            return new List<Filme>();
+        }
+
+        var result = new List<Filme>();
+        var seenTmdbIds = new HashSet<string>(StringComparer.Ordinal);
+        var page = 1;
+
+        try
+        {
+            var httpClient = _httpClientFactory.CreateClient();
+
+            while (result.Count < count && page <= maxPages)
+            {
+                var url = $"{_tmdbBaseUrl}/movie/popular?api_key={_tmdbApiKey}&page={page}&language=pt-PT";
+
+                var response = await httpClient.GetAsync(url);
+                response.EnsureSuccessStatusCode();
+
+                var json = await response.Content.ReadAsStringAsync();
+                var searchResult = JsonSerializer.Deserialize<TmdbSearchResponse>(json, new JsonSerializerOptions
+                {
+                    PropertyNameCaseInsensitive = false
+                });
+
+                if (searchResult?.Results == null || !searchResult.Results.Any())
+                    break;
+
+                // Filtrar filmes com vote_count >= minVoteCount e não adultos
+                var filtered = searchResult.Results
+                    .Where(m => !m.Adult && m.VoteCount >= minVoteCount)
+                    .ToList();
+
+                if (filtered.Any())
+                {
+                    // Hidratar filmes filtrados
+                    var hydrated = await HydrateTmdbResultsToFilmesAsync(filtered, filtered.Count, "popular with min votes");
+
+                    foreach (var filme in hydrated)
+                    {
+                        if (!string.IsNullOrEmpty(filme.TmdbId) && seenTmdbIds.Add(filme.TmdbId))
+                        {
+                            result.Add(filme);
+                            if (result.Count >= count)
+                                break;
+                        }
+                    }
+                }
+
+                page++;
+
+                // Se não houver mais páginas no TMDB, parar
+                if (page > searchResult.TotalPages)
+                    break;
+            }
+
+            return result.Take(count).ToList();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error fetching popular movies with min votes from TMDb");
+            return result;
+        }
+    }
+
     public async Task<List<Filme>> GetUpcomingMoviesAsync(int page = 1, int count = 20)
     {
         var cacheHours = Math.Max(1, _configuration.GetValue<int>("TmdbUpcomingCacheHours", 24));
