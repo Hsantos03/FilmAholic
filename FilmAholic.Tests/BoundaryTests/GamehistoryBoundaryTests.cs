@@ -105,9 +105,9 @@ namespace FilmAholic.Tests.BoundaryTests
         // ─── Score = 1 ───
 
 
-        /// FR47 / FR49 – Um único acerto deve gerar XP = 10 (multiplicador 1.0).
+        /// FR47 / FR49 – Um único acerto deve gerar XP = 5 (sistema de streak base).
         [Fact]
-        public async Task SaveResult_ScoreOne_GrantsTenXP()
+        public async Task SaveResult_ScoreOne_GrantsFiveXP()
         {
             const string userId = "user-score-one";
             await CreateUserAsync(userId, xp: 0);
@@ -118,16 +118,16 @@ namespace FilmAholic.Tests.BoundaryTests
 
             var ok = Assert.IsType<OkObjectResult>(result);
             var data = ToJson(ok.Value);
-            Assert.Equal(10, data.GetProperty("xpGanho").GetInt32());
-            Assert.Equal(10, data.GetProperty("xpTotal").GetInt32());
+            Assert.Equal(5, data.GetProperty("xpGanho").GetInt32());  // XP base = 5
+            Assert.Equal(5, data.GetProperty("xpTotal").GetInt32());
         }
 
 
-        // ─── Multiplicador 2× capped a 100 ────
+        // ─── Score = 10 com bónus de streak ────
 
-        /// FR47 / FR49 – Score = 10 → XP calculado = 200, cap diário = 100 → xpGanho = 100.
+        /// FR47 / FR49 – Score = 10 → XP = 165 (soma 5+7+9+11+13+15+17+19+21+23 + bónus 25).
         [Fact]
-        public async Task SaveResult_ScoreTen_CappedByDailyLimit()
+        public async Task SaveResult_ScoreTen_GrantsCorrectXPWithStreakBonus()
         {
             const string userId = "user-score-ten";
             await CreateUserAsync(userId, xp: 0);
@@ -138,19 +138,20 @@ namespace FilmAholic.Tests.BoundaryTests
 
             var ok = Assert.IsType<OkObjectResult>(result);
             var data = ToJson(ok.Value);
-            Assert.Equal(100, data.GetProperty("xpGanho").GetInt32());
-            Assert.Equal(0, data.GetProperty("xpDiarioRestante").GetInt32());
+            // XP calculado: 5+7+9+11+13+15+17+19+21+23 = 140 + bónus streak (>=10) = 25 → Total 165
+            Assert.Equal(165, data.GetProperty("xpGanho").GetInt32());
+            Assert.Equal(835, data.GetProperty("xpDiarioRestante").GetInt32()); // 1000 - 165 = 835
         }
 
         // ─── Limite diário já atingido ────
 
-        /// FR49 – Após atingir o limite diário de 100 XP, jogos no mesmo dia não dão XP.
+        /// FR49 – Após atingir o limite diário de 1000 XP, jogos no mesmo dia não dão XP.
         [Fact]
         public async Task SaveResult_AfterDailyLimitReached_GrantsZeroXP()
         {
             const string userId = "user-daily-cap";
-            var user = await CreateUserAsync(userId, xp: 100);
-            user.XPDiario = 100;
+            var user = await CreateUserAsync(userId, xp: 1000);
+            user.XPDiario = 1000; // Limite diário é 1000
             user.UltimoResetDiario = DateTime.UtcNow;
             await _context.SaveChangesAsync();
             AuthenticateAs(userId);

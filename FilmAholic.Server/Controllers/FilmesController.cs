@@ -1,5 +1,6 @@
 using FilmAholic.Server.Data;
 using FilmAholic.Server.DTOs;
+using FilmAholic.Server.Models;
 using FilmAholic.Server.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -125,12 +126,8 @@ namespace FilmAholic.Server.Controllers
             }
         }
 
-        /// <summary>
-        /// Filmes “clássicos” via TMDB: <c>discover</c> (pré-2000 por defeito, nota + mín. votos) ou <c>top_rated</c>.
-        /// </summary>
-        /// <param name="fonte"><c>discover</c> (default) ou <c>top_rated</c></param>
-        /// <param name="ateData">Só para discover: data limite de estreia (yyyy-MM-dd). Default 1999-12-31.</param>
-        /// <param name="minVotos">Só para discover: vote_count.gte no TMDB (default 500).</param>
+
+        /// Filmes “clássicos” via TMDB: nota + mín. votos = 500).
         [HttpGet("classicos")]
         public async Task<IActionResult> GetClassicos(
             [FromQuery] string fonte = "discover",
@@ -371,6 +368,27 @@ namespace FilmAholic.Server.Controllers
             if (trailerKey == null) return NotFound();
 
             return Ok(new { url = $"https://www.youtube.com/watch?v={trailerKey}" });
+        }
+
+        /// Filmes mais populares do TMDB com mínimo de 500 classificações (vote_count).
+        /// Busca da API TMDB os filmes populares e filtra apenas os que têm 500+ votos.
+        [HttpGet("populares-comunidade")]
+        public async Task<IActionResult> GetPopularCommunityMovies([FromQuery] int count = 10, [FromQuery] int minRatings = 500)
+        {
+            if (count < 1) count = 10;
+            if (count > 40) count = 40;
+            if (minRatings < 1) minRatings = 500;
+
+            try
+            {
+                // Buscar filmes populares do TMDB com mínimo de votos
+                var movies = await _movieService.GetPopularMoviesWithMinVotesAsync(count, minRatings, maxPages: 10);
+                return Ok(movies);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { error = "Erro ao obter filmes populares do TMDB.", details = ex.Message });
+            }
         }
     }
 }

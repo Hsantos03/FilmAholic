@@ -19,6 +19,7 @@ import { ComunidadesComponent } from './components/comunidades/comunidades.compo
 import { ComunidadeDetalheComponent } from './components/comunidade-detalhe/comunidade-detalhe.component';
 import { NotificacoesConfigComponent } from './components/notificacoes-config/notificacoes-config.component';
 import { AdminPanelComponent } from './components/admin-panel/admin-panel.component';
+import { HomePageComponent } from './components/homepage/homepage.component';
 import { AdminGuard } from './guards/admin.guard';
 
 const routes: Routes = [
@@ -42,7 +43,8 @@ const routes: Routes = [
   { path: 'definicoes-notificacoes', component: NotificacoesConfigComponent },
   { path: 'admin', component: AdminPanelComponent, canActivate: [AdminGuard] },
   { path: 'mapa-cinemas', redirectTo: 'cinemas-proximos', pathMatch: 'full' },
-  { path: '', redirectTo: '/register', pathMatch: 'full' }
+  { path: 'home', component: HomePageComponent },
+  { path: '', redirectTo: '/home', pathMatch: 'full' }
 ];
 
 @NgModule({

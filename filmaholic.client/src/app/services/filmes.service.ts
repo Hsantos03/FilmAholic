@@ -205,4 +205,17 @@ export class FilmesService {
       catchError(() => of(undefined as any))
     );
   }
+
+  /**
+   * Filmes mais populares da comunidade FilmAholic (com base nas classificações dos utilizadores).
+   * Apenas filmes com mínimo de classificações são incluídos.
+   */
+  getPopularesComunidade(count: number = 10, minRatings: number = 500): Observable<any[]> {
+    const params = new HttpParams()
+      .set('count', String(count))
+      .set('minRatings', String(minRatings));
+    return this.http.get<any[]>(`${this.apiUrl}/populares-comunidade`, { params }).pipe(
+      catchError(() => of([]))
+    );
+  }
 }

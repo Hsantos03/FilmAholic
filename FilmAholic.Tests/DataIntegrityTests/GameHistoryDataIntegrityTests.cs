@@ -142,8 +142,8 @@ namespace FilmAholic.Tests.DataIntegrityTests
 
             var user = await _context.Users.FindAsync(userId);
             Assert.NotNull(user);
-            // XP inicial 50 + 10 (score 1, mult 1.0) = 60
-            Assert.Equal(60, user!.XP);
+            // XP inicial 50 + 5 (score 1, streak base) = 55
+            Assert.Equal(55, user!.XP);
         }
 
 
@@ -179,8 +179,8 @@ namespace FilmAholic.Tests.DataIntegrityTests
 
             var user = await _context.Users.FindAsync(userId);
             Assert.NotNull(user);
-            // Score 2, mult 1.0 → XP = 20
-            Assert.Equal(20, user!.XPDiario);
+            // Score 2, streak 5+7 = 12 XP
+            Assert.Equal(12, user!.XPDiario);
         }
 
         // ─── Categoria guardada correctamente ─────

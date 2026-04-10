@@ -18,6 +18,14 @@ const iconDefault = L.icon({
 });
 L.Marker.prototype.options.icon = iconDefault;
 
+// Custom red/pink icon for user location (same shape as default, modified color via CSS)
+const userLocationIcon = L.icon({
+  iconUrl, iconRetinaUrl, shadowUrl,
+  iconSize: [25, 41], iconAnchor: [12, 41],
+  popupAnchor: [1, -34], shadowSize: [41, 41],
+  className: 'user-location-marker-filter'
+});
+
 @Component({
   selector: 'app-cinema-map',
   templateUrl: './cinema-map.component.html',
@@ -252,7 +260,7 @@ export class CinemaMapComponent implements OnInit, AfterViewInit, OnDestroy {
     }).addTo(this.map);
 
     if (this.userPosition) {
-      L.marker([this.userPosition.lat, this.userPosition.lng])
+      L.marker([this.userPosition.lat, this.userPosition.lng], { icon: userLocationIcon })
         .addTo(this.map)
         .bindPopup('<strong>A sua localização</strong>')
         .openPopup();
@@ -284,7 +292,7 @@ export class CinemaMapComponent implements OnInit, AfterViewInit, OnDestroy {
 
   private addUserMarkerAndFit(): void {
     if (!this.map || !this.userPosition) return;
-    L.marker([this.userPosition.lat, this.userPosition.lng])
+    L.marker([this.userPosition.lat, this.userPosition.lng], { icon: userLocationIcon })
       .addTo(this.map)
       .bindPopup('<strong>A sua localização</strong>')
       .openPopup();
