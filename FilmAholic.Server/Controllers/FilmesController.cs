@@ -1,5 +1,6 @@
 using FilmAholic.Server.Data;
 using FilmAholic.Server.DTOs;
+using FilmAholic.Server.Models;
 using FilmAholic.Server.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -371,6 +372,29 @@ namespace FilmAholic.Server.Controllers
             if (trailerKey == null) return NotFound();
 
             return Ok(new { url = $"https://www.youtube.com/watch?v={trailerKey}" });
+        }
+
+        /// <summary>
+        /// Filmes mais populares do TMDB com mínimo de 500 classificações (vote_count).
+        /// Busca da API TMDB os filmes populares e filtra apenas os que têm 500+ votos.
+        /// </summary>
+        [HttpGet("populares-comunidade")]
+        public async Task<IActionResult> GetPopularCommunityMovies([FromQuery] int count = 10, [FromQuery] int minRatings = 500)
+        {
+            if (count < 1) count = 10;
+            if (count > 40) count = 40;
+            if (minRatings < 1) minRatings = 500;
+
+            try
+            {
+                // Buscar filmes populares do TMDB com mínimo de votos
+                var movies = await _movieService.GetPopularMoviesWithMinVotesAsync(count, minRatings, maxPages: 10);
+                return Ok(movies);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { error = "Erro ao obter filmes populares do TMDB.", details = ex.Message });
+            }
         }
     }
 }

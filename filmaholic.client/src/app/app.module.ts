@@ -31,6 +31,7 @@ import { ComunidadesService } from './services/comunidades.service';
 import { NotificacoesConfigComponent } from './components/notificacoes-config/notificacoes-config.component';
 import { OnboardingTourComponent } from './components/onboarding-tour/onboarding-tour.component';
 import { AdminPanelComponent } from './components/admin-panel/admin-panel.component';
+import { HomePageComponent } from './components/homepage/homepage.component';
 
 registerLocaleData(localePt);
 
@@ -65,7 +66,8 @@ registerLocaleData(localePt);
     CommonModule,
     HttpClientModule,
     FormsModule,
-    AppRoutingModule
+    AppRoutingModule,
+    HomePageComponent
   ],
   providers: [{provide: LOCALE_ID, useValue: 'pt-PT'}, ComunidadesService],
   bootstrap: [AppComponent]
