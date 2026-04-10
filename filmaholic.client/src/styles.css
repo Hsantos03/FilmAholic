@@ -488,6 +488,17 @@ app-root > *:not(router-outlet) {
   background: rgba(255,255,255,0.12);
 }
 
+.topbar .icon-btn[aria-label="Menu"],
+.cinema-map-topbar .icon-btn[aria-label="Menu"] {
+  background: transparent;
+}
+
+.topbar .icon-btn[aria-label="Menu"] svg,
+.cinema-map-topbar .icon-btn[aria-label="Menu"] svg {
+  width: 32px;
+  height: 32px;
+}
+
 .top-actions {
   display: flex;
   justify-content: flex-end;

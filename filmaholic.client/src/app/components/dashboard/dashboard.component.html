@@ -1,457 +1,930 @@
 <div class="page">
+
   <header class="topbar">
+
     <button type="button" class="icon-btn" data-tour="dashboard-menu" (click)="toggleMenu()" aria-label="Menu">
+
       <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+
         <path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z" />
+
       </svg>
+
     </button>
+
+
 
     <a class="brand" routerLink="/dashboard" routerLinkActive="active" aria-label="Go to dashboard">FilmAholic</a>
 
+
+
     <div class="search" #searchContainer data-tour="dashboard-search">
+
       <div class="search-pill" role="search">
+
         <input type="text"
+
                [(ngModel)]="searchTerm"
+
                (ngModelChange)="onSearchChange($event)"
+
                (focus)="onSearchFocus()"
+
                (keyup.enter)="doSearch()"
+
                placeholder="Pesquisar filmes..."
+
                aria-label="Pesquisar" />
+
         <button class="pill-icon right" type="button" aria-label="Pesquisar" (click)="doSearch()">
+
           <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+
             <path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z" />
+
           </svg>
+
         </button>
+
       </div>
+
+
 
       <div class="search-menu" *ngIf="showSearchMenu" role="listbox" aria-label="Sugestões de filmes">
+
         <!-- Histórico de pesquisa -->
+
         <div *ngIf="isHistoryMode && searchHistory.length > 0" class="search-history-section">
+
           <div class="search-menu-title">
+
             <span>Histórico de pesquisa</span>
+
             <button class="clear-history-btn" (click)="clearSearchHistory($event)" type="button">Limpar</button>
+
           </div>
+
           <a class="search-item history-item"
+
              *ngFor="let item of searchHistory; let i = index"
+
              href="javascript:void(0)"
+
              (click)="selectFromHistory(item)"
+
              role="option">
+
             <svg class="history-icon" width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+
               <path d="M13 3a9 9 0 0 0-9 9H1l3.89 3.89.07.14L9 12H6c0-3.87 3.13-7 7-7s7 3.13 7 7-3.13 7-7 7c-1.93 0-3.68-.79-4.94-2.06l-1.42 1.42A8.954 8.954 0 0 0 13 21a9 9 0 0 0 0-18zm-1 5v5l4.28 2.54.72-1.21-3.5-2.08V8H12z"/>
+
             </svg>
+
             <div class="search-title">{{ item }}</div>
+
             <button class="remove-history-item"
+
                     (click)="removeFromHistory(item, $event)"
+
                     type="button"
+
                     aria-label="Remover do histórico">
+
               <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+
                 <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+
               </svg>
+
             </button>
+
           </a>
+
         </div>
+
+
 
         <div *ngIf="isSuggestionsMode" class="search-menu-title">Sugestões para si</div>
+
         <div *ngIf="isSuggestionsMode && isLoadingSuggestions" class="search-empty">A carregar sugestões…</div>
+
         <div *ngIf="isSuggestionsMode && !isLoadingSuggestions && searchResults.length === 0 && hasGenrePreferences" class="search-empty">
+
           Nenhum filme dos teus géneros apareceu agora — tenta outro título ou mistura de géneros.
+
         </div>
+
         <div *ngIf="isSuggestionsMode && !isLoadingSuggestions && searchResults.length === 0 && !hasGenrePreferences" class="search-empty">
+
           Escolhe os teus géneros favoritos no perfil para desbloquear sugestões só para ti.
+
         </div>
+
         <div *ngIf="searchResultsLoading" class="search-empty">A pesquisar…</div>
+
         <a class="search-item"
+
            *ngFor="let m of searchResults"
+
            href="javascript:void(0)"
+
            (click)="openSearchResult(m)"
+
            role="option">
+
           <img class="search-thumb" [src]="posterOf(m)" [alt]="m.titulo" />
+
           <div class="search-title">{{ m.titulo }}</div>
+
         </a>
+
         <div *ngIf="!isSuggestionsMode && !searchResultsLoading && searchResults.length === 0 && !isHistoryMode" class="search-empty">
+
           Nao foram encontrados resultados para "{{ searchTerm }}"
+
         </div>
+
       </div>
+
     </div>
+
+
 
     <div class="top-actions">
+
       <app-topbar-actions></app-topbar-actions>
+
     </div>
+
   </header>
 
+
+
   <!-- Sidebar overlay -->
+
   <div class="sidebar-overlay" *ngIf="menuService.isOpen$ | async" (click)="toggleMenu()"></div>
 
+
+
   <!-- Sidebar -->
+
   <nav class="sidebar" [class.open]="menuService.isOpen$ | async">
+
     <div class="sidebar-header">
+
       <span class="sidebar-brand">FilmAholic</span>
+
       <button class="icon-btn" (click)="toggleMenu()" aria-label="Fechar">
+
         <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+
           <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z" />
+
         </svg>
+
       </button>
+
     </div>
+
+
 
     <div class="sidebar-links">
+
       <a class="sidebar-item" routerLink="/dashboard" routerLinkActive="active" (click)="toggleMenu()">
+
         <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+
           <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z" />
+
         </svg>
+
         <span>Início</span>
+
       </a>
+
       <a class="sidebar-item" routerLink="/profile" routerLinkActive="active" (click)="toggleMenu()">
+
         <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+
           <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
+
         </svg>
+
         <span>Perfil</span>
+
       </a>
+
       <a *ngIf="isAdmin" class="sidebar-item" routerLink="/admin" routerLinkActive="active" (click)="toggleMenu()">
+
         <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+
           <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 10.99h7c-.53 4.12-3.28 7.79-7 8.94V12H5V6.3l7-3.11v8.8z" />
+
         </svg>
+
         <span>Administração</span>
+
       </a>
+
       <a class="sidebar-item" routerLink="/cinema-movies" routerLinkActive="active" (click)="toggleMenu()">
+
         <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+
           <path d="M18 4l2 4h-3l-2-4h-2l2 4h-3l-2-4H8l2 4H7L5 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V4h-4z" />
+
         </svg>
+
         <span>Filmes em Cartaz</span>
+
       </a>
+
       <a class="sidebar-item" routerLink="/higher-or-lower" routerLinkActive="active" (click)="toggleMenu()">
+
         <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M21 6H3c-1.1 0-2 .9-2 2v8c0 1.1.9 2 2 2h18c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm-10 7H8v3H6v-3H3v-2h3V8h2v3h3v2zm4.5 2c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm4-3c-.83 0-1.5-.67-1.5-1.5S18.67 9 19.5 9s1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"/></svg>
+
         <span>Higher or Lower</span>
+
       </a>
+
       <button class="sidebar-item" (click)="openDesafios(); toggleMenu()">
+
         <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+
           <path d="M12 2L14.09 8.26L21 9.27L16.5 13.14L17.82 20L12 16.77L6.18 20L7.5 13.14L3 9.27L9.91 8.26L12 2Z" />
+
         </svg>
+
         <span>Desafios Diários</span>
+
       </button>
+
       <a class="sidebar-item" routerLink="/cinemas-proximos" routerLinkActive="active" (click)="toggleMenu()">
+
         <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+
           <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z" />
+
         </svg>
+
         <span>Mapa de Cinemas</span>
+
       </a>
+
       <a class="sidebar-item" routerLink="/comunidades" routerLinkActive="active" (click)="toggleMenu()">
+
         <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+
           <path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z" />
+
         </svg>
+
         <span>Comunidades</span>
+
       </a>
+
     </div>
+
   </nav>
 
+
+
   <main class="content">
+
     <div class="state" *ngIf="isLoadingMovies">A carregar filmes&hellip;</div>
+
     <div class="state error" *ngIf="!isLoadingMovies && errorMovies">{{ errorMovies }}</div>
 
+
+
     <!-- ── EM DESTAQUE ── -->
+
     <section class="strip strip-full" *ngIf="!isLoadingMovies && featured.length">
+
       <div class="strip-inner">
+
         <div class="section-head">
+
           <h2>Em Destaque</h2>
+
         </div>
+
         <div class="carousel hero">
+
           <button class="chevron left" (click)="prevFeatured()" [disabled]="featuredIndex === 0" aria-label="Anterior">&lsaquo;</button>
+
           <div class="carousel-track"
+
                [class.fade-out]="featuredSlideDir === 'fade-out'"
+
                [class.slide-left]="featuredSlideDir === 'left'"
+
                [class.slide-right]="featuredSlideDir === 'right'">
-            <a class="poster-card hero" *ngFor="let f of featuredVisible" [routerLink]="['/movie-detail', f.id]">
+
+            <a class="poster-card hero top10-poster-card" *ngFor="let f of featuredVisible; let i = index" [routerLink]="['/movie-detail', f.id]">
+
               <img [src]="posterOf(f)" [alt]="f.titulo" />
+
+              <div class="top10-card-meta">
+
+                <span class="top10-card-rank">{{ (featuredIndex + i + 1) < 10 ? '0' + (featuredIndex + i + 1) : (featuredIndex + i + 1) }}</span>
+
+                <span class="top10-card-title">{{ f.titulo }}</span>
+
+              </div>
+
             </a>
+
           </div>
+
           <button class="chevron right" (click)="nextFeatured()" [disabled]="featuredIndex >= (featured.length - featuredVisibleCount)" aria-label="Seguinte">&rsaquo;</button>
+
         </div>
+
         <div class="carousel-indicators" *ngIf="featuredPageCount > 1">
+
           <span class="indicator-dot"
+
                 *ngFor="let page of featuredPages"
+
                 [class.active]="page === featuredActivePage"></span>
+
         </div>
+
       </div>
+
     </section>
+
+
 
     <!-- ── TOP 10 FILMES ── -->
+
     <section class="strip strip-full top10-strip" *ngIf="!isLoadingMovies && top10.length">
+
       <div class="strip-inner">
+
         <div class="section-head">
+
           <h2>Top 10 filmes</h2>
+
         </div>
+
         <div class="carousel top10">
+
           <button class="chevron left" (click)="prevTop10()" [disabled]="top10Index === 0" aria-label="Anterior">&lsaquo;</button>
+
           <div class="carousel-track"
+
                [class.fade-out]="top10SlideDir === 'fade-out'"
+
                [class.slide-left]="top10SlideDir === 'left'"
+
                [class.slide-right]="top10SlideDir === 'right'">
-            <a class="poster-card small" *ngFor="let f of top10Visible" [routerLink]="['/movie-detail', f.id]">
+
+            <a class="poster-card small top10-poster-card" *ngFor="let f of top10Visible; let i = index" [routerLink]="['/movie-detail', f.id]">
+
               <img [src]="posterOf(f)" [alt]="f.titulo" />
+
+              <div class="top10-card-meta">
+
+                <span class="top10-card-rank">{{ (top10Index + i + 1) < 10 ? '0' + (top10Index + i + 1) : (top10Index + i + 1) }}</span>
+
+                <span class="top10-card-title">{{ f.titulo }}</span>
+
+              </div>
+
             </a>
+
           </div>
+
           <button class="chevron right" (click)="nextTop10()" [disabled]="top10Index >= (top10.length - top10VisibleCount)" aria-label="Seguinte">&rsaquo;</button>
+
         </div>
+
         <div class="carousel-indicators" *ngIf="top10PageCount > 1">
+
           <span class="indicator-dot"
+
                 *ngFor="let page of top10Pages"
+
                 [class.active]="page === top10ActivePage"></span>
+
         </div>
+
       </div>
+
     </section>
+
+
 
     <!-- ── TOP 10 ATORES ── -->
+
     <div class="state" *ngIf="isLoadingActors">A carregar atores&hellip;</div>
+
     <div class="state error" *ngIf="!isLoadingActors && errorActors">{{ errorActors }}</div>
 
+
+
     <section class="strip strip-full" *ngIf="!isLoadingActors && atores.length">
+
       <div class="strip-inner">
+
         <div class="section-head">
+
           <h2>Top 10 Atores</h2>
+
         </div>
+
         <div class="carousel" id="atores-carousel">
+
           <button class="chevron left" (click)="prevAtores()" [disabled]="atoresIndex === 0" aria-label="Anterior">&lsaquo;</button>
+
           <div class="carousel-track"
+
                [class.fade-out]="atoresSlideDir === 'fade-out'"
+
                [class.slide-left]="atoresSlideDir === 'left'"
+
                [class.slide-right]="atoresSlideDir === 'right'">
+
             <div class="actor-card"
+
                  *ngFor="let a of atoresVisible; let i = index"
+
                  (click)="openActor(a)"
+
                  role="button"
+
                  tabindex="0"
+
                  (keydown.enter)="openActor(a)"
+
                  (keydown.space)="openActor(a); $event.preventDefault()">
+
               <div class="actor-rank">{{ atoresIndex + i + 1 }}</div>
+
               <img class="actor-photo" [src]="fotoAtor(a)" [alt]="a.nome" />
+
               <div class="actor-name">{{ a.nome }}</div>
+
             </div>
+
           </div>
+
           <button class="chevron right" (click)="nextAtores()" [disabled]="atoresIndex >= (atores.length - atoresVisibleCount)" aria-label="Seguinte">&rsaquo;</button>
+
         </div>
+
         <div class="carousel-indicators" *ngIf="atoresPageCount > 1">
+
           <span class="indicator-dot"
+
                 *ngFor="let page of atoresPages"
+
                 [class.active]="page === atoresActivePage"></span>
+
         </div>
+
       </div>
+
     </section>
+
+
 
     <!-- ── RECOMENDAÇÕES PERSONALIZADAS ── -->
+
     <section class="strip strip-full recomendacoes-strip" *ngIf="!isLoadingRecomendacoes && recomendacoes.length > 0">
+
       <div class="strip-inner">
+
         <div class="section-head">
+
           <h2>Recomendado para ti 🎯</h2>
+
           <span class="rec-counter">{{ recomendacaoIndex + 1 }} / {{ recomendacoes.length }}</span>
+
         </div>
+
+
 
         <div class="rec-spotlight">
+
           <button class="rec-nav rec-nav-prev"
+
                   (click)="prevRecomendacao()"
+
                   [disabled]="recomendacaoIndex === 0"
+
                   aria-label="Anterior">
+
             &lsaquo;
+
           </button>
+
+
 
           <div class="rec-card"
+
                [class.fade-out]="recomendacaoSlideDir === 'fade-out'"
+
                [class.slide-left]="recomendacaoSlideDir === 'left'"
+
                [class.slide-right]="recomendacaoSlideDir === 'right'"
+
                *ngIf="currentRecomendacao as r">
+
             <img class="rec-poster"
+
                  [src]="recomendacaoPoster(r)"
+
                  [alt]="r.titulo"
+
                  (click)="openRecomendacao(r)" />
+
             <div class="rec-bottom">
+
               <h3 class="rec-title">{{ r.titulo }}</h3>
+
               <div class="rec-meta">
+
                 <span *ngIf="r.ano">{{ r.ano }}</span>
+
                 <span *ngIf="r.genero"> · {{ r.genero }}</span>
+
               </div>
+
               <div class="rec-rating" *ngIf="r.communityVotes > 0">
+
                 ⭐ {{ r.communityAverage }}/10
+
                 <span class="rec-votes">({{ r.communityVotes }} votos)</span>
+
               </div>
+
               <div class="rec-feedback-row">
+
                 <button class="rec-fb-btn rec-fb-down"
+
                         type="button"
+
                         [disabled]="isSendingFeedback || r._voted"
+
                         [class.rec-fb-voted]="r._voted === 'down'"
+
                         (click)="submitFeedback(r, false, $event)"
+
                         title="Não me interessa"
+
                         aria-label="Recomendação irrelevante">
+
                   👎
+
                 </button>
+
                 <button class="rec-fb-btn rec-fb-up"
+
                         type="button"
+
                         [disabled]="isSendingFeedback || r._voted"
+
                         [class.rec-fb-voted]="r._voted === 'up'"
+
                         (click)="submitFeedback(r, true, $event)"
+
                         title="Gosto! Mais como este"
+
                         aria-label="Recomendação relevante">
+
                   👍
+
                 </button>
+
               </div>
+
             </div>
+
           </div>
+
+
 
           <button class="rec-nav rec-nav-next"
+
                   (click)="nextRecomendacao()"
+
                   [disabled]="recomendacaoIndex >= recomendacoes.length - 1"
+
                   aria-label="Seguinte">
+
             &rsaquo;
+
           </button>
+
         </div>
+
         <div class="carousel-indicators" *ngIf="recomendacoes.length > 1">
+
           <span class="indicator-dot"
+
                 *ngFor="let page of recomendacaoPages"
+
                 [class.active]="page === recomendacaoIndex"></span>
+
         </div>
+
       </div>
+
     </section>
+
+
 
     <!-- ── O QUE VOU VER A SEGUIR ── -->
+
     <section class="strip strip-full nextup-strip" data-tour="dashboard-descobrir">
+
       <div class="strip-inner">
+
         <div class="section-head">
+
           <h2>O que vou ver a seguir</h2>
+
         </div>
+
         <div class="discover-wrap">
+
           <button class="discover-btn" (click)="discoverNext()" [disabled]="isDiscovering || isLoadingMovies">
+
             {{ isDiscovering ? 'A descobrir…' : 'Descobrir' }}
+
           </button>
+
         </div>
+
         <div class="nextup-content">
+
           <div *ngIf="!isLoadingMovies && movies.length === 0" class="empty-list-message">
+
             A lista está em branco como um ecrã antes da sessão. Procura ou escolhe géneros para começar o espetáculo.
+
           </div>
+
           <div class="nextup-card" *ngIf="nextToWatch">
+
             <a [routerLink]="['/movie-detail', nextToWatch.id]">
+
               <img class="nextup-poster" [src]="posterOf(nextToWatch)" [alt]="nextToWatch.titulo" />
+
             </a>
+
             <div class="nextup-meta">
+
               <h3 class="nextup-title">{{ nextToWatch.titulo }}</h3>
+
               <div class="nextup-sub">{{ nextToWatch.genero }}<ng-container *ngIf="nextToWatch.duracao > 0"> &middot; {{ nextToWatch.duracao | formatDuration }}</ng-container></div>
+
               <div class="nextup-actions">
+
                 <button class="action-btn" (click)="goToMovieDetail(nextToWatch.id)">Ver detalhes</button>
+
               </div>
+
             </div>
+
           </div>
+
         </div>
+
       </div>
+
     </section>
 
+
+
     <div class="state" *ngIf="isLoadingRecomendacoes" style="padding: 20px 0;">
+
       A carregar recomendações&hellip;
+
     </div>
+
   </main>
 
+
+
   <app-dicas tourId="dashboard-v1" [steps]="dashboardOnboardingSteps" [startDelayMs]="900"></app-dicas>
+
 </div>
 
+
+
 <!-- ── MODAL DESAFIOS ── -->
+
 <div class="modal-overlay" *ngIf="isDesafiosOpen" (click)="closeDesafios()">
+
   <div class="modal-box" (click)="$event.stopPropagation()">
+
     <button class="modal-close red-cross" (click)="closeDesafios()">&times;</button>
+
     <h3>Desafio Diário</h3>
+
+
 
     <div *ngIf="isLoadingDesafios" class="modal-loading" style="padding: 20px;">A carregar desafio...</div>
 
+
+
     <div *ngIf="!isLoadingDesafios && !desafioDoDia" class="empty-list-message" style="padding: 20px;">
+
       Não há nenhum desafio ativo para hoje. Volta amanhã!
+
     </div>
+
+
 
     <div *ngIf="!isLoadingDesafios && desafioDoDia" class="quiz-container">
+
       <h4 class="quiz-question">{{ desafioDoDia.pergunta }}</h4>
 
+
+
       <div class="quiz-options">
+
         <button class="quiz-option-btn"
+
                 [class.selected]="opcaoSelecionada === 'A'"
+
                 [class.correct]="desafioDoDia.respondido && respostaCorretaVisivel === 'A'"
+
                 [class.wrong]="desafioDoDia.respondido && opcaoSelecionada === 'A' && respostaCorretaVisivel !== 'A'"
+
                 [disabled]="desafioDoDia.respondido"
+
                 (click)="selecionarOpcao('A')">
+
           <span class="option-text">{{ desafioDoDia.opcaoA }}</span>
+
           <span class="option-icon" *ngIf="desafioDoDia.respondido && respostaCorretaVisivel">
+
             <ng-container *ngIf="respostaCorretaVisivel === 'A'">✅</ng-container>
+
             <ng-container *ngIf="opcaoSelecionada === 'A' && respostaCorretaVisivel !== 'A'">❌</ng-container>
+
           </span>
+
         </button>
+
         <button class="quiz-option-btn"
+
                 [class.selected]="opcaoSelecionada === 'B'"
+
                 [class.correct]="desafioDoDia.respondido && respostaCorretaVisivel === 'B'"
+
                 [class.wrong]="desafioDoDia.respondido && opcaoSelecionada === 'B' && respostaCorretaVisivel !== 'B'"
+
                 [disabled]="desafioDoDia.respondido"
+
                 (click)="selecionarOpcao('B')">
+
           <span class="option-text">{{ desafioDoDia.opcaoB }}</span>
+
           <span class="option-icon" *ngIf="desafioDoDia.respondido && respostaCorretaVisivel">
+
             <ng-container *ngIf="respostaCorretaVisivel === 'B'">✅</ng-container>
+
             <ng-container *ngIf="opcaoSelecionada === 'B' && respostaCorretaVisivel !== 'B'">❌</ng-container>
+
           </span>
+
         </button>
+
         <button class="quiz-option-btn"
+
                 [class.selected]="opcaoSelecionada === 'C'"
+
                 [class.correct]="desafioDoDia.respondido && respostaCorretaVisivel === 'C'"
+
                 [class.wrong]="desafioDoDia.respondido && opcaoSelecionada === 'C' && respostaCorretaVisivel !== 'C'"
+
                 [disabled]="desafioDoDia.respondido"
+
                 (click)="selecionarOpcao('C')">
+
           <span class="option-text">{{ desafioDoDia.opcaoC }}</span>
+
           <span class="option-icon" *ngIf="desafioDoDia.respondido && respostaCorretaVisivel">
+
             <ng-container *ngIf="respostaCorretaVisivel === 'C'">✅</ng-container>
+
             <ng-container *ngIf="opcaoSelecionada === 'C' && respostaCorretaVisivel !== 'C'">❌</ng-container>
+
           </span>
+
         </button>
+
       </div>
+
+
 
       <div class="quiz-submit-wrapper" *ngIf="!desafioDoDia.respondido">
+
         <button class="quiz-submit-btn" [disabled]="!opcaoSelecionada" (click)="submeterResposta()">
+
           Confirmar Resposta
+
         </button>
+
       </div>
+
+
 
       <div *ngIf="desafioDoDia.respondido || feedbackDesafio"
+
            class="quiz-feedback"
+
            [ngClass]="desafioDoDia.acertou ? 'success' : 'error'">
+
         {{ feedbackDesafio || (desafioDoDia.acertou ? 'Já respondeste corretamente hoje! 🎉' : 'Já respondeste a este desafio (Incorreto).') }}
+
       </div>
+
+
 
       <div class="quiz-footer">
+
         <div class="quiz-reward-wrapper">
+
           <span class="quiz-reward">✨ Recompensa: {{ desafioDoDia.xp }} XP</span>
+
         </div>
+
         <div class="quiz-timer" *ngIf="desafioDoDia.respondido">
+
           Próxima pergunta em: <strong>{{ timeUntilNext }}</strong>
+
         </div>
+
       </div>
 
+
+
       <div class="medal-notifications" *ngIf="medalSuccessMessage || medalErrorMessage || medalProgress.target > 0">
+
         <div class="state success" *ngIf="medalSuccessMessage">
+
           {{ medalSuccessMessage }}
+
           <div class="medal-progress" *ngIf="medalProgress.target > 0">
+
             <div class="progress-info">
+
               <span class="progress-text">{{ medalProgress.current }}/{{ medalProgress.target }} dias</span>
+
               <span class="next-medal" *ngIf="medalProgress.nextMedalName !== 'Todas conquistadas!'">Próxima: {{ medalProgress.nextMedalName }}</span>
+
               <span class="next-medal" *ngIf="medalProgress.nextMedalName === 'Todas conquistadas!'">🎉 Todas as medalhas conquistadas!</span>
+
             </div>
+
             <div class="progress-bar">
+
               <div class="progress-fill" [style.width.%]="medalProgress.percentage"></div>
+
             </div>
+
           </div>
+
         </div>
+
         <div class="state error" *ngIf="medalErrorMessage">{{ medalErrorMessage }}</div>
+
         <div class="state progress-only" *ngIf="!medalSuccessMessage && !medalErrorMessage && medalProgress.target > 0">
+
           <div class="progress-title">Progresso dos Desafios Diários</div>
+
           <div class="medal-progress">
+
             <div class="progress-info">
+
               <span class="progress-text">{{ medalProgress.current }}/{{ medalProgress.target }} dias</span>
+
               <span class="next-medal" *ngIf="medalProgress.nextMedalName !== 'Todas conquistadas!'">Próxima: {{ medalProgress.nextMedalName }}</span>
+
               <span class="next-medal" *ngIf="medalProgress.nextMedalName === 'Todas conquistadas!'">🎉 Todas as medalhas conquistadas!</span>
+
             </div>
+
             <div class="progress-bar">
+
               <div class="progress-fill" [style.width.%]="medalProgress.percentage"></div>
+
             </div>
+
           </div>
+
         </div>
+
       </div>
+
     </div>
+
   </div>
+
 </div>
+
