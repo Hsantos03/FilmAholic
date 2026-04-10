@@ -3,6 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { CinemaService, CinemaVenue } from '../../services/cinema.service';
 import { MenuService } from '../../services/menu.service';
+import { AuthService } from '../../services/auth.service';
 import * as L from 'leaflet';
 import { OnboardingStep } from '../../services/onboarding.service';
 
@@ -75,8 +76,13 @@ export class CinemaMapComponent implements OnInit, AfterViewInit, OnDestroy {
     private cinemaService: CinemaService,
     private http: HttpClient,
     private router: Router,
-    public menuService: MenuService
+    public menuService: MenuService,
+    private authService: AuthService
   ) { }
+
+  get isAdmin(): boolean {
+    return this.authService.isAdministrador();
+  }
 
   toggleMenu(): void {
     this.menuService.toggle();

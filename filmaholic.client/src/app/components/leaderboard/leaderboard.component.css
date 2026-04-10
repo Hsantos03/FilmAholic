@@ -14,21 +14,7 @@
   min-height: 0;
 }
 
-/* ─── TOPBAR ─── */
-.topbar {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  z-index: 100;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 14px 28px;
-  background: rgba(10,10,15,0.85);
-  backdrop-filter: blur(14px);
-  border-bottom: 1px solid rgba(255,255,255,0.05);
-}
+/* Topbar: visual global em styles.css; .topbar--leaderboard = flex */
 
 .back-btn {
   display: flex;
@@ -133,7 +119,7 @@
 .lb-page {
   position: relative;
   min-height: 100vh;
-  padding: 90px 22px 60px;
+  padding: 28px 22px 60px;
   overflow: hidden;
 }
 
@@ -734,7 +720,7 @@
 /* ─── RESPONSIVE STYLES ─── */
 @media (max-width: 768px) {
   .lb-page {
-    padding: 70px 12px 40px;
+    padding: 24px 12px 40px;
   }
 
   :host.embed-mode .lb-page {
@@ -837,7 +823,7 @@
 
 @media (max-width: 480px) {
   .lb-page {
-    padding: 65px 10px 30px;
+    padding: 20px 10px 30px;
   }
 
   :host.embed-mode .lb-page {

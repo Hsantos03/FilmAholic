@@ -199,6 +199,9 @@ export class ProfileComponent implements OnInit {
     private notificacoesService: NotificacoesService
   ) { }
 
+  get isAdmin(): boolean {
+    return this.authService.isAdministrador();
+  }
 
   ngOnInit(): void {
     const userId = localStorage.getItem('user_id');

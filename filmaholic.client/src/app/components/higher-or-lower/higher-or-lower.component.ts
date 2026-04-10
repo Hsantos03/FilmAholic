@@ -3,6 +3,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { FilmesService, Filme, RatingsDto, ActorDto } from '../../services/filmes.service';
 import { GameService, GameHistoryEntry, SaveResultResponse, GameStats } from '../../services/game.service';
 import { MenuService } from '../../services/menu.service';
+import { AuthService } from '../../services/auth.service';
 import { firstValueFrom } from 'rxjs';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../environments/environment';
@@ -131,8 +132,13 @@ export class HigherOrLowerComponent implements OnInit {
     private gameService: GameService,
     public menuService: MenuService,
     private http: HttpClient,
-    private notificacoesService: NotificacoesService
+    private notificacoesService: NotificacoesService,
+    private authService: AuthService
   ) { }
+
+  get isAdmin(): boolean {
+    return this.authService.isAdministrador();
+  }
 
   toggleMenu(): void {
     this.menuService.toggle();

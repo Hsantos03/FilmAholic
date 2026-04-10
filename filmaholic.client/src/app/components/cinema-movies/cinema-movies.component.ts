@@ -2,6 +2,7 @@ import { Component, OnInit, OnDestroy, AfterViewInit, ViewChild, ElementRef } fr
 import { Router } from '@angular/router';
 import { CinemaService, CinemaMovie, CinemaVenue } from '../../services/cinema.service';
 import { MenuService } from '../../services/menu.service';
+import { AuthService } from '../../services/auth.service';
 import { HttpClient } from '@angular/common/http';
 import { catchError } from 'rxjs/operators';
 import { of } from 'rxjs';
@@ -70,8 +71,13 @@ export class CinemaMoviesComponent implements OnInit, OnDestroy, AfterViewInit {
     private router: Router,
     private cinemaService: CinemaService,
     private http: HttpClient,
-    public menuService: MenuService
+    public menuService: MenuService,
+    private authService: AuthService
   ) { }
+
+  get isAdmin(): boolean {
+    return this.authService.isAdministrador();
+  }
 
   toggleMenu(): void { this.menuService.toggle(); }
 

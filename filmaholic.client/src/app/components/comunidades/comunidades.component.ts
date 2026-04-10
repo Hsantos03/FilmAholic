@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { ComunidadesService, ComunidadeDto, SugestaoFilmeComunidade } from '../../services/comunidades.service';
 import { MenuService } from '../../services/menu.service';
+import { AuthService } from '../../services/auth.service';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../environments/environment';
 import { OnboardingStep } from '../../services/onboarding.service';
@@ -71,8 +72,13 @@ export class ComunidadesComponent implements OnInit {
     private router: Router,
     public menuService: MenuService,
     private http: HttpClient,
-    private notificacoesService: NotificacoesService
+    private notificacoesService: NotificacoesService,
+    private authService: AuthService
   ) { }
+
+  get isAdmin(): boolean {
+    return this.authService.isAdministrador();
+  }
 
   toggleMenu(): void {
     this.menuService.toggle();

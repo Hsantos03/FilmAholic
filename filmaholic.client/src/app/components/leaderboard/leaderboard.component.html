@@ -1,5 +1,5 @@
 <!-- TOPBAR (só quando não está embebido no Higher or Lower) -->
-<header class="topbar" *ngIf="!embedMode">
+<header class="topbar topbar--leaderboard" *ngIf="!embedMode">
   <button class="back-btn" (click)="goBack()">
     <span>←</span> Dashboard
   </button>
@@ -27,7 +27,7 @@
     </div>
 
     <!-- TABS -->
-    <div class="tab-row">
+    <div class="tab-row" data-tour="lb-tabs">
       <button class="tab-btn" [class.tab-active]="category === 'films'" (click)="category = 'films'">
         🎬 Filmes
       </button>

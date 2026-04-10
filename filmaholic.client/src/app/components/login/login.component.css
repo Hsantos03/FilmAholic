@@ -1,2 +1,48 @@
-/* Estilos específicos do login já estão em styles.css (auth-page-wrapper, auth-card, btn-primary-global).
-   Mantido vazio para eventuais overrides locais. */
+/* Alertas alinhados à paleta FilmAholic (rosa / escuro) — sem verde “bootstrap” */
+
+.auth-alert--success {
+  margin-bottom: 1rem;
+  padding: 0.85rem 1.1rem;
+  border-radius: 12px;
+  font-size: 0.9rem;
+  line-height: 1.45;
+  color: rgba(255, 255, 255, 0.92);
+  background: linear-gradient(
+    135deg,
+    rgba(255, 64, 129, 0.16),
+    rgba(233, 30, 99, 0.1)
+  );
+  border: 1px solid rgba(255, 64, 129, 0.45);
+  box-shadow:
+    0 0 0 1px rgba(233, 30, 99, 0.12),
+    0 8px 24px rgba(0, 0, 0, 0.2);
+}
+
+.auth-alert--success.auth-alert--prominent {
+  padding: 1.15rem 1.25rem;
+  margin-bottom: 1.25rem;
+}
+
+.auth-alert__title {
+  margin: 0 0 0.4rem;
+  font-size: 1.05rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: #fff;
+  background: linear-gradient(135deg, var(--accent-pink, #ff4081), var(--color-primary-light, #ff6b9d));
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+}
+
+.auth-alert__text {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.78);
+  font-size: 0.9rem;
+}
+
+.auth-alert__text strong {
+  color: #fff;
+  font-weight: 700;
+}

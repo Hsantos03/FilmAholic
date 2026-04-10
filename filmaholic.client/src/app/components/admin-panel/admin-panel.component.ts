@@ -1,5 +1,8 @@
-import { Component, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
+import { Router } from '@angular/router';
 import { AdminService } from '../../services/admin.service';
+import { AuthService } from '../../services/auth.service';
+import { MenuService } from '../../services/menu.service';
 
 type AdminTab = 'utilizadores' | 'comunidades' | 'notificacoes' | 'desafios' | 'medalhas';
 
@@ -33,6 +36,8 @@ export class AdminPanelComponent implements OnInit {
   anuncioMensagem = '';
   anuncioSending = false;
   anuncioMsg = '';
+  /** Para estilizar mensagem de sucesso vs erro no formulário global. */
+  anuncioMsgOk = true;
 
   // Desafios
   desafios: any[] = [];
@@ -44,7 +49,25 @@ export class AdminPanelComponent implements OnInit {
   medalhas: any[] = [];
   medalhasLoading = false;
 
-  constructor(private admin: AdminService) {}
+  constructor(
+    private admin: AdminService,
+    public menuService: MenuService,
+    private authService: AuthService,
+    private router: Router,
+    private cdr: ChangeDetectorRef
+  ) {}
+
+  get isAdmin(): boolean {
+    return this.authService.isAdministrador();
+  }
+
+  toggleMenu(): void {
+    this.menuService.toggle();
+  }
+
+  openDesafios(): void {
+    this.router.navigate(['/dashboard'], { queryParams: { openDesafios: '1' } });
+  }
 
   ngOnInit(): void {
     this.loadComunidades();
@@ -187,12 +210,14 @@ export class AdminPanelComponent implements OnInit {
     this.anuncioMsg = '';
     this.admin.enviarNotificacaoGlobal(this.anuncioTitulo, this.anuncioMensagem).subscribe({
       next: (r) => {
+        this.anuncioMsgOk = true;
         this.anuncioMsg = `Enviado a ${r.destinatarios ?? 0} utilizadores.`;
         this.anuncioTitulo = '';
         this.anuncioMensagem = '';
         this.anuncioSending = false;
       },
       error: (e) => {
+        this.anuncioMsgOk = false;
         this.anuncioMsg = e.error?.message || 'Erro ao enviar.';
         this.anuncioSending = false;
       }
@@ -229,6 +254,7 @@ export class AdminPanelComponent implements OnInit {
       opcaoC: '',
       respostaCorreta: 'A'
     };
+    this.scrollDesafioFormIntoView();
   }
 
   editDesafio(d: any): void {
@@ -237,6 +263,15 @@ export class AdminPanelComponent implements OnInit {
     if (typeof copy.dataInicio === 'string') copy.dataInicio = copy.dataInicio.slice(0, 10);
     if (typeof copy.dataFim === 'string') copy.dataFim = copy.dataFim.slice(0, 10);
     this.desafioEdit = copy;
+    this.scrollDesafioFormIntoView();
+  }
+
+  /** Formulário fica acima da lista; garante scroll visível após *ngIf. */
+  private scrollDesafioFormIntoView(): void {
+    this.cdr.detectChanges();
+    setTimeout(() => {
+      document.getElementById('admin-desafio-form')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 0);
   }
 
   cancelDesafioEdit(): void {

@@ -1,171 +1,347 @@
-<div class="admin-page">
-  <p class="admin-back-wrap"><a routerLink="/dashboard" class="admin-back">← Voltar ao dashboard</a></p>
-  <header class="admin-header">
-    <h1>Administração</h1>
-    <p class="admin-lead">Gerir utilizadores, comunidades, anúncios globais, desafios e medalhas.</p>
+<div class="page page--admin">
+  <header class="topbar topbar-simple">
+    <button type="button" class="icon-btn" (click)="toggleMenu()" aria-label="Menu">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+        <path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z" />
+      </svg>
+    </button>
+    <a class="brand" routerLink="/dashboard" routerLinkActive="active" aria-label="FilmAholic">FilmAholic</a>
+    <div class="top-actions">
+      <app-topbar-actions></app-topbar-actions>
+    </div>
   </header>
 
-  <nav class="admin-tabs" aria-label="Secções de administração">
-    <button type="button" [class.active]="tab === 'utilizadores'" (click)="setTab('utilizadores')">Utilizadores</button>
-    <button type="button" [class.active]="tab === 'comunidades'" (click)="setTab('comunidades')">Comunidades</button>
-    <button type="button" [class.active]="tab === 'notificacoes'" (click)="setTab('notificacoes')">Notificações globais</button>
-    <button type="button" [class.active]="tab === 'desafios'" (click)="setTab('desafios')">Desafios</button>
-    <button type="button" [class.active]="tab === 'medalhas'" (click)="setTab('medalhas')">Medalhas</button>
+  <div class="sidebar-overlay" *ngIf="menuService.isOpen$ | async" (click)="toggleMenu()"></div>
+  <nav class="sidebar" [class.open]="menuService.isOpen$ | async">
+    <div class="sidebar-header">
+      <span class="sidebar-brand">FilmAholic</span>
+      <button type="button" class="icon-btn" (click)="toggleMenu()" aria-label="Fechar">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z" />
+        </svg>
+      </button>
+    </div>
+    <div class="sidebar-links">
+      <a class="sidebar-item" routerLink="/dashboard" routerLinkActive="active" (click)="toggleMenu()">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z" /></svg>
+        <span>Início</span>
+      </a>
+      <a class="sidebar-item" routerLink="/profile" routerLinkActive="active" (click)="toggleMenu()">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" /></svg>
+        <span>Perfil</span>
+      </a>
+      <a *ngIf="isAdmin" class="sidebar-item" routerLink="/admin" routerLinkActive="active" (click)="toggleMenu()">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 10.99h7c-.53 4.12-3.28 7.79-7 8.94V12H5V6.3l7-3.11v8.8z" />
+        </svg>
+        <span>Administração</span>
+      </a>
+      <a class="sidebar-item" routerLink="/cinema-movies" routerLinkActive="active" (click)="toggleMenu()">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M18 4l2 4h-3l-2-4h-2l2 4h-3l-2-4H8l2 4H7L5 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V4h-4z" /></svg>
+        <span>Filmes em Cartaz</span>
+      </a>
+      <a class="sidebar-item" routerLink="/higher-or-lower" routerLinkActive="active" (click)="toggleMenu()">
+        <span style="font-size:20px">🎮</span>
+        <span>Higher or Lower</span>
+      </a>
+      <button type="button" class="sidebar-item" (click)="openDesafios(); toggleMenu()">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2L14.09 8.26L21 9.27L16.5 13.14L17.82 20L12 16.77L6.18 20L7.5 13.14L3 9.27L9.91 8.26L12 2Z" /></svg>
+        <span>Desafios Diários</span>
+      </button>
+      <a class="sidebar-item" routerLink="/cinemas-proximos" routerLinkActive="active" (click)="toggleMenu()">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z" /></svg>
+        <span>Mapa de Cinemas</span>
+      </a>
+      <a class="sidebar-item" routerLink="/comunidades" routerLinkActive="active" (click)="toggleMenu()">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z" /></svg>
+        <span>Comunidades</span>
+      </a>
+    </div>
   </nav>
 
-  <section *ngIf="tab === 'utilizadores'" class="admin-section">
-    <div class="admin-toolbar">
-      <input type="search" [(ngModel)]="userSearch" (keyup.enter)="searchUsers()" placeholder="Email, nome…" class="admin-input" />
-      <button type="button" class="admin-btn" (click)="searchUsers()">Pesquisar</button>
-    </div>
-    <p *ngIf="usersError" class="admin-error">{{ usersError }}</p>
-    <div *ngIf="usersLoading" class="admin-muted">A carregar…</div>
-    <div class="admin-table-wrap" *ngIf="!usersLoading">
-      <table class="admin-table">
-        <thead>
-          <tr>
-            <th>Email</th>
-            <th>Nome</th>
-            <th>Roles</th>
-            <th>Estado</th>
-            <th>Ações</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr *ngFor="let u of users">
-            <td>{{ u.email }}</td>
-            <td>
-              <input [(ngModel)]="u.nome" class="admin-input admin-input--sm" />
-              <input [(ngModel)]="u.sobrenome" class="admin-input admin-input--sm" />
-            </td>
-            <td>{{ (u.roles || []).join(', ') }}</td>
-            <td>
-              <span *ngIf="u.lockoutEnd" class="admin-badge admin-badge--warn">Bloqueado</span>
-              <span *ngIf="!u.lockoutEnd" class="admin-badge">OK</span>
-            </td>
-            <td class="admin-actions">
-              <button type="button" class="admin-btn admin-btn--ghost" (click)="saveUser(u)">Guardar</button>
-              <button type="button" class="admin-btn admin-btn--ghost" *ngIf="!u.lockoutEnd" (click)="lockUser(u.id)">Bloquear</button>
-              <button type="button" class="admin-btn admin-btn--ghost" *ngIf="u.lockoutEnd" (click)="unlockUser(u.id)">Desbloquear</button>
-              <button type="button" class="admin-btn admin-btn--danger" (click)="deleteUser(u.id)">Eliminar</button>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-    <div class="admin-pager" *ngIf="userTotal > 20">
-      <button type="button" class="admin-btn admin-btn--ghost" (click)="prevUsers()" [disabled]="userPage <= 1">Anterior</button>
-      <span>Página {{ userPage }} ({{ userTotal }} total)</span>
-      <button type="button" class="admin-btn admin-btn--ghost" (click)="nextUsers()" [disabled]="userPage * 20 >= userTotal">Seguinte</button>
-    </div>
-  </section>
+  <div class="admin-shell">
+    <div class="admin-bg" aria-hidden="true"></div>
 
-  <section *ngIf="tab === 'comunidades'" class="admin-section">
-    <label class="admin-label">Comunidade</label>
-    <select [(ngModel)]="comunidadeSelId" (ngModelChange)="onComunidadeChange()" class="admin-select">
-      <option [ngValue]="null">— Escolher —</option>
-      <option *ngFor="let c of comunidades" [ngValue]="c.id">{{ c.nome }} ({{ c.membrosAtivos }} membros, {{ c.posts }} posts)</option>
-    </select>
-    <p *ngIf="modError" class="admin-error">{{ modError }}</p>
-    <p *ngIf="modLoading" class="admin-muted">A carregar…</p>
-
-    <div *ngIf="comunidadeSelId && !modLoading" class="admin-split">
-      <div>
-        <h3>Publicações recentes</h3>
-        <ul class="admin-list">
-          <li *ngFor="let p of postsMod">
-            <strong>{{ p.titulo }}</strong>
-            <span class="admin-muted"> · {{ p.autorNome }} · {{ p.dataCriacao | date:'short' }}</span>
-            <button type="button" class="admin-btn admin-btn--danger admin-btn--inline" (click)="deletePost(p.id)">Apagar</button>
-          </li>
-        </ul>
+    <div class="admin-page">
+    <header class="admin-header">
+      <div class="admin-header__row">
+        <span class="admin-pill">Área restrita</span>
       </div>
-      <div>
-        <h3>Membros</h3>
-        <input [(ngModel)]="kickMotivo" placeholder="Motivo opcional (expulsão)" class="admin-input" />
-        <ul class="admin-list">
-          <li *ngFor="let m of membrosMod">
-            {{ m.nome }} <span class="admin-muted">({{ m.email }})</span> — {{ m.role }}
-            <button type="button" class="admin-btn admin-btn--danger admin-btn--inline" (click)="kickMember(m.utilizadorId)">Remover</button>
-          </li>
-        </ul>
+      <h1 class="admin-title">
+        <span class="admin-title__accent">Admin</span>istração
+      </h1>
+      <p class="admin-lead">Gerir utilizadores, comunidades, anúncios globais, desafios e medalhas.</p>
+    </header>
+
+    <nav class="admin-tabs" aria-label="Secções de administração">
+      <button type="button"
+              [class.active]="tab === 'utilizadores'"
+              [attr.aria-current]="tab === 'utilizadores' ? 'page' : null"
+              (click)="setTab('utilizadores')">
+        <span class="admin-tab__ico" aria-hidden="true">👤</span>
+        Utilizadores
+      </button>
+      <button type="button"
+              [class.active]="tab === 'comunidades'"
+              [attr.aria-current]="tab === 'comunidades' ? 'page' : null"
+              (click)="setTab('comunidades')">
+        <span class="admin-tab__ico" aria-hidden="true">🏘️</span>
+        Comunidades
+      </button>
+      <button type="button"
+              [class.active]="tab === 'notificacoes'"
+              [attr.aria-current]="tab === 'notificacoes' ? 'page' : null"
+              (click)="setTab('notificacoes')">
+        <span class="admin-tab__ico" aria-hidden="true">📣</span>
+        Notificações
+      </button>
+      <button type="button"
+              [class.active]="tab === 'desafios'"
+              [attr.aria-current]="tab === 'desafios' ? 'page' : null"
+              (click)="setTab('desafios')">
+        <span class="admin-tab__ico" aria-hidden="true">⭐</span>
+        Desafios
+      </button>
+      <button type="button"
+              [class.active]="tab === 'medalhas'"
+              [attr.aria-current]="tab === 'medalhas' ? 'page' : null"
+              (click)="setTab('medalhas')">
+        <span class="admin-tab__ico" aria-hidden="true">🏅</span>
+        Medalhas
+      </button>
+    </nav>
+
+    <section *ngIf="tab === 'utilizadores'" class="admin-section">
+      <div class="admin-section__head">
+        <h2 class="admin-section__title">Utilizadores</h2>
+        <p class="admin-section__desc">Pesquisar, editar nomes, bloquear ou eliminar contas.</p>
       </div>
-    </div>
-  </section>
-
-  <section *ngIf="tab === 'notificacoes'" class="admin-section">
-    <p class="admin-muted">Envia um anúncio a todos os utilizadores com email confirmado. Aparece no separador Notificações (ícone no topo).</p>
-    <input [(ngModel)]="anuncioTitulo" placeholder="Título" class="admin-input" />
-    <textarea [(ngModel)]="anuncioMensagem" rows="5" placeholder="Mensagem" class="admin-textarea"></textarea>
-    <button type="button" class="admin-btn" (click)="sendGlobal()" [disabled]="anuncioSending">Enviar</button>
-    <p *ngIf="anuncioMsg" class="admin-msg">{{ anuncioMsg }}</p>
-  </section>
-
-  <section *ngIf="tab === 'desafios'" class="admin-section">
-    <button type="button" class="admin-btn" (click)="newDesafio()">Novo desafio</button>
-    <div *ngIf="desafiosLoading" class="admin-muted">A carregar…</div>
-    <ul class="admin-list admin-list--cards" *ngIf="!desafiosLoading">
-      <li *ngFor="let d of desafios">
-        <span><strong>#{{ d.id }}</strong> {{ d.descricao }}</span>
-        <span class="admin-muted">Ativo: {{ d.ativo }}</span>
-        <button type="button" class="admin-btn admin-btn--ghost admin-btn--inline" (click)="editDesafio(d)">Editar</button>
-        <button type="button" class="admin-btn admin-btn--danger admin-btn--inline" (click)="removeDesafio(d.id)">Eliminar</button>
-      </li>
-    </ul>
-
-    <div *ngIf="desafioEdit" class="admin-form-card">
-      <h3>{{ desafioNovo ? 'Novo desafio' : 'Editar desafio' }}</h3>
-      <div class="admin-grid">
-        <label>Data início <input type="date" [(ngModel)]="desafioEdit.dataInicio" class="admin-input" /></label>
-        <label>Data fim <input type="date" [(ngModel)]="desafioEdit.dataFim" class="admin-input" /></label>
-        <label class="admin-span2">Descrição <input [(ngModel)]="desafioEdit.descricao" class="admin-input" /></label>
-        <label><input type="checkbox" [(ngModel)]="desafioEdit.ativo" /> Ativo</label>
-        <label>Género <input [(ngModel)]="desafioEdit.genero" class="admin-input" /></label>
-        <label>Qtd necessária <input type="number" [(ngModel)]="desafioEdit.quantidadeNecessaria" class="admin-input" /></label>
-        <label>XP <input type="number" [(ngModel)]="desafioEdit.xp" class="admin-input" /></label>
-        <label class="admin-span2">Pergunta <input [(ngModel)]="desafioEdit.pergunta" class="admin-input" /></label>
-        <label>Opção A <input [(ngModel)]="desafioEdit.opcaoA" class="admin-input" /></label>
-        <label>Opção B <input [(ngModel)]="desafioEdit.opcaoB" class="admin-input" /></label>
-        <label>Opção C <input [(ngModel)]="desafioEdit.opcaoC" class="admin-input" /></label>
-        <label>Resposta (A/B/C) <input [(ngModel)]="desafioEdit.respostaCorreta" class="admin-input" /></label>
+      <div class="admin-toolbar">
+        <input type="search"
+               [(ngModel)]="userSearch"
+               (keyup.enter)="searchUsers()"
+               placeholder="Email, nome…"
+               class="admin-input admin-input--grow"
+               aria-label="Pesquisar utilizadores" />
+        <button type="button" class="admin-btn" (click)="searchUsers()">Pesquisar</button>
       </div>
-      <div class="admin-form-actions">
-        <button type="button" class="admin-btn" (click)="saveDesafio()">Guardar</button>
-        <button type="button" class="admin-btn admin-btn--ghost" (click)="cancelDesafioEdit()">Cancelar</button>
+      <p *ngIf="usersError" class="admin-error admin-banner admin-banner--error">{{ usersError }}</p>
+      <div *ngIf="usersLoading" class="admin-loading"><span class="admin-spinner"></span> A carregar…</div>
+      <div *ngIf="!usersLoading && users.length === 0 && !usersError" class="admin-empty">
+        <span class="admin-empty__icon" aria-hidden="true">🔍</span>
+        <p>Nenhum utilizador encontrado.</p>
+        <p class="admin-empty__hint">Ajusta a pesquisa ou carrega a lista sem filtros.</p>
       </div>
-    </div>
-  </section>
+      <div class="admin-table-wrap" *ngIf="!usersLoading && users.length > 0">
+        <table class="admin-table">
+          <thead>
+            <tr>
+              <th>Email</th>
+              <th>Nome</th>
+              <th>Roles</th>
+              <th>Estado</th>
+              <th>Ações</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let u of users">
+              <td class="admin-cell-email">{{ u.email }}</td>
+              <td>
+                <div class="admin-name-row">
+                  <input [(ngModel)]="u.nome" class="admin-input admin-input--sm" placeholder="Nome" />
+                  <input [(ngModel)]="u.sobrenome" class="admin-input admin-input--sm" placeholder="Apelido" />
+                </div>
+              </td>
+              <td><span class="admin-roles">{{ (u.roles || []).join(', ') || '—' }}</span></td>
+              <td>
+                <span *ngIf="u.lockoutEnd" class="admin-badge admin-badge--warn">Bloqueado</span>
+                <span *ngIf="!u.lockoutEnd" class="admin-badge admin-badge--ok">OK</span>
+              </td>
+              <td class="admin-actions">
+                <button type="button" class="admin-btn admin-btn--ghost admin-btn--compact" (click)="saveUser(u)">Guardar</button>
+                <button type="button" class="admin-btn admin-btn--ghost admin-btn--compact" *ngIf="!u.lockoutEnd" (click)="lockUser(u.id)">Bloquear</button>
+                <button type="button" class="admin-btn admin-btn--ghost admin-btn--compact" *ngIf="u.lockoutEnd" (click)="unlockUser(u.id)">Desbloquear</button>
+                <button type="button" class="admin-btn admin-btn--danger admin-btn--compact" (click)="deleteUser(u.id)">Eliminar</button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="admin-pager" *ngIf="userTotal > 20">
+        <button type="button" class="admin-btn admin-btn--ghost" (click)="prevUsers()" [disabled]="userPage <= 1">Anterior</button>
+        <span class="admin-pager__meta">Página <strong>{{ userPage }}</strong> · {{ userTotal }} total</span>
+        <button type="button" class="admin-btn admin-btn--ghost" (click)="nextUsers()" [disabled]="userPage * 20 >= userTotal">Seguinte</button>
+      </div>
+    </section>
 
-  <section *ngIf="tab === 'medalhas'" class="admin-section">
-    <div *ngIf="medalhasLoading" class="admin-muted">A carregar…</div>
-    <div class="admin-table-wrap" *ngIf="!medalhasLoading">
-      <table class="admin-table">
-        <thead>
-          <tr>
-            <th>Id</th>
-            <th>Nome</th>
-            <th>Descrição</th>
-            <th>Ícone URL</th>
-            <th>Critério</th>
-            <th>Ativa</th>
-            <th></th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr *ngFor="let m of medalhas">
-            <td>{{ m.id }}</td>
-            <td><input [(ngModel)]="m.nome" class="admin-input admin-input--sm" /></td>
-            <td><input [(ngModel)]="m.descricao" class="admin-input admin-input--sm" /></td>
-            <td><input [(ngModel)]="m.iconeUrl" class="admin-input admin-input--sm" /></td>
-            <td>
-              <input type="number" [(ngModel)]="m.criterioQuantidade" class="admin-input admin-input--sm" />
-              <input [(ngModel)]="m.criterioTipo" class="admin-input admin-input--sm" />
-            </td>
-            <td><input type="checkbox" [(ngModel)]="m.ativa" /></td>
-            <td><button type="button" class="admin-btn admin-btn--ghost" (click)="saveMedalha(m)">Guardar</button></td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-  </section>
+    <section *ngIf="tab === 'comunidades'" class="admin-section">
+      <div class="admin-section__head">
+        <h2 class="admin-section__title">Comunidades</h2>
+        <p class="admin-section__desc">Moderar publicações e membros por comunidade.</p>
+      </div>
+      <label class="admin-label" for="admin-com-select">Comunidade</label>
+      <select id="admin-com-select"
+              [(ngModel)]="comunidadeSelId"
+              (ngModelChange)="onComunidadeChange()"
+              class="admin-select admin-select--wide">
+        <option [ngValue]="null">— Escolher comunidade —</option>
+        <option *ngFor="let c of comunidades" [ngValue]="c.id">
+          {{ c.nome }} · {{ c.membrosAtivos }} membros · {{ c.posts }} posts
+        </option>
+      </select>
+      <p *ngIf="modError" class="admin-error admin-banner admin-banner--error">{{ modError }}</p>
+      <div *ngIf="modLoading" class="admin-loading"><span class="admin-spinner"></span> A carregar…</div>
+
+      <div *ngIf="comunidadeSelId && !modLoading" class="admin-split">
+        <div class="admin-card">
+          <h3 class="admin-card__title">Publicações recentes</h3>
+          <ul class="admin-list">
+            <li *ngFor="let p of postsMod" class="admin-list-item">
+              <div class="admin-list-item__main">
+                <strong>{{ p.titulo }}</strong>
+                <span class="admin-muted">{{ p.autorNome }} · {{ p.dataCriacao | date:'short' }}</span>
+              </div>
+              <button type="button" class="admin-btn admin-btn--danger admin-btn--compact" (click)="deletePost(p.id)">Apagar</button>
+            </li>
+          </ul>
+          <p *ngIf="postsMod.length === 0" class="admin-empty admin-empty--inline">Sem publicações listadas.</p>
+        </div>
+        <div class="admin-card">
+          <h3 class="admin-card__title">Membros</h3>
+          <input [(ngModel)]="kickMotivo" placeholder="Motivo opcional (expulsão)" class="admin-input admin-input--full" />
+          <ul class="admin-list">
+            <li *ngFor="let m of membrosMod" class="admin-list-item">
+              <div class="admin-list-item__main">
+                <span>{{ m.nome }}</span>
+                <span class="admin-muted">{{ m.email }} · {{ m.role }}</span>
+              </div>
+              <button type="button" class="admin-btn admin-btn--danger admin-btn--compact" (click)="kickMember(m.utilizadorId)">Remover</button>
+            </li>
+          </ul>
+          <p *ngIf="membrosMod.length === 0" class="admin-empty admin-empty--inline">Sem membros ou lista vazia.</p>
+        </div>
+      </div>
+    </section>
+
+    <section *ngIf="tab === 'notificacoes'" class="admin-section">
+      <div class="admin-section__head">
+        <h2 class="admin-section__title">Notificações globais</h2>
+        <p class="admin-section__desc">Anúncio para todos os utilizadores com email confirmado. Aparece no ícone de notificações no topo.</p>
+      </div>
+      <div class="admin-card admin-card--soft">
+        <label class="admin-label" for="an-tit">Título</label>
+        <input id="an-tit" [(ngModel)]="anuncioTitulo" placeholder="Ex.: Manutenção programada" class="admin-input admin-input--full" />
+        <label class="admin-label" for="an-msg">Mensagem</label>
+        <textarea id="an-msg"
+                  [(ngModel)]="anuncioMensagem"
+                  rows="5"
+                  placeholder="Corpo do anúncio…"
+                  class="admin-textarea"></textarea>
+        <button type="button" class="admin-btn admin-btn--primary" (click)="sendGlobal()" [disabled]="anuncioSending">
+          {{ anuncioSending ? 'A enviar…' : 'Enviar anúncio' }}
+        </button>
+        <p *ngIf="anuncioMsg"
+           class="admin-banner"
+           [class.admin-banner--success]="anuncioMsgOk"
+           [class.admin-banner--error]="!anuncioMsgOk">
+          {{ anuncioMsg }}
+        </p>
+      </div>
+    </section>
+
+    <section *ngIf="tab === 'desafios'" class="admin-section">
+      <div class="admin-section__head admin-section__head--row">
+        <div>
+          <h2 class="admin-section__title">Desafios diários</h2>
+          <p class="admin-section__desc">
+            O formulário de criação ou edição abre <strong>por cima da lista</strong>. Usa <strong>Editar</strong> num cartão ou <strong>Novo desafio</strong>.
+          </p>
+        </div>
+        <button type="button" class="admin-btn admin-btn--primary" (click)="newDesafio()">+ Novo desafio</button>
+      </div>
+
+      <div *ngIf="desafioEdit" id="admin-desafio-form" class="admin-desafio-form-anchor" tabindex="-1">
+        <div class="admin-form-card">
+          <h3 class="admin-form-card__title">
+            {{ desafioNovo ? 'Novo desafio' : 'Editar desafio' }}
+            <span *ngIf="!desafioNovo && desafioEdit?.id" class="admin-form-card__subtitle">#{{ desafioEdit.id }}</span>
+          </h3>
+          <div class="admin-grid">
+            <label>Data início <input type="date" [(ngModel)]="desafioEdit.dataInicio" class="admin-input admin-input--full" /></label>
+            <label>Data fim <input type="date" [(ngModel)]="desafioEdit.dataFim" class="admin-input admin-input--full" /></label>
+            <label class="admin-span2">Descrição <input [(ngModel)]="desafioEdit.descricao" class="admin-input admin-input--full" /></label>
+            <label class="admin-check"><input type="checkbox" [(ngModel)]="desafioEdit.ativo" /> Ativo</label>
+            <label>Género <input [(ngModel)]="desafioEdit.genero" class="admin-input admin-input--full" /></label>
+            <label>Qtd necessária <input type="number" [(ngModel)]="desafioEdit.quantidadeNecessaria" class="admin-input admin-input--full" /></label>
+            <label>XP <input type="number" [(ngModel)]="desafioEdit.xp" class="admin-input admin-input--full" /></label>
+            <label class="admin-span2">Pergunta <input [(ngModel)]="desafioEdit.pergunta" class="admin-input admin-input--full" /></label>
+            <label>Opção A <input [(ngModel)]="desafioEdit.opcaoA" class="admin-input admin-input--full" /></label>
+            <label>Opção B <input [(ngModel)]="desafioEdit.opcaoB" class="admin-input admin-input--full" /></label>
+            <label>Opção C <input [(ngModel)]="desafioEdit.opcaoC" class="admin-input admin-input--full" /></label>
+            <label>Resposta (A/B/C) <input [(ngModel)]="desafioEdit.respostaCorreta" class="admin-input admin-input--full" /></label>
+          </div>
+          <div class="admin-form-actions">
+            <button type="button" class="admin-btn admin-btn--primary" (click)="saveDesafio()">Guardar</button>
+            <button type="button" class="admin-btn admin-btn--ghost" (click)="cancelDesafioEdit()">Cancelar</button>
+          </div>
+        </div>
+      </div>
+
+      <div *ngIf="desafiosLoading" class="admin-loading"><span class="admin-spinner"></span> A carregar…</div>
+      <ul class="admin-challenge-list" *ngIf="!desafiosLoading">
+        <li *ngFor="let d of desafios" class="admin-challenge-card">
+          <div class="admin-challenge-card__body">
+            <span class="admin-challenge-id">#{{ d.id }}</span>
+            <p class="admin-challenge-desc">{{ d.descricao }}</p>
+            <span class="admin-badge" [class.admin-badge--inactive]="!d.ativo">{{ d.ativo ? 'Ativo' : 'Inativo' }}</span>
+          </div>
+          <div class="admin-challenge-card__actions">
+            <button type="button" class="admin-btn admin-btn--ghost admin-btn--compact" (click)="editDesafio(d)">Editar</button>
+            <button type="button" class="admin-btn admin-btn--danger admin-btn--compact" (click)="removeDesafio(d.id)">Eliminar</button>
+          </div>
+        </li>
+      </ul>
+      <p *ngIf="!desafiosLoading && desafios.length === 0" class="admin-empty admin-empty--inline">Ainda não há desafios.</p>
+    </section>
+
+    <section *ngIf="tab === 'medalhas'" class="admin-section">
+      <div class="admin-section__head">
+        <h2 class="admin-section__title">Medalhas</h2>
+        <p class="admin-section__desc">Editar nome, descrição, ícone e critérios.</p>
+      </div>
+      <div *ngIf="medalhasLoading" class="admin-loading"><span class="admin-spinner"></span> A carregar…</div>
+      <div class="admin-table-wrap" *ngIf="!medalhasLoading">
+        <table class="admin-table">
+          <thead>
+            <tr>
+              <th>Id</th>
+              <th>Nome</th>
+              <th>Descrição</th>
+              <th>Ícone URL</th>
+              <th>Critério</th>
+              <th>Ativa</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let m of medalhas">
+              <td class="admin-cell-mono">{{ m.id }}</td>
+              <td><input [(ngModel)]="m.nome" class="admin-input admin-input--sm admin-input--table" /></td>
+              <td><input [(ngModel)]="m.descricao" class="admin-input admin-input--table" /></td>
+              <td><input [(ngModel)]="m.iconeUrl" class="admin-input admin-input--table" /></td>
+              <td>
+                <div class="admin-crit-row">
+                  <input type="number" [(ngModel)]="m.criterioQuantidade" class="admin-input admin-input--sm" />
+                  <input [(ngModel)]="m.criterioTipo" class="admin-input admin-input--sm" />
+                </div>
+              </td>
+              <td><input type="checkbox" [(ngModel)]="m.ativa" class="admin-check-input" /></td>
+              <td><button type="button" class="admin-btn admin-btn--ghost admin-btn--compact" (click)="saveMedalha(m)">Guardar</button></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+</div>
 </div>

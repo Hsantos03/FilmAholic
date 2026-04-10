@@ -25,8 +25,9 @@
   z-index: 9999;
 }
 
-.cinema-map-topbar .brand:hover {
-  color: #FF4081;
+.cinema-page > .cinema-map-topbar {
+  width: calc(100% + 48px);
+  max-width: none;
 }
 
 /* ─── FILME NÃO ENCONTRADO ─── */
@@ -319,6 +320,14 @@
 @media (max-width: 768px) {
   .cinema-page {
     padding: 24px 16px 48px;
+  }
+
+  .cinema-page > .cinema-map-topbar {
+    margin-left: -16px;
+    margin-right: -16px;
+    padding-left: 16px;
+    padding-right: 16px;
+    width: calc(100% + 32px);
   }
 
   .cinema-movie-card {

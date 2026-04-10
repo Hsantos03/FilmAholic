@@ -3,6 +3,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { FilmesService, TmdbSearchResponse, TmdbMovieResult } from '../../services/filmes.service';
 import { AtoresService, ActorSearchResult, ActorMovie } from '../../services/atores.service';
 import { MenuService } from '../../services/menu.service';
+import { AuthService } from '../../services/auth.service';
 import { DesafiosService } from '../../services/desafios.service';
 import { OnboardingStep } from '../../services/onboarding.service';
 
@@ -86,8 +87,13 @@ export class SearchResultsComponent implements OnInit, OnDestroy {
     private filmesService: FilmesService,
     private atoresService: AtoresService,
     private desafiosService: DesafiosService,
-    public menuService: MenuService
+    public menuService: MenuService,
+    private authService: AuthService
   ) { }
+
+  get isAdmin(): boolean {
+    return this.authService.isAdministrador();
+  }
 
   ngOnInit(): void {
     // Restore filter state from sessionStorage

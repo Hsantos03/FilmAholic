@@ -7,6 +7,7 @@ import { Subscription } from 'rxjs';
 import { finalize } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
 import { NotificacoesService } from '../../services/notificacoes.service';
+import { AuthService } from '../../services/auth.service';
 import { OnboardingStep } from '../../services/onboarding.service';
 
 @Component({
@@ -146,8 +147,14 @@ export class ComunidadeDetalheComponent implements OnInit, OnDestroy {
     private service: ComunidadesService,
     public menuService: MenuService,
     private http: HttpClient,
-    private notificacoesService: NotificacoesService
+    private notificacoesService: NotificacoesService,
+    private authService: AuthService
   ) { }
+
+  /** Administrador da plataforma (role global), distinto de admin da comunidade. */
+  get isPlatformAdmin(): boolean {
+    return this.authService.isAdministrador();
+  }
 
   toggleMenu(): void { this.menuService.toggle(); }
 

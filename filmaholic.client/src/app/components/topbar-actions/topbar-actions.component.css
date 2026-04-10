@@ -1,4 +1,11 @@
 /* TOPBAR ACTIONS */
+:host {
+  display: block;
+  min-width: 0;
+  width: 100%;
+  max-width: 100%;
+}
+
 .topbar-actions {
   display: flex;
   justify-content: flex-end;

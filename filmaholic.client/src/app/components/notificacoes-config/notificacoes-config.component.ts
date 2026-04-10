@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { MenuService } from '../../services/menu.service';
+import { AuthService } from '../../services/auth.service';
 import { NotificacoesService, PreferenciasNotificacaoDto } from '../../services/notificacoes.service';
 import { OnboardingStep } from '../../services/onboarding.service';
 
@@ -56,8 +57,17 @@ export class NotificacoesConfigComponent implements OnInit {
   constructor(
     private notificacoesService: NotificacoesService,
     private router: Router,
-    public menuService: MenuService
+    public menuService: MenuService,
+    private authService: AuthService
   ) {}
+
+  get isAdmin(): boolean {
+    return this.authService.isAdministrador();
+  }
+
+  goToDashboardDesafios(): void {
+    this.router.navigate(['/dashboard'], { queryParams: { openDesafios: '1' } });
+  }
 
   ngOnInit(): void {
     this.loadPrefs();

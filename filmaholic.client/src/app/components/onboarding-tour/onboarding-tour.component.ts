@@ -2,6 +2,7 @@ import {
   AfterViewInit,
   ChangeDetectorRef,
   Component,
+  ElementRef,
   HostListener,
   Input,
   OnDestroy
@@ -37,6 +38,8 @@ export class OnboardingTourComponent implements AfterViewInit, OnDestroy {
   private startTimer: ReturnType<typeof setTimeout> | null = null;
   private layoutTimer: ReturnType<typeof setTimeout> | null = null;
   private cancelled = false;
+  /** Contentores com scroll (ex.: .hol-page) — window não dispara scroll aqui. */
+  private scrollParents: Element[] = [];
   private readonly onResizeOrScroll = () => {
     if (this.active) {
       this.updateLayout();
@@ -45,7 +48,8 @@ export class OnboardingTourComponent implements AfterViewInit, OnDestroy {
 
   constructor(
     private readonly onboarding: OnboardingService,
-    private readonly cdr: ChangeDetectorRef
+    private readonly cdr: ChangeDetectorRef,
+    private readonly hostRef: ElementRef<HTMLElement>
   ) {}
 
   ngAfterViewInit(): void {
@@ -79,6 +83,7 @@ export class OnboardingTourComponent implements AfterViewInit, OnDestroy {
     this.currentIndex = 0;
     window.addEventListener('resize', this.onResizeOrScroll);
     window.addEventListener('scroll', this.onResizeOrScroll, true);
+    this.attachScrollParents();
     this.cdr.detectChanges();
     this.presentStep(0, 0);
   }
@@ -86,6 +91,28 @@ export class OnboardingTourComponent implements AfterViewInit, OnDestroy {
   private teardownListeners(): void {
     window.removeEventListener('resize', this.onResizeOrScroll);
     window.removeEventListener('scroll', this.onResizeOrScroll, true);
+    for (const el of this.scrollParents) {
+      el.removeEventListener('scroll', this.onResizeOrScroll);
+    }
+    this.scrollParents = [];
+  }
+
+  /** Liga scroll em antepassados que fazem overflow (leaderboard dentro do HOL, etc.). */
+  private attachScrollParents(): void {
+    let el: HTMLElement | null = this.hostRef.nativeElement.parentElement;
+    const seen = new Set<Element>();
+    while (el && el !== document.body) {
+      const st = window.getComputedStyle(el);
+      const oy = st.overflowY;
+      if ((oy === 'auto' || oy === 'scroll') && el.scrollHeight > el.clientHeight + 1) {
+        if (!seen.has(el)) {
+          seen.add(el);
+          el.addEventListener('scroll', this.onResizeOrScroll, { passive: true });
+          this.scrollParents.push(el);
+        }
+      }
+      el = el.parentElement;
+    }
   }
 
   private presentStep(index: number, retryDepth: number): void {
@@ -115,13 +142,13 @@ export class OnboardingTourComponent implements AfterViewInit, OnDestroy {
       return;
     }
 
-    el.scrollIntoView({ block: 'center', behavior: 'smooth' });
+    el.scrollIntoView({ block: 'center', behavior: 'auto', inline: 'nearest' });
     this.updateLayout();
     if (this.layoutTimer) clearTimeout(this.layoutTimer);
     this.layoutTimer = setTimeout(() => {
       this.updateLayout();
       this.cdr.detectChanges();
-    }, 400);
+    }, 50);
 
     this.cdr.detectChanges();
   }

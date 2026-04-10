@@ -215,30 +215,7 @@
     letter-spacing: 1px;
   }
 
-/* ── TOPBAR ── */
-.topbar {
-  position: sticky;
-  top: 0;
-  z-index: 1000;
-  width: 100%;
-  height: 70px;
-  display: grid;
-  grid-template-columns: 60px 160px 1fr 120px;
-  align-items: center;
-  gap: 12px;
-  padding: 0 22px;
-  background: #010B15;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-  backdrop-filter: blur(10px);
-}
-
-.topbar-simple {
-  grid-template-columns: 60px 160px 1fr;
-}
-
-  .topbar-simple .top-actions {
-    justify-self: end;
-  }
+/* Topbar: estilos base em styles.css */
 
 /* ── TÍTULO FILMAHOLIC ── */
 a.brand,
@@ -1200,11 +1177,6 @@ a.brand.active {
 
 /* ── RESPONSIVE ── */
 @media (max-width: 860px) {
-  .topbar {
-    grid-template-columns: 60px 160px 1fr 60px;
-    padding: 0 14px;
-  }
-
   .content {
     padding: 0 14px 55px;
   }
@@ -1226,28 +1198,6 @@ a.brand.active {
 }
 
 @media (max-width: 620px) {
-  .topbar {
-    height: auto;
-    grid-template-columns: 1fr 60px;
-    grid-template-areas:
-      "brand actions"
-      "search search";
-    padding: 10px 12px;
-    row-gap: 10px;
-  }
-
-  .brand {
-    grid-area: brand;
-  }
-
-  .top-actions {
-    grid-area: actions;
-  }
-
-  .search {
-    grid-area: search;
-  }
-
   .carousel {
     padding: 16px 56px;
   }

@@ -857,8 +857,8 @@ namespace FilmAholic.Server.Controllers
                 ComunidadeId = id,
                 UtilizadorId = userId!,
                 Role = "Membro",
-                Status = "Ativo",
-                DataEntrada = DateTime.UtcNow
+                            Status = "Ativo",
+                            DataEntrada = DateTime.UtcNow
             });
 
             await _context.SaveChangesAsync();
@@ -1558,7 +1558,7 @@ namespace FilmAholic.Server.Controllers
             };
 
             _context.ComunidadePostComentarios.Add(comentario);
-            await _context.SaveChangesAsync();
+                        await _context.SaveChangesAsync();
 
             var autor = await _context.Users.OfType<Utilizador>()
                 .FirstOrDefaultAsync(u => u.Id == userId);
