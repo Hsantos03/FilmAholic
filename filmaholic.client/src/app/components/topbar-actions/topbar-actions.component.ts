@@ -481,13 +481,26 @@ export class TopbarActionsComponent implements OnInit, OnDestroy {
     });
   }
 
-  private marcarReminderLidoInterno(id: number): void {
-    this.notificacoesService.marcarReminderJogoComoLida(id).subscribe();
-    this.reminderJogo = this.reminderJogo.map(r =>
-      r.id === id ? { ...r, lidaEm: new Date().toISOString() } : r
-    );
-    this.reminderJogoUnreadCount = Math.max(0, this.reminderJogoUnreadCount - 1);
-    this.cdr.markForCheck();
+  /**
+   * Marca reminder como lido no servidor e só depois atualiza UI (bolinha/contagens).
+   * Evita corrida com refresh e garante que o PUT concluiu antes de navegar para o jogo.
+   */
+  private marcarReminderLidoInterno(id: number, then?: () => void): void {
+    this.notificacoesService.marcarReminderJogoComoLida(id).subscribe({
+      next: () => {
+        const now = new Date().toISOString();
+        this.reminderJogo = this.reminderJogo.map((r) =>
+          r.id === id ? { ...r, lidaEm: now } : r
+        );
+        this.reminderJogoUnreadCount = this.reminderJogo.filter((r) => !r.lidaEm).length;
+        this.notificacoesService.refreshNotificationBadges();
+        this.cdr.markForCheck();
+        then?.();
+      },
+      error: () => {
+        this.cdr.markForCheck();
+      }
+    });
   }
 
   marcarReminderLido(e: MouseEvent, id: number): void {
@@ -499,8 +512,10 @@ export class TopbarActionsComponent implements OnInit, OnDestroy {
   marcarReminderLidoEJogar(e: MouseEvent, id: number): void {
     e.preventDefault();
     e.stopPropagation();
-    this.marcarReminderLidoInterno(id);
-    this.router.navigate(['/higher-or-lower']);
+    this.marcarReminderLidoInterno(id, () => {
+      this.isNotificationsOpen = false;
+      this.router.navigate(['/higher-or-lower']);
+    });
   }
 
   marcarResumoLida(e: MouseEvent, item: ResumoEstatisticasFeedItemDto): void {
