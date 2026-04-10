@@ -126,12 +126,8 @@ namespace FilmAholic.Server.Controllers
             }
         }
 
-        /// <summary>
-        /// Filmes “clássicos” via TMDB: <c>discover</c> (pré-2000 por defeito, nota + mín. votos) ou <c>top_rated</c>.
-        /// </summary>
-        /// <param name="fonte"><c>discover</c> (default) ou <c>top_rated</c></param>
-        /// <param name="ateData">Só para discover: data limite de estreia (yyyy-MM-dd). Default 1999-12-31.</param>
-        /// <param name="minVotos">Só para discover: vote_count.gte no TMDB (default 500).</param>
+
+        /// Filmes “clássicos” via TMDB: nota + mín. votos = 500).
         [HttpGet("classicos")]
         public async Task<IActionResult> GetClassicos(
             [FromQuery] string fonte = "discover",
@@ -374,10 +370,8 @@ namespace FilmAholic.Server.Controllers
             return Ok(new { url = $"https://www.youtube.com/watch?v={trailerKey}" });
         }
 
-        /// <summary>
         /// Filmes mais populares do TMDB com mínimo de 500 classificações (vote_count).
         /// Busca da API TMDB os filmes populares e filtra apenas os que têm 500+ votos.
-        /// </summary>
         [HttpGet("populares-comunidade")]
         public async Task<IActionResult> GetPopularCommunityMovies([FromQuery] int count = 10, [FromQuery] int minRatings = 500)
         {

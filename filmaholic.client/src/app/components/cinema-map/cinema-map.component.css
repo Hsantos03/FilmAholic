@@ -52,7 +52,7 @@
 .cinema-map-page {
   /* Atualizamos a paleta para o tema 3D (Ciano e Vermelho/Rosa) */
   --hero-accent: #00ffff;
-  --orb1-color: #ff0055; /* Vermelho 3D */
+  --orb1-color: #ff3366; /* Vermelho 3D */
   --orb2-color: #00ffff; /* Ciano 3D */
   position: relative;
   height: 100vh;
@@ -535,3 +535,8 @@
   .website-btn:hover .website-clapper-ico {
     filter: drop-shadow(0 0 6px rgba(255,255,255,0.35));
   }
+
+/* Colorir o pin do utilizador com hue-rotate mantendo o formato original */
+::ng-deep .user-location-marker-filter {
+  filter: hue-rotate(140deg) saturate(1.8);
+}
