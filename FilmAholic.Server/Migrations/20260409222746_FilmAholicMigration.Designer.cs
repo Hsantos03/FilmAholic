@@ -12,7 +12,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace FilmAholic.Server.Migrations
 {
     [DbContext(typeof(FilmAholicDbContext))]
-    [Migration("20260409184441_FilmAholicMigration")]
+    [Migration("20260409222746_FilmAholicMigration")]
     partial class FilmAholicMigration
     {
         /// <inheritdoc />
@@ -1171,6 +1171,14 @@ namespace FilmAholic.Server.Migrations
                     b.Property<string>("UserTag")
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("UserTagPrimaryColor")
+                        .HasMaxLength(7)
+                        .HasColumnType("nvarchar(7)");
+
+                    b.Property<string>("UserTagSecondaryColor")
+                        .HasMaxLength(7)
+                        .HasColumnType("nvarchar(7)");
 
                     b.Property<int>("XP")
                         .HasColumnType("int");

@@ -303,10 +303,10 @@
             <div class="post-autor-wrapper">
               <span class="post-autor">{{ p.autorNome }}</span>
               <span class="post-tag-separator" *ngIf="p.autorUserTag">|</span>
-              <span *ngIf="p.autorUserTag" class="post-autor-tag tooltip-trigger post-autor-tag-with-icon">
+              <span *ngIf="p.autorUserTag" class="post-autor-tag tooltip-trigger post-autor-tag-with-icon" [style.--tag-primary-color]="p.autorUserTagPrimaryColor || '#FF4081'" [style.--tag-secondary-color]="p.autorUserTagSecondaryColor || '#FFFFFF'">
                 <img *ngIf="p.autorUserTagIconUrl" [src]="API_URL + p.autorUserTagIconUrl" [alt]="p.autorUserTag" class="post-autor-tag-icon">
                 <span *ngIf="!p.autorUserTagIconUrl" class="post-autor-tag-fallback">🏅</span>
-                {{ p.autorUserTag }}
+                <span class="tag-gradient-text">{{ p.autorUserTag }}</span>
                 <span class="tooltip">
                   <span class="tooltip-label">Como desbloquear</span>
                   <span class="tooltip-desc">{{ p.autorUserTagDescription || 'Medalha especial desbloqueada!' }}</span>
@@ -399,10 +399,10 @@
                 <div class="comment-header">
                   <span class="comment-author">{{ c.autorNome }}</span>
                   <span class="comment-tag-separator" *ngIf="c.autorUserTag">|</span>
-                  <span *ngIf="c.autorUserTag" class="comment-autor-tag tooltip-trigger comment-autor-tag-with-icon">
+                  <span *ngIf="c.autorUserTag" class="comment-autor-tag tooltip-trigger comment-autor-tag-with-icon" [style.--tag-primary-color]="c.autorUserTagPrimaryColor || '#FF4081'" [style.--tag-secondary-color]="c.autorUserTagSecondaryColor || '#FFFFFF'">
                     <img *ngIf="c.autorUserTagIconUrl" [src]="API_URL + c.autorUserTagIconUrl" [alt]="c.autorUserTag" class="comment-autor-tag-icon">
                     <span *ngIf="!c.autorUserTagIconUrl" class="comment-autor-tag-fallback">🏅</span>
-                    {{ c.autorUserTag }}
+                    <span class="tag-gradient-text">{{ c.autorUserTag }}</span>
                     <span class="tooltip">
                       <span class="tooltip-label">Como desbloquear</span>
                       <span class="tooltip-desc">{{ c.autorUserTagDescription || 'Medalha especial desbloqueada!' }}</span>
@@ -459,10 +459,10 @@
             <div class="membro-nome-wrapper">
               <span class="membro-nome">{{ m.userName }}</span>
               <span class="membro-tag-separator" *ngIf="m.userTag">|</span>
-              <span *ngIf="m.userTag" class="membro-tag tooltip-trigger membro-tag-with-icon">
+              <span *ngIf="m.userTag" class="membro-tag tooltip-trigger membro-tag-with-icon" [style.--tag-primary-color]="m.userTagPrimaryColor || '#FF4081'" [style.--tag-secondary-color]="m.userTagSecondaryColor || '#FFFFFF'">
                 <img *ngIf="m.userTagIconUrl" [src]="API_URL + m.userTagIconUrl" [alt]="m.userTag" class="membro-tag-icon">
                 <span *ngIf="!m.userTagIconUrl" class="membro-tag-fallback">🏅</span>
-                {{ m.userTag }}
+                <span class="tag-gradient-text">{{ m.userTag }}</span>
                 <span class="tooltip">
                   <span class="tooltip-label">Como desbloquear</span>
                   <span class="tooltip-desc">{{ m.userTagDescription || 'Medalha especial desbloqueada!' }}</span>
@@ -501,10 +501,10 @@
               <div class="membro-nome-wrapper">
                 <span class="membro-nome">{{ b.userName }}</span>
                 <span class="membro-tag-separator" *ngIf="b.userTag">|</span>
-                <span *ngIf="b.userTag" class="membro-tag tooltip-trigger membro-tag-with-icon">
+                <span *ngIf="b.userTag" class="membro-tag tooltip-trigger membro-tag-with-icon" [style.--tag-primary-color]="b.userTagPrimaryColor || '#FF4081'" [style.--tag-secondary-color]="b.userTagSecondaryColor || '#FFFFFF'">
                   <img *ngIf="b.userTagIconUrl" [src]="API_URL + b.userTagIconUrl" [alt]="b.userTag" class="membro-tag-icon">
                   <span *ngIf="!b.userTagIconUrl" class="membro-tag-fallback">🏅</span>
-                  {{ b.userTag }}
+                  <span class="tag-gradient-text">{{ b.userTag }}</span>
                   <span class="tooltip">
                     <span class="tooltip-label">Como desbloquear</span>
                     <span class="tooltip-desc">{{ b.userTagDescription || 'Medalha especial desbloqueada!' }}</span>

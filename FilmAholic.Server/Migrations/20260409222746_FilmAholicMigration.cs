@@ -48,6 +48,8 @@ namespace FilmAholic.Server.Migrations
                     Bio = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     DataCriacao = table.Column<DateTime>(type: "datetime2", nullable: false),
                     UserTag = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: true),
+                    UserTagPrimaryColor = table.Column<string>(type: "nvarchar(7)", maxLength: 7, nullable: true),
+                    UserTagSecondaryColor = table.Column<string>(type: "nvarchar(7)", maxLength: 7, nullable: true),
                     UserName = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
                     NormalizedUserName = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
                     Email = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),

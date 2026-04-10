@@ -421,7 +421,7 @@ namespace FilmAholic.Server.Controllers
             {
                 var userData = await _context.Set<Utilizador>()
                     .Where(u => userIds.Contains(u.Id))
-                    .Select(u => new { u.Id, u.UserTag })
+                    .Select(u => new { u.Id, u.UserTag, u.UserTagPrimaryColor, u.UserTagSecondaryColor })
                     .ToListAsync();
 
                 var tags = userData.Select(x => x.UserTag).Where(t => !string.IsNullOrEmpty(t)).Distinct().ToList();
@@ -437,6 +437,8 @@ namespace FilmAholic.Server.Controllers
                     StringComparer.OrdinalIgnoreCase);
 
                 var tagByUserId = userData.ToDictionary(x => x.Id, x => x.UserTag);
+                var tagPrimaryColorByUserId = userData.ToDictionary(x => x.Id, x => x.UserTagPrimaryColor);
+                var tagSecondaryColorByUserId = userData.ToDictionary(x => x.Id, x => x.UserTagSecondaryColor);
 
                 foreach (var membro in membros)
                 {
@@ -450,6 +452,14 @@ namespace FilmAholic.Server.Controllers
                         if (!string.IsNullOrEmpty(tag) && iconByTag.TryGetValue(tag, out var icon))
                         {
                             membro.UserTagIconUrl = icon;
+                        }
+                        if (tagPrimaryColorByUserId.TryGetValue(membro.UtilizadorId, out var primaryColor))
+                        {
+                            membro.UserTagPrimaryColor = primaryColor;
+                        }
+                        if (tagSecondaryColorByUserId.TryGetValue(membro.UtilizadorId, out var secondaryColor))
+                        {
+                            membro.UserTagSecondaryColor = secondaryColor;
                         }
                     }
                 }
@@ -602,7 +612,7 @@ namespace FilmAholic.Server.Controllers
             {
                 var userData = await _context.Set<Utilizador>()
                     .Where(u => authorIds.Contains(u.Id))
-                    .Select(u => new { u.Id, u.UserTag })
+                    .Select(u => new { u.Id, u.UserTag, u.UserTagPrimaryColor, u.UserTagSecondaryColor })
                     .ToListAsync();
 
                 var tags = userData.Select(x => x.UserTag).Where(t => !string.IsNullOrEmpty(t)).Distinct().ToList();
@@ -617,6 +627,8 @@ namespace FilmAholic.Server.Controllers
                     StringComparer.OrdinalIgnoreCase);
 
                 var tagByUserId = userData.ToDictionary(x => x.Id, x => x.UserTag);
+                var tagPrimaryColorByUserId = userData.ToDictionary(x => x.Id, x => x.UserTagPrimaryColor);
+                var tagSecondaryColorByUserId = userData.ToDictionary(x => x.Id, x => x.UserTagSecondaryColor);
 
                 foreach (var post in posts)
                 {
@@ -630,6 +642,14 @@ namespace FilmAholic.Server.Controllers
                         if (!string.IsNullOrEmpty(tag) && iconByTag.TryGetValue(tag, out var icon))
                         {
                             post.AutorUserTagIconUrl = icon;
+                        }
+                        if (tagPrimaryColorByUserId.TryGetValue(post.AutorId, out var primaryColor))
+                        {
+                            post.AutorUserTagPrimaryColor = primaryColor;
+                        }
+                        if (tagSecondaryColorByUserId.TryGetValue(post.AutorId, out var secondaryColor))
+                        {
+                            post.AutorUserTagSecondaryColor = secondaryColor;
                         }
                     }
                 }
@@ -753,6 +773,8 @@ namespace FilmAholic.Server.Controllers
                     AutorUserTag = autor?.UserTag,
                     AutorUserTagDescription = tagDescription,
                     AutorUserTagIconUrl = autor?.UserTag != null ? (await _context.Medalhas.FirstOrDefaultAsync(m => m.Nome == autor.UserTag))?.IconeUrl : null,
+                    AutorUserTagPrimaryColor = autor?.UserTagPrimaryColor,
+                    AutorUserTagSecondaryColor = autor?.UserTagSecondaryColor,
                     AutorFotoPerfilUrl = autor?.FotoPerfilUrl
                 };
 
@@ -1187,7 +1209,7 @@ namespace FilmAholic.Server.Controllers
             {
                 var userData = await _context.Set<Utilizador>()
                     .Where(u => banidosUserIds.Contains(u.Id))
-                    .Select(u => new { u.Id, u.UserTag })
+                    .Select(u => new { u.Id, u.UserTag, u.UserTagPrimaryColor, u.UserTagSecondaryColor })
                     .ToListAsync();
 
                 var tags = userData.Select(x => x.UserTag).Where(t => !string.IsNullOrEmpty(t)).Distinct().ToList();
@@ -1203,6 +1225,8 @@ namespace FilmAholic.Server.Controllers
                     StringComparer.OrdinalIgnoreCase);
 
                 var tagByUserId = userData.ToDictionary(x => x.Id, x => x.UserTag);
+                var tagPrimaryColorByUserId = userData.ToDictionary(x => x.Id, x => x.UserTagPrimaryColor);
+                var tagSecondaryColorByUserId = userData.ToDictionary(x => x.Id, x => x.UserTagSecondaryColor);
 
                 foreach (var membro in banidos)
                 {
@@ -1216,6 +1240,14 @@ namespace FilmAholic.Server.Controllers
                         if (!string.IsNullOrEmpty(tag) && iconByTag.TryGetValue(tag, out var icon))
                         {
                             membro.UserTagIconUrl = icon;
+                        }
+                        if (tagPrimaryColorByUserId.TryGetValue(membro.UtilizadorId, out var primaryColor))
+                        {
+                            membro.UserTagPrimaryColor = primaryColor;
+                        }
+                        if (tagSecondaryColorByUserId.TryGetValue(membro.UtilizadorId, out var secondaryColor))
+                        {
+                            membro.UserTagSecondaryColor = secondaryColor;
                         }
                     }
                 }
@@ -1482,13 +1514,13 @@ namespace FilmAholic.Server.Controllers
                 })
                 .ToListAsync();
 
-            // Fetch medal descriptions and icons for comment authors
+            // Fetch medal descriptions, icons, and colors for comment authors
             var authorIds = comentarios.Select(c => c.AutorId).Where(id => !string.IsNullOrEmpty(id)).Distinct().ToList();
             if (authorIds.Count > 0)
             {
                 var userData = await _context.Set<Utilizador>()
                     .Where(u => authorIds.Contains(u.Id))
-                    .Select(u => new { u.Id, u.UserTag })
+                    .Select(u => new { u.Id, u.UserTag, u.UserTagPrimaryColor, u.UserTagSecondaryColor })
                     .ToListAsync();
 
                 var tags = userData.Select(x => x.UserTag).Where(t => !string.IsNullOrEmpty(t)).Distinct().ToList();
@@ -1503,6 +1535,8 @@ namespace FilmAholic.Server.Controllers
                     StringComparer.OrdinalIgnoreCase);
 
                 var tagByUserId = userData.ToDictionary(x => x.Id, x => x.UserTag);
+                var tagPrimaryColorByUserId = userData.ToDictionary(x => x.Id, x => x.UserTagPrimaryColor);
+                var tagSecondaryColorByUserId = userData.ToDictionary(x => x.Id, x => x.UserTagSecondaryColor);
 
                 var comentariosComTags = comentarios.Select(c => new
                 {
@@ -1514,7 +1548,9 @@ namespace FilmAholic.Server.Controllers
                     c.AutorFotoPerfilUrl,
                     c.AutorUserTag,
                     AutorUserTagDescription = !string.IsNullOrEmpty(c.AutorUserTag) && descByTag.TryGetValue(c.AutorUserTag, out var desc) ? desc : null,
-                    AutorUserTagIconUrl = !string.IsNullOrEmpty(c.AutorUserTag) && iconByTag.TryGetValue(c.AutorUserTag, out var icon) ? icon : null
+                    AutorUserTagIconUrl = !string.IsNullOrEmpty(c.AutorUserTag) && iconByTag.TryGetValue(c.AutorUserTag, out var icon) ? icon : null,
+                    AutorUserTagPrimaryColor = !string.IsNullOrEmpty(c.AutorId) && tagPrimaryColorByUserId.TryGetValue(c.AutorId, out var primaryColor) ? primaryColor : null,
+                    AutorUserTagSecondaryColor = !string.IsNullOrEmpty(c.AutorId) && tagSecondaryColorByUserId.TryGetValue(c.AutorId, out var secondaryColor) ? secondaryColor : null
                 }).ToList();
 
                 return Ok(comentariosComTags);
@@ -1534,8 +1570,7 @@ namespace FilmAholic.Server.Controllers
             if (string.IsNullOrWhiteSpace(form.Conteudo))
                 return BadRequest(new { message = "O conteúdo do comentário é obrigatório." });
 
-            var postExists = await _context.ComunidadePosts
-                .AnyAsync(p => p.Id == postId && p.ComunidadeId == id);
+            var postExists = await _context.ComunidadePosts.AnyAsync(p => p.Id == postId && p.ComunidadeId == id);
             if (!postExists) return NotFound();
 
             var isMembro = await _context.ComunidadeMembros
@@ -1583,7 +1618,9 @@ namespace FilmAholic.Server.Controllers
                 AutorFotoPerfilUrl = autor?.FotoPerfilUrl,
                 AutorUserTag = autor?.UserTag,
                 AutorUserTagDescription = tagDescription,
-                AutorUserTagIconUrl = tagIconUrl
+                AutorUserTagIconUrl = tagIconUrl,
+                AutorUserTagPrimaryColor = autor?.UserTagPrimaryColor,
+                AutorUserTagSecondaryColor = autor?.UserTagSecondaryColor
             };
 
             return Ok(comentarioCriado);
@@ -1649,6 +1686,8 @@ namespace FilmAholic.Server.Controllers
             public string? AutorUserTag { get; set; }
             public string? AutorUserTagDescription { get; set; }
             public string? AutorUserTagIconUrl { get; set; }
+            public string? AutorUserTagPrimaryColor { get; set; }
+            public string? AutorUserTagSecondaryColor { get; set; }
             public string? AutorFotoPerfilUrl { get; set; }
         }
 
@@ -1670,6 +1709,8 @@ namespace FilmAholic.Server.Controllers
             public string? UserTag { get; set; }
             public string? UserTagDescription { get; set; }
             public string? UserTagIconUrl { get; set; }
+            public string? UserTagPrimaryColor { get; set; }
+            public string? UserTagSecondaryColor { get; set; }
         }
 
         public class ExpulsarMembroForm

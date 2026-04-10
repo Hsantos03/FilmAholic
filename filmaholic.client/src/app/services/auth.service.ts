@@ -37,14 +37,21 @@ export class AuthService {
     return this.http.get<SessaoDto>(`${this.apiUrl}/sessao`, { withCredentials: true });
   }
 
-  /** Atualiza <code>user_roles</code> no <code>localStorage</code> a partir do cookie de sessão. */
+  /**
+   * Sincroniza sessão com o servidor: roles, e quando autenticado também `user_id` / `user_nome`
+   * no localStorage (alinhado com o cookie), para evitar inconsistências na primeira carga.
+   */
   refreshSessaoRoles(): Observable<void> {
     return this.obterSessao().pipe(
       tap((s) => {
-        if (s.authenticated)
+        if (s.authenticated) {
+          if (s.id) localStorage.setItem('user_id', s.id);
+          const nome = (s.nome ?? '').trim();
+          if (nome) localStorage.setItem('user_nome', nome);
           localStorage.setItem('user_roles', JSON.stringify(s.roles ?? []));
-        else
+        } else {
           localStorage.removeItem('user_roles');
+        }
       }),
       map(() => void 0)
     );

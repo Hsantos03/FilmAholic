@@ -710,7 +710,11 @@
   gap: 4px;
   height: 18px;
   overflow: visible;
-  background: linear-gradient(90deg, #ff4d8d 0%, #fff 25%, #ff4d8d 50%, #fff 75%, #ff4d8d 100%);
+}
+
+/* Animated Gradient Text for Comment Author Tag */
+.comment-autor-tag .tag-gradient-text {
+  background: linear-gradient(90deg, var(--tag-primary-color, #FF4081) 0%, var(--tag-secondary-color, #FFFFFF) 25%, var(--tag-primary-color, #FF4081) 50%, var(--tag-secondary-color, #FFFFFF) 75%, var(--tag-primary-color, #FF4081) 100%);
   background-size: 200% auto;
   -webkit-background-clip: text;
   background-clip: text;
@@ -1117,7 +1121,11 @@
   gap: 4px;
   height: 20px;
   overflow: visible;
-  background: linear-gradient(90deg, #ff4d8d 0%, #fff 25%, #ff4d8d 50%, #fff 75%, #ff4d8d 100%);
+}
+
+/* Animated Gradient Text for Post Author Tag */
+.post-autor-tag .tag-gradient-text {
+  background: linear-gradient(90deg, var(--tag-primary-color, #FF4081) 0%, var(--tag-secondary-color, #FFFFFF) 25%, var(--tag-primary-color, #FF4081) 50%, var(--tag-secondary-color, #FFFFFF) 75%, var(--tag-primary-color, #FF4081) 100%);
   background-size: 200% auto;
   -webkit-background-clip: text;
   background-clip: text;
@@ -1132,7 +1140,7 @@
   object-fit: contain;
   filter: drop-shadow(0 0 3px rgba(255, 77, 141, 0.6));
   margin-left: -35px;
-  margin-right: -30px;
+  margin-right: -32px;
   transform: translateY(0px);
 }
 
@@ -1384,7 +1392,11 @@
   gap: 4px;
   height: 20px;
   overflow: visible;
-  background: linear-gradient(90deg, #ff4d8d 0%, #fff 25%, #ff4d8d 50%, #fff 75%, #ff4d8d 100%);
+}
+
+/* Animated Gradient Text for Member Tag */
+.membro-tag .tag-gradient-text {
+  background: linear-gradient(90deg, var(--tag-primary-color, #FF4081) 0%, var(--tag-secondary-color, #FFFFFF) 25%, var(--tag-primary-color, #FF4081) 50%, var(--tag-secondary-color, #FFFFFF) 75%, var(--tag-primary-color, #FF4081) 100%);
   background-size: 200% auto;
   -webkit-background-clip: text;
   background-clip: text;
@@ -1399,7 +1411,7 @@
   object-fit: contain;
   filter: drop-shadow(0 0 3px rgba(255, 77, 141, 0.6));
   margin-left: -35px;
-  margin-right: -30px;
+  margin-right: -32px;
   transform: translateY(0px);
 }
 

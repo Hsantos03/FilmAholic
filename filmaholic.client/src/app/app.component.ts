@@ -12,8 +12,7 @@ export class AppComponent implements OnInit {
   constructor(private auth: AuthService) {}
 
   ngOnInit(): void {
-    if (localStorage.getItem('user_id')) {
-      this.auth.refreshSessaoRoles().subscribe({ error: () => {} });
-    }
+    // Sempre: repõe user_id/nome/roles a partir do cookie quando há sessão (evita UI que depende do storage em falta).
+    this.auth.refreshSessaoRoles().subscribe({ error: () => {} });
   }
 }
