@@ -1,6 +1,6 @@
 :host {
   display: block;
-  background: #1A1A1A;
+  background: #0a0a0f;
   min-height: 100vh;
 }
 .profile-topbar {
@@ -2800,11 +2800,5 @@
   background: rgba(255,255,255,0.1);
   border-color: rgba(255,255,255,0.5);
   color: #fff;
-}
-
-@media (max-width: 600px) {
-  .medals-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
 }
 
