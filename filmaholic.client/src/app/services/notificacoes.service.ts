@@ -189,6 +189,12 @@ export class NotificacoesService {
     });
   }
 
+  getResumoEstatisticasUnreadCount(): Observable<number> {
+    return this.http.get<number>(`${this.apiUrl}/resumo-estatisticas/unread-count`, {
+      withCredentials: true
+    }).pipe(catchError(() => of(0)));
+  }
+
   marcarResumoEstatisticasComoLida(id: number): Observable<void> {
     return this.http.put<void>(`${this.apiUrl}/resumo-estatisticas/${id}/lida`, {}, { withCredentials: true });
   }
@@ -230,6 +236,12 @@ export class NotificacoesService {
     return this.http.put<void>(`${this.apiUrl}/reminder-jogo/${id}/lida`, {}, { withCredentials: true });
   }
 
+  getReminderJogoUnreadCount(): Observable<number> {
+    return this.http.get<number>(`${this.apiUrl}/reminder-jogo/unread-count`, {
+      withCredentials: true
+    }).pipe(catchError(() => of(0)));
+  }
+
   // ── Medal notifications ──
 
   getNotificacoesMedalhaFeed(options?: { unreadLimit?: number; readLimit?: number }): Observable<NotificacaoMedalhaFeedDto> {
@@ -261,6 +273,12 @@ export class NotificacoesService {
     return this.http
       .get<FilmeDisponivelNotifDto[]>(`${this.apiUrl}/filme-disponivel/feed`, { withCredentials: true })
       .pipe(catchError(() => of([])));
+  }
+
+  getFilmeDisponivelUnreadCount(): Observable<number> {
+    return this.http.get<number>(`${this.apiUrl}/filme-disponivel/unread-count`, {
+      withCredentials: true
+    }).pipe(catchError(() => of(0)));
   }
 
   marcarFilmeDisponivelComoLida(id: number): Observable<void> {

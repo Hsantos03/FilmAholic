@@ -58,17 +58,6 @@
   z-index: 1500;
 }
 
-.notif-resumo-wrapper {
-  display: flex;
-  align-items: flex-start;
-  gap: 10px;
-}
-
-  .notif-resumo-wrapper .notif-check-btn {
-    margin-left: auto;
-    margin-top: 8px;
-  }
-
   .notifications-menu::-webkit-scrollbar {
     width: 3px;
   }
@@ -145,7 +134,7 @@
   line-height: 1;
 }
 
-/* FILTRO DE GÉNEROS (Próximas estreias)*/
+/* FILTRO DE GÉNEROS */
 .notif-genre-filter-row {
   display: flex;
   gap: 5px;
@@ -178,7 +167,7 @@
   color: #fff;
 }
 
-/* SECTION HEADER  (label + botão "marcar tudo") */
+/* SECTION HEADER */
 .notifications-inner {
   display: flex;
   flex-direction: column;
@@ -232,14 +221,13 @@
     color: #ff6b95;
   }
 
-/* ── Divisor entre secções ── */
 .notif-divider {
   height: 0.5px;
   background: rgba(255, 255, 255, 0.06);
   margin: 4px 4px;
 }
 
-/* PRÓXIMAS ESTREIAS — lista de filmes */
+/* PRÓXIMAS ESTREIAS */
 .notif-upcoming-list {
   display: flex;
   flex-direction: column;
@@ -300,7 +288,6 @@
   color: rgba(255, 255, 255, 0.35);
 }
 
-/* Botão ✓ lembrete (estreias) */
 .notification-mark-read {
   margin-left: auto;
   flex-shrink: 0;
@@ -324,7 +311,6 @@
     color: #fff;
   }
 
-/* Quando já marcado como lido — fica verde */
 .notification-item:not(.read) .notification-mark-read {
   background: rgba(134, 239, 172, 0.1);
   border-color: rgba(134, 239, 172, 0.25);
@@ -369,7 +355,7 @@
   text-align: center;
 }
 
-/* NOTIFICAÇÕES — cards genéricos (Higher or Lower, Quero Ver, Comunidades, Medalhas) */
+/* NOTIFICAÇÕES — cards genéricos unificados */
 .notif-card {
   display: flex;
   align-items: center;
@@ -392,12 +378,11 @@
     background: rgba(0, 0, 0, 0.25);
   }
 
-  .notif-card.notif-card--read:hover {
-    opacity: 0.6;
-    background: rgba(255, 255, 255, 0.03);
-  }
+    .notif-card.notif-card--read:hover {
+      opacity: 0.6;
+      background: rgba(255, 255, 255, 0.03);
+    }
 
-/* Ponto vermelho não-lido */
 .notif-unread-dot {
   width: 6px;
   height: 6px;
@@ -408,7 +393,7 @@
   margin-top: 7px;
 }
 
-/* Ícone colorido */
+/* Ícones coloridos */
 .notif-icon {
   width: 38px;
   height: 38px;
@@ -440,17 +425,11 @@
   background: rgba(134, 239, 172, 0.1);
 }
 
-/* Poster pequeno (Quero ver) */
-.notif-poster-sm {
-  width: 34px;
-  height: 50px;
-  border-radius: 5px;
-  object-fit: cover;
-  flex-shrink: 0;
-  background: rgba(255, 255, 255, 0.06);
+.notif-icon--orange {
+  background: rgba(249, 115, 22, 0.12);
 }
+/* Para a Plataforma */
 
-/* Corpo do card */
 .notif-body {
   flex: 1;
   min-width: 0;
@@ -482,7 +461,6 @@
   font-weight: 500;
 }
 
-/* Botão de ação inline (ex: "Jogar →") */
 .notif-action-btn {
   font-size: 11.5px;
   font-weight: 600;
@@ -501,7 +479,6 @@
     background: rgba(255, 47, 109, 0.18);
   }
 
-/* Botão ✓ marcar lido (lado direito) */
 .notif-check-btn {
   flex-shrink: 0;
   width: 28px;
@@ -524,194 +501,7 @@
     color: #a7f3c0;
   }
 
-/* RESUMO DE ESTATÍSTICAS — card compacto */
-.resumo-stats-card {
-  width: 100%;
-  margin: 0 0 4px;
-  background: linear-gradient( 145deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0.02) );
-  border: 0.5px solid rgba(255, 255, 255, 0.08);
-  border-radius: 12px;
-  padding: 12px;
-  transition: all 0.15s ease;
-}
-
-  .resumo-stats-card:hover {
-    background: rgba(255, 255, 255, 0.06);
-    border-color: rgba(255, 255, 255, 0.12);
-  }
-
-.resumo-stats-numbers {
-  display: flex;
-  gap: 8px;
-  margin-bottom: 10px;
-}
-
-.resumo-stat-item {
-  flex: 1;
-  background: rgba(255, 255, 255, 0.05);
-  border-radius: 8px;
-  padding: 10px;
-  text-align: center;
-}
-
-.resumo-stat-value {
-  font-size: 18px;
-  font-weight: 700;
-  color: #fff;
-}
-
-.resumo-stat-label {
-  font-size: 10px;
-  color: rgba(255, 255, 255, 0.4);
-}
-
-.resumo-genre-tags {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px;
-  margin-bottom: 10px;
-}
-
-.resumo-genre-tag {
-  font-size: 10px;
-  padding: 4px 10px;
-  background: rgba(255, 255, 255, 0.08);
-  border-radius: 20px;
-  color: rgba(255, 255, 255, 0.6);
-}
-
-.resumo-feature-film {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding-top: 10px;
-  border-top: 0.5px solid rgba(255, 255, 255, 0.08);
-  cursor: pointer;
-  transition: all 0.12s;
-}
-
-  .resumo-feature-film:hover {
-    transform: translateY(-1px);
-  }
-
-  .resumo-feature-film:hover .resumo-feature-name {
-    color: #fff;
-  }
-
-.resumo-feature-poster {
-  width: 28px;
-  height: 40px;
-  border-radius: 4px;
-  object-fit: cover;
-  flex-shrink: 0;
-  background: rgba(255, 255, 255, 0.07);
-}
-
-.resumo-feature-info {
-  flex: 1;
-  min-width: 0;
-}
-
-.resumo-feature-name {
-  font-size: 13px;
-  font-weight: 600;
-  color: #f0f0f0;
-}
-
-.resumo-feature-meta {
-  font-size: 11px;
-  color: rgba(255, 255, 255, 0.4);
-}
-
-.resumo-stats-row {
-  display: flex;
-  gap: 8px;
-  align-items: stretch;
-}
-
-  .resumo-stats-row .resumo-stats-card {
-    flex: 1;
-  }
-
-.notif-subsection-title {
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.22);
-  padding: 10px 4px 4px;
-  border-top: 0.5px solid rgba(255, 255, 255, 0.06);
-  margin-top: 4px;
-}
-
-.resumo-header {
-  font-size: 11px;
-  font-weight: 700;
-  color: #ff2f6d;
-  margin-bottom: 8px;
-}
-
-.medalha-notif-card {
-  background: rgba(139, 92, 246, 0.08);
-  border: 0.5px solid rgba(139, 92, 246, 0.2);
-  border-radius: 10px;
-  transition: all 0.15s;
-}
-
-  .medalha-notif-card:hover {
-    background: rgba(139, 92, 246, 0.13);
-    border-color: rgba(139, 92, 246, 0.3);
-  }
-
-  .medalha-notif-card.notif-card--read {
-    background: rgba(139, 92, 246, 0.03);
-    border-color: rgba(139, 92, 246, 0.08);
-  }
-
-
-.notifications-empty {
-  padding: 10px 6px;
-  font-size: 12.5px;
-  color: rgba(255, 255, 255, 0.3);
-}
-
-.notifications-empty--sub {
-  padding-top: 3px;
-  font-size: 11px;
-  opacity: 0.75;
-}
-
-.notif-reminder-section,
-.notif-resumo-section,
-.notif-quero-ver-section,
-.notif-plataforma-section,
-.notif-medalha-section {
-  padding: 0 8px;
-}
-
-.resumo-link {
-  display: inline;
-  padding: 0;
-  margin: 0;
-  border: none;
-  background: none;
-  color: #7ec8ff;
-  cursor: pointer;
-  font: inherit;
-  text-decoration: underline;
-  text-underline-offset: 2px;
-}
-
-  .resumo-link:hover {
-    color: #b9ddff;
-  }
-
-.resumo-count {
-  color: rgba(255, 255, 255, 0.35);
-  font-size: 11px;
-}
-
-/* ── Resumo mini stats (para lista unificada) ── */
+/* ── Resumo mini stats ── */
 .resumo-mini-stats {
   display: flex;
   flex-wrap: wrap;
@@ -727,7 +517,6 @@
   border-radius: 12px;
 }
 
-/* ── Resumo mini genres ── */
 .resumo-mini-genres {
   display: flex;
   flex-wrap: wrap;
@@ -744,6 +533,7 @@
   border: 0.5px solid rgba(255, 47, 109, 0.2);
 }
 
+/* Textos de moderação / Banimentos integrados na lista */
 .comunidade-notif-desc--kickban {
   display: block;
   margin-top: 6px;
@@ -754,4 +544,11 @@
   color: #e5e5e5;
   white-space: pre-wrap;
   word-break: break-word;
+  font-size: 11.5px;
+}
+
+.notifications-empty {
+  padding: 10px 6px;
+  font-size: 12.5px;
+  color: rgba(255, 255, 255, 0.3);
 }

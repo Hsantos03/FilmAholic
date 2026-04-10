@@ -22,6 +22,10 @@ export interface CommentDTO {
   // Medal icon URL for the user tag
   userTagIconUrl?: string | null;
 
+  // Tag colors for gradient animation
+  userTagPrimaryColor?: string | null;
+  userTagSecondaryColor?: string | null;
+
   likeCount: number;
   dislikeCount: number;
   myVote: number;

@@ -135,21 +135,19 @@
           </div>
         </div>
 
-        <!-- User Tag Selector -->
+        <!-- User Tag Display -->
         <div class="user-tag-section" *ngIf="medalhasConquistadas.length > 0">
-          <h4>Tag</h4>
-          <div class="tag-selector-wrap">
-            <button type="button" class="tag-selector-btn" (click)="toggleTagMenu()" [class.active]="showTagMenu">
-              {{ userTag || 'Selecionar tag...' }}
+          <div class="user-tag-header">
+            <h4>Tag</h4>
+            <button type="button" class="tag-edit-btn" (click)="openTagModal()" title="Editar tag">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path></svg>
             </button>
-            <div class="tag-selector-menu" *ngIf="showTagMenu">
-              <button type="button" class="tag-selector-item" (click)="selectTag(null)" [class.selected]="userTag === null">
-                Nenhuma tag
-              </button>
-              <button type="button" class="tag-selector-item" *ngFor="let medal of medalhasConquistadas" (click)="selectTag(medal.medalha?.nome || medal.nome)" [class.selected]="userTag === (medal.medalha?.nome || medal.nome)">
-                {{ medal.medalha?.nome || medal.nome }}
-              </button>
-            </div>
+          </div>
+          <div class="tag-display-box" *ngIf="userTag" [style.--tag-primary-color]="userTagPrimaryColor || '#FF4081'" [style.--tag-secondary-color]="userTagSecondaryColor || '#FFFFFF'">
+            <span class="tag-gradient-text">{{ userTag }}</span>
+          </div>
+          <div class="tag-display-empty" *ngIf="!userTag">
+            Sem tag selecionada
           </div>
         </div>
       </div>
@@ -1199,6 +1197,72 @@
 
     <div class="modal-actions">
       <button type="button" class="cancel-btn" style="background: #dc3545; color: white; font-weight: 600;" (click)="removeMedalFromSlot(selectedSlotIndex!)">Remover Medalha</button>
+    </div>
+  </div>
+</div>
+
+<!-- Tag Editor Modal -->
+<div class="modal-overlay" *ngIf="showTagModal" (click)="closeTagModal()">
+  <div class="modal-box tag-modal" (click)="$event.stopPropagation()">
+    <button class="modal-close" (click)="closeTagModal()">&times;</button>
+
+    <h3>Editar Tag</h3>
+    <p class="modal-desc">Personaliza a tua tag com cores e escolhe uma medalha</p>
+
+    <div class="tag-form">
+      <!-- Preview -->
+      <div class="tag-form-group" *ngIf="tagModalSelectedTag">
+        <label>Pré-visualização</label>
+        <div class="tag-preview-box" [style.--tag-primary-color]="tagModalPrimaryColor || '#FF4081'" [style.--tag-secondary-color]="tagModalSecondaryColor || '#FFFFFF'">
+          <span class="tag-gradient-text">{{ tagModalSelectedTag }}</span>
+        </div>
+      </div>
+
+      <!-- Tag Selection Dropdown -->
+      <div class="tag-form-group">
+        <label>Tag</label>
+        <div class="tag-selector-wrap">
+          <button type="button" class="tag-selector-btn" (click)="toggleTagMenu()" [class.active]="showTagMenu">
+            {{ tagModalSelectedTag || 'Selecionar tag...' }}
+          </button>
+          <div class="tag-selector-menu" *ngIf="showTagMenu">
+            <button type="button" class="tag-selector-item" (click)="selectTagModal(null)" [class.selected]="tagModalSelectedTag === null">
+              Nenhuma tag
+            </button>
+            <button type="button" class="tag-selector-item" *ngFor="let medal of medalhasConquistadas" (click)="selectTagModal(medal.medalha?.nome || medal.nome)" [class.selected]="tagModalSelectedTag === (medal.medalha?.nome || medal.nome)">
+              {{ medal.medalha?.nome || medal.nome }}
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Primary Color -->
+      <div class="tag-form-group">
+        <label for="primaryColor">Cor Primária</label>
+        <input id="primaryColor" type="color" [(ngModel)]="tagModalPrimaryColor" class="color-picker-full">
+      </div>
+
+      <!-- Secondary Color -->
+      <div class="tag-form-group">
+        <label for="secondaryColor">Cor Secundária</label>
+        <input id="secondaryColor" type="color" [(ngModel)]="tagModalSecondaryColor" class="color-picker-full">
+      </div>
+
+      <!-- Reset Colors Button -->
+      <div class="tag-form-group reset-colors-group">
+        <button type="button" class="reset-colors-btn" (click)="resetTagColorsToDefault()">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 12"/>
+            <path d="M3 3v9h9"/>
+          </svg>
+          Repor cores por defeito
+        </button>
+      </div>
+    </div>
+
+    <div class="modal-actions">
+      <button type="button" class="save-btn" (click)="saveTagModal()">Guardar</button>
+      <button type="button" class="cancel-btn" (click)="closeTagModal()">Cancelar</button>
     </div>
   </div>
 </div>

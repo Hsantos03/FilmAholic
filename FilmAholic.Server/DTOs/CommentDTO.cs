@@ -20,6 +20,10 @@ namespace FilmAholic.Server.DTOs
         // Medal icon URL for the user tag
         public string? UserTagIconUrl { get; set; }
 
+        // Tag colors for gradient animation
+        public string? UserTagPrimaryColor { get; set; }
+        public string? UserTagSecondaryColor { get; set; }
+
         // Votes - Likes/Dislikes/Contagem dos Comments
         public int LikeCount { get; set; }
         public int DislikeCount { get; set; }

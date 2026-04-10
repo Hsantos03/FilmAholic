@@ -808,8 +808,7 @@
   font-family: 'Bebas Neue', sans-serif;
   font-size: 96px;
   line-height: 1;
-  background: linear-gradient(135deg, #ff2f6d, #ff6b35);
-  -webkit-text-fill-color: transparent;
+  color: #ffffff;
 }
 
 .endgame-sub {

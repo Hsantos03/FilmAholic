@@ -121,10 +121,18 @@ export class ProfileComponent implements OnInit {
   todasMedalhas: any[] = [];
   showcasedMedals: any[] = [];
   userTag: string | null = null;
+  userTagPrimaryColor: string | null = null;
+  userTagSecondaryColor: string | null = null;
 
   // Medal selector modal
   showMedalSelectorModal = false;
   selectedSlotIndex: number | null = null;
+
+  // Tag modal
+  showTagModal = false;
+  tagModalSelectedTag: string | null = null;
+  tagModalPrimaryColor: string | null = '#FF4081';
+  tagModalSecondaryColor: string | null = '#FFFFFF';
 
   private readonly apiMedalhas = environment.apiBaseUrl
     ? `${environment.apiBaseUrl}/api/medalhas`
@@ -1519,47 +1527,61 @@ export class ProfileComponent implements OnInit {
     this.profileService.obterUserTag().subscribe({
       next: (res) => {
         this.userTag = res.tag;
+        this.userTagPrimaryColor = res.primaryColor;
+        this.userTagSecondaryColor = res.secondaryColor;
       },
       error: (err) => {
         console.error('Erro ao carregar tag:', err);
         this.userTag = null;
+        this.userTagPrimaryColor = null;
+        this.userTagSecondaryColor = null;
       }
     });
   }
 
-  selectUserTag(medal: any): void {
-    const tagName = medal.medalha?.nome || medal.nome;
-    if (this.userTag === tagName) {
-      // Deselect if already selected
-      this.userTag = null;
-      this.profileService.atualizarUserTag(null).subscribe({
-        error: (err) => console.error('Erro ao remover tag:', err)
-      });
-    } else {
-      this.userTag = tagName;
-      this.profileService.atualizarUserTag(tagName).subscribe({
-        error: (err) => console.error('Erro ao salvar tag:', err)
-      });
-    }
-  }
-
-  onTagChange(): void {
-    this.profileService.atualizarUserTag(this.userTag).subscribe({
-      error: (err) => console.error('Erro ao atualizar tag:', err)
-    });
-  }
-
+  // Tag Modal Dropdown
   showTagMenu = false;
 
   toggleTagMenu(): void {
     this.showTagMenu = !this.showTagMenu;
   }
 
-  selectTag(tag: string | null): void {
-    this.userTag = tag;
+  selectTagModal(tag: string | null): void {
+    this.tagModalSelectedTag = tag;
     this.showTagMenu = false;
-    this.profileService.atualizarUserTag(tag).subscribe({
-      error: (err) => console.error('Erro ao atualizar tag:', err)
+  }
+
+  // Tag Modal Methods
+  openTagModal(): void {
+    this.tagModalSelectedTag = this.userTag;
+    this.tagModalPrimaryColor = this.userTagPrimaryColor || '#FF4081';
+    this.tagModalSecondaryColor = this.userTagSecondaryColor || '#FFFFFF';
+    this.showTagModal = true;
+    this.showTagMenu = false;
+  }
+
+  closeTagModal(): void {
+    this.showTagModal = false;
+    this.showTagMenu = false;
+  }
+
+  resetTagColorsToDefault(): void {
+    this.tagModalPrimaryColor = '#FF4081';
+    this.tagModalSecondaryColor = '#FFFFFF';
+  }
+
+  saveTagModal(): void {
+    this.userTag = this.tagModalSelectedTag;
+    this.userTagPrimaryColor = this.tagModalPrimaryColor;
+    this.userTagSecondaryColor = this.tagModalSecondaryColor;
+    this.profileService.atualizarUserTag(this.userTag, this.userTagPrimaryColor, this.userTagSecondaryColor).subscribe({
+      next: () => {
+        this.showTagModal = false;
+        this.showTagMenu = false;
+      },
+      error: (err) => {
+        console.error('Erro ao atualizar tag:', err);
+      }
     });
   }
 
