@@ -246,7 +246,7 @@ a.brand.active {
 .search-pill {
   width: min(720px, 100%);
   height: 46px;
-  border-radius: 14px;
+  border-radius: 999px;
   background: #AE8191;
   border: 1px solid rgba(255, 255, 255, 0.10);
   display: grid;
@@ -260,10 +260,10 @@ a.brand.active {
     height: 46px;
     border: none;
     background: transparent;
-    padding: 0 10px;
+    padding: 0 14px;
     outline: none;
     color: #fff;
-    font-size: 14px;
+    font-size: 16px;
     line-height: 46px;
     vertical-align: middle;
   }
@@ -283,6 +283,11 @@ a.brand.active {
   place-items: center;
   font-size: 18px;
   transition: 0.15s ease;
+}
+
+.pill-icon svg {
+  width: 22px;
+  height: 22px;
 }
 
   .pill-icon:hover {
@@ -942,6 +947,18 @@ a.brand.active {
   max-width: 240px;
   width: 100%;
   transition: background 0.2s;
+}
+
+.rec-card.fade-out {
+  animation: fadeOut 0.2s ease forwards;
+}
+
+.rec-card.slide-left {
+  animation: slideLeft 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+}
+
+.rec-card.slide-right {
+  animation: slideRight 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
 }
 
   .rec-card:hover {

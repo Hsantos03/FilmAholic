@@ -99,9 +99,13 @@ export class DashboardComponent implements OnInit, OnDestroy {
   featured: Filme[] = [];
   featuredIndex = 0;
   featuredVisibleCount = 4;
+  isFeaturedAnimating = false;
+  featuredSlideDir: 'fade-out' | 'left' | 'right' | null = null;
   top10: Filme[] = [];
   top10Index = 0;
   top10VisibleCount = 4;
+  isTop10Animating = false;
+  top10SlideDir: 'fade-out' | 'left' | 'right' | null = null;
 
   atores: PopularActor[] = [];
   atoresIndex = 0;
@@ -117,6 +121,8 @@ export class DashboardComponent implements OnInit, OnDestroy {
   recomendacaoIndex = 0;
   isLoadingRecomendacoes = false;
   isSendingFeedback = false;
+  isRecomendacaoAnimating = false;
+  recomendacaoSlideDir: 'fade-out' | 'left' | 'right' | null = null;
 
   private onResizeBound = () => this.updateVisibleCount();
   private onDocumentClickBound = (e: MouseEvent) => this.onDocumentClick(e);
@@ -211,15 +217,31 @@ export class DashboardComponent implements OnInit, OnDestroy {
   }
 
   public prevRecomendacao(): void {
-    if (this.recomendacaoIndex > 0) {
+    if (this.isRecomendacaoAnimating || this.recomendacaoIndex === 0) return;
+    this.isRecomendacaoAnimating = true;
+    this.recomendacaoSlideDir = 'fade-out';
+    setTimeout(() => {
       this.recomendacaoIndex--;
-    }
+      this.recomendacaoSlideDir = 'right';
+      setTimeout(() => {
+        this.isRecomendacaoAnimating = false;
+        this.recomendacaoSlideDir = null;
+      }, 500);
+    }, 200);
   }
 
   public nextRecomendacao(): void {
-    if (this.recomendacaoIndex < this.recomendacoes.length - 1) {
+    if (this.isRecomendacaoAnimating || this.recomendacaoIndex >= this.recomendacoes.length - 1) return;
+    this.isRecomendacaoAnimating = true;
+    this.recomendacaoSlideDir = 'fade-out';
+    setTimeout(() => {
       this.recomendacaoIndex++;
-    }
+      this.recomendacaoSlideDir = 'left';
+      setTimeout(() => {
+        this.isRecomendacaoAnimating = false;
+        this.recomendacaoSlideDir = null;
+      }, 500);
+    }, 200);
   }
 
   public recomendacaoPoster(r: RecomendacaoDto | null): string {
@@ -594,12 +616,33 @@ export class DashboardComponent implements OnInit, OnDestroy {
   }
 
   prevFeatured(): void {
-    this.featuredIndex = Math.max(0, this.featuredIndex - this.featuredVisibleCount);
+    if (this.isFeaturedAnimating || this.featuredIndex === 0) return;
+    this.isFeaturedAnimating = true;
+    this.featuredSlideDir = 'fade-out';
+    setTimeout(() => {
+      this.featuredIndex = Math.max(0, this.featuredIndex - this.featuredVisibleCount);
+      this.featuredSlideDir = 'right';
+      setTimeout(() => {
+        this.isFeaturedAnimating = false;
+        this.featuredSlideDir = null;
+      }, 500);
+    }, 200);
   }
 
   nextFeatured(): void {
+    if (this.isFeaturedAnimating) return;
     const maxIndex = Math.max(0, this.featured.length - this.featuredVisibleCount);
-    this.featuredIndex = Math.min(maxIndex, this.featuredIndex + this.featuredVisibleCount);
+    if (this.featuredIndex >= maxIndex) return;
+    this.isFeaturedAnimating = true;
+    this.featuredSlideDir = 'fade-out';
+    setTimeout(() => {
+      this.featuredIndex = Math.min(maxIndex, this.featuredIndex + this.featuredVisibleCount);
+      this.featuredSlideDir = 'left';
+      setTimeout(() => {
+        this.isFeaturedAnimating = false;
+        this.featuredSlideDir = null;
+      }, 500);
+    }, 200);
   }
 
   get top10Visible(): Filme[] {
@@ -607,29 +650,45 @@ export class DashboardComponent implements OnInit, OnDestroy {
   }
 
   prevTop10(): void {
-    this.top10Index = Math.max(0, this.top10Index - this.top10VisibleCount);
+    if (this.isTop10Animating || this.top10Index === 0) return;
+    this.isTop10Animating = true;
+    this.top10SlideDir = 'fade-out';
+    setTimeout(() => {
+      this.top10Index = Math.max(0, this.top10Index - this.top10VisibleCount);
+      this.top10SlideDir = 'right';
+      setTimeout(() => {
+        this.isTop10Animating = false;
+        this.top10SlideDir = null;
+      }, 500);
+    }, 200);
   }
 
   nextTop10(): void {
+    if (this.isTop10Animating) return;
     const maxIndex = Math.max(0, this.top10.length - this.top10VisibleCount);
-    this.top10Index = Math.min(maxIndex, this.top10Index + this.top10VisibleCount);
+    if (this.top10Index >= maxIndex) return;
+    this.isTop10Animating = true;
+    this.top10SlideDir = 'fade-out';
+    setTimeout(() => {
+      this.top10Index = Math.min(maxIndex, this.top10Index + this.top10VisibleCount);
+      this.top10SlideDir = 'left';
+      setTimeout(() => {
+        this.isTop10Animating = false;
+        this.top10SlideDir = null;
+      }, 500);
+    }, 200);
   }
 
   get atoresVisible(): PopularActor[] {
-    if (!this.atores.length) return [];
-    const result = [];
-    for (let i = 0; i < this.atoresVisibleCount; i++) {
-      result.push(this.atores[(this.atoresIndex + i) % this.atores.length]);
-    }
-    return result;
+    return this.atores.slice(this.atoresIndex, this.atoresIndex + this.atoresVisibleCount);
   }
 
   prevAtores(): void {
-    if (this.isAtoresAnimating) return;
+    if (this.isAtoresAnimating || this.atoresIndex === 0) return;
     this.isAtoresAnimating = true;
     this.atoresSlideDir = 'fade-out';
     setTimeout(() => {
-      this.atoresIndex = (this.atoresIndex - 1 + this.atores.length) % this.atores.length;
+      this.atoresIndex = Math.max(0, this.atoresIndex - this.atoresVisibleCount);
       this.atoresSlideDir = 'right';
       setTimeout(() => {
         this.isAtoresAnimating = false;
@@ -640,10 +699,12 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
   nextAtores(): void {
     if (this.isAtoresAnimating) return;
+    const maxIndex = Math.max(0, this.atores.length - this.atoresVisibleCount);
+    if (this.atoresIndex >= maxIndex) return;
     this.isAtoresAnimating = true;
     this.atoresSlideDir = 'fade-out';
     setTimeout(() => {
-      this.atoresIndex = (this.atoresIndex + 1) % this.atores.length;
+      this.atoresIndex = Math.min(maxIndex, this.atoresIndex + this.atoresVisibleCount);
       this.atoresSlideDir = 'left';
       setTimeout(() => {
         this.isAtoresAnimating = false;

@@ -155,7 +155,10 @@
         </div>
         <div class="carousel hero">
           <button class="chevron left" (click)="prevFeatured()" [disabled]="featuredIndex === 0" aria-label="Anterior">&lsaquo;</button>
-          <div class="carousel-track">
+          <div class="carousel-track"
+               [class.fade-out]="featuredSlideDir === 'fade-out'"
+               [class.slide-left]="featuredSlideDir === 'left'"
+               [class.slide-right]="featuredSlideDir === 'right'">
             <a class="poster-card hero" *ngFor="let f of featuredVisible" [routerLink]="['/movie-detail', f.id]">
               <img [src]="posterOf(f)" [alt]="f.titulo" />
             </a>
@@ -173,7 +176,10 @@
         </div>
         <div class="carousel top10">
           <button class="chevron left" (click)="prevTop10()" [disabled]="top10Index === 0" aria-label="Anterior">&lsaquo;</button>
-          <div class="carousel-track">
+          <div class="carousel-track"
+               [class.fade-out]="top10SlideDir === 'fade-out'"
+               [class.slide-left]="top10SlideDir === 'left'"
+               [class.slide-right]="top10SlideDir === 'right'">
             <a class="poster-card small" *ngFor="let f of top10Visible" [routerLink]="['/movie-detail', f.id]">
               <img [src]="posterOf(f)" [alt]="f.titulo" />
             </a>
@@ -224,7 +230,7 @@
           <h2>Top 10 Atores</h2>
         </div>
         <div class="carousel" id="atores-carousel">
-          <button class="chevron left" (click)="prevAtores()" aria-label="Anterior">&lsaquo;</button>
+          <button class="chevron left" (click)="prevAtores()" [disabled]="atoresIndex === 0" aria-label="Anterior">&lsaquo;</button>
           <div class="carousel-track"
                [class.fade-out]="atoresSlideDir === 'fade-out'"
                [class.slide-left]="atoresSlideDir === 'left'"
@@ -236,12 +242,12 @@
                  tabindex="0"
                  (keydown.enter)="openActor(a)"
                  (keydown.space)="openActor(a); $event.preventDefault()">
-              <div class="actor-rank">{{ (atoresIndex + i) % atores.length + 1 }}</div>
+              <div class="actor-rank">{{ atoresIndex + i + 1 }}</div>
               <img class="actor-photo" [src]="fotoAtor(a)" [alt]="a.nome" />
               <div class="actor-name">{{ a.nome }}</div>
             </div>
           </div>
-          <button class="chevron right" (click)="nextAtores()" aria-label="Seguinte">&rsaquo;</button>
+          <button class="chevron right" (click)="nextAtores()" [disabled]="atoresIndex >= (atores.length - atoresVisibleCount)" aria-label="Seguinte">&rsaquo;</button>
         </div>
       </div>
     </section>
@@ -262,7 +268,11 @@
             &lsaquo;
           </button>
 
-          <div class="rec-card" *ngIf="currentRecomendacao as r">
+          <div class="rec-card"
+               [class.fade-out]="recomendacaoSlideDir === 'fade-out'"
+               [class.slide-left]="recomendacaoSlideDir === 'left'"
+               [class.slide-right]="recomendacaoSlideDir === 'right'"
+               *ngIf="currentRecomendacao as r">
             <img class="rec-poster"
                  [src]="recomendacaoPoster(r)"
                  [alt]="r.titulo"

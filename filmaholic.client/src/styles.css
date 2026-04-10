@@ -471,8 +471,8 @@ app-root > *:not(router-outlet) {
 }
 
 .icon-btn {
-  height: 40px;
-  width: 40px;
+  height: 44px;
+  width: 44px;
   border: none;
   border-radius: 12px;
   background: rgba(255,255,255,0.08);
@@ -499,7 +499,7 @@ app-root > *:not(router-outlet) {
 }
 
 .brand {
-  font-size: 18px;
+  font-size: 20px;
   font-weight: 700;
   letter-spacing: 0.3px;
   opacity: 0.95;
@@ -667,8 +667,8 @@ app-root > *:not(router-outlet) {
   z-index: 1000;
   width: 100%;
   max-width: 100%;
-  min-height: 70px;
-  height: 70px;
+  min-height: 76px;
+  height: 76px;
   box-sizing: border-box;
   display: grid;
   /* minmax(0,1fr) evita a grelha a não esticar e deixar faixa vazia à direita */
@@ -696,8 +696,8 @@ app-root > *:not(router-outlet) {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  height: 70px;
-  min-height: 70px;
+  height: 76px;
+  min-height: 76px;
   padding: 14px 28px;
 }
 
