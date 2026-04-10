@@ -790,7 +790,7 @@
 
     .new-comment-input-wrapper input:focus {
       outline: none;
-      border-color: #ef4444;
+      border-color: #ff2f6d;
     }
 
 .send-comment-btn {
@@ -798,7 +798,7 @@
   right: 6px;
   top: 50%;
   transform: translateY(-50%);
-  background: #ef4444;
+  background: #ff2f6d;
   border: none;
   color: white;
   padding: 6px 12px;
@@ -810,7 +810,7 @@
 }
 
   .send-comment-btn:hover:not(:disabled) {
-    background: #dc2626;
+    background: #ff4081;
   }
 
   .send-comment-btn:disabled {
