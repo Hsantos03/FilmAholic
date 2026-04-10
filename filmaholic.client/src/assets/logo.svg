@@ -1,0 +1,12 @@
+<svg width="600" height="150" viewBox="0 0 600 150" xmlns="http://www.w3.org/2000/svg">
+  <style>
+    .logo-text {
+      font-family: 'Brush Script MT', 'Segoe Script', cursive;
+      font-size: 80px;
+      fill: currentColor;
+      font-weight: 600;
+    }
+  </style>
+  
+  <text x="20" y="100" class="logo-text">FilmAholic</text>
+</svg>

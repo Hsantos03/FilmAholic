@@ -8,7 +8,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace FilmAholic.Server.Migrations
 {
     /// <inheritdoc />
-    public partial class FilmAholicMigration : Migration
+    public partial class FilmaholicMigration : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
