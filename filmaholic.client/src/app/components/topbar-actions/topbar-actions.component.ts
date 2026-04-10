@@ -18,6 +18,7 @@ import {
   NotificacaoPlataformaFeedDto,
   NotificacaoPlataformaItemDto
 } from '../../services/notificacoes.service';
+import { reminderJogoSvgPath } from './reminder-jogo-notif-icons';
 
 type NotificacaoUnificada = {
   id: number;
@@ -501,6 +502,17 @@ export class TopbarActionsComponent implements OnInit, OnDestroy {
         this.cdr.markForCheck();
       }
     });
+  }
+
+  /** Variante 0–9 do ícone do reminder (API); legado sem campo → 0. */
+  reminderJogoVariante(raw: ReminderJogoNotifDto): number {
+    const v = raw?.variante;
+    if (typeof v === 'number' && v >= 0 && v <= 9) return v;
+    return 0;
+  }
+
+  reminderJogoIconPathD(raw: ReminderJogoNotifDto): string {
+    return reminderJogoSvgPath(this.reminderJogoVariante(raw));
   }
 
   marcarReminderLido(e: MouseEvent, id: number): void {

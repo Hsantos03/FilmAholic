@@ -64,6 +64,8 @@ export interface NotificacaoComunidadeFeedDto {
 export interface ReminderJogoNotifDto {
   id: number;
   corpo: string;
+  /** 0 = comando (SVG gamepad); 1–9 = ícone extra por ordem da mensagem. */
+  variante?: number;
   criadaEm: string;
   lidaEm?: string | null;
 }

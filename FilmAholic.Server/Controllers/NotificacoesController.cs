@@ -1178,13 +1178,19 @@ namespace FilmAholic.Server.Controllers
             var userId = GetUserId();
             if (string.IsNullOrWhiteSpace(userId)) return Unauthorized();
 
-            var notifs = await _context.Notificacoes
+            var rows = await _context.Notificacoes
                 .AsNoTracking()
                 .Where(n => n.UtilizadorId == userId && n.Tipo == TipoReminderJogo && n.LidaEm == null)
                 .OrderByDescending(n => n.CriadaEm)
                 .Take(5)
                 .Select(n => new { n.Id, n.Corpo, n.CriadaEm })
                 .ToListAsync();
+
+            var notifs = rows.Select(n =>
+            {
+                var p = ReminderJogoCorpoJson.Parse(n.Corpo);
+                return new { id = n.Id, corpo = p.Texto, variante = p.Variante, criadaEm = n.CriadaEm };
+            }).ToList();
 
             return Ok(notifs);
         }

@@ -29,13 +29,14 @@
       </button>
     </div>
 
+    <div class="lb-ranking-panel">
     <!-- TABS -->
     <div class="tab-row" data-tour="lb-tabs">
-      <button class="tab-btn" [class.tab-active]="category === 'films'" (click)="category = 'films'">
+      <button type="button" class="tab-btn" [class.tab-active]="category === 'films'" (click)="category = 'films'">
         <svg class="lb-icon lb-icon-tab" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M18 4l2 4h-3l-2-4h-2l2 4h-3l-2-4H8l2 4H7L5 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V4h-4z"/></svg>
         Filmes
       </button>
-      <button class="tab-btn" [class.tab-active]="category === 'actors'" (click)="category = 'actors'">
+      <button type="button" class="tab-btn" [class.tab-active]="category === 'actors'" (click)="category = 'actors'">
         <svg class="lb-icon lb-icon-tab" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>
         Atores
       </button>
@@ -96,13 +97,22 @@
         <span>A carregar ranking…</span>
       </div>
 
-      <div class="lb-empty" *ngIf="!isLoading && activeBoard.length === 0">
-        <div class="empty-icon" aria-hidden="true">
-          <svg class="lb-icon lb-icon-empty" viewBox="0 0 24 24" fill="currentColor"><path d="M21 6H3c-1.1 0-2 .9-2 2v8c0 1.1.9 2 2 2h18c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm-10 7H8v3H6v-3H3v-2h3V8h2v3h3v2zm4.5 2c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm4-3c-.83 0-1.5-.67-1.5-1.5S18.67 9 19.5 9s1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"/></svg>
+      <ng-container *ngIf="!isLoading && activeBoard.length === 0">
+        <div class="list-header list-header--preview" aria-hidden="true">
+          <span class="col-rank">Pos.</span>
+          <span class="col-player">Jogador</span>
+          <span class="col-score">Melhor Score</span>
+          <span class="col-games">Jogos</span>
+          <span class="col-level">Nível</span>
         </div>
-        <p>Ainda não há jogadores nesta categoria.</p>
-        <p class="empty-sub">Sê o primeiro a entrar no ranking!</p>
-      </div>
+        <div class="lb-empty">
+          <div class="empty-icon" aria-hidden="true">
+            <svg class="lb-icon lb-icon-empty" viewBox="0 0 24 24" fill="currentColor"><path d="M21 6H3c-1.1 0-2 .9-2 2v8c0 1.1.9 2 2 2h18c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm-10 7H8v3H6v-3H3v-2h3V8h2v3h3v2zm4.5 2c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm4-3c-.83 0-1.5-.67-1.5-1.5S18.67 9 19.5 9s1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"/></svg>
+          </div>
+          <p class="empty-title">Ainda não há jogadores nesta categoria</p>
+          <p class="empty-sub">Joga Higher or Lower e sê o primeiro a aparecer aqui.</p>
+        </div>
+      </ng-container>
 
       <div class="list-header" *ngIf="!isLoading && activeBoard.length > 3">
         <span class="col-rank">Pos.</span>
@@ -140,9 +150,10 @@
         </div>
       </div>
 
-      <div class="my-position" *ngIf="!isLoading && currentUserId && !currentUserInBoard">
+      <div class="my-position" *ngIf="!isLoading && currentUserId && !currentUserInBoard && activeBoard.length > 0">
         <span class="my-pos-label">A tua posição ainda não está no top 10 — continua a jogar!</span>
       </div>
+    </div>
     </div>
 
   </div>
