@@ -287,7 +287,8 @@
                             [class.active]="c.myVote === 1"
                             (click)="voteComment(c, 1)"
                             title="Like">
-                      👍 {{ c.likeCount || 0 }}
+                      <img class="comment-vote-icon" src="assets/rec-feedback-like.png" alt="" width="16" height="16" aria-hidden="true" />
+                      <span>{{ c.likeCount || 0 }}</span>
                     </button>
 
                     <button type="button"
@@ -295,7 +296,8 @@
                             [class.active]="c.myVote === -1"
                             (click)="voteComment(c, -1)"
                             title="Dislike">
-                      👎 {{ c.dislikeCount || 0 }}
+                      <img class="comment-vote-icon" src="assets/rec-feedback-dislike.png" alt="" width="16" height="16" aria-hidden="true" />
+                      <span>{{ c.dislikeCount || 0 }}</span>
                     </button>
 
                     <button type="button"

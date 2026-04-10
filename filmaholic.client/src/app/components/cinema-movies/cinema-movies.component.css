@@ -46,8 +46,8 @@
   animation: fadeUp 0.3s ease;
 }
 
-  .movie-not-found span {
-    font-size: 1.5rem;
+  .movie-not-found .cinema-ico--notfound {
+    flex-shrink: 0;
   }
 
   .movie-not-found p {
@@ -84,6 +84,9 @@
 }
 
 .section-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
   font-family: 'Bebas Neue', sans-serif;
   font-size: 22px;
   letter-spacing: 1.5px;
@@ -388,6 +391,9 @@
 }
 
 .nearby-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   font-size: 13px;
   font-weight: 700;
   color: rgba(255,255,255,0.6);
@@ -517,8 +523,10 @@
   text-overflow: ellipsis;
 }
 
-.closest-icon {
-  font-size: 0.8rem;
+.closest-icon.cinema-ico {
+  width: 13px;
+  height: 13px;
+  flex-shrink: 0;
 }
 
 .closest-name {
@@ -548,6 +556,9 @@
 }
 
 .badge-proximo {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
   background: rgba(59, 130, 246, 0.15);
   color: #3b82f6;
   border: 1px solid rgba(59, 130, 246, 0.3);
@@ -558,4 +569,47 @@
   text-transform: uppercase;
   letter-spacing: 0.5px;
   white-space: nowrap;
+}
+
+/* Ícones PNG (substituem emojis em Filmes em Cartaz) */
+.cinema-page .cinema-hero .hero-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.cinema-ico {
+  flex-shrink: 0;
+  object-fit: contain;
+  display: block;
+}
+
+.cinema-ico--hero {
+  width: 18px;
+  height: 18px;
+}
+
+.cinema-ico--warn {
+  width: 16px;
+  height: 16px;
+}
+
+.cinema-ico--title {
+  width: 14px;
+  height: 14px;
+}
+
+.cinema-ico--proximo {
+  width: 11px;
+  height: 11px;
+}
+
+.cinema-ico--section {
+  width: 22px;
+  height: 22px;
+}
+
+.cinema-ico--notfound {
+  width: 28px;
+  height: 28px;
 }

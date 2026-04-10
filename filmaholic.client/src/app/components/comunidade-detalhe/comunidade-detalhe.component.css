@@ -72,16 +72,25 @@
   background: #151515;
   border: 1px solid rgba(255,255,255,0.1);
   border-radius: 8px;
-  padding: 12px 12px 12px 36px;
+  padding: 12px 12px 12px 48px;
   color: white;
   outline: none;
+  box-sizing: border-box;
 }
 
 .search-icon {
   position: absolute;
-  left: 10px;
-  font-size: 16px;
-  line-height: 1;
+  left: 11px;
+  top: 50%;
+  transform: translateY(-50%);
+  pointer-events: none;
+}
+
+.movie-search-popcorn {
+  width: 20px;
+  height: 20px;
+  object-fit: contain;
+  display: block;
 }
 
 .movie-search-results {
@@ -379,6 +388,9 @@
 }
 
 .tab-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   background: none;
   border: none;
   border-bottom: 2px solid transparent;
@@ -466,6 +478,11 @@
     font-size: 14px;
     width: 100%;
     box-sizing: border-box;
+  }
+
+  /* Espaço à esquerda para o ícone de pipocas (evita sobrepor o placeholder) */
+  .post-form input.movie-search-input {
+    padding: 10px 12px 10px 48px;
   }
 
 .save-btn {
@@ -575,10 +592,13 @@
 }
 
 .post-action-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   background: transparent;
   border: none;
   cursor: pointer;
-  font-size: 14px;
+  padding: 2px;
   opacity: 0.6;
   transition: opacity 0.2s, transform 0.2s;
 }
@@ -587,6 +607,14 @@
     opacity: 1;
     transform: scale(1.1);
   }
+
+.post-action-ico {
+  width: 18px;
+  height: 18px;
+  object-fit: contain;
+  display: block;
+  pointer-events: none;
+}
 
 .post-footer {
   margin-top: 16px;
@@ -834,6 +862,14 @@
   transition: background 0.2s, color 0.2s;
 }
 
+.vote-btn .vote-btn-icon {
+  width: 16px;
+  height: 16px;
+  object-fit: contain;
+  flex-shrink: 0;
+  pointer-events: none;
+}
+
   .vote-btn:hover {
     background: rgba(255, 255, 255, 0.1);
   }
@@ -961,15 +997,28 @@
 }
 
 .reveal-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
   background: rgba(0, 0, 0, 0.75);
   border: 1px solid rgba(255, 255, 255, 0.2);
   color: #fff;
   font-weight: 600;
+  font-size: 14px;
   padding: 10px 20px;
   border-radius: 20px;
   cursor: pointer;
   transition: transform 0.2s, background 0.2s;
   backdrop-filter: blur(4px);
+}
+
+.reveal-spoiler-ico {
+  width: 22px;
+  height: 22px;
+  object-fit: contain;
+  flex-shrink: 0;
+  display: block;
+  pointer-events: none;
 }
 
   .reveal-btn:hover {
@@ -1739,6 +1788,9 @@
 }
 
 .metrica-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   background: transparent;
   border: 1px solid rgba(255,255,255,0.15);
   border-radius: 20px;
@@ -1817,6 +1869,9 @@
   }
 
 .ranking-pos {
+  display: flex;
+  align-items: center;
+  justify-content: center;
   font-size: 22px;
   min-width: 36px;
   text-align: center;
@@ -1854,7 +1909,33 @@
 .stat-filmes, .stat-tempo {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 6px;
+}
+
+.rank-ui-ico {
+  flex-shrink: 0;
+  object-fit: contain;
+  display: block;
+}
+
+.rank-ui-ico--tab {
+  width: 18px;
+  height: 18px;
+}
+
+.rank-ui-ico--metric {
+  width: 16px;
+  height: 16px;
+}
+
+.rank-ui-ico--pos1 {
+  width: 26px;
+  height: 26px;
+}
+
+.rank-ui-ico--stat {
+  width: 17px;
+  height: 17px;
 }
 
 /* Kick / ban modal — optional reason & ban duration */

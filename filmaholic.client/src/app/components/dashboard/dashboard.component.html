@@ -285,7 +285,7 @@
                         (click)="submitFeedback(r, false, $event)"
                         title="Não me interessa"
                         aria-label="Recomendação irrelevante">
-                  👎
+                  <img class="rec-fb-icon" src="assets/rec-feedback-dislike.png" alt="" width="22" height="22" aria-hidden="true" />
                 </button>
                 <button class="rec-fb-btn rec-fb-up"
                         type="button"
@@ -294,7 +294,7 @@
                         (click)="submitFeedback(r, true, $event)"
                         title="Gosto! Mais como este"
                         aria-label="Recomendação relevante">
-                  👍
+                  <img class="rec-fb-icon" src="assets/rec-feedback-like.png" alt="" width="22" height="22" aria-hidden="true" />
                 </button>
               </div>
             </div>
@@ -381,12 +381,20 @@
       <div *ngIf="desafioDoDia.respondido || feedbackDesafio"
            class="quiz-feedback"
            [ngClass]="desafioDoDia.acertou ? 'success' : 'error'">
-        {{ feedbackDesafio || (desafioDoDia.acertou ? 'Já respondeste corretamente hoje! 🎉' : 'Já respondeste a este desafio (Incorreto).') }}
+        <span class="quiz-feedback-msg">{{ feedbackDesafio || (desafioDoDia.acertou ? 'Já respondeste corretamente hoje!' : 'Já respondeste a este desafio (Incorreto).') }}</span>
+        <img *ngIf="desafioDoDia.acertou"
+             class="quiz-party-ico"
+             src="assets/desafio-diario-party.png"
+             alt=""
+             aria-hidden="true" />
       </div>
 
       <div class="quiz-footer">
         <div class="quiz-reward-wrapper">
-          <span class="quiz-reward">✨ Recompensa: {{ desafioDoDia.xp }} XP</span>
+          <span class="quiz-reward">
+            <img class="quiz-sparkles-ico" src="assets/desafio-diario-sparkles.png" alt="" aria-hidden="true" />
+            Recompensa: {{ desafioDoDia.xp }} XP
+          </span>
         </div>
         <div class="quiz-timer" *ngIf="desafioDoDia.respondido">
           Próxima pergunta em: <strong>{{ timeUntilNext }}</strong>

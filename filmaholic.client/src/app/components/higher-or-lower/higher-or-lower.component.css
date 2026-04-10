@@ -98,8 +98,9 @@
   min-width: 86px;
 }
 
-.hol-page.hol-menu-home .cat-icon {
-  font-size: 24px;
+.hol-page.hol-menu-home .cat-icon .hol-icon {
+  width: 24px;
+  height: 24px;
 }
 
 .hol-page.hol-menu-home .cat-hint {
@@ -114,7 +115,16 @@
 }
 
 .hol-page.hol-menu-home .history-btn {
-  padding: 10px 20px;
+  width: 200px;
+  max-width: 100%;
+  padding: 8px 14px;
+  font-size: 13px;
+  border-radius: 12px;
+}
+
+.hol-page.hol-menu-home .history-btn .hol-icon {
+  width: 18px;
+  height: 18px;
 }
 
 /* ─── BG ORBS ─── */
@@ -297,7 +307,15 @@
   }
 
 .cat-icon {
-  font-size: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 0;
+}
+
+.cat-icon .hol-icon {
+  width: 28px;
+  height: 28px;
 }
 
 .cat-label {
@@ -365,16 +383,23 @@
   align-items: center;
   justify-content: center;
   gap: 8px;
-  width: 240px;
-  padding: 13px 24px;
+  width: 220px;
+  max-width: 100%;
+  padding: 10px 18px;
   background: transparent;
   border: 1px solid rgba(255,255,255,0.12);
   border-radius: 14px;
   color: rgba(255,255,255,0.65);
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s;
+}
+
+.history-btn .hol-icon {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
 }
 
   .history-btn:hover {
@@ -644,13 +669,26 @@
 }
 
 .pop-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   background: rgba(0,0,0,0.75);
+}
+
+.pop-badge .hol-icon {
+  width: 16px;
+  height: 16px;
+  color: #fbbf24;
+  flex-shrink: 0;
 }
 
 .chosen-tag {
   position: absolute;
   top: 10px;
   right: 10px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
   background: rgba(255,47,109,0.85);
   color: #fff;
   padding: 4px 10px;
@@ -752,7 +790,16 @@
 }
 
 .notif-icon {
-  font-size: 18px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 0;
+  flex-shrink: 0;
+}
+
+.notif-icon .hol-icon {
+  width: 20px;
+  height: 20px;
 }
 
 .notif-correct {
@@ -791,9 +838,15 @@
   box-shadow: 0 24px 64px rgba(0,0,0,0.4);
 }
 
-.endgame-emoji {
-  font-size: 56px;
+.endgame-icon {
   margin-bottom: 4px;
+  line-height: 0;
+  color: #fbbf24;
+}
+
+.endgame-icon .hol-icon {
+  width: 56px;
+  height: 56px;
 }
 
 .endgame-title {
@@ -885,10 +938,20 @@
 }
 
 .history-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
   font-family: 'Bebas Neue', sans-serif;
   font-size: 28px;
   letter-spacing: 2px;
   margin: 0;
+}
+
+.history-title .hol-icon {
+  width: 28px;
+  height: 28px;
+  color: rgba(255, 255, 255, 0.75);
+  flex-shrink: 0;
 }
 
 .history-actions {
@@ -970,11 +1033,20 @@
 }
 
 .hi-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   font-size: 11px;
   font-weight: 700;
   padding: 4px 12px;
   border-radius: 20px;
   white-space: nowrap;
+}
+
+.hi-badge .hol-icon {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
 }
 
 .badge-actors {
@@ -1150,11 +1222,20 @@
 }
 
 .xp-gained {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
   font-family: 'Bebas Neue', sans-serif;
   font-size: 32px;
   color: #fbbf24;
   letter-spacing: 2px;
   animation: popIn 0.4s ease both;
+}
+
+.xp-gained .hol-icon {
+  width: 28px;
+  height: 28px;
+  flex-shrink: 0;
 }
 
 .xp-zero {
@@ -1209,7 +1290,16 @@
 }
 
 .stat-icon {
-  font-size: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 0;
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.stat-icon .hol-icon {
+  width: 22px;
+  height: 22px;
 }
 
 .stat-value {
@@ -1330,7 +1420,12 @@
 
   .start-btn,
   .history-btn {
-    width: 200px;
+    width: 180px;
+  }
+
+  .hol-page.hol-menu-home .history-btn {
+    width: 180px;
+    padding: 8px 12px;
   }
 
   /* Game screen responsive */
@@ -1519,8 +1614,9 @@
     padding: 10px 16px;
   }
 
-  .cat-icon {
-    font-size: 24px;
+  .cat-icon .hol-icon {
+    width: 24px;
+    height: 24px;
   }
 
   .cat-label {
@@ -1541,9 +1637,20 @@
 
   .start-btn,
   .history-btn {
-    width: 180px;
-    padding: 14px 20px;
-    font-size: 14px;
+    width: 160px;
+    padding: 10px 14px;
+    font-size: 13px;
+  }
+
+  .hol-page.hol-menu-home .history-btn {
+    width: 160px;
+    padding: 7px 12px;
+    font-size: 12px;
+  }
+
+  .history-btn .hol-icon {
+    width: 17px;
+    height: 17px;
   }
 
   .duel-card {

@@ -143,7 +143,10 @@
       <div class="tabs-left">
         <button class="tab-btn" [class.active]="activeTab === 'posts'" (click)="activeTab = 'posts'">Publicações</button>
         <button class="tab-btn" [class.active]="activeTab === 'membros'" (click)="activeTab = 'membros'">Membros</button>
-        <button class="tab-btn" [class.active]="activeTab === 'ranking'" (click)="activeTab = 'ranking'; carregarRanking()">🏆 Ranking</button>
+        <button class="tab-btn" [class.active]="activeTab === 'ranking'" (click)="activeTab = 'ranking'; carregarRanking()">
+          <img class="rank-ui-ico rank-ui-ico--tab" src="assets/comunidade-ranking-trophy.png" alt="" aria-hidden="true" />
+          Ranking
+        </button>
       </div>
       <div class="membros-counter" *ngIf="activeTab === 'membros'">
         {{ comunidade.membrosCount ?? 0 }}<ng-container *ngIf="comunidade.limiteMembros">/{{ comunidade.limiteMembros }}</ng-container>
@@ -157,10 +160,12 @@
       <!-- Toggle de métrica -->
       <div class="ranking-metrica-toggle">
         <button class="metrica-btn" [class.active]="rankingMetrica === 'filmes'" (click)="mudarMetrica('filmes')">
-          🎬 Filmes vistos
+          <img class="rank-ui-ico rank-ui-ico--metric" src="assets/comunidade-ranking-clapper.png" alt="" aria-hidden="true" />
+          Filmes vistos
         </button>
         <button class="metrica-btn" [class.active]="rankingMetrica === 'tempo'" (click)="mudarMetrica('tempo')">
-          ⏱️ Tempo assistido
+          <img class="rank-ui-ico rank-ui-ico--metric" src="assets/comunidade-ranking-clock.png" alt="" aria-hidden="true" />
+          Tempo assistido
         </button>
       </div>
 
@@ -182,7 +187,11 @@
              [class.top3]="membro.posicao === 3">
           <!-- Posição -->
           <div class="ranking-pos">
-            <span *ngIf="membro.posicao === 1">🥇</span>
+            <img *ngIf="membro.posicao === 1"
+                 class="rank-ui-ico rank-ui-ico--pos1"
+                 src="assets/comunidade-ranking-trophy.png"
+                 alt=""
+                 aria-hidden="true" />
             <span *ngIf="membro.posicao === 2">🥈</span>
             <span *ngIf="membro.posicao === 3">🥉</span>
             <span *ngIf="membro.posicao > 3">#{{ membro.posicao }}</span>
@@ -196,8 +205,14 @@
 
           <!-- Stats -->
           <div class="ranking-stats">
-            <span *ngIf="rankingMetrica === 'filmes'" class="stat-filmes">🎬 {{ membro.filmesVistos }} filmes</span>
-            <span *ngIf="rankingMetrica === 'tempo'" class="stat-tempo">⏱️ {{ membro.minutosAssistidos | number:'1.0-0' }} min</span>
+            <span *ngIf="rankingMetrica === 'filmes'" class="stat-filmes">
+              <img class="rank-ui-ico rank-ui-ico--stat" src="assets/comunidade-ranking-clapper.png" alt="" aria-hidden="true" />
+              {{ membro.filmesVistos }} filmes
+            </span>
+            <span *ngIf="rankingMetrica === 'tempo'" class="stat-tempo">
+              <img class="rank-ui-ico rank-ui-ico--stat" src="assets/comunidade-ranking-clock.png" alt="" aria-hidden="true" />
+              {{ membro.minutosAssistidos | number:'1.0-0' }} min
+            </span>
           </div>
         </div>
 
@@ -252,9 +267,11 @@
                      placeholder="Pesquisar filme para anexar..."
                      [(ngModel)]="pesquisaFilme"
                      (input)="procurarFilmeParaAnexar()"
-                     class="movie-search-input"
-                     style="padding-left: 38px;">
-              <span class="search-icon" style="position:absolute; left:12px; top:50%; transform:translateY(-50%); font-size:16px; pointer-events:none;">🍿</span>
+                     class="movie-search-input">
+              <img class="search-icon movie-search-popcorn"
+                   src="assets/comunidade-post-popcorn.png"
+                   alt=""
+                   aria-hidden="true" />
             </div>
 
             <ul *ngIf="resultadosFilmes.length > 0" class="movie-search-results">
@@ -327,9 +344,13 @@
 
             <button *ngIf="p.autorId !== currentUserId && !isCurrentCastigado" class="post-action-btn report-btn" (click)="openReportModal(p)" title="Denunciar publicação" [disabled]="p.jaReportou">🚩</button>
 
-            <button *ngIf="p.autorId === currentUserId && !isCurrentCastigado" class="post-action-btn edit-btn" (click)="openEditPost(p)" title="Editar">✏️</button>
+            <button *ngIf="p.autorId === currentUserId && !isCurrentCastigado" class="post-action-btn edit-btn" (click)="openEditPost(p)" title="Editar" type="button">
+              <img class="post-action-ico" src="assets/comunidade-spoiler-pencil.png" alt="" aria-hidden="true" />
+            </button>
 
-            <button *ngIf="(p.autorId === currentUserId || isAdmin) && !isCurrentCastigado" class="post-action-btn delete-btn" (click)="openDeletePostModal(p)" title="Apagar">🗑️</button>
+            <button *ngIf="(p.autorId === currentUserId || isAdmin) && !isCurrentCastigado" class="post-action-btn delete-btn" (click)="openDeletePostModal(p)" title="Apagar" type="button">
+              <img class="post-action-ico" src="assets/comunidade-spoiler-trash.png" alt="" aria-hidden="true" />
+            </button>
           </div>
         </div>
 
@@ -347,8 +368,9 @@
               </div>
 
               <div class="spoiler-overlay" *ngIf="p.temSpoiler && !revealedSpoilers.has(p.id!)">
-                <button class="reveal-btn" (click)="revelarSpoiler(p.id)">
-                  👀 Revelar Spoiler
+                <button type="button" class="reveal-btn" (click)="revelarSpoiler(p.id)">
+                  <img class="reveal-spoiler-ico" src="assets/comunidade-spoiler-eyes.png" alt="" aria-hidden="true" />
+                  Revelar Spoiler
                 </button>
               </div>
             </div>
@@ -370,10 +392,12 @@
         <div class="post-footer">
           <div class="vote-group" [class.vote-group--disabled]="isCurrentCastigado" [attr.title]="isCurrentCastigado ? 'Castigo ativo: não podes votar.' : null">
             <button type="button" class="vote-btn" [class.active-like]="p.userVote === 1" [disabled]="isCurrentCastigado" (click)="votar(p, true)">
-              👍 <span>{{ p.likesCount || 0 }}</span>
+              <img class="vote-btn-icon" src="assets/rec-feedback-like.png" alt="" width="16" height="16" aria-hidden="true" />
+              <span>{{ p.likesCount || 0 }}</span>
             </button>
             <button type="button" class="vote-btn" [class.active-dislike]="p.userVote === -1" [disabled]="isCurrentCastigado" (click)="votar(p, false)">
-              👎 <span>{{ p.dislikesCount || 0 }}</span>
+              <img class="vote-btn-icon" src="assets/rec-feedback-dislike.png" alt="" width="16" height="16" aria-hidden="true" />
+              <span>{{ p.dislikesCount || 0 }}</span>
             </button>
           </div>
 

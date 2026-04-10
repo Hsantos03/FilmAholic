@@ -695,6 +695,21 @@
   font-weight: 600;
 }
 
+.comment-btn.like-btn,
+.comment-btn.dislike-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.comment-btn .comment-vote-icon {
+  width: 16px;
+  height: 16px;
+  object-fit: contain;
+  flex-shrink: 0;
+  pointer-events: none;
+}
+
   .comment-btn:hover {
     background: rgba(255,255,255,0.14);
   }

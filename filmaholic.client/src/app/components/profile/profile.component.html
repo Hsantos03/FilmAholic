@@ -1,4 +1,4 @@
-<!-- Topbar (hamburger + marca + notificações + perfil) -->
+﻿<!-- Topbar (hamburger + marca + notificações + perfil) -->
 <header class="cinema-map-topbar profile-topbar">
   <button class="icon-btn" (click)="toggleMenu()" aria-label="Menu">
     <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
@@ -81,7 +81,7 @@
   <div class="profile-left">
     <div class="avatar">
       <img *ngIf="fotoPerfilUrl" [src]="fotoPerfilUrl" alt="Foto de perfil" />
-      <span *ngIf="!fotoPerfilUrl">👤</span>
+      <img *ngIf="!fotoPerfilUrl" class="avatar-placeholder-img" src="assets/user-placeholder.png" alt="" width="72" height="72" aria-hidden="true" />
 
       <button type="button"
               class="avatar-edit-btn"
@@ -194,7 +194,7 @@
           </div>
 
             <button class="pill-btn" title="Ver mais tarde">
-            <span class="icon">🚀</span>
+            <img class="icon pill-btn-img" src="assets/rocket-quero-ver.png" alt="" width="24" height="24" aria-hidden="true" />
           </button>
         </div>
       </div>
@@ -214,7 +214,7 @@
           </div>
 
             <button class="pill-btn gray" title="Vistos">
-            <span class="icon">✅</span>
+            <img class="icon pill-btn-img" src="assets/check-ja-vi.png" alt="" width="24" height="24" aria-hidden="true" />
           </button>
         </div>
       </div>

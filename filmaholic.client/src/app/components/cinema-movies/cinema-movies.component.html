@@ -68,7 +68,10 @@
 
   <!-- HERO -->
   <header class="cinema-hero" data-tour="cinema-movies-hero">
-    <div class="hero-badge">🍿 EM CARTAZ</div>
+    <div class="hero-badge">
+      <img class="cinema-ico cinema-ico--hero" src="assets/cinema-popcorn.png" alt="" aria-hidden="true" />
+      EM CARTAZ
+    </div>
     <h1 class="hero-title">Filmes em<br><span class="title-accent">Cartaz</span></h1>
     <p class="hero-sub">A sua próxima sessão favorita está à sua espera.</p>
   </header>
@@ -78,7 +81,8 @@
 
     <!-- Aviso sem localização -->
     <div *ngIf="geoError" class="geo-warning">
-      <span>📍</span> {{ geoError }}
+      <img class="cinema-ico cinema-ico--warn" src="assets/cinema-pin.png" alt="" aria-hidden="true" />
+      {{ geoError }}
     </div>
 
     <!-- A carregar -->
@@ -90,7 +94,10 @@
     <!-- Lista filtrada: favoritos + mais próximo NOS + mais próximo City -->
     <div *ngIf="!nearbyLoading && nearbyCinemas.length > 0" class="nearby-wrap">
       <div class="nearby-header">
-        <span class="nearby-title">📍 Os teus cinemas</span>
+        <span class="nearby-title">
+          <img class="cinema-ico cinema-ico--title" src="assets/cinema-pin.png" alt="" aria-hidden="true" />
+          Os teus cinemas
+        </span>
         <a routerLink="/cinemas-proximos" class="nearby-link">Ver todos →</a>
       </div>
       <div class="nearby-scroll">
@@ -116,7 +123,10 @@
           </div>
 
           <div *ngIf="isMaisProximo(c)" style="display: flex; align-items: center; padding-right: 8px;">
-            <span class="badge-proximo">📍 Cinema mais perto</span>
+            <span class="badge-proximo">
+              <img class="cinema-ico cinema-ico--proximo" src="assets/cinema-pin.png" alt="" aria-hidden="true" />
+              Cinema mais perto
+            </span>
           </div>
 
           <div class="nearby-dist" *ngIf="c.distanceKm != null">
@@ -142,7 +152,7 @@
 
   <!-- FILME NÃO ENCONTRADO -->
   <div class="movie-not-found" *ngIf="movieNotFound">
-    <span>🎬</span>
+    <img class="cinema-ico cinema-ico--notfound" src="assets/cinema-clapper.png" alt="" aria-hidden="true" />
     <p>O filme <strong>{{ movieNotFound }}</strong> ainda não está disponível na base de dados.</p>
   </div>
 
@@ -152,7 +162,10 @@
     <!-- ── CINEMA NOS ── -->
     <section *ngIf="nosMovies.length > 0" class="cinema-section">
       <div class="section-header">
-        <div class="section-badge nos-badge">🎬 Cinema NOS</div>
+        <div class="section-badge nos-badge">
+          <img class="cinema-ico cinema-ico--section" src="assets/cinema-clapper.png" alt="" aria-hidden="true" />
+          Cinema NOS
+        </div>
         <span class="section-count">{{ nosMovies.length }} filmes</span>
       </div>
 
@@ -176,7 +189,7 @@
                   <div class="overlay-bottom">
                     <span class="duration">{{ formatDuration(movie.duracao) }}</span>
                     <div class="closest-cinema" *ngIf="closestCinemaForMovie(movie) as closest">
-                      <span class="closest-icon">📍</span>
+                      <img class="closest-icon cinema-ico" src="assets/cinema-pin.png" alt="" aria-hidden="true" />
                       <span class="closest-name">{{ closest.nome }}</span>
                       <span class="closest-km" *ngIf="closest.distanceKm != null">· {{ closest.distanceKm }} km</span>
                     </div>
@@ -203,7 +216,7 @@
                   <div class="overlay-bottom">
                     <span class="duration">{{ formatDuration(movie.duracao) }}</span>
                     <div class="closest-cinema" *ngIf="closestCinemaForMovie(movie) as closest">
-                      <span class="closest-icon">📍</span>
+                      <img class="closest-icon cinema-ico" src="assets/cinema-pin.png" alt="" aria-hidden="true" />
                       <span class="closest-name">{{ closest.nome }}</span>
                       <span class="closest-km" *ngIf="closest.distanceKm != null">· {{ closest.distanceKm }} km</span>
                     </div>
@@ -228,7 +241,10 @@
     <!-- ── CINEMA CITY ── -->
     <section *ngIf="cineplaceMovies.length > 0" class="cinema-section">
       <div class="section-header">
-        <div class="section-badge city-badge">🎬 Cinema City</div>
+        <div class="section-badge city-badge">
+          <img class="cinema-ico cinema-ico--section" src="assets/cinema-clapper.png" alt="" aria-hidden="true" />
+          Cinema City
+        </div>
         <span class="section-count">{{ cineplaceMovies.length }} filmes</span>
       </div>
 
@@ -252,7 +268,7 @@
                   <div class="overlay-bottom">
                     <span class="duration">{{ formatDuration(movie.duracao) }}</span>
                     <div class="closest-cinema" *ngIf="closestCinemaForMovie(movie) as closest">
-                      <span class="closest-icon">📍</span>
+                      <img class="closest-icon cinema-ico" src="assets/cinema-pin.png" alt="" aria-hidden="true" />
                       <span class="closest-name">{{ closest.nome }}</span>
                       <span class="closest-km" *ngIf="closest.distanceKm != null">· {{ closest.distanceKm }} km</span>
                     </div>
@@ -279,7 +295,7 @@
                   <div class="overlay-bottom">
                     <span class="duration">{{ formatDuration(movie.duracao) }}</span>
                     <div class="closest-cinema" *ngIf="closestCinemaForMovie(movie) as closest">
-                      <span class="closest-icon">📍</span>
+                      <img class="closest-icon cinema-ico" src="assets/cinema-pin.png" alt="" aria-hidden="true" />
                       <span class="closest-name">{{ closest.nome }}</span>
                       <span class="closest-km" *ngIf="closest.distanceKm != null">· {{ closest.distanceKm }} km</span>
                     </div>

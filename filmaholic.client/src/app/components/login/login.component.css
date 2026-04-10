@@ -1,4 +1,4 @@
-/* Alertas alinhados à paleta FilmAholic (rosa / escuro) — sem verde “bootstrap” */
+/* Sucesso: verde em modo escuro (UX convencional), sem verde “bootstrap” claro */
 
 .auth-alert--success {
   margin-bottom: 1rem;
@@ -6,16 +6,16 @@
   border-radius: 12px;
   font-size: 0.9rem;
   line-height: 1.45;
-  color: rgba(255, 255, 255, 0.92);
+  color: rgba(236, 253, 245, 0.95);
   background: linear-gradient(
     135deg,
-    rgba(255, 64, 129, 0.16),
-    rgba(233, 30, 99, 0.1)
+    rgba(6, 78, 59, 0.55),
+    rgba(4, 47, 46, 0.65)
   );
-  border: 1px solid rgba(255, 64, 129, 0.45);
+  border: 1px solid rgba(52, 211, 153, 0.4);
   box-shadow:
-    0 0 0 1px rgba(233, 30, 99, 0.12),
-    0 8px 24px rgba(0, 0, 0, 0.2);
+    0 0 0 1px rgba(16, 185, 129, 0.12),
+    0 8px 24px rgba(0, 0, 0, 0.22);
 }
 
 .auth-alert--success.auth-alert--prominent {
@@ -28,21 +28,18 @@
   font-size: 1.05rem;
   font-weight: 800;
   letter-spacing: -0.02em;
-  color: #fff;
-  background: linear-gradient(135deg, var(--accent-pink, #ff4081), var(--color-primary-light, #ff6b9d));
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
-  color: transparent;
+  color: #6ee7b7;
+  background: none;
+  -webkit-text-fill-color: #6ee7b7;
 }
 
 .auth-alert__text {
   margin: 0;
-  color: rgba(255, 255, 255, 0.78);
+  color: rgba(209, 250, 229, 0.88);
   font-size: 0.9rem;
 }
 
 .auth-alert__text strong {
-  color: #fff;
+  color: #ecfdf5;
   font-weight: 700;
 }

@@ -69,7 +69,10 @@
 
   <!-- HERO HEADER -->
   <header class="cinema-hero" data-tour="cinema-map-hero">
-    <div class="hero-badge">📍 LOCALIZAÇÃO</div>
+    <div class="hero-badge">
+      <img class="map-pin-ico map-pin-ico--hero" src="assets/cinemas-map-pin.png" alt="" aria-hidden="true" />
+      LOCALIZAÇÃO
+    </div>
     <h1 class="hero-title">Cinemas<span class="title-accent"> Próximos</span></h1>
     <p class="hero-sub">Encontra o cinema mais perto de ti e planeia a tua próxima sessão.</p>
   </header>
@@ -106,7 +109,10 @@
     </div>
 
     <p class="fav-hint" *ngIf="userPosition">
-      ⭐ Clica na estrela para guardar um favorito &nbsp;|&nbsp; 🎬 Clica no nome para ver no mapa
+      <img class="map-hint-ico" src="assets/cinemas-map-star.png" alt="" aria-hidden="true" />
+      Clica na estrela para guardar um favorito &nbsp;|&nbsp;
+      <img class="map-hint-ico" src="assets/cinemas-map-clapper.png" alt="" aria-hidden="true" />
+      Clica no nome para ver no mapa
     </p>
 
     <div class="cinema-grid">
@@ -120,7 +126,9 @@
 
         <div class="cinema-rank">{{ i + 1 }}</div>
 
-        <div class="cinema-icon">🎬</div>
+        <div class="cinema-icon">
+          <img class="map-clapper-ico map-clapper-ico--card" src="assets/cinemas-map-clapper.png" alt="" aria-hidden="true" />
+        </div>
 
         <!-- Nome clicável para voar ao marcador -->
         <div class="cinema-info">
@@ -141,7 +149,12 @@
                 [disabled]="togglingId === cinemaId(c)"
                 [title]="isFavorito(c) ? 'Remover dos favoritos' : 'Adicionar aos favoritos'"
                 aria-label="Toggle favorito">
-          <span *ngIf="togglingId !== cinemaId(c)">{{ isFavorito(c) ? '⭐' : '☆' }}</span>
+          <img *ngIf="togglingId !== cinemaId(c)"
+               class="fav-star-ico"
+               [class.fav-star-ico--active]="isFavorito(c)"
+               src="assets/cinemas-map-star.png"
+               alt=""
+               aria-hidden="true" />
           <span *ngIf="togglingId === cinemaId(c)" class="fav-spinner"></span>
         </button>
 
@@ -153,7 +166,7 @@
            class="website-btn"
            title="Ver filmes em cartaz"
            (click)="$event.stopPropagation()">
-          🎬
+          <img class="website-clapper-ico" src="assets/cinemas-map-clapper.png" alt="" aria-hidden="true" />
         </a>
 
       </div>

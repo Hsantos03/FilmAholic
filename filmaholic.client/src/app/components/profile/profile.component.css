@@ -108,8 +108,13 @@
     object-fit: cover;
     border-radius: 50%;
   }
-  .avatar > span {
-    color: #7D57AE;
+  .avatar .avatar-placeholder-img {
+    width: 38%;
+    height: 38%;
+    max-width: 88px;
+    max-height: 88px;
+    object-fit: contain;
+    border-radius: 0;
   }
 .avatar-edit-btn {
   position: absolute;
@@ -385,7 +390,15 @@
     background: rgba(76, 175, 80, 0.2);
   }
   .pill-btn .icon {
-    font-size: 18px;
+    width: 20px;
+    height: 20px;
+    display: block;
+  }
+
+  .pill-btn .pill-btn-img {
+    width: 22px;
+    height: 22px;
+    object-fit: contain;
   }
 .section {
   margin-top: 26px;

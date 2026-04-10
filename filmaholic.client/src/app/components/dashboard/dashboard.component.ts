@@ -342,7 +342,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
         this.respostaCorretaVisivel = res.respostaCorreta;
 
         if (res.acertou) {
-          this.feedbackDesafio = `Correto! Ganhaste ${res.xpGanho || this.desafioDoDia.xp} XP! 🎉`;
+          this.feedbackDesafio = `Correto! Ganhaste ${res.xpGanho || this.desafioDoDia.xp} XP!`;
           
           this.http.post<any>(`${this.apiMedalhas}/check-desafios`, {}, { withCredentials: true })
             .pipe(finalize(() => this.notificacoesService.refreshNotificationBadges()))

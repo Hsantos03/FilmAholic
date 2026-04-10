@@ -107,9 +107,9 @@ export class LeaderboardComponent implements OnInit {
   }
 
   rankIcon(rank: number): string {
-    if (rank === 1) return '🥇';
-    if (rank === 2) return '🥈';
-    if (rank === 3) return '🥉';
+    if (rank === 1) return '\uD83E\uDD47';
+    if (rank === 2) return '\uD83E\uDD48';
+    if (rank === 3) return '\uD83E\uDD49';
     return `#${rank}`;
   }
 

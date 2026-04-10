@@ -2,8 +2,8 @@
   <div class="confirm-card">
     <div class="header">
       <h1 *ngIf="isLoading">A confirmar...</h1>
-      <h1 *ngIf="!isLoading && success">✅ Email Confirmado!</h1>
-      <h1 *ngIf="!isLoading && !success">❌ Erro ao Confirmar</h1>
+      <h1 *ngIf="!isLoading && success">Email Confirmado!</h1>
+      <h1 *ngIf="!isLoading && !success">Erro ao Confirmar</h1>
     </div>
 
     <div *ngIf="isLoading" style="text-align: center; padding: 40px;">
