@@ -21,7 +21,7 @@ import {
 
 type NotificacaoUnificada = {
   id: number;
-  tipo: 'comunidade' | 'medalha' | 'resumo' | 'jogo' | 'filme';
+  tipo: 'comunidade' | 'medalha' | 'resumo' | 'jogo' | 'filme' | 'plataforma';
   texto: string;
   data: Date;
   raw: any;
@@ -33,7 +33,6 @@ type NotificacaoUnificada = {
   templateUrl: './topbar-actions.component.html',
   styleUrls: ['./topbar-actions.component.css']
 })
-
 export class TopbarActionsComponent implements OnInit, OnDestroy {
   @ViewChild('notificationsContainer', { static: false }) notificationsContainerRef?: ElementRef<HTMLElement>;
 
@@ -46,7 +45,6 @@ export class TopbarActionsComponent implements OnInit, OnDestroy {
   activeNotifTab: 'estreias' | 'notificacoes' = 'estreias';
 
   upcomingTmdb: Filme[] = [];
-  /** TMDB ids com NovaEstreia marcada como lida (servidor). */
   readTmdbIds = new Set<number>();
   private isLoadingUpcomingDetails = false;
 
@@ -58,35 +56,28 @@ export class TopbarActionsComponent implements OnInit, OnDestroy {
   readonly notifPageSize = 10;
   notifPage = 0;
 
-  /** Com sessão (cookie): filtrar lista pelos géneros favoritos (visível no menu). */
   filtrarEstreiasPorGeneros = true;
-
-  /** Definido pelo servidor: último carregamento de próximas estreias foi com sessão autenticada. */
   proximasEstreiasSessaoAtiva = false;
 
   resumoFeed: ResumoEstatisticasFeedDto = { unread: [], read: [] };
-
   reminderJogo: ReminderJogoNotifDto[] = [];
-
-  /** Quero ver: cinema / streaming */
   filmeDisponivel: FilmeDisponivelNotifDto[] = [];
 
-  // ── Community notifications ──
   comunidadeFeed: NotificacaoComunidadeFeedDto = { unread: [], read: [] };
   comunidadeUnreadCount = 0;
 
-  // ── Medal notifications ──
   medalhaFeed: NotificacaoMedalhaFeedDto = { unread: [], read: [] };
   medalhaUnreadCount = 0;
 
-  // ── Platform-wide announcements (admin) ──
   plataformaFeed: NotificacaoPlataformaFeedDto = { unread: [], read: [] };
   plataformaUnreadCount = 0;
 
-  readonly API_URL = environment.apiBaseUrl
-    ? environment.apiBaseUrl
-    : '';
+  // Novos contadores para notificações adicionais
+  resumoUnreadCount = 0;
+  filmeDisponivelUnreadCount = 0;
+  reminderJogoUnreadCount = 0;
 
+  readonly API_URL = environment.apiBaseUrl ? environment.apiBaseUrl : '';
 
   constructor(
     private filmesService: FilmesService,
@@ -100,7 +91,11 @@ export class TopbarActionsComponent implements OnInit, OnDestroy {
     this.loadComunidadeUnreadCount();
     this.loadMedalhaUnreadCount();
     this.loadPlataformaUnreadCount();
+    this.loadResumoUnreadCount();
+    this.loadFilmeDisponivelUnreadCount();
+    this.loadReminderJogoUnreadCount();
 
+    // Restaura a atualização automática do Sino
     this.badgeRefreshSub = this.notificacoesService.notificationBadgeRefresh$.subscribe(() => {
       this.refreshNotificationUiAfterExternalAction();
     });
@@ -110,11 +105,13 @@ export class TopbarActionsComponent implements OnInit, OnDestroy {
     this.badgeRefreshSub?.unsubscribe();
   }
 
-  /** Atualiza contagens de imediato; se o painel de notificações estiver aberto, recarrega também os feeds. */
   private refreshNotificationUiAfterExternalAction(): void {
     this.loadComunidadeUnreadCount();
     this.loadMedalhaUnreadCount();
     this.loadPlataformaUnreadCount();
+    this.loadResumoUnreadCount();
+    this.loadFilmeDisponivelUnreadCount();
+    this.loadReminderJogoUnreadCount();
     if (this.isNotificationsOpen) {
       if (this.activeNotifTab === 'notificacoes') {
         this.loadReminderJogo();
@@ -171,8 +168,47 @@ export class TopbarActionsComponent implements OnInit, OnDestroy {
     );
   }
 
-  // ── Community notifications ──
+  // ── Plataforma ──
+  private loadPlataformaUnreadCount(): void {
+    this.notificacoesService.getNotificacoesPlataformaUnreadCount().subscribe({
+      next: (count) => {
+        this.plataformaUnreadCount = count;
+        this.cdr.markForCheck();
+      }
+    });
+  }
 
+  private loadPlataformaFeed(): void {
+    this.notificacoesService.getNotificacoesPlataformaFeed({ unreadLimit: 12, readLimit: 6 }).subscribe({
+      next: (dto) => {
+        this.plataformaFeed = dto ?? { unread: [], read: [] };
+        this.cdr.markForCheck();
+      },
+      error: () => {
+        this.plataformaFeed = { unread: [], read: [] };
+      }
+    });
+  }
+
+  marcarPlataformaLida(e: MouseEvent, item: NotificacaoPlataformaItemDto): void {
+    e.preventDefault();
+    e.stopPropagation();
+    this.notificacoesService.marcarNotificacaoPlataformaComoLida(item.id).subscribe({
+      next: () => {
+        this.plataformaFeed = {
+          unread: (this.plataformaFeed.unread ?? []).filter(x => x.id !== item.id),
+          read: [
+            { ...item, lidaEm: new Date().toISOString() },
+            ...(this.plataformaFeed.read ?? []).filter(x => x.id !== item.id)
+          ].slice(0, 12)
+        };
+        this.plataformaUnreadCount = Math.max(0, this.plataformaUnreadCount - 1);
+        this.cdr.markForCheck();
+      }
+    });
+  }
+
+  // ── Community notifications ──
   private loadComunidadeUnreadCount(): void {
     this.notificacoesService.getNotificacoesComunidadeUnreadCount().subscribe({
       next: (count) => {
@@ -181,8 +217,6 @@ export class TopbarActionsComponent implements OnInit, OnDestroy {
       }
     });
   }
-
-  
 
   private loadComunidadeFeed(): void {
     this.notificacoesService.getNotificacoesComunidadeFeed({ unreadLimit: 50, readLimit: 50 }).subscribe({
@@ -205,14 +239,13 @@ export class TopbarActionsComponent implements OnInit, OnDestroy {
     e.stopPropagation();
     this.notificacoesService.marcarNotificacaoComunidadeComoLida(item.id).subscribe({
       next: () => {
-        // Marcar como lida sem remover da lista - apenas atualiza a propriedade lidaEm
         const now = new Date().toISOString();
         this.comunidadeFeed = {
           unread: (this.comunidadeFeed.unread ?? []).filter(x => x.id !== item.id),
           read: [
             { ...item, lidaEm: now },
             ...(this.comunidadeFeed.read ?? []).filter(x => x.id !== item.id)
-          ].slice(0, 50) // Manter até 50 notificações lidas
+          ].slice(0, 50)
         };
         this.comunidadeUnreadCount = Math.max(0, this.comunidadeUnreadCount - 1);
         this.cdr.markForCheck();
@@ -228,7 +261,7 @@ export class TopbarActionsComponent implements OnInit, OnDestroy {
         const allRead = [
           ...(this.comunidadeFeed.unread ?? []).map(x => ({ ...x, lidaEm: now })),
           ...(this.comunidadeFeed.read ?? [])
-        ].slice(0, 50); // Manter até 50 notificações lidas
+        ].slice(0, 50);
         this.comunidadeFeed = { unread: [], read: allRead };
         this.comunidadeUnreadCount = 0;
         this.cdr.markForCheck();
@@ -245,15 +278,10 @@ export class TopbarActionsComponent implements OnInit, OnDestroy {
     this.router.navigate(['/comunidades', item.comunidadeId]);
   }
 
-  /** Normaliza o tipo vindo da API (ex.: kick / banido). */
   comunidadeNotifTipo(tipo: string | undefined | null): string {
     return (tipo ?? 'post').trim().toLowerCase();
   }
 
-  /**
-   * Corpo da notificação para expulsão/ban (motivo opcional, duração no ban).
-   * Só devolve texto quando o servidor enviou {@link NotificacaoComunidadeItemDto.corpo}.
-   */
   comunidadeKickBanCorpo(n: NotificacaoComunidadeItemDto): string | null {
     const t = this.comunidadeNotifTipo(n.tipo);
     if (t !== 'kick' && t !== 'banido') return null;
@@ -261,150 +289,57 @@ export class TopbarActionsComponent implements OnInit, OnDestroy {
     return s && s.length > 0 ? s : null;
   }
 
-  get hasComunidadeItems(): boolean {
-    return ((this.comunidadeFeed?.unread?.length ?? 0) + (this.comunidadeFeed?.read?.length ?? 0)) > 0;
-  }
-
+  // ── UNIFIED NOTIFICATIONS GETTER ──
   get notificacoesOrdenadas(): NotificacaoUnificada[] {
     const mapa = new Map<string, NotificacaoUnificada>();
 
     const add = (notif: NotificacaoUnificada, key: string) => {
-      if (!mapa.has(key)) {
-        mapa.set(key, notif);
-      }
+      if (!mapa.has(key)) mapa.set(key, notif);
     };
 
+    // Plataforma
+    (this.plataformaFeed.unread ?? []).forEach(n => add({ id: n.id, tipo: 'plataforma', texto: n.titulo, data: new Date(n.criadaEm), raw: n, lida: false }, `plat-${n.id}`));
+    (this.plataformaFeed.read ?? []).forEach(n => add({ id: n.id, tipo: 'plataforma', texto: n.titulo, data: new Date(n.criadaEm), raw: n, lida: true }, `plat-read-${n.id}`));
+
     // Comunidades
-    (this.comunidadeFeed.unread ?? []).forEach(n => {
-      add({
-        id: n.id,
-        tipo: 'comunidade',
-        texto: `Comunidades: novas publicações em ${n.comunidadeNome}`,
-        data: new Date(n.criadaEm),
-        raw: n,
-        lida: false
-      }, `comunidade-${n.id}`);
-    });
+    (this.comunidadeFeed.unread ?? []).forEach(n => add({ id: n.id, tipo: 'comunidade', texto: `Comunidades: ${n.comunidadeNome}`, data: new Date(n.criadaEm), raw: n, lida: false }, `comunidade-${n.id}`));
+    (this.comunidadeFeed.read ?? []).forEach(n => add({ id: n.id, tipo: 'comunidade', texto: `Comunidades: ${n.comunidadeNome}`, data: new Date(n.criadaEm), raw: n, lida: true }, `comunidade-read-${n.id}`));
 
     // Medalhas
-    (this.medalhaFeed.unread ?? []).forEach(n => {
-      add({
-        id: n.id,
-        tipo: 'medalha',
-        texto: `Desbloqueaste ${n.medalhaNome}`,
-        data: new Date(n.criadaEm),
-        raw: n,
-        lida: false
-      }, `medalha-${n.id}`);
-    });
+    (this.medalhaFeed.unread ?? []).forEach(n => add({ id: n.id, tipo: 'medalha', texto: `Desbloqueaste ${n.medalhaNome}`, data: new Date(n.criadaEm), raw: n, lida: false }, `medalha-${n.id}`));
+    (this.medalhaFeed.read ?? []).forEach(n => add({ id: n.id, tipo: 'medalha', texto: `Desbloqueaste ${n.medalhaNome}`, data: new Date(n.criadaEm), raw: n, lida: true }, `medalha-read-${n.id}`));
 
-    // Jogo (verificar se tem lidaEm para determinar se está lido)
-    (this.reminderJogo ?? []).forEach(n => {
-      add({
-        id: n.id,
-        tipo: 'jogo',
-        texto: n.corpo,
-        data: new Date(n.criadaEm),
-        raw: n,
-        lida: !!n.lidaEm
-      } as NotificacaoUnificada, `jogo-${n.id}`);
-    });
+    // Jogo
+    (this.reminderJogo ?? []).forEach(n => add({ id: n.id, tipo: 'jogo', texto: n.corpo, data: new Date(n.criadaEm), raw: n, lida: !!n.lidaEm }, `jogo-${n.id}`));
 
-    // Filme (verificar se tem lidaEm para determinar se está lido)
-    (this.filmeDisponivel ?? []).forEach(n => {
-      add({
-        id: n.id,
-        tipo: 'filme',
-        texto: n.corpo ?? n.titulo ?? '',
-        data: new Date(n.criadaEm),
-        raw: n,
-        lida: !!n.lidaEm
-      } as NotificacaoUnificada, `filme-${n.id}`);
-    });
+    // Filme
+    (this.filmeDisponivel ?? []).forEach(n => add({ id: n.id, tipo: 'filme', texto: n.corpo ?? n.titulo ?? '', data: new Date(n.criadaEm), raw: n, lida: !!n.lidaEm }, `filme-${n.id}`));
 
-    // Comunidades lidas
-    (this.comunidadeFeed.read ?? []).forEach(n => {
-      add({
-        id: n.id,
-        tipo: 'comunidade',
-        texto: `Comunidades: novas publicações em ${n.comunidadeNome}`,
-        data: new Date(n.criadaEm),
-        raw: n,
-        lida: true
-      } as NotificacaoUnificada, `comunidade-read-${n.id}`);
-    });
+    // Resumo
+    (this.resumoFeed.unread ?? []).forEach(n => add({ id: n.id, tipo: 'resumo', texto: 'Resumo semanal', data: new Date(n.criadaEm), raw: n, lida: false }, `resumo-${n.id}`));
+    (this.resumoFeed.read ?? []).forEach(n => add({ id: n.id, tipo: 'resumo', texto: 'Resumo semanal', data: new Date(n.criadaEm), raw: n, lida: true }, `resumo-read-${n.id}`));
 
-    // Medalhas lidas
-    (this.medalhaFeed.read ?? []).forEach(n => {
-      add({
-        id: n.id,
-        tipo: 'medalha',
-        texto: `Desbloqueaste ${n.medalhaNome}`,
-        data: new Date(n.criadaEm),
-        raw: n,
-        lida: true
-      } as NotificacaoUnificada, `medalha-read-${n.id}`);
-    });
-
-    // Resumo não lidos
-    (this.resumoFeed.unread ?? []).forEach(n => {
-      add({
-        id: n.id,
-        tipo: 'resumo',
-        texto: 'Resumo semanal',
-        data: new Date(n.criadaEm),
-        raw: n,
-        lida: false
-      } as NotificacaoUnificada, `resumo-${n.id}`);
-    });
-
-    // Resumo lidos
-    (this.resumoFeed.read ?? []).forEach(n => {
-      add({
-        id: n.id,
-        tipo: 'resumo',
-        texto: 'Resumo semanal',
-        data: new Date(n.criadaEm),
-        raw: n,
-        lida: true
-      } as NotificacaoUnificada, `resumo-read-${n.id}`);
-    });
-
-    return Array.from(mapa.values())
-      .sort((a, b) => b.data.getTime() - a.data.getTime());
+    return Array.from(mapa.values()).sort((a, b) => b.data.getTime() - a.data.getTime());
   }
 
-  // ── Getters para paginação das notificações ──
   get notificacoesPaged(): NotificacaoUnificada[] {
     const all = this.notificacoesOrdenadas;
     const start = this.notifPage * this.notifPageSize;
     return all.slice(start, start + this.notifPageSize);
   }
 
-  get notifPagerVisible(): boolean {
-    return this.notificacoesOrdenadas.length > this.notifPageSize;
-  }
+  get notifPagerVisible(): boolean { return this.notificacoesOrdenadas.length > this.notifPageSize; }
 
   get notifPageLabel(): string {
     const total = this.notificacoesOrdenadas.length;
     if (total === 0) return '';
-    const pages = Math.max(1, Math.ceil(total / this.notifPageSize));
-    return `${this.notifPage + 1} / ${pages}`;
+    return `${this.notifPage + 1} / ${Math.max(1, Math.ceil(total / this.notifPageSize))}`;
   }
 
-  get notifLastPage(): number {
-    return Math.max(0, Math.ceil(this.notificacoesOrdenadas.length / this.notifPageSize) - 1);
-  }
+  get notifLastPage(): number { return Math.max(0, Math.ceil(this.notificacoesOrdenadas.length / this.notifPageSize) - 1); }
 
-  prevNotifPage(e: MouseEvent): void {
-    e.stopPropagation();
-    this.notifPage = Math.max(0, this.notifPage - 1);
-  }
-
-  nextNotifPage(e: MouseEvent): void {
-    e.stopPropagation();
-    this.notifPage = Math.min(this.notifLastPage, this.notifPage + 1);
-  }
+  prevNotifPage(e: MouseEvent): void { e.stopPropagation(); this.notifPage = Math.max(0, this.notifPage - 1); }
+  nextNotifPage(e: MouseEvent): void { e.stopPropagation(); this.notifPage = Math.min(this.notifLastPage, this.notifPage + 1); }
 
   private clampNotifPage(): void {
     const max = this.notifLastPage;
@@ -412,7 +347,6 @@ export class TopbarActionsComponent implements OnInit, OnDestroy {
   }
 
   // ── Medal notifications ──
-
   private loadMedalhaUnreadCount(): void {
     this.notificacoesService.getNotificacoesMedalhaUnreadCount().subscribe({
       next: (count) => {
@@ -443,14 +377,13 @@ export class TopbarActionsComponent implements OnInit, OnDestroy {
   marcarMedalhaComoLida(item: NotificacaoMedalhaItemDto): void {
     this.notificacoesService.marcarNotificacaoMedalhaComoLida(item.id).subscribe({
       next: () => {
-        // Mover para lidas em vez de remover
         const now = new Date().toISOString();
         this.medalhaFeed = {
           unread: (this.medalhaFeed.unread ?? []).filter(x => x.id !== item.id),
           read: [
             { ...item, lidaEm: now },
             ...(this.medalhaFeed.read ?? []).filter(x => x.id !== item.id)
-          ].slice(0, 50) // Manter até 50 notificações lidas
+          ].slice(0, 50)
         };
         this.medalhaUnreadCount = Math.max(0, this.medalhaUnreadCount - 1);
         this.cdr.markForCheck();
@@ -461,12 +394,11 @@ export class TopbarActionsComponent implements OnInit, OnDestroy {
   marcarTodasMedalhasComoLidas(): void {
     this.notificacoesService.marcarTodasNotificacoesMedalhaComoLidas().subscribe({
       next: () => {
-        // Mover todas as não lidas para lidas
         const now = new Date().toISOString();
         const allRead = [
           ...(this.medalhaFeed.unread ?? []).map(x => ({ ...x, lidaEm: now })),
           ...(this.medalhaFeed.read ?? [])
-        ].slice(0, 50); // Manter até 50 notificações lidas
+        ].slice(0, 50);
         this.medalhaFeed = { unread: [], read: allRead };
         this.medalhaUnreadCount = 0;
         this.cdr.markForCheck();
@@ -474,70 +406,7 @@ export class TopbarActionsComponent implements OnInit, OnDestroy {
     });
   }
 
-  get hasMedalhaItems(): boolean {
-    return ((this.medalhaFeed?.unread?.length ?? 0) + (this.medalhaFeed?.read?.length ?? 0)) > 0;
-  }
-
-  // ── Anúncios da plataforma ──
-
-  private loadPlataformaUnreadCount(): void {
-    this.notificacoesService.getNotificacoesPlataformaUnreadCount().subscribe({
-      next: (count) => {
-        this.plataformaUnreadCount = count;
-        this.cdr.markForCheck();
-      }
-    });
-  }
-
-  private loadPlataformaFeed(): void {
-    this.notificacoesService.getNotificacoesPlataformaFeed({ unreadLimit: 12, readLimit: 6 }).subscribe({
-      next: (dto) => {
-        this.plataformaFeed = dto ?? { unread: [], read: [] };
-        this.cdr.markForCheck();
-      },
-      error: () => {
-        this.plataformaFeed = { unread: [], read: [] };
-      }
-    });
-    this.loadPlataformaUnreadCount();
-  }
-
-  marcarPlataformaLida(e: MouseEvent, item: NotificacaoPlataformaItemDto): void {
-    e.preventDefault();
-    e.stopPropagation();
-    this.notificacoesService.marcarNotificacaoPlataformaComoLida(item.id).subscribe({
-      next: () => {
-        this.plataformaFeed = {
-          unread: (this.plataformaFeed.unread ?? []).filter(x => x.id !== item.id),
-          read: [
-            { ...item, lidaEm: new Date().toISOString() },
-            ...(this.plataformaFeed.read ?? []).filter(x => x.id !== item.id)
-          ].slice(0, 12)
-        };
-        this.plataformaUnreadCount = Math.max(0, this.plataformaUnreadCount - 1);
-        this.cdr.markForCheck();
-      }
-    });
-  }
-
-  get hasPlataformaItems(): boolean {
-    return ((this.plataformaFeed?.unread?.length ?? 0) + (this.plataformaFeed?.read?.length ?? 0)) > 0;
-  }
-
-  // ── Existing methods below unchanged ──
-  get hasResumoItems(): boolean {
-    const u = this.resumoFeed?.unread?.length ?? 0;
-    const r = this.resumoFeed?.read?.length ?? 0;
-    return u + r > 0;
-  }
-
-  /** Texto para linha "Géneros mais vistos" nos cards de resumo; vazio se não houver dados. */
-  resumoGenerosLabel(it: ResumoEstatisticasFeedItemDto): string {
-    const list = it.corpo?.generosMaisVistos;
-    if (!list?.length) return '';
-    return list.map((g) => `${g.nome} (${g.filmes})`).join(', ');
-  }
-
+  // ── Resumo / Jogo / Filmes ──
   private loadResumoFeed(): void {
     this.notificacoesService.getResumoEstatisticasFeed({ unreadLimit: 50, readLimit: 50 }).subscribe({
       next: (dto) => {
@@ -547,9 +416,7 @@ export class TopbarActionsComponent implements OnInit, OnDestroy {
         };
         this.cdr.markForCheck();
       },
-      error: () => {
-        this.resumoFeed = { unread: [], read: [] };
-      }
+      error: () => { this.resumoFeed = { unread: [], read: [] }; }
     });
   }
 
@@ -573,30 +440,45 @@ export class TopbarActionsComponent implements OnInit, OnDestroy {
     });
   }
 
+  private loadResumoUnreadCount(): void {
+    this.notificacoesService.getResumoEstatisticasUnreadCount().subscribe({
+      next: (count) => {
+        this.resumoUnreadCount = count;
+        this.cdr.markForCheck();
+      }
+    });
+  }
 
+  private loadFilmeDisponivelUnreadCount(): void {
+    this.notificacoesService.getFilmeDisponivelUnreadCount().subscribe({
+      next: (count) => {
+        this.filmeDisponivelUnreadCount = count;
+        this.cdr.markForCheck();
+      }
+    });
+  }
+
+  private loadReminderJogoUnreadCount(): void {
+    this.notificacoesService.getReminderJogoUnreadCount().subscribe({
+      next: (count) => {
+        this.reminderJogoUnreadCount = count;
+        this.cdr.markForCheck();
+      }
+    });
+  }
 
   marcarFilmeDisponivelLida(e: MouseEvent, item: FilmeDisponivelNotifDto): void {
     e.preventDefault();
     e.stopPropagation();
     this.notificacoesService.marcarFilmeDisponivelComoLida(item.id).subscribe({
       next: () => {
-        // Marcar como lida mantendo na lista
         this.filmeDisponivel = this.filmeDisponivel.map((x) =>
           x.id === item.id ? { ...x, lidaEm: new Date().toISOString() } : x
         );
+        this.filmeDisponivelUnreadCount = Math.max(0, this.filmeDisponivelUnreadCount - 1);
         this.cdr.markForCheck();
       }
     });
-  }
-
-  openFilmeDisponivelNotif(e: MouseEvent, item: FilmeDisponivelNotifDto): void {
-    e.preventDefault();
-    e.stopPropagation();
-    const id = item.filmeId;
-    if (id && !isNaN(id)) {
-      this.isNotificationsOpen = false;
-      this.router.navigate(['/movie-detail', id]);
-    }
   }
 
   private marcarReminderLidoInterno(id: number): void {
@@ -604,17 +486,16 @@ export class TopbarActionsComponent implements OnInit, OnDestroy {
     this.reminderJogo = this.reminderJogo.map(r =>
       r.id === id ? { ...r, lidaEm: new Date().toISOString() } : r
     );
+    this.reminderJogoUnreadCount = Math.max(0, this.reminderJogoUnreadCount - 1);
     this.cdr.markForCheck();
   }
 
-  // Só marca como lido (botão ✓)
   marcarReminderLido(e: MouseEvent, id: number): void {
     e.preventDefault();
     e.stopPropagation();
     this.marcarReminderLidoInterno(id);
   }
 
-  // Marca como lido E navega (botão "Jogar agora →")
   marcarReminderLidoEJogar(e: MouseEvent, id: number): void {
     e.preventDefault();
     e.stopPropagation();
@@ -632,15 +513,15 @@ export class TopbarActionsComponent implements OnInit, OnDestroy {
           read: [
             { ...item, lidaEm: new Date().toISOString() },
             ...(this.resumoFeed.read ?? []).filter((x) => x.id !== item.id)
-          ].slice(0, 50) // Manter até 50 notificações lidas
+          ].slice(0, 50)
         };
+        this.resumoUnreadCount = Math.max(0, this.resumoUnreadCount - 1);
         this.cdr.markForCheck();
       }
     });
   }
 
   // ── Unified notification handlers ──
-
   onNotifClick(e: MouseEvent, n: NotificacaoUnificada): void {
     e.preventDefault();
     e.stopPropagation();
@@ -656,13 +537,7 @@ export class TopbarActionsComponent implements OnInit, OnDestroy {
           this.router.navigate(['/movie-detail', filmeId]);
         }
         break;
-      case 'resumo':
-        // Resumo não tem navegação específica, apenas mostra detalhes
-        break;
-      case 'medalha':
-      case 'jogo':
-        // Medalhas e jogo não têm navegação no clique
-        break;
+      // Resumo, plataforma, jogo e medalha não navegam via card click normal
     }
   }
 
@@ -671,138 +546,65 @@ export class TopbarActionsComponent implements OnInit, OnDestroy {
     e.stopPropagation();
 
     switch (n.tipo) {
-      case 'comunidade':
-        this.marcarComunidadeNotifLida(e, n.raw);
-        break;
-      case 'medalha':
-        this.marcarMedalhaComoLida(n.raw);
-        break;
-      case 'jogo':
-        this.marcarReminderLido(e, n.id);
-        break;
-      case 'filme':
-        this.marcarFilmeDisponivelLida(e, n.raw);
-        break;
-      case 'resumo':
-        this.marcarResumoLida(e, n.raw);
-        break;
+      case 'plataforma': this.marcarPlataformaLida(e, n.raw); break;
+      case 'comunidade': this.marcarComunidadeNotifLida(e, n.raw); break;
+      case 'medalha': this.marcarMedalhaComoLida(n.raw); break;
+      case 'jogo': this.marcarReminderLido(e, n.id); break;
+      case 'filme': this.marcarFilmeDisponivelLida(e, n.raw); break;
+      case 'resumo': this.marcarResumoLida(e, n.raw); break;
     }
   }
 
   marcarTodasNotificacoesLidas(e: MouseEvent): void {
     e.stopPropagation();
-
-    // Marcar todas as notificações não lidas como lidas
-    if (this.comunidadeUnreadCount > 0) {
-      this.marcarTodasComunidadeLidas(e);
+    if (this.comunidadeUnreadCount > 0) this.marcarTodasComunidadeLidas(e);
+    if (this.medalhaUnreadCount > 0) this.marcarTodasMedalhasComoLidas();
+    if (this.plataformaUnreadCount > 0) {
+      // Loop rápido para limpar as da plataforma caso existam
+      this.plataformaFeed.unread?.forEach(p => this.marcarPlataformaLida(e, p));
     }
-    if (this.medalhaUnreadCount > 0) {
-      this.marcarTodasMedalhasComoLidas();
-    }
-    // Ajustar página se necessário após reduzir notificações
     setTimeout(() => this.clampNotifPage(), 0);
   }
 
-  openResumoCommunityMovie(e: MouseEvent, f: ResumoFilmeComunidadeDto): void {
-    e.preventDefault();
-    e.stopPropagation();
-    this.isNotificationsOpen = false;
-    const id = f?.filmeId;
-    if (id && !isNaN(id)) this.router.navigate(['/movie-detail', id]);
-  }
-
-  get hasUpcomingList(): boolean {
-    return (this.upcomingTmdb?.length ?? 0) > 0;
-  }
-
-  get showEstreiasGenreFilter(): boolean {
-    return this.proximasEstreiasSessaoAtiva;
-  }
+  // ── Funções de Estreias (Upcoming) ──
+  get hasUpcomingList(): boolean { return (this.upcomingTmdb?.length ?? 0) > 0; }
+  get showEstreiasGenreFilter(): boolean { return this.proximasEstreiasSessaoAtiva; }
 
   private isUpcomingRead(m: Filme): boolean {
     const t = Number(m.tmdbId);
     return !!m.tmdbId && !isNaN(t) && this.readTmdbIds.has(t);
   }
 
-  get upcomingUnreadAll(): Filme[] {
-    const list = (this.upcomingTmdb || []).filter((m) => m.tmdbId && !this.isUpcomingRead(m));
-    return this.filmesService.sortFilmesByReleaseAsc(list);
-  }
+  get upcomingUnreadAll(): Filme[] { return this.filmesService.sortFilmesByReleaseAsc((this.upcomingTmdb || []).filter((m) => m.tmdbId && !this.isUpcomingRead(m))); }
+  get upcomingReadAll(): Filme[] { return this.filmesService.sortFilmesByReleaseAsc((this.upcomingTmdb || []).filter((m) => m.tmdbId && this.isUpcomingRead(m))); }
 
-  get upcomingReadAll(): Filme[] {
-    const list = (this.upcomingTmdb || []).filter((m) => m.tmdbId && this.isUpcomingRead(m));
-    return this.filmesService.sortFilmesByReleaseAsc(list);
-  }
+  get upcomingUnreadPaged(): Filme[] { return this.upcomingUnreadAll.slice(this.upcomingUnreadPage * this.upcomingPageSize, (this.upcomingUnreadPage + 1) * this.upcomingPageSize); }
+  get upcomingReadPaged(): Filme[] { return this.upcomingReadAll.slice(this.upcomingReadPage * this.upcomingPageSize, (this.upcomingReadPage + 1) * this.upcomingPageSize); }
 
-  get upcomingUnreadPaged(): Filme[] {
-    const all = this.upcomingUnreadAll;
-    const start = this.upcomingUnreadPage * this.upcomingPageSize;
-    return all.slice(start, start + this.upcomingPageSize);
-  }
-
-  get upcomingReadPaged(): Filme[] {
-    const all = this.upcomingReadAll;
-    const start = this.upcomingReadPage * this.upcomingPageSize;
-    return all.slice(start, start + this.upcomingPageSize);
-  }
-
-  get upcomingUnreadPagerVisible(): boolean {
-    return this.upcomingUnreadAll.length > this.upcomingPageSize;
-  }
-
-  get upcomingReadPagerVisible(): boolean {
-    return this.upcomingReadAll.length > this.upcomingPageSize;
-  }
+  get upcomingUnreadPagerVisible(): boolean { return this.upcomingUnreadAll.length > this.upcomingPageSize; }
+  get upcomingReadPagerVisible(): boolean { return this.upcomingReadAll.length > this.upcomingPageSize; }
 
   get upcomingUnreadPageLabel(): string {
     const total = this.upcomingUnreadAll.length;
-    if (total === 0) return '';
-    const pages = Math.max(1, Math.ceil(total / this.upcomingPageSize));
-    return `${this.upcomingUnreadPage + 1} / ${pages}`;
+    return total === 0 ? '' : `${this.upcomingUnreadPage + 1} / ${Math.max(1, Math.ceil(total / this.upcomingPageSize))}`;
   }
 
   get upcomingReadPageLabel(): string {
     const total = this.upcomingReadAll.length;
-    if (total === 0) return '';
-    const pages = Math.max(1, Math.ceil(total / this.upcomingPageSize));
-    return `${this.upcomingReadPage + 1} / ${pages}`;
+    return total === 0 ? '' : `${this.upcomingReadPage + 1} / ${Math.max(1, Math.ceil(total / this.upcomingPageSize))}`;
   }
 
-  get upcomingUnreadLastPage(): number {
-    return Math.max(0, Math.ceil(this.upcomingUnreadAll.length / this.upcomingPageSize) - 1);
-  }
+  get upcomingUnreadLastPage(): number { return Math.max(0, Math.ceil(this.upcomingUnreadAll.length / this.upcomingPageSize) - 1); }
+  get upcomingReadLastPage(): number { return Math.max(0, Math.ceil(this.upcomingReadAll.length / this.upcomingPageSize) - 1); }
 
-  get upcomingReadLastPage(): number {
-    return Math.max(0, Math.ceil(this.upcomingReadAll.length / this.upcomingPageSize) - 1);
-  }
-
-  prevUnreadPage(e: MouseEvent): void {
-    e.stopPropagation();
-    this.upcomingUnreadPage = Math.max(0, this.upcomingUnreadPage - 1);
-  }
-
-  nextUnreadPage(e: MouseEvent): void {
-    e.stopPropagation();
-    const max = Math.max(0, Math.ceil(this.upcomingUnreadAll.length / this.upcomingPageSize) - 1);
-    this.upcomingUnreadPage = Math.min(max, this.upcomingUnreadPage + 1);
-  }
-
-  prevReadPage(e: MouseEvent): void {
-    e.stopPropagation();
-    this.upcomingReadPage = Math.max(0, this.upcomingReadPage - 1);
-  }
-
-  nextReadPage(e: MouseEvent): void {
-    e.stopPropagation();
-    const max = Math.max(0, Math.ceil(this.upcomingReadAll.length / this.upcomingPageSize) - 1);
-    this.upcomingReadPage = Math.min(max, this.upcomingReadPage + 1);
-  }
+  prevUnreadPage(e: MouseEvent): void { e.stopPropagation(); this.upcomingUnreadPage = Math.max(0, this.upcomingUnreadPage - 1); }
+  nextUnreadPage(e: MouseEvent): void { e.stopPropagation(); this.upcomingUnreadPage = Math.min(this.upcomingUnreadLastPage, this.upcomingUnreadPage + 1); }
+  prevReadPage(e: MouseEvent): void { e.stopPropagation(); this.upcomingReadPage = Math.max(0, this.upcomingReadPage - 1); }
+  nextReadPage(e: MouseEvent): void { e.stopPropagation(); this.upcomingReadPage = Math.min(this.upcomingReadLastPage, this.upcomingReadPage + 1); }
 
   private clampUpcomingPages(): void {
-    const maxU = Math.max(0, Math.ceil(this.upcomingUnreadAll.length / this.upcomingPageSize) - 1);
-    if (this.upcomingUnreadPage > maxU) this.upcomingUnreadPage = maxU;
-    const maxR = Math.max(0, Math.ceil(this.upcomingReadAll.length / this.upcomingPageSize) - 1);
-    if (this.upcomingReadPage > maxR) this.upcomingReadPage = maxR;
+    if (this.upcomingUnreadPage > this.upcomingUnreadLastPage) this.upcomingUnreadPage = this.upcomingUnreadLastPage;
+    if (this.upcomingReadPage > this.upcomingReadLastPage) this.upcomingReadPage = this.upcomingReadLastPage;
   }
 
   private syncReadTmdbFromServer(): void {
@@ -834,21 +636,11 @@ export class TopbarActionsComponent implements OnInit, OnDestroy {
     };
 
     this.notificacoesService
-      .getProximasEstreiasPersonalizadas({
-        page: 1,
-        count: 40,
-        filtrarPorGeneros: this.filtrarEstreiasPorGeneros
-      })
+      .getProximasEstreiasPersonalizadas({ page: 1, count: 40, filtrarPorGeneros: this.filtrarEstreiasPorGeneros })
       .pipe(
-        tap(() => {
-          this.proximasEstreiasSessaoAtiva = true;
-        }),
+        tap(() => { this.proximasEstreiasSessaoAtiva = true; }),
         catchError((err) => {
-          if (err?.status === 401) {
-            this.proximasEstreiasSessaoAtiva = false;
-          } else {
-            this.proximasEstreiasSessaoAtiva = true;
-          }
+          this.proximasEstreiasSessaoAtiva = (err?.status !== 401);
           return this.filmesService.getUpcoming(1, 40);
         })
       )
@@ -870,12 +662,14 @@ export class TopbarActionsComponent implements OnInit, OnDestroy {
       (m) => m.tmdbId && (!m.releaseDate || !((m.duracao ?? 0) > 0))
     );
     if (!missing.length) return;
+
     this.isLoadingUpcomingDetails = true;
     const requests = missing.map((m) => {
       const idNum = Number(m.tmdbId);
       if (!idNum || isNaN(idNum)) return of(null);
       return this.filmesService.getMovieFromTmdb(idNum).pipe(catchError(() => of(null)));
     });
+
     forkJoin(requests).subscribe({
       next: (results: (Filme | null)[]) => {
         results.forEach((res, idx) => {
@@ -893,9 +687,7 @@ export class TopbarActionsComponent implements OnInit, OnDestroy {
                   if (remoteDate) break;
                 }
               }
-            } catch {
-              /* ignore */
-            }
+            } catch { /* ignore */ }
           }
           const tid = missing[idx].tmdbId;
           const local = tid ? this.upcomingTmdb.find((x) => x.tmdbId === tid) : undefined;
@@ -909,18 +701,15 @@ export class TopbarActionsComponent implements OnInit, OnDestroy {
               if (!isNaN(y)) local.ano = y;
             }
           }
+
           const remoteDur = anyRes.duracao ?? anyRes.Duracao;
           if (local && typeof remoteDur === 'number' && remoteDur > 0 && !((local.duracao ?? 0) > 0)) {
             local.duracao = remoteDur;
           }
         });
       },
-      complete: () => {
-        this.isLoadingUpcomingDetails = false;
-      },
-      error: () => {
-        this.isLoadingUpcomingDetails = false;
-      }
+      complete: () => { this.isLoadingUpcomingDetails = false; },
+      error: () => { this.isLoadingUpcomingDetails = false; }
     });
   }
 

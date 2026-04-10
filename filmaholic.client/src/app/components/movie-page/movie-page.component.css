@@ -769,7 +769,7 @@
 .recommendations-section {
   margin-top: 30px;
   padding: 22px;
-  background: #010B15;
+  background: rgba(255,255,255,0.04);
   border-radius: 16px;
   border: 1px solid rgba(255,255,255,0.08);
 }
@@ -795,7 +795,7 @@
         height: 22px;
         margin-right: 10px;
         border-radius: 999px;
-        background: rgba(255,255,255,0.9);
+        background: #ff4081;
         vertical-align: middle;
       }
 

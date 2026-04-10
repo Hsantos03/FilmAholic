@@ -1046,6 +1046,20 @@ namespace FilmAholic.Server.Controllers
             return NoContent();
         }
 
+        /// Contagem de notificações de resumo estatísticas não lidas.
+        [HttpGet("resumo-estatisticas/unread-count")]
+        public async Task<ActionResult<int>> GetResumoEstatisticasUnreadCount()
+        {
+            var userId = GetUserId();
+            if (string.IsNullOrWhiteSpace(userId))
+                return Unauthorized();
+
+            var count = await _context.Notificacoes
+                .CountAsync(n => n.UtilizadorId == userId && n.Tipo == TipoResumoEstatisticas && n.LidaEm == null);
+
+            return Ok(count);
+        }
+
         /// Feed de notificações de comunidade (novas publicações).
         [HttpGet("comunidade/feed")]
         public async Task<ActionResult<NotificacaoComunidadeFeedDto>> GetNotificacoesComunidadeFeed(
@@ -1189,6 +1203,19 @@ namespace FilmAholic.Server.Controllers
             notif.LidaEm = DateTime.UtcNow;
             await _context.SaveChangesAsync();
             return NoContent();
+        }
+
+        /// Contagem de notificações de reminder de jogo não lidas.
+        [HttpGet("reminder-jogo/unread-count")]
+        public async Task<ActionResult<int>> GetReminderJogoUnreadCount()
+        {
+            var userId = GetUserId();
+            if (string.IsNullOrWhiteSpace(userId)) return Unauthorized();
+
+            var count = await _context.Notificacoes
+                .CountAsync(n => n.UtilizadorId == userId && n.Tipo == TipoReminderJogo && n.LidaEm == null);
+
+            return Ok(count);
         }
 
         // ── Medal notifications ──
@@ -1433,6 +1460,18 @@ namespace FilmAholic.Server.Controllers
             return NoContent();
         }
 
+        /// Contagem de notificações de filme disponível não lidas.
+        [HttpGet("filme-disponivel/unread-count")]
+        public async Task<ActionResult<int>> GetFilmeDisponivelUnreadCount()
+        {
+            var userId = GetUserId();
+            if (string.IsNullOrEmpty(userId)) return Unauthorized();
+
+            var count = await _context.Notificacoes
+                .CountAsync(n => n.UtilizadorId == userId && n.Tipo == TipoFilmeDisponivel && n.LidaEm == null);
+
+            return Ok(count);
+        }
 
         public class NotificacaoPlataformaItemDto
         {
