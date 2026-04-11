@@ -124,11 +124,15 @@ namespace FilmAholic.Server.Controllers
 
             if (dto.FotoPerfilUrl is not null)
             {
+                if (IsBase64ImageTooLarge(dto.FotoPerfilUrl, 1 * 1024 * 1024))
+                    return BadRequest(new { message = "A imagem de perfil é muito grande (máximo 1MB)." });
                 user.FotoPerfilUrl = string.IsNullOrWhiteSpace(dto.FotoPerfilUrl) ? null : dto.FotoPerfilUrl;
             }
 
             if (dto.CapaUrl is not null)
             {
+                if (IsBase64ImageTooLarge(dto.CapaUrl, 1 * 1024 * 1024))
+                    return BadRequest(new { message = "A imagem de capa é muito grande (máximo 1MB)." });
                 user.CapaUrl = string.IsNullOrWhiteSpace(dto.CapaUrl) ? null : dto.CapaUrl;
             }
 
@@ -443,6 +447,27 @@ namespace FilmAholic.Server.Controllers
             public string? Tag { get; set; }
             public string? PrimaryColor { get; set; }
             public string? SecondaryColor { get; set; }
+        }
+        private static bool IsBase64ImageTooLarge(string? base64String, long maxSizeBytes)
+        {
+            if (string.IsNullOrEmpty(base64String)) return false;
+            // Handle common data URI formats
+            var base64Part = base64String;
+            if (base64String.Contains("base64,"))
+            {
+                base64Part = base64String.Substring(base64String.IndexOf("base64,") + 7);
+            }
+            
+            try 
+            {
+                // A rough estimate is faster: every 4 chars = 3 bytes
+                long estimatedSize = (base64Part.Length * 3) / 4;
+                return estimatedSize > maxSizeBytes;
+            }
+            catch
+            {
+                return false;
+            }
         }
     }
 }

@@ -1096,6 +1096,10 @@
         <img *ngIf="editCapaUrl" [src]="editCapaUrl" alt="Pré-visualização da capa" class="image-preview" />
         <input id="capaFile" name="capaFile" type="file" accept="image/*" (change)="onCapaFileSelected($event)" />
       </div>
+      <div class="error-container" *ngIf="capaError" style="display: flex; align-items: center; gap: 8px; margin-top: 8px;">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="#ff4d4d"><path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/></svg>
+        <p class="error-text" style="color: #ff4d4d; margin: 0; font-size: 0.9rem; font-weight: 500;">{{ capaError }}</p>
+      </div>
 
       <div class="modal-actions">
         <button type="button" class="cancel-btn" (click)="closeEditCapa()">Cancelar</button>
@@ -1118,6 +1122,10 @@
       <div class="image-preview-container">
         <img *ngIf="editFotoPerfilUrl" [src]="editFotoPerfilUrl" alt="Pré-visualização do avatar" class="image-preview avatar-preview" />
         <input id="avatarFile" name="avatarFile" type="file" accept="image/*" (change)="onAvatarFileSelected($event)" />
+      </div>
+      <div class="error-container" *ngIf="avatarError" style="display: flex; align-items: center; gap: 8px; margin-top: 8px;">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="#ff4d4d"><path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/></svg>
+        <p class="error-text" style="color: #ff4d4d; margin: 0; font-size: 0.9rem; font-weight: 500;">{{ avatarError }}</p>
       </div>
 
       <div class="modal-actions">

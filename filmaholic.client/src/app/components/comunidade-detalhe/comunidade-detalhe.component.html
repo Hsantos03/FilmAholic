@@ -690,7 +690,7 @@
     </div>
 
     <label for="editLimiteMembros">Limite de membros (opcional)</label>
-    <input id="editLimiteMembros" type="number" min="1" max="500" [(ngModel)]="editLimiteMembros" />
+    <input id="editLimiteMembros" type="number" min="1" max="500" [(ngModel)]="editLimiteMembros" (keydown)="onlyNumbers($event)" inputmode="numeric" pattern="[0-9]*" />
     <div *ngIf="editLimiteMembros !== null && editLimiteMembros < 0" class="length-warning">
       <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"></path><path d="M12 9v4"></path><path d="M12 17h.01"></path></svg>
       <span>O limite de membros não pode ser um número negativo.</span>
@@ -716,6 +716,10 @@
       Alterar capa (banner)
       <input type="file" accept="image/*" (change)="onEditBannerSelected($event)" style="display:none" />
     </label>
+    <div class="error-container" *ngIf="bannerError" style="display: flex; align-items: center; gap: 8px; margin-top: -10px; margin-bottom: 10px;">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="#ff4d4d"><path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/></svg>
+      <div class="form-error" style="margin: 0;">{{ bannerError }}</div>
+    </div>
     <div *ngIf="editBannerPreview" class="imagem-preview">
       <img [src]="editBannerPreview" alt="Nova capa" />
       <button type="button" class="remove-img-btn" (click)="editBannerFile = null; editBannerPreview = null">✕ Remover</button>
@@ -731,6 +735,10 @@
       Alterar foto de perfil (ícone)
       <input type="file" accept="image/*" (change)="onEditIconSelected($event)" style="display:none" />
     </label>
+    <div class="error-container" *ngIf="iconError" style="display: flex; align-items: center; gap: 8px; margin-top: -10px; margin-bottom: 10px;">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="#ff4d4d"><path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/></svg>
+      <div class="form-error" style="margin: 0;">{{ iconError }}</div>
+    </div>
     <div *ngIf="editIconPreview" class="imagem-preview">
       <img [src]="editIconPreview" alt="Novo ícone" />
       <button type="button" class="remove-img-btn" (click)="editIconFile = null; editIconPreview = null">✕ Remover</button>

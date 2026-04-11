@@ -61,6 +61,8 @@ export class ComunidadesComponent implements OnInit {
   iconPreview: string | null = null;
   isCreating = false;
   createError = '';
+  bannerError = '';
+  iconError = '';
 
   sugestoesFilmes: SugestaoFilmeComunidade[] = [];
   isLoadingSugestoes = false;
@@ -169,7 +171,6 @@ export class ComunidadesComponent implements OnInit {
   }
 
   openCreate(): void {
-    this.createError = '';
     this.newNome = '';
     this.newDescricao = '';
     this.newLimiteMembros = null;
@@ -177,40 +178,56 @@ export class ComunidadesComponent implements OnInit {
     this.bannerFile = null;
     this.bannerPreview = null;
     this.iconFile = null;
-    if (this.iconPreview) {
-      URL.revokeObjectURL(this.iconPreview);
-      this.iconPreview = null;
-    }
+    this.iconPreview = null;
+    this.createError = '';
+    this.bannerError = '';
+    this.iconError = '';
     this.showCreateModal = true;
   }
 
   closeCreate(): void {
     this.showCreateModal = false;
-    this.isCreating = false;
+    this.createError = '';
+    this.bannerError = '';
+    this.iconError = '';
   }
 
   onBannerSelected(ev: any): void {
     const f: File = ev?.target?.files?.[0];
-    this.bannerFile = f || null;
+    if (!f) return;
+    this.bannerError = '';
+
+    if (f.size > 1 * 1024 * 1024) {
+      this.bannerError = 'A imagem do banner é muito grande. Por favor, escolha uma imagem menor que 1MB.';
+      ev.target.value = '';
+      return;
+    }
+
+    this.bannerFile = f;
     if (this.bannerPreview) {
       URL.revokeObjectURL(this.bannerPreview);
       this.bannerPreview = null;
     }
-    if (this.bannerFile) {
-      this.bannerPreview = URL.createObjectURL(this.bannerFile);
-    }
+    this.bannerPreview = URL.createObjectURL(this.bannerFile);
   }
 
   onIconSelected(ev: any): void {
     const f: File = ev?.target?.files?.[0];
-    this.iconFile = f || null;
+    if (!f) return;
+    this.iconError = '';
+
+    if (f.size > 1 * 1024 * 1024) {
+      this.iconError = 'O ícone é muito grande. Por favor, escolha uma imagem menor que 1MB.';
+      ev.target.value = '';
+      return;
+    }
+
+    this.iconFile = f;
     if (this.iconPreview) {
       URL.revokeObjectURL(this.iconPreview);
       this.iconPreview = null;
     }
-    if (this.iconFile) {
-      this.iconPreview = URL.createObjectURL(this.iconFile);
-    }
+    this.iconPreview = URL.createObjectURL(this.iconFile);
   }
 
   createCommunity(): void {
@@ -284,5 +301,12 @@ export class ComunidadesComponent implements OnInit {
   initialLetra(nome: string | undefined): string {
     const t = (nome || '?').trim();
     return t.length ? t.charAt(0).toUpperCase() : '?';
+  }
+
+  onlyNumbers(event: KeyboardEvent): void {
+    const allowedKeys = ['Backspace', 'Tab', 'ArrowLeft', 'ArrowRight', 'Delete', 'Enter'];
+    if (!allowedKeys.includes(event.key) && isNaN(Number(event.key)) && event.key !== ' ') {
+      event.preventDefault();
+    }
   }
 }

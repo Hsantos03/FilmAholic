@@ -82,6 +82,8 @@ export class ComunidadeDetalheComponent implements OnInit, OnDestroy {
   editRemoveIcon = false;
   isSavingEdit = false;
   editError = '';
+  bannerError = '';
+  iconError = '';
 
   // ── Modal de confirmação de apagar ─────
   showDeleteModal = false;
@@ -412,8 +414,8 @@ export class ComunidadeDetalheComponent implements OnInit, OnDestroy {
   openEditModal(): void {
     if (!this.comunidade) return;
     this.editNome = this.comunidade.nome;
-    this.editDescricao = this.comunidade.descricao ?? '';
-    this.editLimiteMembros = this.comunidade.limiteMembros ?? null;
+    this.editDescricao = this.comunidade.descricao || '';
+    this.editLimiteMembros = this.comunidade.limiteMembros || null;
     this.editIsPrivada = !!this.comunidade.isPrivada;
     this.editBannerFile = null;
     this.editBannerPreview = null;
@@ -422,26 +424,49 @@ export class ComunidadeDetalheComponent implements OnInit, OnDestroy {
     this.editRemoveBanner = false;
     this.editRemoveIcon = false;
     this.editError = '';
+    this.bannerError = '';
+    this.iconError = '';
     this.showEditModal = true;
   }
 
   closeEditModal(): void {
     this.showEditModal = false;
+    this.editError = '';
+    this.bannerError = '';
+    this.iconError = '';
     this.isSavingEdit = false;
   }
 
-  onEditBannerSelected(ev: any): void {
+   onEditBannerSelected(ev: any): void {
     const f: File = ev?.target?.files?.[0];
-    this.editBannerFile = f || null;
+    if (!f) return;
+    this.bannerError = '';
+
+    if (f.size > 1 * 1024 * 1024) {
+      this.bannerError = 'A imagem do banner é muito grande. Por favor, escolha uma imagem menor que 1MB.';
+      ev.target.value = '';
+      return;
+    }
+
+    this.editBannerFile = f;
     if (this.editBannerPreview) { URL.revokeObjectURL(this.editBannerPreview); this.editBannerPreview = null; }
-    if (this.editBannerFile) this.editBannerPreview = URL.createObjectURL(this.editBannerFile);
+    this.editBannerPreview = URL.createObjectURL(this.editBannerFile);
   }
 
   onEditIconSelected(ev: any): void {
     const f: File = ev?.target?.files?.[0];
-    this.editIconFile = f || null;
+    if (!f) return;
+    this.iconError = '';
+
+    if (f.size > 1 * 1024 * 1024) {
+      this.iconError = 'O ícone é muito grande. Por favor, escolha uma imagem menor que 1MB.';
+      ev.target.value = '';
+      return;
+    }
+
+    this.editIconFile = f;
     if (this.editIconPreview) { URL.revokeObjectURL(this.editIconPreview); this.editIconPreview = null; }
-    if (this.editIconFile) this.editIconPreview = URL.createObjectURL(this.editIconFile);
+    this.editIconPreview = URL.createObjectURL(this.editIconFile);
   }
 
   removeCurrentBanner(): void {
@@ -1058,5 +1083,12 @@ export class ComunidadeDetalheComponent implements OnInit, OnDestroy {
 
   removerFilmeAnexado(): void {
     this.filmeSelecionado = null;
+  }
+
+  onlyNumbers(event: KeyboardEvent): void {
+    const allowedKeys = ['Backspace', 'Tab', 'ArrowLeft', 'ArrowRight', 'Delete', 'Enter'];
+    if (!allowedKeys.includes(event.key) && isNaN(Number(event.key)) && event.key !== ' ') {
+      event.preventDefault();
+    }
   }
 }

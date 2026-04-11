@@ -96,6 +96,8 @@ export class ProfileComponent implements OnInit {
 
   isEditingCapa = false;
   isEditingAvatar = false;
+  avatarError = '';
+  capaError = '';
 
   isDeleting = false;
   deleteInput = '';
@@ -1291,11 +1293,13 @@ export class ProfileComponent implements OnInit {
 
   openEditCapa(): void {
     this.editCapaUrl = this.capaUrl;
+    this.capaError = '';
     this.isEditingCapa = true;
   }
 
   closeEditCapa(): void {
     this.isEditingCapa = false;
+    this.capaError = '';
   }
 
   saveCapa(): void {
@@ -1319,11 +1323,13 @@ export class ProfileComponent implements OnInit {
 
   openEditAvatar(): void {
     this.editFotoPerfilUrl = this.fotoPerfilUrl;
+    this.avatarError = '';
     this.isEditingAvatar = true;
   }
 
   closeEditAvatar(): void {
     this.isEditingAvatar = false;
+    this.avatarError = '';
   }
 
   saveAvatar(): void {
@@ -1349,9 +1355,11 @@ export class ProfileComponent implements OnInit {
   onAvatarFileSelected(event: any): void {
     const file = event.target.files[0];
     if (!file) return;
+    this.avatarError = '';
 
-    if (file.size > 5 * 1024 * 1024) {
-      alert('A imagem é muito grande. Por favor, escolha uma imagem menor que 5MB.');
+    if (file.size > 1 * 1024 * 1024) {
+      this.avatarError = 'A imagem é muito grande. Por favor, escolha uma imagem menor que 1MB.';
+      event.target.value = '';
       return;
     }
 
@@ -1406,9 +1414,11 @@ export class ProfileComponent implements OnInit {
   onCapaFileSelected(event: any): void {
     const file = event.target.files[0];
     if (!file) return;
+    this.capaError = '';
 
-    if (file.size > 5 * 1024 * 1024) {
-      alert('A imagem é muito grande. Por favor, escolha uma imagem menor que 5MB.');
+    if (file.size > 1 * 1024 * 1024) {
+      this.capaError = 'A imagem é muito grande. Por favor, escolha uma imagem menor que 1MB.';
+      event.target.value = '';
       return;
     }
 

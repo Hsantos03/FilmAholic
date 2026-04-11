@@ -282,7 +282,7 @@ namespace FilmAholic.Server.Controllers
         /// <returns>Estatudo 201 Created retornando o endpoint visual do novo fórum recém-nascido.</returns>
         [Authorize]
         [HttpPost]
-        [RequestSizeLimit(10_000_000)]
+        [RequestSizeLimit(3_000_000)]
         public async Task<IActionResult> Create([FromForm] ComunidadeCreateForm form)
         {
             if (string.IsNullOrWhiteSpace(form.Nome))
@@ -297,6 +297,11 @@ namespace FilmAholic.Server.Controllers
 
                 if (form.LimiteMembros is < 0)
                     return BadRequest(new { message = "O limite de membros não pode ser um número negativo." });
+
+                if (form.Banner != null && form.Banner.Length > 1 * 1024 * 1024)
+                    return BadRequest(new { message = "O banner é muito grande (máximo 1MB)." });
+                if (form.Icon != null && form.Icon.Length > 1 * 1024 * 1024)
+                    return BadRequest(new { message = "O ícone é muito grande (máximo 1MB)." });
 
                 var bannerFileName = await SaveImageAsync(form.Banner, "comunidades");
                 var iconFileName = await SaveImageAsync(form.Icon, "comunidades/icons");
@@ -370,7 +375,7 @@ namespace FilmAholic.Server.Controllers
         /// <returns>Resultado refactoring da atualização ou limite falhado na colisão de limites mínimos de user vs existentes.</returns>
         [Authorize]
         [HttpPut("{id:int}")]
-        [RequestSizeLimit(10_000_000)]
+        [RequestSizeLimit(3_000_000)]
         public async Task<IActionResult> Update(int id, [FromForm] ComunidadeUpdateForm form)
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue("sub");
@@ -400,6 +405,11 @@ namespace FilmAholic.Server.Controllers
 
             if (form.LimiteMembros is < 0)
                 return BadRequest(new { message = "O limite de membros não pode ser um número negativo." });
+
+            if (form.Banner != null && form.Banner.Length > 1 * 1024 * 1024)
+                return BadRequest(new { message = "O banner é muito grande (máximo 1MB)." });
+            if (form.Icon != null && form.Icon.Length > 1 * 1024 * 1024)
+                return BadRequest(new { message = "O ícone é muito grande (máximo 1MB)." });
 
             comunidade.Nome = form.Nome.Trim();
             comunidade.Descricao = string.IsNullOrWhiteSpace(form.Descricao) ? null : form.Descricao.Trim();
