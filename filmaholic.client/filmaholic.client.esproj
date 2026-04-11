@@ -12,6 +12,7 @@
   </ItemGroup>
   <ItemGroup>
     <Folder Include="src\assets\auth\" />
+    <Folder Include="src\assets\comunidade\" />
     <Folder Include="src\assets\generos-onboarding\" />
   </ItemGroup>
 </Project>
