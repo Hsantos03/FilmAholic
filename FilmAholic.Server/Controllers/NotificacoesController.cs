@@ -22,6 +22,11 @@ namespace FilmAholic.Server.Controllers
         private const string TipoReminderJogo = "ReminderJogo";
         public const string TipoAnuncioPlataforma = "AnuncioPlataforma";
 
+        /// <summary>Notificações já lidas deixam de aparecer nos feeds após este intervalo (UTC).</summary>
+        private static readonly TimeSpan NotificacaoLidaRetencao = TimeSpan.FromDays(1);
+
+        private static DateTime NotificacaoLidaVisivelDesdeUtc(DateTime agoraUtc) => agoraUtc - NotificacaoLidaRetencao;
+
         public NotificacoesController(FilmAholicDbContext context, IMovieService movieService)
         {
             _context = context;
@@ -436,6 +441,9 @@ namespace FilmAholic.Server.Controllers
             if (pairs.Count == 0)
                 return Ok(new LidosTmdbIdsDto());
 
+            var nowUtc = DateTime.UtcNow;
+            var lidaVisivelDesde = NotificacaoLidaVisivelDesdeUtc(nowUtc);
+
             var filmeIds = pairs.Select(p => p.Id).ToList();
             var readFilmeIds = await _context.Notificacoes
                 .AsNoTracking()
@@ -443,6 +451,7 @@ namespace FilmAholic.Server.Controllers
                     n.UtilizadorId == userId &&
                     n.Tipo == TipoNovaEstreia &&
                     n.LidaEm != null &&
+                    n.LidaEm >= lidaVisivelDesde &&
                     n.FilmeId != null &&
                     filmeIds.Contains(n.FilmeId.Value))
                 .Select(n => n.FilmeId!.Value)
@@ -588,6 +597,7 @@ namespace FilmAholic.Server.Controllers
 
             var nowUtc = DateTime.UtcNow;
             var endUtc = nowUtc.AddDays(windowDays);
+            var lidaVisivelDesde = NotificacaoLidaVisivelDesdeUtc(nowUtc);
 
             var favoriteGenres = await _context.UtilizadorGeneros
                 .Where(ug => ug.UtilizadorId == userId)
@@ -629,7 +639,7 @@ namespace FilmAholic.Server.Controllers
                 .ToList();
 
             var readNotifs = await _context.Notificacoes
-                .Where(n => n.UtilizadorId == userId && n.Tipo == TipoNovaEstreia && n.LidaEm != null)
+                .Where(n => n.UtilizadorId == userId && n.Tipo == TipoNovaEstreia && n.LidaEm != null && n.LidaEm >= lidaVisivelDesde)
                 .Include(n => n.Filme)
                 .OrderByDescending(n => n.LidaEm)
                 .Take(40)
@@ -666,6 +676,7 @@ namespace FilmAholic.Server.Controllers
 
             var nowUtc = DateTime.UtcNow;
             var endUtc = nowUtc.AddDays(windowDays);
+            var lidaVisivelDesde = NotificacaoLidaVisivelDesdeUtc(nowUtc);
             var userId = GetUserId();
 
             var dto = new NovaEstreiaDebugDto
@@ -836,7 +847,7 @@ namespace FilmAholic.Server.Controllers
             }).ToList();
 
             var read = await _context.Notificacoes
-                .Where(n => n.UtilizadorId == userId && n.Tipo == TipoNovaEstreia && n.LidaEm != null)
+                .Where(n => n.UtilizadorId == userId && n.Tipo == TipoNovaEstreia && n.LidaEm != null && n.LidaEm >= lidaVisivelDesde)
                 .Include(n => n.Filme)
                 .OrderByDescending(n => n.LidaEm)
                 .Take(10)
@@ -981,6 +992,8 @@ namespace FilmAholic.Server.Controllers
             if (!prefs.ResumoEstatisticasAtiva)
                 return Ok(new ResumoEstatisticasFeedDto());
 
+            var lidaVisivelDesde = NotificacaoLidaVisivelDesdeUtc(DateTime.UtcNow);
+
             static ResumoEstatisticasCorpoDto? ParseCorpo(string? raw)
             {
                 if (string.IsNullOrWhiteSpace(raw)) return null;
@@ -1003,7 +1016,7 @@ namespace FilmAholic.Server.Controllers
 
             var read = await _context.Notificacoes
                 .AsNoTracking()
-                .Where(n => n.UtilizadorId == userId && n.Tipo == TipoResumoEstatisticas && n.LidaEm != null)
+                .Where(n => n.UtilizadorId == userId && n.Tipo == TipoResumoEstatisticas && n.LidaEm != null && n.LidaEm >= lidaVisivelDesde)
                 .OrderByDescending(n => n.LidaEm)
                 .Take(readLimit)
                 .ToListAsync();
@@ -1075,6 +1088,8 @@ namespace FilmAholic.Server.Controllers
             if (readLimit < 0) readLimit = 0;
             if (readLimit > 50) readLimit = 50;
 
+            var lidaVisivelDesde = NotificacaoLidaVisivelDesdeUtc(DateTime.UtcNow);
+
             var unread = await _context.NotificacoesComunidade
                 .AsNoTracking()
                 .Where(n => n.UtilizadorId == userId && n.LidaEm == null)
@@ -1098,7 +1113,7 @@ namespace FilmAholic.Server.Controllers
 
             var read = await _context.NotificacoesComunidade
                 .AsNoTracking()
-                .Where(n => n.UtilizadorId == userId && n.LidaEm != null)
+                .Where(n => n.UtilizadorId == userId && n.LidaEm != null && n.LidaEm >= lidaVisivelDesde)
                 .OrderByDescending(n => n.LidaEm)
                 .Take(readLimit)
                 .Select(n => new NotificacaoComunidadeItemDto
@@ -1178,9 +1193,11 @@ namespace FilmAholic.Server.Controllers
             var userId = GetUserId();
             if (string.IsNullOrWhiteSpace(userId)) return Unauthorized();
 
+            var lidaVisivelDesde = NotificacaoLidaVisivelDesdeUtc(DateTime.UtcNow);
+
             var rows = await _context.Notificacoes
                 .AsNoTracking()
-                .Where(n => n.UtilizadorId == userId && n.Tipo == TipoReminderJogo)
+                .Where(n => n.UtilizadorId == userId && n.Tipo == TipoReminderJogo && (n.LidaEm == null || n.LidaEm >= lidaVisivelDesde))
                 .OrderByDescending(n => n.CriadaEm)
                 .Take(12)
                 .Select(n => new { n.Id, n.Corpo, n.CriadaEm, n.LidaEm })
@@ -1240,6 +1257,8 @@ namespace FilmAholic.Server.Controllers
             if (readLimit < 0) readLimit = 0;
             if (readLimit > 50) readLimit = 50;
 
+            var lidaVisivelDesde = NotificacaoLidaVisivelDesdeUtc(DateTime.UtcNow);
+
             var unreadNotifications = await _context.Notificacoes
                 .AsNoTracking()
                 .Where(n => n.UtilizadorId == userId && n.Tipo == "Medalha" && n.LidaEm == null)
@@ -1260,7 +1279,7 @@ namespace FilmAholic.Server.Controllers
 
             var readNotifications = await _context.Notificacoes
                 .AsNoTracking()
-                .Where(n => n.UtilizadorId == userId && n.Tipo == "Medalha" && n.LidaEm != null)
+                .Where(n => n.UtilizadorId == userId && n.Tipo == "Medalha" && n.LidaEm != null && n.LidaEm >= lidaVisivelDesde)
                 .OrderByDescending(n => n.LidaEm)
                 .Take(readLimit)
                 .ToListAsync();
@@ -1376,6 +1395,8 @@ namespace FilmAholic.Server.Controllers
             if (readLimit < 0) readLimit = 0;
             if (readLimit > 50) readLimit = 50;
 
+            var lidaVisivelDesde = NotificacaoLidaVisivelDesdeUtc(DateTime.UtcNow);
+
             var unreadRaw = await _context.Notificacoes
                 .AsNoTracking()
                 .Where(n => n.UtilizadorId == userId && n.Tipo == TipoAnuncioPlataforma && n.LidaEm == null)
@@ -1385,7 +1406,7 @@ namespace FilmAholic.Server.Controllers
 
             var readRaw = await _context.Notificacoes
                 .AsNoTracking()
-                .Where(n => n.UtilizadorId == userId && n.Tipo == TipoAnuncioPlataforma && n.LidaEm != null)
+                .Where(n => n.UtilizadorId == userId && n.Tipo == TipoAnuncioPlataforma && n.LidaEm != null && n.LidaEm >= lidaVisivelDesde)
                 .OrderByDescending(n => n.LidaEm)
                 .Take(readLimit)
                 .ToListAsync();
@@ -1463,9 +1484,11 @@ namespace FilmAholic.Server.Controllers
             var userId = GetUserId();
             if (string.IsNullOrEmpty(userId)) return Unauthorized();
 
+            var lidaVisivelDesde = NotificacaoLidaVisivelDesdeUtc(DateTime.UtcNow);
+
             var items = await _context.Notificacoes
                 .AsNoTracking()
-                .Where(n => n.UtilizadorId == userId && n.Tipo == TipoFilmeDisponivel)
+                .Where(n => n.UtilizadorId == userId && n.Tipo == TipoFilmeDisponivel && (n.LidaEm == null || n.LidaEm >= lidaVisivelDesde))
                 .OrderByDescending(n => n.CriadaEm)
                 .Take(40)
                 .Select(n => new FilmeDisponivelFeedItemDto
