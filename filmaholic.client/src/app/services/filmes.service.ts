@@ -14,6 +14,9 @@ export interface Filme {
   tmdbId?: string;
   ano?: number | null;
   releaseDate?: string | null;
+  imdbRating?: string | null;
+  metascore?: string | null;
+  rottenTomatoes?: string | null;
 }
 
 export interface RecomendacaoDto {

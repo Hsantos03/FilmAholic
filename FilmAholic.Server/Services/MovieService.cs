@@ -295,6 +295,12 @@ public class MovieService : IMovieService
         filme.Ano = updatedInfo.Ano;
         filme.ReleaseDate = updatedInfo.ReleaseDate;
 
+        // Persist ratings during update
+        filme.ImdbRating = updatedInfo.ImdbRating;
+        filme.Metascore = updatedInfo.Metascore;
+        filme.RottenTomatoes = updatedInfo.RottenTomatoes;
+        filme.LastRatingsUpdate = updatedInfo.LastRatingsUpdate;
+
         await _context.SaveChangesAsync();
 
         return filme;
@@ -375,6 +381,24 @@ public class MovieService : IMovieService
         else if (omdbMovie != null && !string.IsNullOrEmpty(omdbMovie.Released) && DateTime.TryParse(omdbMovie.Released, out var omdbDate))
         {
             filme.ReleaseDate = omdbDate;
+        }
+
+        // Ratings persistence
+        if (omdbMovie != null)
+        {
+            filme.ImdbRating = string.IsNullOrWhiteSpace(omdbMovie.ImdbRating) ? null : omdbMovie.ImdbRating;
+            filme.Metascore = string.IsNullOrWhiteSpace(omdbMovie.Metascore) ? null : omdbMovie.Metascore;
+
+            if (omdbMovie.Ratings != null && omdbMovie.Ratings.Count > 0)
+            {
+                var rt = omdbMovie.Ratings.FirstOrDefault(r =>
+                    !string.IsNullOrWhiteSpace(r.Source) &&
+                    r.Source.ToLower().Contains("rotten tomatoes"));
+
+                if (rt != null && !string.IsNullOrWhiteSpace(rt.Value))
+                    filme.RottenTomatoes = rt.Value;
+            }
+            filme.LastRatingsUpdate = DateTime.UtcNow;
         }
 
         return filme;
@@ -888,10 +912,38 @@ public class MovieService : IMovieService
     {
         var dto = new RatingsDto();
 
-        int? parsedTmdbId = null;
+        // 1. Try to find in DB first
+        Models.Filme? dbFilme = null;
+        if (!string.IsNullOrWhiteSpace(tmdbId))
+        {
+            dbFilme = await _context.Set<Models.Filme>()
+                .FirstOrDefaultAsync(f => f.TmdbId == tmdbId);
+        }
+        else if (!string.IsNullOrWhiteSpace(title))
+        {
+            dbFilme = await _context.Set<Models.Filme>()
+                .FirstOrDefaultAsync(f => f.Titulo.ToLower() == title.ToLower());
+        }
 
+        // If found and fresh (e.g. 24h), use it
+        if (dbFilme != null && dbFilme.LastRatingsUpdate.HasValue &&
+            (DateTime.UtcNow - dbFilme.LastRatingsUpdate.Value).TotalHours < 24)
+        {
+            dto.ImdbRating = dbFilme.ImdbRating;
+            dto.Metascore = dbFilme.Metascore;
+            dto.RottenTomatoes = dbFilme.RottenTomatoes;
+            dto.ImdbId = dbFilme.TmdbId; // Might be a misnomer in RatingsDto if it expects real IMDb id, but let's check TMDb vote too
+
+            // We still need TMDb real-time votes if possible, but for now let's skip the expensive TMDB call if we have fresh base data
+            // Or better, fetch TMDb separately if we want live counts.
+        }
+
+        int? parsedTmdbId = null;
         if (!string.IsNullOrWhiteSpace(tmdbId) && int.TryParse(tmdbId, out var tmp))
             parsedTmdbId = tmp;
+
+        if (parsedTmdbId == null && dbFilme != null && int.TryParse(dbFilme.TmdbId, out var tmp2))
+            parsedTmdbId = tmp2;
 
         if (parsedTmdbId == null && !string.IsNullOrWhiteSpace(title))
         {
@@ -902,13 +954,10 @@ public class MovieService : IMovieService
                 if (first != null)
                     parsedTmdbId = first.Id;
             }
-            catch
-            {
-            }
+            catch { }
         }
 
         TmdbMovieDto? tmdbMovie = null;
-
         if (parsedTmdbId != null)
         {
             tmdbMovie = await GetMovieDetailsFromTmdbAsync(parsedTmdbId.Value);
@@ -920,7 +969,8 @@ public class MovieService : IMovieService
             }
         }
 
-        if (!string.IsNullOrWhiteSpace(dto.ImdbId))
+        // 3. fetch from OMDb if data is missing or stale
+        if (string.IsNullOrEmpty(dto.ImdbRating) && !string.IsNullOrWhiteSpace(dto.ImdbId))
         {
             var omdb = await GetMovieDetailsFromOmdbAsync(dto.ImdbId);
             if (omdb != null)
@@ -936,6 +986,16 @@ public class MovieService : IMovieService
 
                     if (rt != null && !string.IsNullOrWhiteSpace(rt.Value))
                         dto.RottenTomatoes = rt.Value;
+                }
+
+                // Update DB with these new ratings
+                if (dbFilme != null)
+                {
+                    dbFilme.ImdbRating = dto.ImdbRating;
+                    dbFilme.Metascore = dto.Metascore;
+                    dbFilme.RottenTomatoes = dto.RottenTomatoes;
+                    dbFilme.LastRatingsUpdate = DateTime.UtcNow;
+                    await _context.SaveChangesAsync();
                 }
             }
         }

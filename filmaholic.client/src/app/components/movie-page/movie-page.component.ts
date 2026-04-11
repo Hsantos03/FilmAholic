@@ -420,13 +420,38 @@ export class MoviePageComponent implements OnInit, OnDestroy {
   }
 
   private loadRatings(filmeId: number): void {
+    // 1. If we already have ratings in the 'filme' object, use them as initial state
+    if (this.filme && (this.filme.imdbRating || this.filme.metascore || this.filme.rottenTomatoes)) {
+      this.ratings = {
+        tmdbVoteAverage: null, // Will be filled by TMDb or real-time call
+        tmdbVoteCount: null,
+        imdbRating: this.filme.imdbRating,
+        metascore: this.filme.metascore,
+        rottenTomatoes: this.filme.rottenTomatoes,
+        imdbId: this.filme.tmdbId
+      };
+    }
+
     this.isLoadingRatings = true;
 
     this.filmesService.getRatings(filmeId).subscribe({
-      next: (r) => (this.ratings = r ?? null),
+      next: (r) => {
+        if (r) {
+          this.ratings = r;
+          // Update the filme object if we got new data
+          if (this.filme) {
+            this.filme.imdbRating = r.imdbRating;
+            this.filme.metascore = r.metascore;
+            this.filme.rottenTomatoes = r.rottenTomatoes;
+          }
+        }
+      },
       error: (err) => {
-        console.warn('Failed to load ratings', err);
-        this.ratings = null;
+        console.warn('Failed to load real-time ratings', err);
+        // Don't nullify this.ratings if we already had data from the filme object
+        if (!this.ratings) {
+          this.ratings = null;
+        }
       },
       complete: () => (this.isLoadingRatings = false)
     });

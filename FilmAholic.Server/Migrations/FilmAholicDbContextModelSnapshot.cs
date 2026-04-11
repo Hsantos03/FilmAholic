@@ -536,12 +536,24 @@ namespace FilmAholic.Server.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<string>("ImdbRating")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("LastRatingsUpdate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Metascore")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("PosterUrl")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTime?>("ReleaseDate")
                         .HasColumnType("datetime2");
+
+                    b.Property<string>("RottenTomatoes")
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Titulo")
                         .IsRequired()

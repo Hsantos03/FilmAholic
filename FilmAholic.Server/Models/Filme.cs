@@ -15,6 +15,12 @@ public class Filme
     // New: full release date when available
     public DateTime? ReleaseDate { get; set; }
 
+    // External ratings (OMDb)
+    public string? ImdbRating { get; set; }
+    public string? Metascore { get; set; }
+    public string? RottenTomatoes { get; set; }
+    public DateTime? LastRatingsUpdate { get; set; }
+
     /// Géneros TMDB (lista / detalhe). Não persistido na BD; usado para filtrar estreias por géneros favoritos.
     [NotMapped]
     public List<int> TmdbGenreIds { get; set; } = new();
