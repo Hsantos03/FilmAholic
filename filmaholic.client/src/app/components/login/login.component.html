@@ -1,4 +1,9 @@
 <div class="auth-page-wrapper">
+  <a routerLink="/home" class="auth-back-home" aria-label="Ir para a página inicial FilmAholic">
+    <span class="auth-back-home__arrow" aria-hidden="true">←</span>
+    <span class="auth-back-home__brand">FilmAholic</span>
+    <span>Início</span>
+  </a>
   <div class="auth-card">
     <div class="header">
       <h1>Log In</h1>
@@ -85,6 +90,7 @@
       </div>
 
       <div class="footer-links">
+        <a routerLink="/home">Página inicial</a>
         <a routerLink="/register">Não tem conta? Registe-se aqui!</a>
         <a routerLink="/forgot-password" class="forgot-link">Recuperar palavra passe</a>
       </div>
