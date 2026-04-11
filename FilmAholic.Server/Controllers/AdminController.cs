@@ -2,6 +2,7 @@ using System.Security.Claims;
 using System.Text.Json;
 using FilmAholic.Server.Data;
 using FilmAholic.Server.Models;
+using FilmAholic.Server.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -142,9 +143,24 @@ public class AdminController : ControllerBase
         var u = await _userManager.FindByIdAsync(id);
         if (u == null) return NotFound();
 
+        // Igual ao apagar a própria conta (ProfileController): manter comentários, anonimizar autor.
+        var votesDoUser = _context.CommentVotes.Where(v => v.UserId == id);
+        _context.CommentVotes.RemoveRange(votesDoUser);
+
+        var comentariosDoUser = await _context.Comments.Where(c => c.UserId == id).ToListAsync();
+        foreach (var comment in comentariosDoUser)
+        {
+            comment.UserName = "Conta Eliminada";
+            comment.UserId = null;
+        }
+
+        await ComunidadeEliminacaoAoRemoverConta.ExecutarAsync(_context, id);
+
         var result = await _userManager.DeleteAsync(u);
         if (!result.Succeeded)
             return BadRequest(new { message = "Não foi possível eliminar (dependências ou erro).", errors = result.Errors.Select(e => e.Description).ToList() });
+
+        await _context.SaveChangesAsync();
 
         return Ok(new { message = "Conta eliminada." });
     }

@@ -1092,49 +1092,83 @@ namespace FilmAholic.Server.Controllers
 
             var lidaVisivelDesde = NotificacaoLidaCutoffAgoraUtc();
 
-            var unread = await _context.NotificacoesComunidade
+            var unreadEntities = await _context.NotificacoesComunidade
                 .AsNoTracking()
                 .Where(n => n.UtilizadorId == userId && n.LidaEm == null)
                 .OrderByDescending(n => n.CriadaEm)
                 .Take(unreadLimit)
-                .Select(n => new NotificacaoComunidadeItemDto
-                {
-                    Id = n.Id,
-                    ComunidadeId = n.ComunidadeId,
-                    ComunidadeNome = _context.Comunidades
-                        .Where(c => c.Id == n.ComunidadeId)
-                        .Select(c => c.Nome)
-                        .FirstOrDefault() ?? "",
-                    PostId = n.PostId,
-                    Tipo = (n.Tipo ?? "post").ToLower(),
-                    Corpo = n.Corpo,
-                    CriadaEm = n.CriadaEm,
-                    LidaEm = n.LidaEm
-                })
                 .ToListAsync();
 
-            var read = await _context.NotificacoesComunidade
+            var readEntities = await _context.NotificacoesComunidade
                 .AsNoTracking()
                 .Where(n => n.UtilizadorId == userId && n.LidaEm != null && n.LidaEm >= lidaVisivelDesde)
                 .OrderByDescending(n => n.LidaEm)
                 .Take(readLimit)
-                .Select(n => new NotificacaoComunidadeItemDto
-                {
-                    Id = n.Id,
-                    ComunidadeId = n.ComunidadeId,
-                    ComunidadeNome = _context.Comunidades
-                        .Where(c => c.Id == n.ComunidadeId)
-                        .Select(c => c.Nome)
-                        .FirstOrDefault() ?? "",
-                    PostId = n.PostId,
-                    Tipo = (n.Tipo ?? "post").ToLower(),
-                    Corpo = n.Corpo,
-                    CriadaEm = n.CriadaEm,
-                    LidaEm = n.LidaEm
-                })
                 .ToListAsync();
 
+            var idsComunidade = unreadEntities.Concat(readEntities)
+                .Where(n => n.ComunidadeId.HasValue)
+                .Select(n => n.ComunidadeId!.Value)
+                .Distinct()
+                .ToList();
+
+            var nomesPorId = idsComunidade.Count == 0
+                ? new Dictionary<int, string>()
+                : await _context.Comunidades.AsNoTracking()
+                    .Where(c => idsComunidade.Contains(c.Id))
+                    .ToDictionaryAsync(c => c.Id, c => c.Nome);
+
+            var unread = unreadEntities.Select(n => MapNotificacaoComunidadeItem(n, nomesPorId)).ToList();
+            var read = readEntities.Select(n => MapNotificacaoComunidadeItem(n, nomesPorId)).ToList();
+
             return Ok(new NotificacaoComunidadeFeedDto { Unread = unread, Read = read });
+        }
+
+        private static NotificacaoComunidadeItemDto MapNotificacaoComunidadeItem(
+            NotificacaoComunidade n,
+            IReadOnlyDictionary<int, string> nomesPorComunidadeId)
+        {
+            var tipoNorm = (n.Tipo ?? "post").ToLowerInvariant();
+            string comNome;
+            if (n.ComunidadeId is int cid && nomesPorComunidadeId.TryGetValue(cid, out var nm))
+                comNome = nm;
+            else if (TryComunidadeNomeEliminadaFromCorpo(n.Tipo, n.Corpo, out var parsed))
+                comNome = parsed;
+            else
+                comNome = "";
+
+            return new NotificacaoComunidadeItemDto
+            {
+                Id = n.Id,
+                ComunidadeId = n.ComunidadeId,
+                ComunidadeNome = comNome,
+                PostId = n.PostId,
+                Tipo = tipoNorm,
+                Corpo = n.Corpo,
+                CriadaEm = n.CriadaEm,
+                LidaEm = n.LidaEm
+            };
+        }
+
+        private static bool TryComunidadeNomeEliminadaFromCorpo(string? tipo, string? corpo, out string nome)
+        {
+            nome = "";
+            if (!string.Equals(tipo, ComunidadeEliminacaoAoRemoverConta.TipoNotificacao, StringComparison.OrdinalIgnoreCase))
+                return false;
+            if (string.IsNullOrWhiteSpace(corpo))
+                return false;
+            try
+            {
+                using var doc = JsonDocument.Parse(corpo);
+                if (!doc.RootElement.TryGetProperty("comunidadeNome", out var el))
+                    return false;
+                nome = el.GetString() ?? "";
+                return nome.Length > 0;
+            }
+            catch
+            {
+                return false;
+            }
         }
 
         /// Contagem de notificações de comunidade não lidas.
@@ -1625,7 +1659,7 @@ namespace FilmAholic.Server.Controllers
         public class NotificacaoComunidadeItemDto
         {
             public int Id { get; set; }
-            public int ComunidadeId { get; set; }
+            public int? ComunidadeId { get; set; }
             public string ComunidadeNome { get; set; } = "";
             public int? PostId { get; set; }
             public string Tipo { get; set; } = "post";

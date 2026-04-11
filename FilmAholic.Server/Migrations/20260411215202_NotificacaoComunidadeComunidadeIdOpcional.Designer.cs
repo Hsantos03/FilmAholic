@@ -4,6 +4,7 @@ using FilmAholic.Server.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace FilmAholic.Server.Migrations
 {
     [DbContext(typeof(FilmAholicDbContext))]
-    partial class FilmAholicDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260411215202_NotificacaoComunidadeComunidadeIdOpcional")]
+    partial class NotificacaoComunidadeComunidadeIdOpcional
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -536,24 +539,12 @@ namespace FilmAholic.Server.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("ImdbRating")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<DateTime?>("LastRatingsUpdate")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("Metascore")
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<string>("PosterUrl")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTime?>("ReleaseDate")
                         .HasColumnType("datetime2");
-
-                    b.Property<string>("RottenTomatoes")
-                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Titulo")
                         .IsRequired()
