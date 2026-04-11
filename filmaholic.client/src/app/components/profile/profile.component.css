@@ -309,6 +309,8 @@
   color: #ddd;
   max-width: 820px;
   text-align: left;
+  overflow-wrap: break-word;
+  word-break: break-word;
 }
 .lists-top {
   display: flex;

@@ -1169,8 +1169,24 @@ export class ProfileComponent implements OnInit {
         { withCredentials: true }
       )
       .subscribe({
-        next: () => { },
-        error: (err) => console.warn('Failed to persist profile changes to API.', err)
+        next: () => { 
+          localStorage.setItem('userName', this.userName);
+        },
+        error: (err) => {
+          console.warn('Failed to persist profile changes to API.', err);
+          let errorMsg = 'Não foi possível guardar as alterações.';
+          if (err.error?.errors) {
+            const firstError = Object.values(err.error.errors)[0] as any;
+            if (firstError?.description) {
+              errorMsg = firstError.description;
+            } else if (Array.isArray(firstError) && typeof firstError[0] === 'string') {
+              errorMsg = firstError[0];
+            } else if (firstError?.code === 'InvalidUserName') {
+              errorMsg = 'O nome de utilizador é inválido (apenas letras e números são permitidos).';
+            }
+          }
+          alert(errorMsg);
+        }
       });
   }
 

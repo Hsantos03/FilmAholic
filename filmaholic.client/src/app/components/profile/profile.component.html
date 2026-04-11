@@ -1030,10 +1030,18 @@
 
     <form (ngSubmit)="saveChanges()">
       <label for="userName">Nome de utilizador</label>
-      <input id="userName" name="userName" type="text" [(ngModel)]="editUserName" required />
+      <input id="userName" name="userName" type="text" [(ngModel)]="editUserName" maxlength="30" required />
+      <div *ngIf="editUserName && editUserName.length >= 30" style="color: #ff6b6b; font-size: 13px; font-weight: 500; margin-top: 4px; margin-bottom: 16px; padding-left: 4px; display: flex; align-items: center; gap: 6px; animation: slideIn 0.3s ease;">
+        <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"></path><path d="M12 9v4"></path><path d="M12 17h.01"></path></svg>
+        <span>Número de caracteres excedido (máximo 30).</span>
+      </div>
 
       <label for="bio">Bio</label>
-      <textarea id="bio" name="bio" rows="4" [(ngModel)]="editBio"></textarea>
+      <textarea id="bio" name="bio" rows="4" [(ngModel)]="editBio" maxlength="150"></textarea>
+      <div *ngIf="editBio && editBio.length >= 150" style="color: #ff6b6b; font-size: 13px; font-weight: 500; margin-top: 4px; margin-bottom: 16px; padding-left: 4px; display: flex; align-items: center; gap: 6px; animation: slideIn 0.3s ease;">
+        <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"></path><path d="M12 9v4"></path><path d="M12 17h.01"></path></svg>
+        <span>Número de caracteres excedido (máximo 150).</span>
+      </div>
 
       <div class="modal-actions">
         <button type="submit" class="save-btn">Guardar</button>

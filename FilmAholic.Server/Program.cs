@@ -34,6 +34,7 @@ builder.Services.AddIdentity<Utilizador, IdentityRole>(options =>
     options.Password.RequireNonAlphanumeric = true;
     options.Password.RequiredLength = 8;
     options.Tokens.EmailConfirmationTokenProvider = TokenOptions.DefaultProvider;
+    options.User.AllowedUserNameCharacters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-._@+ áàãâäéêëíîïóôõöúûüçÁÀÃÂÄÉÊËÍÎÏÓÔÕÖÚÛÜÇ'";
 })
 .AddEntityFrameworkStores<FilmAholicDbContext>()
 .AddDefaultTokenProviders();
