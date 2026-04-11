@@ -31,6 +31,11 @@ export interface CommentDTO {
   myVote: number;
 }
 
+export interface PaginatedCommentsDTO {
+  comments: CommentDTO[];
+  totalCount: number;
+}
+
 @Injectable({ providedIn: 'root' })
 export class CommentsService {
   private readonly apiBase = environment.apiBaseUrl || '';
@@ -38,9 +43,9 @@ export class CommentsService {
 
   constructor(private http: HttpClient) { }
 
-  getByMovie(movieId: number): Observable<CommentDTO[]> {
-    return this.http.get<CommentDTO[]>(
-      `${this.apiUrl}/movie/${movieId}`,
+  getByMovie(movieId: number, page: number = 1, pageSize: number = 5): Observable<PaginatedCommentsDTO> {
+    return this.http.get<PaginatedCommentsDTO>(
+      `${this.apiUrl}/movie/${movieId}?page=${page}&pageSize=${pageSize}`,
       { withCredentials: true }
     );
   }

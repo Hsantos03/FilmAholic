@@ -140,6 +140,14 @@ export class ComunidadeDetalheComponent implements OnInit, OnDestroy {
   pedidosPendentes: ComunidadePedidoEntradaDto[] = [];
   isProcessingPedido = false;
 
+  // Pagination for posts
+  postsCurrentPage = 1;
+  postsPageSize = 6;
+  postsTotalCount = 0;
+
+  // Comment page size
+  commentsPageSize = 5;
+
   private comunidadeId!: number;
   private sub?: Subscription;
 
@@ -245,9 +253,56 @@ export class ComunidadeDetalheComponent implements OnInit, OnDestroy {
   }
 
   loadPosts(): void {
-    this.service.getPosts(this.comunidadeId).subscribe({
-      next: (list) => { this.posts = list; }
+    this.service.getPosts(this.comunidadeId, this.postsCurrentPage, this.postsPageSize, this.sortOrder).subscribe({
+      next: (res) => {
+        this.posts = res.posts || [];
+        this.postsTotalCount = res.totalCount || 0;
+      }
     });
+  }
+
+  onSortChange(): void {
+    this.postsCurrentPage = 1;
+    this.loadPosts();
+  }
+
+  onPostsPageChange(page: number | string): void {
+    const pageNum = typeof page === 'string' ? parseInt(page) : page;
+    if (isNaN(pageNum) || pageNum < 1 || pageNum > this.totalPostsPages) return;
+
+    this.postsCurrentPage = pageNum;
+    this.loadPosts();
+    // Scroll to the top of posts list
+    const postHeader = document.getElementById('posts-start-anchor');
+    if (postHeader) postHeader.scrollIntoView({ behavior: 'smooth' });
+  }
+
+  get totalPostsPages(): number {
+    return Math.ceil(this.postsTotalCount / this.postsPageSize);
+  }
+
+  getPostsPages(): (number | string)[] {
+    return this.generateVisiblePages(this.postsCurrentPage, this.totalPostsPages);
+  }
+
+  private generateVisiblePages(current: number, total: number): (number | string)[] {
+    const pages: (number | string)[] = [];
+    if (total <= 7) {
+      for (let i = 1; i <= total; i++) pages.push(i);
+      return pages;
+    }
+    pages.push(1);
+    if (current > 3) pages.push('...');
+    const start = Math.max(2, current - 1);
+    const end = Math.min(total - 1, current + 1);
+    for (let i = start; i <= end; i++) {
+        if (!pages.includes(i)) pages.push(i);
+    }
+    if (current < total - 2) {
+      if (!pages.includes('...')) pages.push('...');
+    }
+    if (!pages.includes(total)) pages.push(total);
+    return pages;
   }
 
   juntar(): void {
@@ -326,7 +381,12 @@ export class ComunidadeDetalheComponent implements OnInit, OnDestroy {
         post.reportsCount = 0;
         post.temSpoiler = this.newTemSpoiler;
 
-        this.posts.unshift(post);
+        this.postsCurrentPage = 1; // Voltar à primeira página para ver o novo post
+        this.loadPosts();
+        
+        // Reset local flags only after starting the load
+        this.isPosting = false;
+
         this.newTitulo = '';
         this.newConteudo = '';
         this.imagemFile = null;
@@ -334,7 +394,6 @@ export class ComunidadeDetalheComponent implements OnInit, OnDestroy {
         this.newTemSpoiler = false;
         this.filmeSelecionado = null;
         this.showPostForm = false;
-        this.isPosting = false;
       },
       error: (err) => {
         this.postError = err?.error?.message || 'Erro ao publicar.';
@@ -343,28 +402,9 @@ export class ComunidadeDetalheComponent implements OnInit, OnDestroy {
     });
   }
 
+  // Getter for template consistency (now just returns the actual server-side sorted list)
   get sortedPosts(): PostDto[] {
-    return [...this.posts].sort((a, b) => {
-      switch (this.sortOrder) {
-        case 'desc':
-          return new Date(b.dataCriacao ?? 0).getTime() - new Date(a.dataCriacao ?? 0).getTime();
-
-        case 'asc':
-          return new Date(a.dataCriacao ?? 0).getTime() - new Date(b.dataCriacao ?? 0).getTime();
-
-        case 'likes':
-          return (b.likesCount || 0) - (a.likesCount || 0);
-
-        case 'dislikes':
-          return (b.dislikesCount || 0) - (a.dislikesCount || 0);
-
-        case 'reports':
-          return (b.reportsCount || 0) - (a.reportsCount || 0);
-
-        default:
-          return 0;
-      }
-    });
+    return this.posts;
   }
 
   // ── Editar comunidade ────
@@ -783,7 +823,7 @@ export class ComunidadeDetalheComponent implements OnInit, OnDestroy {
 
     this.service.deletePost(this.comunidadeId, this.postToDelete.id).subscribe({
       next: () => {
-        this.posts = this.posts.filter(p => p.id !== this.postToDelete!.id);
+        this.loadPosts();
         this.closeDeletePostModal();
       },
       error: () => {
@@ -918,14 +958,36 @@ export class ComunidadeDetalheComponent implements OnInit, OnDestroy {
     post.showComentarios = !post.showComentarios;
 
     if (post.showComentarios && (!post.comentarios || post.comentarios.length === 0)) {
-      this.service.getComentarios(this.comunidadeId, post.id!).subscribe({
-        next: (comentarios) => {
-          post.comentarios = comentarios;
-          post.comentariosCount = comentarios.length;
-        },
-        error: (err) => console.error('Erro ao carregar comentários', err)
-      });
+        post.comentariosCurrentPage = 1;
+        this.loadPostComments(post);
     }
+  }
+
+  loadPostComments(post: PostDto): void {
+    if (!post.id) return;
+    this.service.getComentarios(this.comunidadeId, post.id, post.comentariosCurrentPage || 1, this.commentsPageSize).subscribe({
+      next: (res) => {
+        post.comentarios = res.comments || [];
+        post.comentariosTotalCount = res.totalCount || 0;
+      },
+      error: (err) => console.error('Erro ao carregar comentários', err)
+    });
+  }
+
+  onCommentsPageChange(post: PostDto, page: number | string): void {
+    const pageNum = typeof page === 'string' ? parseInt(page) : page;
+    const total = this.getTotalCommentsPages(post);
+    if (isNaN(pageNum) || pageNum < 1 || pageNum > total) return;
+    post.comentariosCurrentPage = pageNum;
+    this.loadPostComments(post);
+  }
+
+  getTotalCommentsPages(post: PostDto): number {
+    return Math.ceil((post.comentariosTotalCount || 0) / this.commentsPageSize);
+  }
+
+  getCommentsPages(post: PostDto): (number | string)[] {
+    return this.generateVisiblePages(post.comentariosCurrentPage || 1, this.getTotalCommentsPages(post));
   }
 
   submitComentario(post: PostDto): void {
@@ -935,10 +997,9 @@ export class ComunidadeDetalheComponent implements OnInit, OnDestroy {
 
     this.service.createComentario(this.comunidadeId, post.id, post.newComentarioTexto.trim()).subscribe({
       next: (novoComentario) => {
-        if (!post.comentarios) post.comentarios = [];
-        post.comentarios.push(novoComentario);
-
-        post.comentariosCount = (post.comentariosCount || 0) + 1;
+        post.comentariosTotalCount = (post.comentariosTotalCount || 0) + 1;
+        post.comentariosCurrentPage = 1; // Back to first page to see the comment
+        this.loadPostComments(post);
         post.newComentarioTexto = '';
         post.isSubmittingComentario = false;
       },

@@ -565,17 +565,41 @@ namespace FilmAholic.Server.Controllers
 
         // ─── GET posts da comunidade ──────
         [HttpGet("{id:int}/posts")]
-        public async Task<IActionResult> GetPosts(int id)
+        public async Task<IActionResult> GetPosts(int id, [FromQuery] int page = 1, [FromQuery] int pageSize = 10, [FromQuery] string sortOrder = "desc")
         {
             var baseUrl = PublicBaseUrl();
             var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue("sub");
             var bloqueio = await ForbidSeBanidoAsync(id, currentUserId);
             if (bloqueio != null) return bloqueio;
 
-            var posts = await _context.ComunidadePosts
-                .AsNoTracking()
-                .Where(p => p.ComunidadeId == id)
-                .OrderByDescending(p => p.DataCriacao)
+            var query = _context.ComunidadePosts.Where(p => p.ComunidadeId == id);
+
+            // Apply global sorting
+            switch ((sortOrder ?? "desc").ToLower())
+            {
+                case "asc":
+                    query = query.OrderBy(p => p.DataCriacao);
+                    break;
+                case "likes":
+                    query = query.OrderByDescending(p => _context.ComunidadePostVotos.Count(v => v.PostId == p.Id && v.IsLike));
+                    break;
+                case "dislikes":
+                    query = query.OrderByDescending(p => _context.ComunidadePostVotos.Count(v => v.PostId == p.Id && !v.IsLike));
+                    break;
+                case "reports":
+                    query = query.OrderByDescending(p => _context.ComunidadePostReports.Count(r => r.PostId == p.Id));
+                    break;
+                case "desc":
+                default:
+                    query = query.OrderByDescending(p => p.DataCriacao);
+                    break;
+            }
+
+            var totalCount = await query.CountAsync();
+
+            var posts = await query
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
                 .Select(p => new PostDto
                 {
                     Id = p.Id,
@@ -667,7 +691,7 @@ namespace FilmAholic.Server.Controllers
                 }
             }
 
-            return Ok(posts);
+            return Ok(new PaginatedPostsDto { Posts = posts, TotalCount = totalCount });
         }
 
         // ─── POST criar publicação (apenas membros) ────
@@ -1495,16 +1519,19 @@ namespace FilmAholic.Server.Controllers
 
         // ─── GET comentários de um post ────
         [HttpGet("{id:int}/posts/{postId:int}/comentarios")]
-        public async Task<IActionResult> GetComentarios(int id, int postId)
+        public async Task<IActionResult> GetComentarios(int id, int postId, [FromQuery] int page = 1, [FromQuery] int pageSize = 5)
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue("sub");
             var bloqueio = await ForbidSeBanidoAsync(id, userId);
             if (bloqueio != null) return bloqueio;
 
-            var comentarios = await _context.ComunidadePostComentarios
-                .AsNoTracking()
-                .Where(c => c.PostId == postId)
+            var query = _context.ComunidadePostComentarios.Where(c => c.PostId == postId);
+            var totalCount = await query.CountAsync();
+
+            var comentarios = await query
                 .OrderByDescending(c => c.DataCriacao)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
                 .Select(c => new
                 {
                     c.Id,
@@ -1563,12 +1590,12 @@ namespace FilmAholic.Server.Controllers
                     AutorUserTagIconUrl = !string.IsNullOrEmpty(c.AutorUserTag) && iconByTag.TryGetValue(c.AutorUserTag, out var icon) ? icon : null,
                     AutorUserTagPrimaryColor = !string.IsNullOrEmpty(c.AutorId) && tagPrimaryColorByUserId.TryGetValue(c.AutorId, out var primaryColor) ? primaryColor : null,
                     AutorUserTagSecondaryColor = !string.IsNullOrEmpty(c.AutorId) && tagSecondaryColorByUserId.TryGetValue(c.AutorId, out var secondaryColor) ? secondaryColor : null
-                }).ToList();
+                }).Cast<object>().ToList();
 
-                return Ok(comentariosComTags);
+                return Ok(new PaginatedComunidadeCommentsDto { Comments = comentariosComTags, TotalCount = totalCount });
             }
 
-            return Ok(comentarios);
+            return Ok(new PaginatedComunidadeCommentsDto { Comments = comentarios.Cast<object>().ToList(), TotalCount = totalCount });
         }
 
         // ─── POST criar comentário ────
@@ -1835,6 +1862,17 @@ namespace FilmAholic.Server.Controllers
 
             [FromForm(Name = "removeIcon")]
             public bool RemoveIcon { get; set; }
+        }
+        public class PaginatedPostsDto
+        {
+            public List<PostDto> Posts { get; set; } = new();
+            public int TotalCount { get; set; }
+        }
+
+        public class PaginatedComunidadeCommentsDto
+        {
+            public List<object> Comments { get; set; } = new();
+            public int TotalCount { get; set; }
         }
     }
 }

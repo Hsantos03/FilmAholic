@@ -5,265 +5,136 @@
     <app-topbar-actions></app-topbar-actions>
   </div>
 </header>
-
 <main class="content">
   <div *ngIf="isLoading" class="state">A carregar filme…</div>
   <div *ngIf="error" class="state error">{{ error }}</div>
-
   <div *ngIf="filme as f" class="movie-page-inner">
     <div class="movie-card">
-
-      <!--  CAPA -->
       <aside class="poster-col">
         <div class="poster-tour-anchor" data-tour="movie-poster">
           <img class="movie-poster" [src]="posterOf()" [alt]="f.titulo" />
         </div>
-        <button *ngIf="trailerUrl"
-                type="button"
-                class="trailer-btn"
-                data-tour="movie-trailer"
-                (click)="openTrailer()">
-          ▶ Ver Trailer
-        </button>
+        <button *ngIf="trailerUrl" type="button" class="trailer-btn" data-tour="movie-trailer" (click)="openTrailer()">▶ Ver Trailer</button>
       </aside>
-
-      <!-- Modal FORA do aside -->
       <div class="trailer-modal" *ngIf="showTrailer" (click)="closeTrailer()">
         <div class="trailer-modal-wrapper" (click)="$event.stopPropagation()">
           <button class="trailer-close" (click)="closeTrailer()">✕</button>
           <div class="trailer-modal-inner">
-            <iframe [src]="safeTrailerUrl"
-                    frameborder="0"
-                    allowfullscreen
-                    allow="autoplay; encrypted-media">
-            </iframe>
+            <iframe [src]="safeTrailerUrl" frameborder="0" allowfullscreen allow="autoplay; encrypted-media"></iframe>
           </div>
         </div>
       </div>
-
-      <!-- INFO -->
       <section class="info-col centered">
-
-        <!-- TÍTULO -->
         <h1 class="movie-title">{{ f.titulo }}</h1>
-        <div class="movie-sub">
-          {{ f.ano ? f.ano + ' · ' : '' }}{{ f.genero }}<ng-container *ngIf="f.duracao > 0"> · {{ f.duracao | formatDuration }}</ng-container>
-        </div>
-
-        <!-- AÇÕES -->
+        <div class="movie-sub">{{ f.ano ? f.ano + ' · ' : '' }}{{ f.genero }}<ng-container *ngIf="f.duracao > 0"> · {{ f.duracao | formatDuration }}</ng-container></div>
         <div class="actions-row" data-tour="movie-actions">
-          <button class="btn ghost"
-                  [class.active]="inWatchLater"
-                  [attr.aria-pressed]="inWatchLater"
-                  (click)="addQueroVer()"
-                  [title]="inWatchLater ? 'Este filme já está na tua lista Quero Ver' : 'Adicionar à lista Quero Ver'">
+          <button class="btn ghost" [class.active]="inWatchLater" [attr.aria-pressed]="inWatchLater" (click)="addQueroVer()" [title]="inWatchLater ? 'Este filme já está na tua lista Quero Ver' : 'Adicionar à lista Quero Ver'">
             <span *ngIf="!inWatchLater">+ Quero Ver</span>
             <span *ngIf="inWatchLater">✔ Quero Ver</span>
           </button>
-
-          <button class="btn primary"
-                  [class.active]="inWatched"
-                  [attr.aria-pressed]="inWatched"
-                  (click)="addJaVi()"
-                  [title]="inWatched ? 'Visto' : 'Já visto'">
+          <button class="btn primary" [class.active]="inWatched" [attr.aria-pressed]="inWatched" (click)="addJaVi()" [title]="inWatched ? 'Visto' : 'Já visto'">
             <span *ngIf="!inWatched">Já Vi</span>
             <span *ngIf="inWatched">✔ Já Vi</span>
           </button>
-
           <button class="btn favorite"
                   [class.active]="isFavorite"
                   [attr.aria-pressed]="isFavorite"
                   (click)="toggleFavorite()"
                   [title]="isFavorite ? 'Remover dos favoritos' : 'Adicionar aos favoritos'">
             <span *ngIf="!isFavorite">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="vertical-align: middle; margin-right: 4px;">
-                <path d="M22 9.24l-7.19-.62L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21 12 17.27 18.18 21l-1.63-7.03L22 9.24zM12 15.4l-3.76 2.27 1-4.28-3.32-2.88 4.38-.38L12 6.1l1.71 4.04 4.38.38-3.32 2.88 1 4.28L12 15.4z" />
-              </svg>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="vertical-align: middle; margin-right: 4px;"><path d="M22 9.24l-7.19-.62L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21 12 17.27 18.18 21l-1.63-7.03L22 9.24zM12 15.4l-3.76 2.27 1-4.28-3.32-2.88 4.38-.38L12 6.1l1.71 4.04 4.38.38-3.32 2.88 1 4.28L12 15.4z" /></svg>
               Favorito
             </span>
             <span *ngIf="isFavorite">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="vertical-align: middle; margin-right: 4px;">
-                <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" />
-              </svg>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="vertical-align: middle; margin-right: 4px;"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" /></svg>
               Favoritos
             </span>
           </button>
         </div>
-
-        <!-- RATINGS (APIs) -->
+        <div *ngIf="showFavLimitWarning" class="favorites-limit-warning length-warning">
+          <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"></path><path d="M12 9v4"></path><path d="M12 17h.01"></path></svg>
+          <span>Já não é possível adicionar mais filmes porque já existem 50 favoritos na tua lista.</span>
+        </div>
         <div class="ratings-block" data-tour="movie-ratings">
           <div class="ratings-title">Ratings</div>
-
-          <div *ngIf="isLoadingRatings" class="ratings-loading">
-            A carregar ratings…
-          </div>
-
+          <div *ngIf="isLoadingRatings" class="ratings-loading">A carregar ratings…</div>
           <div *ngIf="!isLoadingRatings && ratings" class="ratings-grid">
             <div class="rating-item">
-              <div class="rating-label">
-                <img class="rating-logo"
-                     src="https://www.themoviedb.org/assets/2/v4/logos/v2/blue_square_2-d537fb228cf3ded904ef09b136fe3fec72548ebc1fea3fbbd1ad9e36364db38b.svg"
-                     alt="TMDb"
-                     title="The Movie Database" />
-              </div>
-              <div class="rating-value">
-                {{ ratings.tmdbVoteAverage | number:'1.1-1' }}/10
-                <span class="rating-sub">({{ ratings.tmdbVoteCount }} votos)</span>
-              </div>
+              <div class="rating-label"><img class="rating-logo" src="https://www.themoviedb.org/assets/2/v4/logos/v2/blue_square_2-d537fb228cf3ded904ef09b136fe3fec72548ebc1fea3fbbd1ad9e36364db38b.svg" alt="TMDb" title="The Movie Database" /></div>
+              <div class="rating-value">{{ ratings.tmdbVoteAverage | number:'1.1-1' }}/10 <span class="rating-sub">({{ ratings.tmdbVoteCount }} votos)</span></div>
             </div>
-
             <div class="rating-item">
-              <div class="rating-label">
-                <img class="rating-logo"
-                     src="https://upload.wikimedia.org/wikipedia/commons/6/69/IMDB_Logo_2016.svg"
-                     alt="IMDb"
-                     title="Internet Movie Database" />
-              </div>
+              <div class="rating-label"><img class="rating-logo" src="https://upload.wikimedia.org/wikipedia/commons/6/69/IMDB_Logo_2016.svg" alt="IMDb" title="Internet Movie Database" /></div>
               <div class="rating-value">{{ ratings.imdbRating || '—' }}/10</div>
             </div>
-
             <div class="rating-item">
-              <div class="rating-label">
-                <img class="rating-logo"
-                     src="https://upload.wikimedia.org/wikipedia/commons/2/20/Metacritic.svg"
-                     alt="Metacritic"
-                     title="Metacritic" />
-              </div>
+              <div class="rating-label"><img class="rating-logo" src="https://upload.wikimedia.org/wikipedia/commons/2/20/Metacritic.svg" alt="Metacritic" title="Metacritic" /></div>
               <div class="rating-value">{{ ratings.metascore || '—' }}/100</div>
             </div>
-
             <div class="rating-item">
-              <div class="rating-label">
-                <img class="rating-logo"
-                     src="https://upload.wikimedia.org/wikipedia/commons/5/5b/Rotten_Tomatoes.svg"
-                     alt="Rotten Tomatoes"
-                     title="Rotten Tomatoes" />
-              </div>
+              <div class="rating-label"><img class="rating-logo" src="https://upload.wikimedia.org/wikipedia/commons/5/5b/Rotten_Tomatoes.svg" alt="Rotten Tomatoes" title="Rotten Tomatoes" /></div>
               <div class="rating-value">{{ ratings.rottenTomatoes || '—' }}</div>
             </div>
           </div>
         </div>
-
-        <!-- FILMAHOLIC RATING -->
         <div class="our-rating-block" data-tour="movie-filmaholic-rating">
           <div class="our-rating-head">
             <div class="our-rating-title">Classificação FilmAholic</div>
-
-            <div class="our-rating-summary">
-              <span class="our-rating-avg">{{ ourAverage | number:'1.1-1' }}/10</span>
-              <span class="our-rating-count">({{ ourCount }} votos)</span>
-            </div>
+            <div class="our-rating-summary"><span class="our-rating-avg">{{ ourAverage | number:'1.1-1' }}/10</span> <span class="our-rating-count">({{ ourCount }} votos)</span></div>
           </div>
-
           <div class="our-rating-row" (mouseleave)="clearMovieStarHover()">
             <div class="our-stars" [class.disabled]="!canRateMovie || isSavingMovieRating">
-              <button class="our-star-btn"
-                      type="button"
-                      *ngFor="let i of [1,2,3,4,5]"
-                      (mousemove)="onMovieStarHover(i, $event)"
-                      (click)="setMovieRating(i, $event)"
-                      [disabled]="!canRateMovie || isSavingMovieRating"
-                      aria-label="Avaliar">
-                <span class="our-star-visual"
-                      [class.full]="isStarFull(i)"
-                      [class.half]="isStarHalf(i)">★</span>
-              </button>
+              <button class="our-star-btn" type="button" *ngFor="let i of [1,2,3,4,5]" (mousemove)="onMovieStarHover(i, $event)" (click)="setMovieRating(i, $event)" [disabled]="!canRateMovie || isSavingMovieRating" aria-label="Avaliar"><span class="our-star-visual" [class.full]="isStarFull(i)" [class.half]="isStarHalf(i)">★</span></button>
             </div>
-
-            <div class="our-rating-me">
-              <span *ngIf="myScore !== null">A tua nota: <strong>{{ myScore }}/10</strong></span>
-              <span *ngIf="myScore === null" class="muted">Ainda não deste o teu veredito.</span>
-            </div>
+            <div class="our-rating-me"><span *ngIf="myScore !== null">A tua nota: <strong>{{ myScore }}/10</strong></span> <span *ngIf="myScore === null" class="muted">Ainda não deste o teu veredito.</span></div>
           </div>
-
           <div class="our-rating-actions">
-            <button class="btn ghost"
-                    type="button"
-                    *ngIf="canRateMovie && myScore !== null"
-                    (click)="clearMyMovieRating()"
-                    [disabled]="isSavingMovieRating">
-              Remover avaliação
-            </button>
-
+            <button class="btn ghost" type="button" *ngIf="canRateMovie && myScore !== null" (click)="clearMyMovieRating()" [disabled]="isSavingMovieRating">Remover avaliação</button>
             <span class="muted" *ngIf="!canRateMovie">Faz login para avaliar.</span>
           </div>
-
           <div class="state error" *ngIf="ratingError">{{ ratingError }}</div>
         </div>
-
-        <!-- SINOPSE -->
         <div class="overview" *ngIf="overview" data-tour="movie-sinopse">
           <h3>Sinopse</h3>
           <p>{{ overview }}</p>
         </div>
-
-        <!-- ELENCO -->
         <div class="cast-section" *ngIf="isLoadingCast || cast.length" data-tour="movie-elenco">
           <h3>Elenco Principal</h3>
-
           <div *ngIf="isLoadingCast" class="ratings-loading">A carregar elenco…</div>
-
           <div *ngIf="!isLoadingCast && cast.length" class="cast-scroll">
             <div class="cast-card" *ngFor="let a of cast" (click)="openActor(a)" role="button" tabindex="0">
-              <img *ngIf="a.fotoUrl"
-                   class="cast-photo"
-                   [src]="a.fotoUrl"
-                   [alt]="a.nome" />
-              <div *ngIf="!a.fotoUrl" class="cast-photo cast-no-photo">
-                {{ a.nome.charAt(0) }}
-              </div>
+              <img *ngIf="a.fotoUrl" class="cast-photo" [src]="a.fotoUrl" [alt]="a.nome" />
+              <div *ngIf="!a.fotoUrl" class="cast-photo cast-no-photo">{{ a.nome.charAt(0) }}</div>
               <div class="cast-name">{{ a.nome }}</div>
               <div class="cast-char">{{ a.personagem }}</div>
             </div>
           </div>
         </div>
-
-        <!-- COMMENTS -->
-        <div class="comments" data-tour="movie-comentarios">
+        <!-- Anchor para scroll de paginação -->
+        <div id="comentarios-anchor"></div>
+        <div class="comments-section-header" data-tour="movie-comentarios">
           <h3>Comentários</h3>
-
-          <!-- WRITE COMMENT -->
           <div class="comment-row">
             <div class="comment-box">
-              <div class="avatar avatar-sm"
-                   [attr.data-deletedd]="meFotoPerfilUrl ? 'false' : (currentUserDisplayName === 'Conta Eliminada' ? 'true' : 'false')"
-                   title="Tu">
+              <div class="avatar avatar-sm" [attr.data-deletedd]="meFotoPerfilUrl ? 'false' : (currentUserDisplayName === 'Conta Eliminada' ? 'true' : 'false')" title="Tu">
                 <img *ngIf="meFotoPerfilUrl" class="avatar-img" [src]="meFotoPerfilUrl" [alt]="currentUserDisplayName" />
                 <span *ngIf="!meFotoPerfilUrl">{{ commentAvatarInitial(currentUserInitialSource) }}</span>
               </div>
-
-              <input class="comment-input"
-                     type="text"
-                     placeholder="Escreve um comentário…"
-                     [(ngModel)]="newComment"
-                     [disabled]="isSendingComment"
-                     (keydown.enter)="$event.preventDefault(); sendComment()" />
-
-              <button class="send-btn"
-                      type="button"
-                      (click)="sendComment()"
-                      [disabled]="isSendingComment"
-                      aria-label="Enviar comentário">
-                ➤
-              </button>
+              <input class="comment-input" type="text" placeholder="Escreve um comentário…" [(ngModel)]="newComment" maxlength="500" [disabled]="isSendingComment" (keydown.enter)="(!isSendingComment && !(newComment && newComment.length > 500)) ? sendComment() : $event.preventDefault()" />
+              <button class="send-btn" type="button" (click)="sendComment()" [disabled]="isSendingComment || (newComment && newComment.length > 500)" aria-label="Enviar comentário">➤</button>
             </div>
           </div>
-
-          <div class="state error" *ngIf="commentError">
-            {{ commentError }}
+          <div *ngIf="newComment && newComment.length >= 500" class="length-warning">
+            <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"></path><path d="M12 9v4"></path><path d="M12 17h.01"></path></svg>
+            <span>Número de caracteres excedido (máximo 500).</span>
           </div>
-
-          <!-- LISTA DE COMENTÁRIOS -->
+          <div class="state error" *ngIf="commentError">{{ commentError }}</div>
           <div class="comments-list" *ngIf="comments.length; else noComments">
             <div class="comment-item" *ngFor="let c of comments">
-
-              <div class="avatar avatar-md"
-                   [attr.data-deletedd]="c.userName === 'Conta Eliminada'"
-                   [title]="c.userName">
+              <div class="avatar avatar-md" [attr.data-deletedd]="c.userName === 'Conta Eliminada'" [title]="c.userName">
                 <img *ngIf="c.fotoPerfilUrl" class="avatar-img" [src]="c.fotoPerfilUrl" [alt]="c.userName" />
                 <span *ngIf="!c.fotoPerfilUrl && c.userName !== 'Conta Eliminada'">{{ commentAvatarInitial(c.userName) }}</span>
               </div>
-
               <div class="comment-content">
                 <div class="comment-header">
                   <div class="comment-user-wrapper">
@@ -279,153 +150,87 @@
                       </span>
                     </span>
                   </div>
-
-                  <!-- AÇÕES + VOTOS (fora do modo edição) -->
                   <div class="comment-actions" *ngIf="editingCommentId !== c.id">
-                    <button type="button"
-                            class="comment-btn like-btn"
-                            [class.active]="c.myVote === 1"
-                            (click)="voteComment(c, 1)"
-                            title="Like">
+                    <button type="button" class="comment-btn like-btn" [class.active]="c.myVote === 1" (click)="voteComment(c, 1)" title="Like">
                       <img class="comment-vote-icon" src="assets/rec-feedback-like.png" alt="" width="16" height="16" aria-hidden="true" />
                       <span>{{ c.likeCount || 0 }}</span>
                     </button>
-
-                    <button type="button"
-                            class="comment-btn dislike-btn"
-                            [class.active]="c.myVote === -1"
-                            (click)="voteComment(c, -1)"
-                            title="Dislike">
+                    <button type="button" class="comment-btn dislike-btn" [class.active]="c.myVote === -1" (click)="voteComment(c, -1)" title="Dislike">
                       <img class="comment-vote-icon" src="assets/rec-feedback-dislike.png" alt="" width="16" height="16" aria-hidden="true" />
                       <span>{{ c.dislikeCount || 0 }}</span>
                     </button>
-
-                    <button type="button"
-                            class="comment-btn"
-                            *ngIf="c.canEdit"
-                            (click)="startEdit(c)">
-                      Editar
-                    </button>
-
-                    <button type="button"
-                            class="comment-btn danger"
-                            *ngIf="c.canEdit"
-                            (click)="openCommentDeleteConfirm(c)"
-                            [disabled]="isDeletingComment">
-                      Apagar
-                    </button>
+                    <button type="button" class="comment-btn" *ngIf="c.canEdit" (click)="startEdit(c)">Editar</button>
+                    <button type="button" class="comment-btn danger" *ngIf="c.canEdit" (click)="openCommentDeleteConfirm(c)" [disabled]="isDeletingComment">Apagar</button>
                   </div>
                 </div>
-
-                <!-- Modo edição -->
                 <div class="comment-edit-form" *ngIf="editingCommentId === c.id">
-                  <textarea class="comment-edit-input"
-                            [(ngModel)]="editText"
-                            rows="3"
-                            [disabled]="isSavingEdit"></textarea>
-
+                  <textarea class="comment-edit-input" [(ngModel)]="editText" rows="3" maxlength="500" [disabled]="isSavingEdit"></textarea>
+                  <div *ngIf="editText && editText.length >= 500" class="length-warning" style="margin-top: 8px; margin-bottom: 8px;">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"></path><path d="M12 9v4"></path><path d="M12 17h.01"></path></svg>
+                    <span>Número de caracteres excedido (máximo 500).</span>
+                  </div>
                   <div class="comment-edit-actions">
-                    <button type="button"
-                            class="btn primary"
-                            (click)="saveEdit()"
-                            [disabled]="isSavingEdit">
-                      Guardar
-                    </button>
-
-                    <button type="button"
-                            class="btn ghost"
-                            (click)="cancelEdit()"
-                            [disabled]="isSavingEdit">
-                      Cancelar
-                    </button>
+                    <button type="button" class="btn primary" (click)="saveEdit()" [disabled]="isSavingEdit || (editText && editText.length > 500)">Guardar</button>
+                    <button type="button" class="btn ghost" (click)="cancelEdit()" [disabled]="isSavingEdit">Cancelar</button>
                   </div>
                 </div>
-
-                <p class="comment-text" *ngIf="editingCommentId !== c.id">
-                  {{ c.texto }}
-                </p>
-
+                <p class="comment-text" *ngIf="editingCommentId !== c.id">{{ c.texto }}</p>
                 <div class="comment-meta" *ngIf="editingCommentId !== c.id">
-                  <span *ngIf="c.dataEdicao; else createdDate">
-                    Editado: {{ c.dataEdicao | date:'dd/MM/yyyy, HH:mm':'':'pt-PT' }}
-                  </span>
-
-                  <ng-template #createdDate>
-                    {{ c.dataCriacao | date:'dd/MM/yyyy, HH:mm':'':'pt-PT' }}
-                  </ng-template>
+                  <span *ngIf="c.dataEdicao; else createdDate">Editado: {{ c.dataEdicao | date:'dd/MM/yyyy, HH:mm':'':'pt-PT' }}</span>
+                  <ng-template #createdDate>{{ c.dataCriacao | date:'dd/MM/yyyy, HH:mm':'':'pt-PT' }}</ng-template>
                 </div>
               </div>
             </div>
           </div>
-
           <ng-template #noComments>
             <div class="comments-empty">Ainda não existem comentários — sê o primeiro a deixar a tua review.</div>
           </ng-template>
         </div>
 
+        <!-- Paginação -->
+        <div class="comments-pagination" *ngIf="totalPages > 1">
+          <button type="button" class="page-btn prev-btn" [disabled]="currentPage === 1" (click)="onPageChange(currentPage - 1)">
+            Anterior
+          </button>
+          
+          <div class="page-numbers">
+            <ng-container *ngFor="let p of pages">
+              <button *ngIf="p !== '...'; else ellipses" 
+                      type="button" 
+                      class="page-btn num-btn" 
+                      [class.active]="p === currentPage" 
+                      (click)="onPageChange(p)">
+                {{ p }}
+              </button>
+              <ng-template #ellipses>
+                <span class="page-ellipsis">...</span>
+              </ng-template>
+            </ng-container>
+          </div>
+
+          <button type="button" class="page-btn next-btn" [disabled]="currentPage === totalPages" (click)="onPageChange(currentPage + 1)">
+            Próximo
+          </button>
+        </div>
       </section>
     </div>
-
-    <!-- RELACIONADOS / RECOMENDAÇÕES -->
-    <section class="recommendations-section"
-             *ngIf="!isLoadingRecommendations && recommendations.length"
-             data-tour="movie-relacionados">
-      <div class="section-head">
-        <h2>Relacionados</h2>
-      </div>
-
+    <section class="recommendations-section" *ngIf="!isLoadingRecommendations && recommendations.length" data-tour="movie-relacionados">
+      <div class="section-head"><h2>Relacionados</h2></div>
       <div class="recommendations-grid">
-        <div class="rec-card"
-             *ngFor="let r of recommendations"
-             (click)="goToRecommendation(r)"
-             style="cursor: pointer;">
-          <img class="rec-poster" [src]="recommendationPoster(r)" [alt]="r.titulo" />
-        </div>
+        <div class="rec-card" *ngFor="let r of recommendations" (click)="goToRecommendation(r)" style="cursor: pointer;"><img class="rec-poster" [src]="recommendationPoster(r)" [alt]="r.titulo" /></div>
       </div>
     </section>
-
     <div class="state" *ngIf="isLoadingRecommendations">A carregar recomendações...</div>
   </div>
-
-  <app-dicas
-    *ngIf="filme && trailerDicaReady"
-    tourId="movie-detail-v1"
-    [steps]="movieDicasSteps"
-    [startDelayMs]="1300">
-  </app-dicas>
-
-  <!-- Confirmação de apagar comentário (usabilidade / acessibilidade — sem alert nativo) -->
-  <div class="modal-overlay comment-delete-overlay"
-       *ngIf="commentToDelete"
-       role="presentation"
-       (click)="closeCommentDeleteConfirm()">
-    <div class="modal-box comment-delete-dialog"
-         role="dialog"
-         aria-modal="true"
-         aria-labelledby="comment-delete-title"
-         (click)="$event.stopPropagation()">
-      <button type="button"
-              class="modal-close"
-              (click)="closeCommentDeleteConfirm()"
-              [disabled]="isDeletingComment"
-              aria-label="Fechar">×</button>
-
+  <app-dicas *ngIf="filme && trailerDicaReady" tourId="movie-detail-v1" [steps]="movieDicasSteps" [startDelayMs]="1300"></app-dicas>
+  <div class="modal-overlay comment-delete-overlay" *ngIf="commentToDelete" role="presentation" (click)="closeCommentDeleteConfirm()">
+    <div class="modal-box comment-delete-dialog" role="dialog" aria-modal="true" aria-labelledby="comment-delete-title" (click)="$event.stopPropagation()">
+      <button type="button" class="modal-close" (click)="closeCommentDeleteConfirm()" [disabled]="isDeletingComment" aria-label="Fechar">✕</button>
       <h3 id="comment-delete-title">Apagar comentário</h3>
       <p class="comment-delete-msg">Tens a certeza que queres apagar este comentário? Esta ação não pode ser anulada.</p>
-
       <div class="modal-actions comment-delete-actions">
-        <button type="button"
-                class="btn ghost"
-                (click)="closeCommentDeleteConfirm()"
-                [disabled]="isDeletingComment">
-          Cancelar
-        </button>
-        <button type="button"
-                class="btn danger"
-                (click)="confirmDeleteComment()"
-                [disabled]="isDeletingComment">
-          {{ isDeletingComment ? 'A apagar…' : 'Apagar' }}
-        </button>
+        <button type="button" class="btn ghost" (click)="closeCommentDeleteConfirm()" [disabled]="isDeletingComment">Cancelar</button>
+        <button type="button" class="btn danger" (click)="confirmDeleteComment()" [disabled]="isDeletingComment">{{ isDeletingComment ? 'A apagar…' : 'Apagar' }}</button>
       </div>
     </div>
   </div>

@@ -79,6 +79,20 @@ export interface PostDto {
   autorUserTagPrimaryColor?: string | null;
   autorUserTagSecondaryColor?: string | null;
   autorFotoPerfilUrl?: string | null;
+  
+  // Pagination metadata for comments inside each post
+  comentariosCurrentPage?: number;
+  comentariosTotalCount?: number;
+}
+
+export interface PaginatedPostsDto {
+  posts: PostDto[];
+  totalCount: number;
+}
+
+export interface PaginatedCommunityCommentsDto {
+  comments: ComentarioDto[];
+  totalCount: number;
 }
 
 export interface ComentarioDto {
@@ -152,17 +166,23 @@ export class ComunidadesService {
     );
   }
 
-  getPosts(id: number): Observable<PostDto[]> {
-    return this.http.get<PostDto[]>(`${this.apiUrl}/${id}/posts`, { withCredentials: true }).pipe(
-      map(posts => {
-        posts.forEach(p => {
-          if (p.dataCriacao && !p.dataCriacao.endsWith('Z')) {
-            p.dataCriacao += 'Z';
-          }
-        });
-        return posts;
+  getPosts(id: number, page: number = 1, pageSize: number = 10, sortOrder: string = 'desc'): Observable<PaginatedPostsDto> {
+    const params = new HttpParams()
+      .set('page', String(page))
+      .set('pageSize', String(pageSize))
+      .set('sortOrder', sortOrder);
+    return this.http.get<PaginatedPostsDto>(`${this.apiUrl}/${id}/posts`, { params, withCredentials: true }).pipe(
+      map(res => {
+        if (res.posts) {
+          res.posts.forEach(p => {
+            if (p.dataCriacao && !p.dataCriacao.endsWith('Z')) {
+              p.dataCriacao += 'Z';
+            }
+          });
+        }
+        return res;
       }),
-      catchError(() => of([]))
+      catchError(() => of({ posts: [], totalCount: 0 }))
     );
   }
 
@@ -279,17 +299,20 @@ export class ComunidadesService {
     return this.http.post(`${this.apiUrl}/${comunidadeId}/membros/${utilizadorId}/castigar?horas=${horas}`, {}, { withCredentials: true });
   }
 
-  getComentarios(comunidadeId: number, postId: number): Observable<ComentarioDto[]> {
-    return this.http.get<ComentarioDto[]>(`${this.apiUrl}/${comunidadeId}/posts/${postId}/comentarios`, { withCredentials: true }).pipe(
-      map(comentarios => {
-        comentarios.forEach(c => {
-          if (c.dataCriacao && !c.dataCriacao.endsWith('Z')) {
-            c.dataCriacao += 'Z';
-          }
-        });
-        return comentarios;
+  getComentarios(comunidadeId: number, postId: number, page: number = 1, pageSize: number = 5): Observable<PaginatedCommunityCommentsDto> {
+    const params = new HttpParams().set('page', String(page)).set('pageSize', String(pageSize));
+    return this.http.get<PaginatedCommunityCommentsDto>(`${this.apiUrl}/${comunidadeId}/posts/${postId}/comentarios`, { params, withCredentials: true }).pipe(
+      map(res => {
+        if (res.comments) {
+          res.comments.forEach(c => {
+            if (c.dataCriacao && !c.dataCriacao.endsWith('Z')) {
+              c.dataCriacao += 'Z';
+            }
+          });
+        }
+        return res;
       }),
-      catchError(() => of([]))
+      catchError(() => of({ comments: [], totalCount: 0 }))
     );
   }
 

@@ -81,7 +81,7 @@ namespace FilmAholic.Server.Controllers
                 }
 
                 existing.JaViu = jaViu;
-                existing.Data = DateTime.Now;
+                existing.Data = DateTime.UtcNow;
             }
             else
             {
@@ -90,7 +90,7 @@ namespace FilmAholic.Server.Controllers
                     UtilizadorId = userId,
                     FilmeId = actualFilmeId,
                     JaViu = jaViu,
-                    Data = DateTime.Now
+                    Data = DateTime.UtcNow
                 });
 
                 if (jaViu) shouldProcessDesafio = true;
@@ -381,7 +381,7 @@ namespace FilmAholic.Server.Controllers
             }
 
             DateTime startDate;
-            DateTime endDate = to ?? DateTime.Now;
+            DateTime endDate = to ?? DateTime.UtcNow;
             
             if (from.HasValue)
             {
@@ -389,13 +389,13 @@ namespace FilmAholic.Server.Controllers
             }
             else
             {
-                startDate = DateTime.Now.AddMonths(-11);
+                startDate = DateTime.UtcNow.AddMonths(-11);
             }
 
             if (from == null && to == null)
             {
                 startDate = new DateTime(2026, 1, 1);
-                endDate = DateTime.Now;
+                endDate = DateTime.UtcNow;
             }
 
             var totalDays = (endDate - startDate).Days;
@@ -573,7 +573,7 @@ namespace FilmAholic.Server.Controllers
         {
             if (filme == null || string.IsNullOrWhiteSpace(filme.Genero)) return;
 
-            var now = DateTime.Now;
+            var now = DateTime.UtcNow;
 
             var matchingDesafios = await _context.Desafios
                 .Where(d =>
@@ -599,8 +599,7 @@ namespace FilmAholic.Server.Controllers
                     {
                         UtilizadorId = userId,
                         DesafioId = desafio.Id,
-                        QuantidadeProgresso = 0,
-                        DataAtualizacao = DateTime.Now
+                        DataAtualizacao = DateTime.UtcNow
                     };
                     _context.UserDesafios.Add(userDesafio);
                 }
@@ -608,7 +607,7 @@ namespace FilmAholic.Server.Controllers
                 if (userDesafio.QuantidadeProgresso >= desafio.QuantidadeNecessaria) continue;
 
                 userDesafio.QuantidadeProgresso += 1;
-                userDesafio.DataAtualizacao = DateTime.Now;
+                userDesafio.DataAtualizacao = DateTime.UtcNow;
                 anyChange = true;
 
                 if (userDesafio.QuantidadeProgresso >= desafio.QuantidadeNecessaria)

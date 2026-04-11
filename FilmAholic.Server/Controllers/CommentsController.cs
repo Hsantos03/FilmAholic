@@ -22,7 +22,7 @@ namespace FilmAholic.Server.Controllers
         }
 
         [HttpGet("movie/{movieId:int}")]
-        public async Task<ActionResult<List<CommentDTO>>> GetByMovie(int movieId)
+        public async Task<IActionResult> GetByMovie(int movieId, [FromQuery] int page = 1, [FromQuery] int pageSize = 5)
         {
             try
             {
@@ -30,13 +30,17 @@ namespace FilmAholic.Server.Controllers
                     ? (User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue("sub") ?? "")
                     : null;
 
-                var comments = await _context.Comments
-                    .Where(c => c.FilmeId == movieId)
+                var query = _context.Comments.Where(c => c.FilmeId == movieId);
+                var totalCount = await query.CountAsync();
+
+                var comments = await query
                     .OrderByDescending(c => c.DataCriacao)
+                    .Skip((page - 1) * pageSize)
+                    .Take(pageSize)
                     .ToListAsync();
 
                 var commentIds = comments.Select(c => c.Id).ToList();
-
+                // ... same logic as before for DTO generation ...
                 var userIds = comments.Select(c => c.UserId).Where(uid => uid != null).Distinct().ToList();
                 Dictionary<string, string?> userNameByUserId = new();
                 Dictionary<string, string?> fotoByUserId = new();
@@ -127,13 +131,12 @@ namespace FilmAholic.Server.Controllers
                     MyVote = myVoteByComment.TryGetValue(c.Id, out var mv) ? mv : 0
                 }).ToList();
 
-                return Ok(dtos);
+                return Ok(new PaginatedCommentsDTO { Comments = dtos, TotalCount = totalCount });
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Erro ao obter comentários do filme {MovieId}. Pode faltar aplicar migrações na base de dados.", movieId);
-                // Devolver lista vazia para a página do filme carregar; o utilizador vê "sem comentários"
-                return Ok(new List<CommentDTO>());
+                _logger.LogError(ex, "Erro ao obter comentários do filme {MovieId}.", movieId);
+                return Ok(new { comments = new List<CommentDTO>(), totalCount = 0 });
             }
         }
 
