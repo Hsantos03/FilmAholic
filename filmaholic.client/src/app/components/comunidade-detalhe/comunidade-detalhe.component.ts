@@ -968,7 +968,9 @@ export class ComunidadeDetalheComponent implements OnInit, OnDestroy {
     this.service.getComentarios(this.comunidadeId, post.id, post.comentariosCurrentPage || 1, this.commentsPageSize).subscribe({
       next: (res) => {
         post.comentarios = res.comments || [];
-        post.comentariosTotalCount = res.totalCount || 0;
+        const total = res.totalCount || 0;
+        post.comentariosTotalCount = total;
+        post.comentariosCount = total;
       },
       error: (err) => console.error('Erro ao carregar comentários', err)
     });
@@ -986,6 +988,11 @@ export class ComunidadeDetalheComponent implements OnInit, OnDestroy {
     return Math.ceil((post.comentariosTotalCount || 0) / this.commentsPageSize);
   }
 
+  /** Total para o rótulo «Ver N comentários»: sincronizado com a API de comentários, não só com comentariosCount do feed. */
+  getPostCommentDisplayCount(post: PostDto): number {
+    return post.comentariosTotalCount ?? post.comentariosCount ?? 0;
+  }
+
   getCommentsPages(post: PostDto): (number | string)[] {
     return this.generateVisiblePages(post.comentariosCurrentPage || 1, this.getTotalCommentsPages(post));
   }
@@ -997,7 +1004,9 @@ export class ComunidadeDetalheComponent implements OnInit, OnDestroy {
 
     this.service.createComentario(this.comunidadeId, post.id, post.newComentarioTexto.trim()).subscribe({
       next: (novoComentario) => {
-        post.comentariosTotalCount = (post.comentariosTotalCount || 0) + 1;
+        const next = (post.comentariosTotalCount ?? post.comentariosCount ?? 0) + 1;
+        post.comentariosTotalCount = next;
+        post.comentariosCount = next;
         post.comentariosCurrentPage = 1; // Back to first page to see the comment
         this.loadPostComments(post);
         post.newComentarioTexto = '';
