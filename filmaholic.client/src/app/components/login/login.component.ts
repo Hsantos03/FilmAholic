@@ -77,6 +77,27 @@ export class LoginComponent implements OnInit {
       if (params['error']) {
         this.errorMessage = params['error'];
       }
+
+      if (params['reset'] === 'ok') {
+        this.successMessage = 'Password atualizada com sucesso. Inicia sessão com a nova password.';
+        this.router.navigate([], {
+          relativeTo: this.route,
+          queryParams: { reset: null },
+          queryParamsHandling: 'merge',
+          replaceUrl: true
+        });
+      }
+
+      if (params['recover'] === 'sent') {
+        this.successMessage =
+          'Se este email estiver na FilmAholic, enviámos o link de recuperação. Verifica a caixa de entrada e o spam.';
+        this.router.navigate([], {
+          relativeTo: this.route,
+          queryParams: { recover: null },
+          queryParamsHandling: 'merge',
+          replaceUrl: true
+        });
+      }
     });
   }
 
