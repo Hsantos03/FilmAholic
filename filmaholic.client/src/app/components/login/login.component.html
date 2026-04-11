@@ -7,7 +7,10 @@
 
     <!-- Mensagem de verificação de email -->
     <div *ngIf="showEmailVerificationMessage" style="background-color: #fff3cd; border: 1px solid #ffc107; border-radius: 10px; padding: 20px; margin-bottom: 20px;">
-      <h3 style="color: #856404; margin-top: 0;">⚠️ Email não confirmado</h3>
+      <h3 class="login-email-verify__title">
+        <img src="assets/email-unconfirmed-warning.png" alt="" class="login-email-verify__warn-icon" width="26" height="26" aria-hidden="true" />
+        <span>Email não confirmado</span>
+      </h3>
       <p style="color: #856404; margin-bottom: 15px;">
         Por favor, confirme o seu email antes de fazer login. Verifique a sua caixa de entrada (e pasta de spam) para <strong>{{ emailParaVerificar }}</strong>.
       </p>

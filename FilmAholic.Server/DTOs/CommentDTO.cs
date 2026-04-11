@@ -29,4 +29,9 @@ namespace FilmAholic.Server.DTOs
         public int DislikeCount { get; set; }
         public int MyVote { get; set; }
     }
+    public class PaginatedCommentsDTO
+    {
+        public List<CommentDTO> Comments { get; set; } = new();
+        public int TotalCount { get; set; }
+    }
 }

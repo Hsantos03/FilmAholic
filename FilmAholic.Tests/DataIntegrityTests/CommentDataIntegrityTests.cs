@@ -129,8 +129,9 @@ namespace FilmAholic.Tests.DataIntegrityTests
 
                 // Assert
                 var result = await controller.GetByMovie(filmeIdInexistente);
-                var okResult = Assert.IsType<OkObjectResult>(result.Result);
-                var commentList = Assert.IsType<List<CommentDTO>>(okResult.Value);
+                var okResult = Assert.IsType<OkObjectResult>(result);
+                var paginated = Assert.IsType<PaginatedCommentsDTO>(okResult.Value);
+                Assert.Empty(paginated.Comments);
             }
         }
 

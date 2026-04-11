@@ -601,7 +601,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
    * relevante=false (👎) dismisses from future recs.
 
-   * The movie stays visible — only marked visually. List refreshes on next dashboard load.
+   * Após sucesso, o cartão atual sai com a mesma animação do carrossel e mostra-se a seguinte sugestão.
 
    */
 
@@ -619,9 +619,9 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
       next: () => {
 
-        r._voted = relevante ? 'up' : 'down';
-
         this.isSendingFeedback = false;
+
+        this.removeCurrentRecomendacaoWithAnimation();
 
       },
 
@@ -632,6 +632,68 @@ export class DashboardComponent implements OnInit, OnDestroy {
       }
 
     });
+
+  }
+
+
+
+  /** Remove a recomendação visível após feedback (like/dislike), com transição igual a «seguinte». */
+
+  private removeCurrentRecomendacaoWithAnimation(): void {
+
+    if (this.isRecomendacaoAnimating || !this.recomendacoes.length) return;
+
+    const idx = this.recomendacaoIndex;
+
+    if (idx < 0 || idx >= this.recomendacoes.length) return;
+
+
+
+    this.isRecomendacaoAnimating = true;
+
+    this.recomendacaoSlideDir = 'fade-out';
+
+
+
+    setTimeout(() => {
+
+      this.recomendacoes.splice(idx, 1);
+
+      if (this.recomendacaoIndex >= this.recomendacoes.length) {
+
+        this.recomendacaoIndex = Math.max(0, this.recomendacoes.length - 1);
+
+      }
+
+
+
+      if (this.recomendacoes.length === 0) {
+
+        this.recomendacaoSlideDir = null;
+
+        this.isRecomendacaoAnimating = false;
+
+        // Novo lote: no servidor os filmes já votados deixam de entrar na lista.
+
+        this.loadRecomendacoes();
+
+        return;
+
+      }
+
+
+
+      this.recomendacaoSlideDir = 'left';
+
+      setTimeout(() => {
+
+        this.isRecomendacaoAnimating = false;
+
+        this.recomendacaoSlideDir = null;
+
+      }, 500);
+
+    }, 200);
 
   }
 

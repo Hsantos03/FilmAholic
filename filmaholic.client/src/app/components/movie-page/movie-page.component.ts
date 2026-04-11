@@ -26,10 +26,10 @@ export class MoviePageComponent implements OnInit, OnDestroy {
    * depois o username — evita o fallback antigo "User" que mostrava sempre **U**.
    */
   get currentUserInitialSource(): string {
-    const nome = (localStorage.getItem('user_nome') || '').trim();
-    if (nome) return nome;
     const login = (localStorage.getItem('userName') || '').trim();
     if (login) return login;
+    const nome = (localStorage.getItem('user_nome') || '').trim();
+    if (nome) return nome;
     return '';
   }
 
@@ -58,12 +58,18 @@ export class MoviePageComponent implements OnInit, OnDestroy {
 
   inWatchLater = false;
   inWatched = false;
+  favoritesCount = 0;
+  showFavLimitWarning = false;
 
   comments: CommentDTO[] = [];
   newComment = '';
   selectedRating = 0;
   isSendingComment = false;
   commentError = '';
+
+  currentPage = 1;
+  pageSize = 5;
+  totalComments = 0;
 
   editingCommentId: number | null = null;
   editText = '';
@@ -548,13 +554,71 @@ export class MoviePageComponent implements OnInit, OnDestroy {
 
   // COMMENTS
   loadComments(movieId: number): void {
-    this.commentsService.getByMovie(movieId).subscribe({
-      next: res => (this.comments = res || []),
+    this.commentsService.getByMovie(movieId, this.currentPage, this.pageSize).subscribe({
+      next: res => {
+        this.comments = res.comments || [];
+        this.totalComments = res.totalCount || 0;
+      },
       error: (err) => {
         console.warn('Failed to load comments', err);
         this.comments = [];
+        this.totalComments = 0;
       }
     });
+  }
+
+  onPageChange(page: number | string): void {
+    const pageNum = typeof page === 'string' ? parseInt(page) : page;
+    if (isNaN(pageNum) || pageNum < 1 || pageNum > this.totalPages) return;
+    
+    this.currentPage = pageNum;
+    if (this.filme) {
+      this.loadComments(this.filme.id);
+      // Scroll to comments section
+      const commentsSection = document.getElementById('comentarios-anchor');
+      if (commentsSection) {
+        commentsSection.scrollIntoView({ behavior: 'smooth' });
+      }
+    }
+  }
+
+  get totalPages(): number {
+    return Math.ceil(this.totalComments / this.pageSize);
+  }
+
+  get pages(): (number | string)[] {
+    const total = this.totalPages;
+    const current = this.currentPage;
+    const pages: (number | string)[] = [];
+
+    if (total <= 7) {
+      for (let i = 1; i <= total; i++) pages.push(i);
+      return pages;
+    }
+
+    // Always show first page
+    pages.push(1);
+
+    if (current > 3) {
+      pages.push('...');
+    }
+
+    // Window around current page
+    const start = Math.max(2, current - 1);
+    const end = Math.min(total - 1, current + 1);
+
+    for (let i = start; i <= end; i++) {
+      if (!pages.includes(i)) pages.push(i);
+    }
+
+    if (current < total - 2) {
+      if (!pages.includes('...')) pages.push('...');
+    }
+
+    // Always show last page
+    if (!pages.includes(total)) pages.push(total);
+
+    return pages;
   }
 
   startEdit(c: CommentDTO): void {
@@ -587,9 +651,9 @@ export class MoviePageComponent implements OnInit, OnDestroy {
     this.isDeletingComment = true;
     this.commentsService.delete(c.id).subscribe({
       next: () => {
-        this.comments = this.comments.filter(x => x.id !== c.id);
         this.isDeletingComment = false;
         this.commentToDelete = null;
+        if (this.filme) this.loadComments(this.filme.id);
       },
       error: () => {
         this.commentError = 'Não foi possível apagar o comentário.';
@@ -638,9 +702,10 @@ export class MoviePageComponent implements OnInit, OnDestroy {
     this.isSendingComment = true;
 
     this.commentsService.create(this.filme.id, this.newComment.trim()).subscribe({
-      next: (created) => {
+      next: () => {
         this.newComment = '';
-        this.comments = [created, ...this.comments];
+        this.currentPage = 1; // Reset to page 1 to see the new comment
+        this.loadComments(this.filme!.id);
       },
       error: (err) => {
         console.error('Create comment failed', err);
@@ -722,8 +787,12 @@ export class MoviePageComponent implements OnInit, OnDestroy {
     this.favoritesService.getFavorites().subscribe({
       next: (fav) => {
         this.isFavorite = fav?.filmes?.includes(this.filme!.id) ?? false;
+        this.favoritesCount = fav?.filmes?.length ?? 0;
       },
-      error: () => (this.isFavorite = false)
+      error: () => {
+        this.isFavorite = false;
+        this.favoritesCount = 0;
+      }
     });
   }
 
@@ -743,11 +812,18 @@ export class MoviePageComponent implements OnInit, OnDestroy {
         if (isAlready) {
           updatedFilmes = filmesList.filter(id => id !== this.filme!.id);
         } else {
-          if (filmesList.length >= this.MAX_FAVORITES) return;
+          if (filmesList.length >= this.MAX_FAVORITES) {
+            this.showFavLimitWarning = true;
+            setTimeout(() => {
+              this.showFavLimitWarning = false;
+            }, 2000);
+            return;
+          }
           updatedFilmes = [...filmesList, this.filme!.id];
         }
 
         this.isFavorite = !isAlready;
+        this.favoritesCount = updatedFilmes.length;
 
         this.favoritesService.saveFavorites({ filmes: updatedFilmes, atores: Array.isArray(atores) ? atores : [] }).subscribe({
           next: () => this.favoritesService.notifyFavoritesChanged(),

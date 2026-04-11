@@ -55,7 +55,9 @@ public class RecomendacoesController : ControllerBase
             .Select(f => new { f.FilmeId, f.Relevante })
             .ToListAsync();
 
-        var dismissedIds = new HashSet<int>(feedback.Where(f => !f.Relevante).Select(f => f.FilmeId));
+        // Qualquer filme já avaliado (gosto ou não) deixa de aparecer — permite pedir novos lotes sem repetir cartões.
+        var feedbackFilmeIds = new HashSet<int>(feedback.Select(f => f.FilmeId));
+
         var likedIds = new HashSet<int>(feedback.Where(f => f.Relevante).Select(f => f.FilmeId));
 
         var boostedGenres = new HashSet<string>(genreNames, StringComparer.OrdinalIgnoreCase);
@@ -76,7 +78,7 @@ public class RecomendacoesController : ControllerBase
         var allMovies = await _context.Set<Filme>().ToListAsync();
 
         var candidates = allMovies
-            .Where(f => !watchedIds.Contains(f.Id) && !dismissedIds.Contains(f.Id))
+            .Where(f => !watchedIds.Contains(f.Id) && !feedbackFilmeIds.Contains(f.Id))
             .Where(f =>
             {
                 var movieGenres = (f.Genero ?? "")

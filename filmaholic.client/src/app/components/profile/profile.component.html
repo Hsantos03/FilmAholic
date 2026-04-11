@@ -908,7 +908,7 @@
                 <span class="medalha-nome">{{ um.medalha?.nome || 'Medalha' }}</span>
                 <span class="medalha-desc">{{ um.medalha?.descricao }}</span>
                 <span class="medalha-data" style="font-size: 0.75rem; color: #888; margin-top: 4px;">
-                  Conquistada em {{ um.dataConquista | date:'dd/MM/yyyy' }}
+                  Conquistada em {{ um.dataConquista | date:'dd/MM/yyyy, HH:mm':'':'pt-PT' }}
                 </span>
               </div>
 
@@ -1066,8 +1066,9 @@
       </div>
 
       <div class="modal-actions">
+        <button type="button" class="cancel-btn" (click)="closeEditCapa()">Cancelar</button>
+        <button type="button" class="modal-remover-btn" (click)="removeCapa()" *ngIf="editCapaUrl">Remover</button>
         <button type="submit" class="save-btn">Guardar</button>
-        <button type="button" class="save-btn" style="background: #dc3545;" (click)="removeCapa()" *ngIf="editCapaUrl">Remover</button>
       </div>
     </form>
   </div>
@@ -1088,8 +1089,9 @@
       </div>
 
       <div class="modal-actions">
+        <button type="button" class="cancel-btn" (click)="closeEditAvatar()">Cancelar</button>
+        <button type="button" class="modal-remover-btn" (click)="removeAvatar()" *ngIf="editFotoPerfilUrl">Remover</button>
         <button type="submit" class="save-btn">Guardar</button>
-        <button type="button" class="save-btn" style="background: #dc3545;" (click)="removeAvatar()" *ngIf="editFotoPerfilUrl">Remover</button>
       </div>
     </form>
   </div>

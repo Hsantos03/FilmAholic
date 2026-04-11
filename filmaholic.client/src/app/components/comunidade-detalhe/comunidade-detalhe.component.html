@@ -67,11 +67,13 @@
 
   <div *ngIf="!isLoading && accessDeniedBan" class="ban-access-denied">
     <div class="ban-access-denied__card">
-      <div class="ban-access-denied__icon" aria-hidden="true">⛔</div>
+      <div class="ban-access-denied__icon" aria-hidden="true">
+        <img src="assets/membro-banir.png" alt="" class="ban-access-denied__icon-img" />
+      </div>
       <h2 class="ban-access-denied__title">Não tens acesso a esta comunidade</h2>
       <p *ngIf="banComunidadeNome" class="ban-access-denied__nome"><strong>{{ banComunidadeNome }}</strong></p>
       <p class="ban-access-denied__msg">{{ banAccessMessage }}</p>
-      <p *ngIf="banAccessAteUtc" class="ban-access-denied__ate">Banimento até: <strong>{{ banAccessAteUtc | date:'dd/MM/yyyy, HH:mm' }}</strong> (hora local)</p>
+      <p *ngIf="banAccessAteUtc" class="ban-access-denied__ate">Banimento até: <strong>{{ banAccessAteUtc | date:'dd/MM/yyyy, HH:mm':'':'pt-PT' }}</strong> (hora local)</p>
       <p *ngIf="!banAccessAteUtc" class="ban-access-denied__ate ban-access-denied__ate--perm">Este banimento é <strong>permanente</strong> (sem data de fim).</p>
       <button type="button" class="primary-btn ban-access-denied__btn" routerLink="/comunidades">Voltar às comunidades</button>
     </div>
@@ -95,7 +97,7 @@
       <h1>{{ comunidade.nome }}</h1>
       <div class="meta">
         <span> · {{ comunidade.isPrivada ? 'Privada' : 'Pública' }}</span>
-        <span *ngIf="comunidade.dataCriacao"> · Criada {{ comunidade.dataCriacao | date:'shortDate' }}</span>
+        <span *ngIf="comunidade.dataCriacao"> · Criada {{ comunidade.dataCriacao | date:'dd/MM/yyyy':'':'pt-PT' }}</span>
             </div>
           </div>
       </div>
@@ -234,7 +236,7 @@
         </div>
         <div class="sort-control">
           <label>Ordenar:</label>
-          <select [(ngModel)]="sortOrder" class="custom-select">
+          <select [(ngModel)]="sortOrder" (change)="onSortChange()" class="custom-select">
             <option value="desc">Mais recentes</option>
             <option value="asc">Mais antigas</option>
             <option value="likes">Mais likes</option>
@@ -314,10 +316,13 @@
             <span class="slider"></span>
           </label>
         </div>
-        <button type="button" class="save-btn" (click)="submitPost()" [disabled]="isPosting || (newTitulo && newTitulo.length > 30) || (newConteudo && newConteudo.length > 500)">
+        <button type="button" class="save-btn" (click)="submitPost()" [disabled]="isPosting || !newTitulo.trim() || !newConteudo.trim() || newTitulo.length > 30 || newConteudo.length > 500">
           {{ isPosting ? 'A publicar…' : 'Publicar' }}
         </button>
       </div>
+
+      <!-- Anchor for pagination scroll -->
+      <div id="posts-start-anchor"></div>
 
       <div *ngIf="posts.length === 0" class="empty">Ainda não há publicações nesta comunidade.</div>
 
@@ -347,10 +352,19 @@
           </div>
           <div class="post-owner-actions">
             <span *ngIf="isAdmin && (p.reportsCount || 0) > 0" class="admin-report-badge" title="Denúncias recebidas">
-              🚩 {{ p.reportsCount }}
+              <img class="admin-report-badge-ico" src="assets/395841.png" alt="" width="14" height="14" aria-hidden="true" />
+              {{ p.reportsCount }}
             </span>
 
-            <button *ngIf="p.autorId !== currentUserId && !isCurrentCastigado" class="post-action-btn report-btn" (click)="openReportModal(p)" title="Denunciar publicação" [disabled]="p.jaReportou">🚩</button>
+            <button *ngIf="p.autorId !== currentUserId && !isCurrentCastigado"
+                    type="button"
+                    class="post-action-btn report-btn"
+                    (click)="openReportModal(p)"
+                    title="Denunciar publicação"
+                    [disabled]="p.jaReportou"
+                    aria-label="Denunciar publicação">
+              <img class="post-action-ico" src="assets/395841.png" alt="" aria-hidden="true" />
+            </button>
 
             <button *ngIf="p.autorId === currentUserId && !isCurrentCastigado" class="post-action-btn edit-btn" (click)="openEditPost(p)" title="Editar" type="button">
               <img class="post-action-ico" src="assets/comunidade-spoiler-pencil.png" alt="" aria-hidden="true" />
@@ -394,7 +408,7 @@
         </div>
 
         <div class="post-meta-footer">
-          <span class="post-data">{{ p.dataCriacao | date:'short' }}</span>
+          <span class="post-data">{{ p.dataCriacao | date:'dd/MM/yyyy, HH:mm':'':'pt-PT' }}</span>
         </div>
 
         <div class="post-footer">
@@ -449,10 +463,28 @@
                 </div>
                 <p class="comment-content">{{ c.conteudo }}</p>
                 <div class="comment-meta-footer">
-                  <span class="comment-date">{{ c.dataCriacao | date:'short' }}</span>
+                  <span class="comment-date">{{ c.dataCriacao | date:'dd/MM/yyyy, HH:mm':'':'pt-PT' }}</span>
                 </div>
               </div>
             </div>
+          </div>
+
+          <!-- Pagination for Comments -->
+          <div class="comments-pagination" *ngIf="getTotalCommentsPages(p) > 1">
+            <button class="comp-page-btn" [disabled]="p.comentariosCurrentPage === 1" (click)="onCommentsPageChange(p, (p.comentariosCurrentPage || 1) - 1)">
+              ‹
+            </button>
+            
+            <ng-container *ngFor="let cp of getCommentsPages(p)">
+              <button *ngIf="cp !== '...'" class="comp-page-btn" [class.active]="cp === p.comentariosCurrentPage" (click)="onCommentsPageChange(p, cp)">
+                {{ cp }}
+              </button>
+              <span *ngIf="cp === '...'" class="comp-ellipsis">...</span>
+            </ng-container>
+
+            <button class="comp-page-btn" [disabled]="p.comentariosCurrentPage === getTotalCommentsPages(p)" (click)="onCommentsPageChange(p, (p.comentariosCurrentPage || 1) + 1)">
+              ›
+            </button>
           </div>
 
           <div class="new-comment-box" *ngIf="isMembro && !isCurrentCastigado">
@@ -475,6 +507,28 @@
           </div>
         </div>
       </article>
+
+      <!-- Pagination for Posts -->
+      <div class="pagination-container" *ngIf="totalPostsPages > 1">
+        <button class="page-btn" [disabled]="postsCurrentPage === 1" (click)="onPostsPageChange(postsCurrentPage - 1)">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="15 18 9 12 15 6"></polyline>
+          </svg>
+        </button>
+
+        <ng-container *ngFor="let pf of getPostsPages()">
+          <button *ngIf="pf !== '...'" class="page-btn" [class.active]="pf === postsCurrentPage" (click)="onPostsPageChange(pf)">
+            {{ pf }}
+          </button>
+          <span *ngIf="pf === '...'" class="page-ellipsis">...</span>
+        </ng-container>
+
+        <button class="page-btn" [disabled]="postsCurrentPage === totalPostsPages" (click)="onPostsPageChange(postsCurrentPage + 1)">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="9 18 15 12 9 6"></polyline>
+          </svg>
+        </button>
+      </div>
     </div>
 
     <!-- Tab Membros -->
@@ -485,7 +539,7 @@
         <div *ngFor="let pedido of pedidosPendentes" class="pending-request-row">
           <div class="pending-request-user">
             <strong>{{ pedido.userName }}</strong>
-            <span>Pedido em {{ pedido.dataPedido | date:'short' }}</span>
+            <span>Pedido em {{ pedido.dataPedido | date:'dd/MM/yyyy, HH:mm':'':'pt-PT' }}</span>
           </div>
           <div class="pending-request-actions">
             <button type="button" class="pending-approve-btn" (click)="aprovarPedido(pedido)" [disabled]="isProcessingPedido">Aprovar</button>
@@ -518,17 +572,17 @@
               Castigado · tempo restante: <strong>{{ membrosCastigoCountdown[m.utilizadorId] }}</strong>
             </span>
           </div>
-          <span class="membro-data">Entrou {{ m.dataEntrada | date:'shortDate' }}</span>
+          <span class="membro-data">Entrou {{ m.dataEntrada | date:'dd/MM/yyyy':'':'pt-PT' }}</span>
 
           <div class="membro-actions" *ngIf="isAdmin && m.utilizadorId !== currentUserId">
-            <button class="kick-btn punish-btn" (click)="openCastigoModal(m)" title="Castigar membro">
-              ⏱️
+            <button class="kick-btn punish-btn" (click)="openCastigoModal(m)" title="Castigar membro" type="button" aria-label="Castigar membro">
+              <img class="membro-action-icon" src="assets/membro-castigo.png" alt="" width="22" height="22" aria-hidden="true" />
             </button>
-            <button class="kick-btn" (click)="openKickModal(m)" title="Expulsar membro">
-              ✕
+            <button class="kick-btn" (click)="openKickModal(m)" title="Expulsar membro" type="button" aria-label="Expulsar membro">
+              <img class="membro-action-icon" src="assets/membro-expulsar.png" alt="" width="22" height="22" aria-hidden="true" />
             </button>
-            <button class="kick-btn ban-btn" (click)="openBanModal(m)" title="Banir membro">
-              ⛔
+            <button class="kick-btn ban-btn" (click)="openBanModal(m)" title="Banir membro" type="button" aria-label="Banir membro">
+              <img class="membro-action-icon" src="assets/membro-banir.png" alt="" width="22" height="22" aria-hidden="true" />
             </button>
           </div>
 
@@ -556,10 +610,10 @@
               </div>
               <span class="membro-role">BANIDO</span>
               <span class="membro-ban-meta" *ngIf="!b.banidoAte">Ban: <strong>permanente</strong></span>
-              <span class="membro-ban-meta" *ngIf="b.banidoAte">Ban até: <strong>{{ b.banidoAte | date:'short' }}</strong></span>
+              <span class="membro-ban-meta" *ngIf="b.banidoAte">Ban até: <strong>{{ b.banidoAte | date:'dd/MM/yyyy, HH:mm':'':'pt-PT' }}</strong></span>
               <span class="membro-ban-motivo" *ngIf="b.motivoBan">{{ b.motivoBan }}</span>
             </div>
-            <span class="membro-data">Desde {{ b.dataEntrada | date:'shortDate' }}</span>
+            <span class="membro-data">Desde {{ b.dataEntrada | date:'dd/MM/yyyy':'':'pt-PT' }}</span>
           </div>
         </div>
       </div>
@@ -750,7 +804,7 @@
   <div class="modal-box modal-box--danger" (click)="$event.stopPropagation()">
     <button class="modal-close" (click)="closeReportModal()">&times;</button>
     <div class="delete-modal-icon">
-      <span style="font-size: 32px;">🚩</span>
+      <img class="castigo-modal-icon-img" src="assets/395841.png" alt="" width="44" height="44" aria-hidden="true" />
     </div>
     <h3>Denunciar publicação</h3>
     <p class="delete-modal-msg">Tem a certeza que deseja denunciar esta publicação por conteúdo inadequado?</p>
@@ -768,7 +822,7 @@
   <div class="modal-box modal-box--danger" (click)="$event.stopPropagation()">
     <button class="modal-close" (click)="closeCastigoModal()">&times;</button>
     <div class="delete-modal-icon">
-      <span style="font-size: 32px;">⏱️</span>
+      <img class="castigo-modal-icon-img" src="assets/membro-castigo.png" alt="" width="44" height="44" aria-hidden="true" />
     </div>
     <h3>Castigar membro</h3>
     <p class="delete-modal-msg">Escolhe quanto tempo o membro <strong>{{ membroToCastigar?.userName }}</strong> ficará impedido de fazer novas publicações.</p>
@@ -797,9 +851,12 @@
     <button class="modal-close" type="button" (click)="closeKickModal()">&times;</button>
 
     <div class="delete-modal-icon">
-      <svg width="40" height="40" viewBox="0 0 24 24" fill="currentColor">
-        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm5 11H7v-2h10v2z" />
-      </svg>
+      <img class="castigo-modal-icon-img"
+           [src]="kickMode === 'ban' ? 'assets/membro-banir.png' : 'assets/membro-expulsar.png'"
+           alt=""
+           width="44"
+           height="44"
+           aria-hidden="true" />
     </div>
 
     <h3>{{ kickMode === 'ban' ? 'Banir membro?' : 'Expulsar membro?' }}</h3>
