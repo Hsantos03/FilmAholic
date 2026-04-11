@@ -1123,6 +1123,14 @@
   cursor: default;
 }
 
+.admin-report-badge-ico {
+  width: 14px;
+  height: 14px;
+  object-fit: contain;
+  flex-shrink: 0;
+  opacity: 0.95;
+}
+
 .post-autor {
   font-weight: 600;
   font-size: 14px;

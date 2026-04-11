@@ -352,10 +352,19 @@
           </div>
           <div class="post-owner-actions">
             <span *ngIf="isAdmin && (p.reportsCount || 0) > 0" class="admin-report-badge" title="Denúncias recebidas">
-              🚩 {{ p.reportsCount }}
+              <img class="admin-report-badge-ico" src="assets/395841.png" alt="" width="14" height="14" aria-hidden="true" />
+              {{ p.reportsCount }}
             </span>
 
-            <button *ngIf="p.autorId !== currentUserId && !isCurrentCastigado" class="post-action-btn report-btn" (click)="openReportModal(p)" title="Denunciar publicação" [disabled]="p.jaReportou">🚩</button>
+            <button *ngIf="p.autorId !== currentUserId && !isCurrentCastigado"
+                    type="button"
+                    class="post-action-btn report-btn"
+                    (click)="openReportModal(p)"
+                    title="Denunciar publicação"
+                    [disabled]="p.jaReportou"
+                    aria-label="Denunciar publicação">
+              <img class="post-action-ico" src="assets/395841.png" alt="" aria-hidden="true" />
+            </button>
 
             <button *ngIf="p.autorId === currentUserId && !isCurrentCastigado" class="post-action-btn edit-btn" (click)="openEditPost(p)" title="Editar" type="button">
               <img class="post-action-ico" src="assets/comunidade-spoiler-pencil.png" alt="" aria-hidden="true" />
@@ -795,7 +804,7 @@
   <div class="modal-box modal-box--danger" (click)="$event.stopPropagation()">
     <button class="modal-close" (click)="closeReportModal()">&times;</button>
     <div class="delete-modal-icon">
-      <span style="font-size: 32px;">🚩</span>
+      <img class="castigo-modal-icon-img" src="assets/395841.png" alt="" width="44" height="44" aria-hidden="true" />
     </div>
     <h3>Denunciar publicação</h3>
     <p class="delete-modal-msg">Tem a certeza que deseja denunciar esta publicação por conteúdo inadequado?</p>
