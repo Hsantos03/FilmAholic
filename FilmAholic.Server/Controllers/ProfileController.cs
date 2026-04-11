@@ -41,7 +41,7 @@ namespace FilmAholic.Server.Controllers
                 .Select(u => new
                 {
                     id = u.Id,
-                    userName = u.UserName,
+                    userName = !string.IsNullOrEmpty(u.UserName) && !u.UserName.Contains("@") ? u.UserName : u.Nome + " " + u.Sobrenome,
                     nome = u.Nome,
                     sobrenome = u.Sobrenome,
                     email = u.Email,

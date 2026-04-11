@@ -155,17 +155,24 @@
               <div class="card-desc">{{ c.descricao || 'Sem descrição' }}</div>
             </div>
             <div class="card-meta">
-              <span class="ban-pill" *ngIf="c.isCurrentUserBanned && c.meuBanimentoAteUtc"
-                    [attr.title]="'Banido até ' + (c.meuBanimentoAteUtc | date:'dd/MM/yyyy, HH:mm') + ' (hora local).'">
-                Banido até {{ c.meuBanimentoAteUtc | date:'dd/MM/yyyy, HH:mm' }}
-              </span>
-              <span class="ban-pill" *ngIf="c.isCurrentUserBanned && !c.meuBanimentoAteUtc"
-                    title="Banimento permanente — sem data de fim.">
-                Banimento permanente
-              </span>
-              <span class="visibility-pill" [class.private]="c.isPrivada">{{ c.isPrivada ? 'Privada' : 'Pública' }}</span>
-              <span class="members">{{ c.membrosCount ?? 0 }}<ng-container *ngIf="c.limiteMembros">/{{ c.limiteMembros }}</ng-container> membros</span>
-              <span class="created" *ngIf="c.dataCriacao">Criada: {{ c.dataCriacao | date:'shortDate' }}</span>
+              <div class="card-meta-row" *ngIf="c.isCurrentUserBanned">
+                <span class="ban-pill" *ngIf="c.meuBanimentoAteUtc"
+                      [attr.title]="'Banido até ' + (c.meuBanimentoAteUtc | date:'dd/MM/yyyy, HH:mm') + ' (hora local).'">
+                  Banido até {{ c.meuBanimentoAteUtc | date:'dd/MM/yyyy, HH:mm' }}
+                </span>
+                <span class="ban-pill" *ngIf="!c.meuBanimentoAteUtc"
+                      title="Banimento permanente — sem data de fim.">
+                  Banimento permanente
+                </span>
+              </div>
+              <div class="card-meta-row">
+                <span class="visibility-pill" [class.private]="c.isPrivada">{{ c.isPrivada ? 'Privada' : 'Pública' }}</span>
+                <span class="admin-pill" *ngIf="c.isAdmin">Admin</span>
+              </div>
+              <div class="card-meta-row">
+                <span class="created" *ngIf="c.dataCriacao">Criada: {{ c.dataCriacao | date:'shortDate' }}</span>
+                <span class="members">{{ c.membrosCount ?? 0 }}<ng-container *ngIf="c.limiteMembros">/{{ c.limiteMembros }}</ng-container> membros</span>
+              </div>
             </div>
           </article>
         </div>
@@ -200,17 +207,24 @@
               <div class="card-desc">{{ c.descricao || 'Sem descrição' }}</div>
             </div>
             <div class="card-meta">
-              <span class="ban-pill" *ngIf="c.isCurrentUserBanned && c.meuBanimentoAteUtc"
-                    [attr.title]="'Banido até ' + (c.meuBanimentoAteUtc | date:'dd/MM/yyyy, HH:mm') + ' (hora local).'">
-                Banido até {{ c.meuBanimentoAteUtc | date:'dd/MM/yyyy, HH:mm' }}
-              </span>
-              <span class="ban-pill" *ngIf="c.isCurrentUserBanned && !c.meuBanimentoAteUtc"
-                    title="Banimento permanente — sem data de fim.">
-                Banimento permanente
-              </span>
-              <span class="visibility-pill" [class.private]="c.isPrivada">{{ c.isPrivada ? 'Privada' : 'Pública' }}</span>
-              <span class="members">{{ c.membrosCount ?? 0 }}<ng-container *ngIf="c.limiteMembros">/{{ c.limiteMembros }}</ng-container> membros</span>
-              <span class="created" *ngIf="c.dataCriacao">Criada: {{ c.dataCriacao | date:'shortDate' }}</span>
+              <div class="card-meta-row" *ngIf="c.isCurrentUserBanned">
+                <span class="ban-pill" *ngIf="c.meuBanimentoAteUtc"
+                      [attr.title]="'Banido até ' + (c.meuBanimentoAteUtc | date:'dd/MM/yyyy, HH:mm') + ' (hora local).'">
+                  Banido até {{ c.meuBanimentoAteUtc | date:'dd/MM/yyyy, HH:mm' }}
+                </span>
+                <span class="ban-pill" *ngIf="!c.meuBanimentoAteUtc"
+                      title="Banimento permanente — sem data de fim.">
+                  Banimento permanente
+                </span>
+              </div>
+              <div class="card-meta-row">
+                <span class="visibility-pill" [class.private]="c.isPrivada">{{ c.isPrivada ? 'Privada' : 'Pública' }}</span>
+                <span class="admin-pill" *ngIf="c.isAdmin">Admin</span>
+              </div>
+              <div class="card-meta-row">
+                <span class="created" *ngIf="c.dataCriacao">Criada: {{ c.dataCriacao | date:'shortDate' }}</span>
+                <span class="members">{{ c.membrosCount ?? 0 }}<ng-container *ngIf="c.limiteMembros">/{{ c.limiteMembros }}</ng-container> membros</span>
+              </div>
             </div>
           </article>
         </div>
@@ -245,6 +259,10 @@
 
         <label for="limiteMembros">Limite de membros (opcional)</label>
         <input id="limiteMembros" name="limiteMembros" type="number" min="1" max="500" [(ngModel)]="newLimiteMembros" />
+        <div *ngIf="newLimiteMembros !== null && newLimiteMembros < 0" class="length-warning">
+          <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"></path><path d="M12 9v4"></path><path d="M12 17h.01"></path></svg>
+          <span>O limite de membros não pode ser um número negativo.</span>
+        </div>
         <div *ngIf="newLimiteMembros && newLimiteMembros > 500" class="length-warning">
           <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"></path><path d="M12 9v4"></path><path d="M12 17h.01"></path></svg>
           <span>O limite de membros não pode exceder 500.</span>
@@ -279,7 +297,7 @@
 
         <div class="modal-actions">
           <button type="button" class="cancel-btn" (click)="closeCreate()" [disabled]="isCreating">Cancelar</button>
-          <button type="button" class="save-btn" (click)="createCommunity()" [disabled]="isCreating || (newNome && newNome.length > 30) || (newDescricao && newDescricao.length > 150) || (newLimiteMembros && newLimiteMembros > 500)">
+          <button type="button" class="save-btn" (click)="createCommunity()" [disabled]="isCreating || (newNome && newNome.length > 30) || (newDescricao && newDescricao.length > 150) || (newLimiteMembros !== null && (newLimiteMembros > 500 || newLimiteMembros < 0))">
             {{ isCreating ? 'A criar…' : 'Criar' }}
           </button>
         </div>

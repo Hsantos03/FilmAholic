@@ -220,9 +220,15 @@ export class ComunidadesComponent implements OnInit {
       return;
     }
 
-    if (this.newLimiteMembros !== null && this.newLimiteMembros > 500) {
-      this.createError = 'O limite de membros não pode exceder 500.';
-      return;
+    if (this.newLimiteMembros !== null) {
+      if (this.newLimiteMembros < 0) {
+        this.createError = 'O limite de membros não pode ser um número negativo.';
+        return;
+      }
+      if (this.newLimiteMembros > 500) {
+        this.createError = 'O limite de membros não pode exceder 500.';
+        return;
+      }
     }
 
     const fd = new FormData();
@@ -259,7 +265,7 @@ export class ComunidadesComponent implements OnInit {
       },
       error: (err) => {
         console.error(err);
-        this.createError = 'Falha ao criar comunidade.';
+        this.createError = err?.error?.message || 'Falha ao criar comunidade.';
         this.isCreating = false;
       }
     });

@@ -8,14 +8,16 @@ export class FormatDurationPipe implements PipeTransform {
   transform(
     value: number | null | undefined,
     unit: 'min' | 'hours' = 'min',
-    treatZeroAsUnknown = false
+    treatZeroAsUnknown = false,
+    showDays = true,
+    compact = false
   ): string {
     if (value == null || value < 0 || isNaN(value)) {
-      return treatZeroAsUnknown ? '' : '0 min';
+      return treatZeroAsUnknown ? '' : (compact ? '0m' : '0 min');
     }
     let totalMin = unit === 'hours' ? Math.round(value * 60) : Math.round(value);
     if (totalMin === 0) {
-      return treatZeroAsUnknown ? '' : '0 min';
+      return treatZeroAsUnknown ? '' : (compact ? '0m' : '0 min');
     }
 
     const min = totalMin % 60;
@@ -26,22 +28,25 @@ export class FormatDurationPipe implements PipeTransform {
     const months = Math.floor(totalDays / 30);
 
     const parts: string[] = [];
+    const minUnit = compact ? 'm' : ' min';
+    const hourUnit = 'h'; 
 
-    if (months > 0) {
+    if (showDays && months > 0) {
       parts.push(months === 1 ? '1 mês' : `${months} meses`);
       if (days > 0) parts.push(days === 1 ? '1 dia' : `${days} dias`);
-    } else if (totalDays > 0) {
+    } else if (showDays && totalDays > 0) {
       parts.push(totalDays === 1 ? '1 dia' : `${totalDays} dias`);
       if (hours > 0 || min > 0) {
-        const hPart = hours > 0 ? `${hours}h` : '';
-        const mPart = min > 0 ? `${min} min` : '';
-        if (hPart || mPart) parts.push([hPart, mPart].filter(Boolean).join(' '));
+        const hPart = hours > 0 ? `${hours}${hourUnit}` : '';
+        const mPart = min > 0 ? `${min}${minUnit}` : '';
+        if (hPart) parts.push(hPart);
+        if (mPart) parts.push(mPart);
       }
     } else if (totalHours > 0) {
-      parts.push(`${totalHours}h`);
-      if (min > 0) parts.push(`${min} min`);
+      parts.push(`${totalHours}${hourUnit}`);
+      if (min > 0) parts.push(`${min}${minUnit}`);
     } else {
-      return min === 1 ? '1 min' : `${min} min`;
+      return `${min}${minUnit}`;
     }
 
     return parts.join(' ');

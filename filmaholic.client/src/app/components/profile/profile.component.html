@@ -513,7 +513,7 @@
         </section>
 
         <section class="stats-comparison stats-comparison-in-main" *ngIf="statsComparison">
-          <h3>Tu vs Média Global</h3>
+          <h3>{{ profileLabel }} vs Média Global</h3>
 
           <div class="comparison-item">
             <div class="comparison-label">Filmes vistos</div>
@@ -814,7 +814,7 @@
                     <div class="chart-bar user-bar"
                          [style.height.%]="getBarHeight(m.total)"
                          [style.--saber-color]="getUserBarColor()"
-                         [attr.title]="m.total + ' filmes (Tu)'">
+                         [attr.title]="m.total + ' filmes (' + profileLabel + ')'">
                       <div class="chart-bar-value">{{ m.total }}</div>
                     </div>
 
@@ -832,7 +832,7 @@
               <div class="chart-line-legend">
                 <span class="legend-item user-legend">
                   <i class="legend-dot" [style.background]="getUserBarGradient()"></i>
-                  Tu
+                  {{ profileLabel }}
                 </span>
                 <span class="legend-item global-legend">
                   <i class="legend-dot" [style.background]="getGlobalBarGradient()"></i>

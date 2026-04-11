@@ -115,6 +115,7 @@ namespace FilmAholic.Server.Controllers
                 var dtos = comments.Select(c => new CommentDTO
                 {
                     Id = c.Id,
+                    UserId = c.UserId,
                     UserName = c.UserId != null && userNameByUserId.TryGetValue(c.UserId, out var uname) && !string.IsNullOrEmpty(uname) ? uname : c.UserName,
                     FotoPerfilUrl = c.UserId != null && fotoByUserId.TryGetValue(c.UserId, out var url) ? url : null,
                     UserTag = c.UserId != null && userTagByUserId.TryGetValue(c.UserId, out var tag) ? tag : null,
@@ -203,6 +204,7 @@ namespace FilmAholic.Server.Controllers
                 var outDto = new CommentDTO
                 {
                     Id = comment.Id,
+                    UserId = comment.UserId,
                     UserName = comment.UserName,
                     FotoPerfilUrl = user?.FotoPerfilUrl,
                     UserTag = user?.UserTag,
@@ -270,6 +272,7 @@ namespace FilmAholic.Server.Controllers
             return Ok(new CommentDTO
             {
                 Id = comment.Id,
+                UserId = comment.UserId,
                 UserName = commentUser != null ? (!string.IsNullOrEmpty(commentUser.UserName) && !commentUser.UserName.Contains("@") ? commentUser.UserName : commentUser.Nome + " " + commentUser.Sobrenome) : comment.UserName,
                 FotoPerfilUrl = fotoUrl,
                 UserTag = userTag,

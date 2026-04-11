@@ -157,7 +157,23 @@ export class OnboardingTourComponent implements AfterViewInit, OnDestroy {
     const step = this.steps[this.currentIndex];
     if (!step) return;
     const el = document.querySelector(step.selector) as HTMLElement | null;
-    if (!el) return;
+
+    if (!el) {
+      // Se o elemento não existe, escondemos o spotlight
+      this.highlightWidth = '0px';
+      this.highlightHeight = '0px';
+      this.highlightTop = '0px';
+      this.highlightLeft = '0px';
+
+      // Posicionamos o popover no centro da viewport como fallback
+      const w = Math.min(320, window.innerWidth - 32);
+      this.popoverWidth = w;
+      this.popoverLeft = `${window.innerWidth / 2 - w / 2}px`;
+      const popoverEl = this.hostRef.nativeElement.querySelector('.onboarding-popover') as HTMLElement | null;
+      const actualH = popoverEl?.offsetHeight || 220;
+      this.popoverTop = `${window.innerHeight / 2 - actualH / 2}px`;
+      return;
+    }
 
     const r = el.getBoundingClientRect();
     const pad = 8;
@@ -174,14 +190,26 @@ export class OnboardingTourComponent implements AfterViewInit, OnDestroy {
     let left = r.left + r.width / 2 - w / 2;
     left = Math.max(16, Math.min(left, window.innerWidth - w - 16));
 
+    const popoverEl = this.hostRef.nativeElement.querySelector('.onboarding-popover') as HTMLElement | null;
+    const actualH = popoverEl?.offsetHeight || 220;
     const gap = 12;
+
     let top = r.bottom + gap;
-    const popoverGuessH = 220;
-    if (top + popoverGuessH > window.innerHeight - 16) {
-      top = r.top - popoverGuessH - gap;
+
+    // Se transbordar em baixo, tenta meter em cima
+    if (top + actualH > window.innerHeight - 16) {
+      const topOption = r.top - actualH - gap;
+      if (topOption > 16) {
+        top = topOption;
+      } else {
+        // Se em cima também não cabe, cola no fundo com margem
+        top = Math.max(16, window.innerHeight - actualH - 16);
+      }
     }
+
+    // Garantir que não foge do topo
     if (top < 16) {
-      top = r.bottom + gap;
+      top = Math.max(16, r.bottom + gap);
     }
 
     this.popoverTop = `${top}px`;

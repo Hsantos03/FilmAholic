@@ -138,7 +138,14 @@
               <div class="comment-content">
                 <div class="comment-header">
                   <div class="comment-user-wrapper">
-                    <strong class="comment-user">{{ c.userName }}</strong>
+                    <a *ngIf="c.userId && c.userName !== 'Conta Eliminada'; else plainName" 
+                       [routerLink]="['/profile', c.userId]" 
+                       class="comment-user-link">
+                      <strong class="comment-user">{{ c.userName }}</strong>
+                    </a>
+                    <ng-template #plainName>
+                      <strong class="comment-user">{{ c.userName }}</strong>
+                    </ng-template>
                     <span *ngIf="c.userTag" class="tag-separator">|</span>
                     <span *ngIf="c.userTag" class="user-tag tooltip-trigger user-tag-with-icon" [attr.data-text]="c.userTag" [style.--tag-primary-color]="c.userTagPrimaryColor || '#FF4081'" [style.--tag-secondary-color]="c.userTagSecondaryColor || '#FFFFFF'">
                       <img *ngIf="c.userTagIconUrl" [src]="API_URL + c.userTagIconUrl" [alt]="c.userTag" class="user-tag-icon">

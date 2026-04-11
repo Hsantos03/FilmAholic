@@ -96,9 +96,10 @@
           <div class="comunidade-heading-text">
       <h1>{{ comunidade.nome }}</h1>
       <div class="meta">
+        <span *ngIf="isAdmin" class="admin-pill">Admin</span>
         <span> · {{ comunidade.isPrivada ? 'Privada' : 'Pública' }}</span>
         <span *ngIf="comunidade.dataCriacao"> · Criada {{ comunidade.dataCriacao | date:'dd/MM/yyyy':'':'pt-PT' }}</span>
-            </div>
+      </div>
           </div>
       </div>
 
@@ -200,9 +201,15 @@
           </div>
 
           <!-- Nome -->
-          <div class="ranking-nome">
-            {{ membro.userName }}
-            <span *ngIf="membro.isCurrentUser" class="tu-badge">Tu</span>
+          <div class="ranking-nome-cell">
+            <div class="ranking-avatar">
+              <img *ngIf="membro.fotoPerfilUrl?.trim()" class="ranking-avatar-img" [src]="membro.fotoPerfilUrl" [alt]="membro.userName || ''" />
+              <span *ngIf="!membro.fotoPerfilUrl?.trim()">{{ getUserInitial(membro.userName) }}</span>
+            </div>
+            <div class="ranking-nome">
+              {{ membro.userName }}
+              <span *ngIf="membro.isCurrentUser" class="tu-badge">Tu</span>
+            </div>
           </div>
 
           <!-- Stats -->
@@ -213,7 +220,7 @@
             </span>
             <span *ngIf="rankingMetrica === 'tempo'" class="stat-tempo">
               <img class="rank-ui-ico rank-ui-ico--stat" src="assets/comunidade-ranking-clock.png" alt="" aria-hidden="true" />
-              {{ membro.minutosAssistidos | number:'1.0-0' }} min
+              {{ membro.minutosAssistidos | formatDuration:'min':false:false:true }}
             </span>
           </div>
         </div>
@@ -328,7 +335,7 @@
 
       <article class="post-card" *ngFor="let p of sortedPosts">
         <div class="post-header">
-          <a *ngIf="p.autorId" class="post-author-info post-author-profile-link" [routerLink]="['/profile', p.autorId]" [attr.title]="'Ver perfil de ' + (p.autorNome || '')">
+          <div *ngIf="p.autorId" class="post-author-info">
             <div class="post-avatar" [attr.title]="p.autorNome || ''">
               <img *ngIf="p.autorFotoPerfilUrl?.trim()"
                    class="post-avatar-img"
@@ -337,7 +344,9 @@
               <span *ngIf="!p.autorFotoPerfilUrl?.trim()">{{ getUserInitial(p.autorNome) }}</span>
             </div>
             <div class="post-autor-wrapper">
-              <span class="post-autor">{{ p.autorNome }}</span>
+              <a class="post-autor post-author-profile-link" [routerLink]="['/profile', p.autorId]" [attr.title]="'Ver perfil de ' + (p.autorNome || '')">
+                {{ p.autorNome }}
+              </a>
               <span class="post-tag-separator" *ngIf="p.autorUserTag">|</span>
               <span *ngIf="p.autorUserTag" class="post-autor-tag tooltip-trigger post-autor-tag-with-icon" [style.--tag-primary-color]="p.autorUserTagPrimaryColor || '#FF4081'" [style.--tag-secondary-color]="p.autorUserTagSecondaryColor || '#FFFFFF'">
                 <img *ngIf="p.autorUserTagIconUrl" [src]="API_URL + p.autorUserTagIconUrl" [alt]="p.autorUserTag" class="post-autor-tag-icon">
@@ -349,7 +358,7 @@
                 </span>
               </span>
             </div>
-          </a>
+          </div>
           <div *ngIf="!p.autorId" class="post-author-info">
             <div class="post-avatar" [attr.title]="p.autorNome || ''">
               <img *ngIf="p.autorFotoPerfilUrl?.trim()"
@@ -462,20 +471,14 @@
             <div *ngIf="p.comentarios?.length === 0" class="no-comments">Ainda não há comentários.</div>
 
             <div class="comment-item" *ngFor="let c of p.comentarios">
-              <a *ngIf="c.autorId" class="comment-avatar comment-profile-link" [routerLink]="['/profile', c.autorId]" [attr.title]="'Ver perfil de ' + (c.autorNome || '')">
-                <img *ngIf="c.autorFotoPerfilUrl?.trim()"
-                     class="comment-avatar-img"
-                     [src]="c.autorFotoPerfilUrl"
-                     [alt]="c.autorNome || ''" />
-                <span *ngIf="!c.autorFotoPerfilUrl?.trim()">{{ getUserInitial(c.autorNome) }}</span>
-              </a>
-              <div *ngIf="!c.autorId" class="comment-avatar" [attr.title]="c.autorNome || ''">
+              <div class="comment-avatar" [attr.title]="c.autorNome || ''">
                 <img *ngIf="c.autorFotoPerfilUrl?.trim()"
                      class="comment-avatar-img"
                      [src]="c.autorFotoPerfilUrl"
                      [alt]="c.autorNome || ''" />
                 <span *ngIf="!c.autorFotoPerfilUrl?.trim()">{{ getUserInitial(c.autorNome) }}</span>
               </div>
+
               <div class="comment-body">
                 <div class="comment-header">
                   <a *ngIf="c.autorId" class="comment-author comment-author-link" [routerLink]="['/profile', c.autorId]">{{ c.autorNome }}</a>
@@ -581,8 +584,10 @@
       <div *ngIf="membros.length === 0" class="empty">Nenhum membro encontrado.</div>
       <div class="membros-list">
         <div class="membro-item" *ngFor="let m of membros">
-          <a *ngIf="m.utilizadorId" class="membro-avatar membro-profile-link" [routerLink]="['/profile', m.utilizadorId]" [attr.title]="'Ver perfil de ' + m.userName">{{ getUserInitial(m.userName) }}</a>
-          <div *ngIf="!m.utilizadorId" class="membro-avatar">{{ getUserInitial(m.userName) }}</div>
+          <div class="membro-avatar" [attr.title]="'Avatar de ' + (m.userName || '')">
+            <img *ngIf="m.fotoPerfilUrl?.trim()" class="membro-avatar-img" [src]="m.fotoPerfilUrl" [alt]="m.userName || ''" />
+            <span *ngIf="!m.fotoPerfilUrl?.trim()">{{ getUserInitial(m.userName) }}</span>
+          </div>
           <div class="membro-info">
             <div class="membro-nome-wrapper">
               <a *ngIf="m.utilizadorId" class="membro-nome membro-nome-link" [routerLink]="['/profile', m.utilizadorId]">{{ m.userName }}</a>
@@ -625,7 +630,10 @@
         <h3>Membros banidos</h3>
         <div class="membros-list">
           <div class="membro-item membro-item--banido" *ngFor="let b of banidos">
-            <div class="membro-avatar">{{ getUserInitial(b.userName) }}</div>
+            <div class="membro-avatar" [attr.title]="'Avatar de ' + (b.userName || '')">
+              <img *ngIf="b.fotoPerfilUrl?.trim()" class="membro-avatar-img" [src]="b.fotoPerfilUrl" [alt]="b.userName || ''" />
+              <span *ngIf="!b.fotoPerfilUrl?.trim()">{{ getUserInitial(b.userName) }}</span>
+            </div>
             <div class="membro-info">
               <div class="membro-nome-wrapper">
                 <span class="membro-nome">{{ b.userName }}</span>
@@ -683,6 +691,10 @@
 
     <label for="editLimiteMembros">Limite de membros (opcional)</label>
     <input id="editLimiteMembros" type="number" min="1" max="500" [(ngModel)]="editLimiteMembros" />
+    <div *ngIf="editLimiteMembros !== null && editLimiteMembros < 0" class="length-warning">
+      <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"></path><path d="M12 9v4"></path><path d="M12 17h.01"></path></svg>
+      <span>O limite de membros não pode ser um número negativo.</span>
+    </div>
     <div *ngIf="editLimiteMembros && editLimiteMembros > 500" class="length-warning">
       <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"></path><path d="M12 9v4"></path><path d="M12 17h.01"></path></svg>
       <span>O limite de membros não pode exceder 500.</span>
@@ -733,7 +745,7 @@
 
     <div class="modal-actions">
       <button type="button" class="cancel-btn" (click)="closeEditModal()" [disabled]="isSavingEdit">Cancelar</button>
-      <button type="button" class="save-btn" (click)="saveEdit()" [disabled]="isSavingEdit || (editNome && editNome.length > 30) || (editDescricao && editDescricao.length > 150) || (editLimiteMembros && editLimiteMembros > 500)">
+      <button type="button" class="save-btn" (click)="saveEdit()" [disabled]="isSavingEdit || (editNome && editNome.length > 30) || (editDescricao && editDescricao.length > 150) || (editLimiteMembros !== null && (editLimiteMembros > 500 || editLimiteMembros < 0))">
         {{ isSavingEdit ? 'A guardar…' : 'Guardar alterações' }}
       </button>
     </div>

@@ -230,9 +230,14 @@ export class ProfileComponent implements OnInit {
     return this.viewedProfileUserId === this.ownUserId;
   }
 
-  /** Rótulo nas barras de comparação (estatísticas): "Tu" no próprio perfil, genérico noutros. */
+  /** Rótulo nas barras de comparação (estatísticas): "Tu" no próprio perfil, nome do utilizador noutros. */
   get statsComparisonUserLabel(): string {
-    return this.isOwnProfile ? 'Tu' : 'Utilizador';
+    return this.isOwnProfile ? 'Tu' : this.userName;
+  }
+
+  /** Rótulo geral para títulos e legendas: "Tu" ou nome do utilizador. */
+  get profileLabel(): string {
+    return this.isOwnProfile ? 'Tu' : this.userName;
   }
 
   private forUserMoviesQuery(): string | null | undefined {
@@ -299,7 +304,7 @@ export class ProfileComponent implements OnInit {
       .get<any>(`${this.apiBase}/${encodeURIComponent(userId)}`, { withCredentials: true })
       .subscribe({
         next: (res) => {
-          if (res?.userName && res.userName.trim() && res.userName !== res?.email) {
+          if (res?.userName && res.userName.trim()) {
             this.userName = res.userName;
           } else if (res?.nome) {
             this.userName = res.sobrenome ? `${res.nome} ${res.sobrenome}` : res.nome;

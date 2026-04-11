@@ -459,6 +459,17 @@ export class ComunidadeDetalheComponent implements OnInit, OnDestroy {
       return;
     }
 
+    if (this.editLimiteMembros !== null) {
+      if (this.editLimiteMembros < 0) {
+        this.editError = 'O limite de membros não pode ser um número negativo.';
+        return;
+      }
+      if (this.editLimiteMembros > 500) {
+        this.editError = 'O limite de membros não pode exceder 500.';
+        return;
+      }
+    }
+
     const fd = new FormData();
     fd.append('nome', this.editNome.trim());
     fd.append('descricao', this.editDescricao?.trim() ?? '');

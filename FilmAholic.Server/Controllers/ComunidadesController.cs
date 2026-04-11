@@ -150,7 +150,9 @@ namespace FilmAholic.Server.Controllers
                             .Where(m => m.ComunidadeId == c.Id && m.UtilizadorId == userId && m.Status == "Banido"
                                 && (m.BanidoAte == null || m.BanidoAte > agora))
                             .Select(m => m.BanidoAte)
-                            .FirstOrDefault()
+                            .FirstOrDefault(),
+                    IsAdmin = !string.IsNullOrWhiteSpace(userId) && _context.ComunidadeMembros.Any(m =>
+                        m.ComunidadeId == c.Id && m.UtilizadorId == userId && m.Role == "Admin" && m.Status == "Ativo")
                 })
                 .ToListAsync();
 
@@ -165,6 +167,7 @@ namespace FilmAholic.Server.Controllers
                 MeuBanimentoAteUtc = x.MeuBanimentoAteUtc,
                 DataCriacao = x.DataCriacao,
                 MembrosCount = x.MembrosCount,
+                IsAdmin = x.IsAdmin,
                 BannerUrl = BannerUrlFromFileName(x.BannerFileName, baseUrl),
                 IconUrl = IconUrlFromFileName(x.IconFileName, baseUrl)
             }).ToList();
@@ -235,6 +238,9 @@ namespace FilmAholic.Server.Controllers
 
                 var userId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue("sub");
 
+                if (form.LimiteMembros is < 0)
+                    return BadRequest(new { message = "O limite de membros não pode ser um número negativo." });
+
                 var bannerFileName = await SaveImageAsync(form.Banner, "comunidades");
                 var iconFileName = await SaveImageAsync(form.Icon, "comunidades/icons");
 
@@ -242,7 +248,7 @@ namespace FilmAholic.Server.Controllers
                 {
                     Nome = form.Nome.Trim(),
                     Descricao = string.IsNullOrWhiteSpace(form.Descricao) ? null : form.Descricao.Trim(),
-                    LimiteMembros = form.LimiteMembros is > 0 ? form.LimiteMembros : null,
+                    LimiteMembros = form.LimiteMembros > 0 ? form.LimiteMembros : null,
                     IsPrivada = form.IsPrivada,
                     BannerFileName = bannerFileName,
                     IconFileName = iconFileName,
@@ -328,9 +334,12 @@ namespace FilmAholic.Server.Controllers
                     return BadRequest(new { message = "O limite de membros não pode ser inferior ao número atual de membros." });
             }
 
+            if (form.LimiteMembros is < 0)
+                return BadRequest(new { message = "O limite de membros não pode ser um número negativo." });
+
             comunidade.Nome = form.Nome.Trim();
             comunidade.Descricao = string.IsNullOrWhiteSpace(form.Descricao) ? null : form.Descricao.Trim();
-            comunidade.LimiteMembros = form.LimiteMembros is > 0 ? form.LimiteMembros : null;
+            comunidade.LimiteMembros = form.LimiteMembros > 0 ? form.LimiteMembros : null;
             comunidade.IsPrivada = form.IsPrivada;
 
             if (form.Banner != null && form.Banner.Length > 0)
@@ -423,7 +432,11 @@ namespace FilmAholic.Server.Controllers
                     DataEntrada = m.DataEntrada,
                     CastigadoAte = m.CastigadoAte,
                     BanidoAte = m.BanidoAte,
-                    MotivoBan = m.MotivoBan
+                    MotivoBan = m.MotivoBan,
+                    FotoPerfilUrl = _context.Users.OfType<Utilizador>()
+                        .Where(u => u.Id == m.UtilizadorId)
+                        .Select(u => u.FotoPerfilUrl)
+                        .FirstOrDefault()
                 })
                 .ToListAsync();
 
@@ -510,8 +523,12 @@ namespace FilmAholic.Server.Controllers
                 .OfType<Utilizador>()
                 .AsNoTracking()
                 .Where(u => membros.Contains(u.Id))
-                .Select(u => new { u.Id, NomeCompleto = !string.IsNullOrEmpty(u.UserName) && !u.UserName.Contains("@") ? u.UserName : u.Nome + " " + u.Sobrenome })
-                .ToDictionaryAsync(u => u.Id, u => u.NomeCompleto ?? string.Empty);
+                .Select(u => new { 
+                    u.Id, 
+                    NomeCompleto = !string.IsNullOrEmpty(u.UserName) && !u.UserName.Contains("@") ? u.UserName : u.Nome + " " + u.Sobrenome,
+                    u.FotoPerfilUrl
+                })
+                .ToDictionaryAsync(u => u.Id, u => u);
 
             var stats = await _context.UserMovies
                 .AsNoTracking()
@@ -533,11 +550,12 @@ namespace FilmAholic.Server.Controllers
             var lista = membros.Select(uid =>
             {
                 stats.TryGetValue(uid, out var s);
-                utilizadores.TryGetValue(uid, out var nome);
+                utilizadores.TryGetValue(uid, out var uInfo);
                 return new
                 {
                     UtilizadorId = uid,
-                    UserName = nome ?? "Utilizador removido",
+                    UserName = uInfo?.NomeCompleto ?? "Utilizador removido",
+                    FotoPerfilUrl = uInfo?.FotoPerfilUrl,
                     FilmesVistos = s?.FilmesVistos ?? 0,
                     MinutosAssistidos = s?.MinutosAssistidos ?? 0
                 };
@@ -555,7 +573,8 @@ namespace FilmAholic.Server.Controllers
                     UserName = x.UserName,
                     FilmesVistos = x.FilmesVistos,
                     MinutosAssistidos = x.MinutosAssistidos,
-                    IsCurrentUser = x.UtilizadorId == currentUserId
+                    IsCurrentUser = x.UtilizadorId == currentUserId,
+                    FotoPerfilUrl = x.FotoPerfilUrl
                 })
                 .ToList();
 
@@ -1236,7 +1255,11 @@ namespace FilmAholic.Server.Controllers
                     Status = m.Status,
                     DataEntrada = m.DataEntrada,
                     BanidoAte = m.BanidoAte,
-                    MotivoBan = m.MotivoBan
+                    MotivoBan = m.MotivoBan,
+                    FotoPerfilUrl = _context.Users.OfType<Utilizador>()
+                        .Where(u => u.Id == m.UtilizadorId)
+                        .Select(u => u.FotoPerfilUrl)
+                        .FirstOrDefault()
                 })
                 .ToListAsync();
 
@@ -1750,6 +1773,7 @@ namespace FilmAholic.Server.Controllers
             public string? UserTagIconUrl { get; set; }
             public string? UserTagPrimaryColor { get; set; }
             public string? UserTagSecondaryColor { get; set; }
+            public string? FotoPerfilUrl { get; set; }
         }
 
         public class ExpulsarMembroForm
@@ -1773,6 +1797,7 @@ namespace FilmAholic.Server.Controllers
             public int FilmesVistos { get; set; }
             public int MinutosAssistidos { get; set; }
             public bool IsCurrentUser { get; set; }
+            public string? FotoPerfilUrl { get; set; }
         }
 
         public class ComunidadeDto
@@ -1787,6 +1812,7 @@ namespace FilmAholic.Server.Controllers
             public DateTime? MeuBanimentoAteUtc { get; set; }
             public DateTime DataCriacao { get; set; }
             public int MembrosCount { get; set; }
+            public bool IsAdmin { get; set; }
             public string? BannerUrl { get; set; }
             public string? IconUrl { get; set; }
         }

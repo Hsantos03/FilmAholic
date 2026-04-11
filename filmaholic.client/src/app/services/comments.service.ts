@@ -5,6 +5,7 @@ import { environment } from '../../environments/environment';
 
 export interface CommentDTO {
   id: number;
+  userId?: string;
   userName: string;
   fotoPerfilUrl?: string | null;
   texto: string;

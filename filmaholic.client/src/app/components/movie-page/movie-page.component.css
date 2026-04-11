@@ -520,8 +520,20 @@
   gap: 12px;
 }
 
+.comment-user-link {
+  text-decoration: none;
+  color: inherit;
+  transition: color 0.2s ease;
+  display: inline-flex;
+}
+
+.comment-user-link:hover .comment-user {
+  color: #ff2f6d;
+}
+
 .comment-user {
   font-weight: 900;
+  transition: color 0.2s ease;
 }
 
 .comment-user-wrapper {

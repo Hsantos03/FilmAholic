@@ -16,6 +16,7 @@ export interface ComunidadeDto {
   meuBanimentoAteUtc?: string | null;
   dataCriacao?: string;
   membrosCount?: number;
+  isAdmin?: boolean;
   bannerUrl?: string | null;
   iconUrl?: string | null;
 }
@@ -38,6 +39,7 @@ export interface MembroDto {
   // Tag colors for gradient animation
   userTagPrimaryColor?: string | null;
   userTagSecondaryColor?: string | null;
+  fotoPerfilUrl?: string | null;
 }
 
 export interface RankingMembroDto {
@@ -47,6 +49,7 @@ export interface RankingMembroDto {
   filmesVistos: number;
   minutosAssistidos: number;
   isCurrentUser: boolean;
+  fotoPerfilUrl?: string | null;
 }
 
 export interface PostDto {
