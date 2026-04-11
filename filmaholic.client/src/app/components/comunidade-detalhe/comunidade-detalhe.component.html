@@ -424,7 +424,7 @@
           </div>
 
           <button class="view-comments-link" (click)="toggleComentarios(p)">
-            {{ p.showComentarios ? 'Ocultar comentários' : 'Ver ' + (p.comentariosCount || 0) + ' comentários' }}
+            {{ p.showComentarios ? 'Ocultar comentários' : 'Ver ' + getPostCommentDisplayCount(p) + ' comentários' }}
             <span class="chevron" [class.open]="p.showComentarios">
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M6 9l6 6 6-6" />
