@@ -25,6 +25,8 @@ type NotificacaoUnificada = {
   data: Date;
   raw: any;
   lida?: boolean;
+  /** Preenchido quando lida; usado para ordenar a secção "Vistas" (mais recente primeiro). */
+  lidaEm?: Date | null;
 };
 
 @Component({
@@ -290,6 +292,12 @@ export class TopbarActionsComponent implements OnInit, OnDestroy {
     return s && s.length > 0 ? s : null;
   }
 
+  private static parseLidaEm(iso?: string | null): Date | null {
+    if (iso == null || String(iso).trim() === '') return null;
+    const d = new Date(iso);
+    return isNaN(d.getTime()) ? null : d;
+  }
+
   // ── UNIFIED NOTIFICATIONS GETTER ──
   get notificacoesOrdenadas(): NotificacaoUnificada[] {
     const mapa = new Map<string, NotificacaoUnificada>();
@@ -300,35 +308,67 @@ export class TopbarActionsComponent implements OnInit, OnDestroy {
 
     // Plataforma
     (this.plataformaFeed.unread ?? []).forEach(n => add({ id: n.id, tipo: 'plataforma', texto: n.titulo, data: new Date(n.criadaEm), raw: n, lida: false }, `plat-${n.id}`));
-    (this.plataformaFeed.read ?? []).forEach(n => add({ id: n.id, tipo: 'plataforma', texto: n.titulo, data: new Date(n.criadaEm), raw: n, lida: true }, `plat-read-${n.id}`));
+    (this.plataformaFeed.read ?? []).forEach(n => add({
+      id: n.id, tipo: 'plataforma', texto: n.titulo, data: new Date(n.criadaEm), raw: n, lida: true,
+      lidaEm: TopbarActionsComponent.parseLidaEm(n.lidaEm)
+    }, `plat-read-${n.id}`));
 
     // Comunidades
     (this.comunidadeFeed.unread ?? []).forEach(n => add({ id: n.id, tipo: 'comunidade', texto: `Comunidades: ${n.comunidadeNome}`, data: new Date(n.criadaEm), raw: n, lida: false }, `comunidade-${n.id}`));
-    (this.comunidadeFeed.read ?? []).forEach(n => add({ id: n.id, tipo: 'comunidade', texto: `Comunidades: ${n.comunidadeNome}`, data: new Date(n.criadaEm), raw: n, lida: true }, `comunidade-read-${n.id}`));
+    (this.comunidadeFeed.read ?? []).forEach(n => add({
+      id: n.id, tipo: 'comunidade', texto: `Comunidades: ${n.comunidadeNome}`, data: new Date(n.criadaEm), raw: n, lida: true,
+      lidaEm: TopbarActionsComponent.parseLidaEm(n.lidaEm)
+    }, `comunidade-read-${n.id}`));
 
     // Medalhas
     (this.medalhaFeed.unread ?? []).forEach(n => add({ id: n.id, tipo: 'medalha', texto: `Desbloqueaste ${n.medalhaNome}`, data: new Date(n.criadaEm), raw: n, lida: false }, `medalha-${n.id}`));
-    (this.medalhaFeed.read ?? []).forEach(n => add({ id: n.id, tipo: 'medalha', texto: `Desbloqueaste ${n.medalhaNome}`, data: new Date(n.criadaEm), raw: n, lida: true }, `medalha-read-${n.id}`));
+    (this.medalhaFeed.read ?? []).forEach(n => add({
+      id: n.id, tipo: 'medalha', texto: `Desbloqueaste ${n.medalhaNome}`, data: new Date(n.criadaEm), raw: n, lida: true,
+      lidaEm: TopbarActionsComponent.parseLidaEm(n.lidaEm)
+    }, `medalha-read-${n.id}`));
 
     // Jogo
-    (this.reminderJogo ?? []).forEach(n => add({ id: n.id, tipo: 'jogo', texto: n.corpo, data: new Date(n.criadaEm), raw: n, lida: !!n.lidaEm }, `jogo-${n.id}`));
+    (this.reminderJogo ?? []).forEach(n => {
+      const lida = !!n.lidaEm;
+      add({
+        id: n.id, tipo: 'jogo', texto: n.corpo, data: new Date(n.criadaEm), raw: n, lida,
+        lidaEm: lida ? TopbarActionsComponent.parseLidaEm(n.lidaEm) : null
+      }, `jogo-${n.id}`);
+    });
 
     // Filme
-    (this.filmeDisponivel ?? []).forEach(n => add({ id: n.id, tipo: 'filme', texto: n.corpo ?? n.titulo ?? '', data: new Date(n.criadaEm), raw: n, lida: !!n.lidaEm }, `filme-${n.id}`));
+    (this.filmeDisponivel ?? []).forEach(n => {
+      const lida = !!n.lidaEm;
+      add({
+        id: n.id, tipo: 'filme', texto: n.corpo ?? n.titulo ?? '', data: new Date(n.criadaEm), raw: n, lida,
+        lidaEm: lida ? TopbarActionsComponent.parseLidaEm(n.lidaEm) : null
+      }, `filme-${n.id}`);
+    });
 
     // Resumo
     (this.resumoFeed.unread ?? []).forEach(n => add({ id: n.id, tipo: 'resumo', texto: 'Resumo semanal', data: new Date(n.criadaEm), raw: n, lida: false }, `resumo-${n.id}`));
-    (this.resumoFeed.read ?? []).forEach(n => add({ id: n.id, tipo: 'resumo', texto: 'Resumo semanal', data: new Date(n.criadaEm), raw: n, lida: true }, `resumo-read-${n.id}`));
+    (this.resumoFeed.read ?? []).forEach(n => add({
+      id: n.id, tipo: 'resumo', texto: 'Resumo semanal', data: new Date(n.criadaEm), raw: n, lida: true,
+      lidaEm: TopbarActionsComponent.parseLidaEm(n.lidaEm)
+    }, `resumo-read-${n.id}`));
 
     return Array.from(mapa.values()).sort((a, b) => b.data.getTime() - a.data.getTime());
   }
 
   get notificacoesNaoLidas(): NotificacaoUnificada[] {
-    return this.notificacoesOrdenadas.filter((n) => !n.lida);
+    return this.notificacoesOrdenadas
+      .filter((n) => !n.lida)
+      .sort((a, b) => b.data.getTime() - a.data.getTime());
   }
 
   get notificacoesLidas(): NotificacaoUnificada[] {
-    return this.notificacoesOrdenadas.filter((n) => !!n.lida);
+    return this.notificacoesOrdenadas
+      .filter((n) => !!n.lida)
+      .sort((a, b) => {
+        const ta = (a.lidaEm?.getTime() ?? a.data.getTime());
+        const tb = (b.lidaEm?.getTime() ?? b.data.getTime());
+        return tb - ta;
+      });
   }
 
   get notificacoesNaoLidasPaged(): NotificacaoUnificada[] {

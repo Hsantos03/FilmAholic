@@ -4,9 +4,11 @@ import { Observable, of } from 'rxjs';
 import { Router } from '@angular/router';
 import { catchError, finalize, map, tap } from 'rxjs/operators';
 import { environment } from '../../environments/environment';
+import { SessionTerminationService, SessaoTerminadaMotivo } from './session-termination.service';
 
 export interface SessaoDto {
   authenticated: boolean;
+  sessaoTerminadaMotivo?: SessaoTerminadaMotivo;
   id?: string;
   email?: string;
   nome?: string;
@@ -23,7 +25,11 @@ export class AuthService {
   private readonly apiBase = environment.apiBaseUrl || '';
   private apiUrl = this.apiBase ? `${this.apiBase}/api/autenticacao` : '/api/autenticacao';
 
-  constructor(private http: HttpClient, private router: Router) { }
+  constructor(
+    private http: HttpClient,
+    private router: Router,
+    private sessionTermination: SessionTerminationService
+  ) {}
 
   registar(dados: any): Observable<any> {
     return this.http.post(`${this.apiUrl}/registar`, dados, { withCredentials: true });
@@ -44,6 +50,11 @@ export class AuthService {
   refreshSessaoRoles(): Observable<void> {
     return this.obterSessao().pipe(
       tap((s) => {
+        const motivo = s.sessaoTerminadaMotivo;
+        if (motivo === 'bloqueada' || motivo === 'eliminada') {
+          this.sessionTermination.notify(motivo);
+          return;
+        }
         if (s.authenticated) {
           if (s.id) localStorage.setItem('user_id', s.id);
           const nome = (s.nome ?? '').trim();

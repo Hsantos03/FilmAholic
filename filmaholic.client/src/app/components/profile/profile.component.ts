@@ -36,6 +36,8 @@ export class ProfileComponent implements OnInit {
   viewedProfileUserId: string | null = null;
 
   userName = localStorage.getItem('userName') || 'RandomUser';
+  /** Conta em lockout (bloqueada pelo admin), vinda da API do perfil. */
+  contaBloqueada = false;
   joined = '14 hours ago';
   bio = '';
   fotoPerfilUrl: string | null = null;
@@ -287,6 +289,8 @@ export class ProfileComponent implements OnInit {
       return;
     }
 
+    this.contaBloqueada = false;
+
     this.refreshAllListsAndStats();
     this.loadFavorites();
     if (!this.isOwnProfile) {
@@ -311,6 +315,8 @@ export class ProfileComponent implements OnInit {
           } else {
             this.userName = this.userName || 'User';
           }
+
+          this.contaBloqueada = !!res?.contaBloqueada;
 
           this.bio = res?.bio ?? '';
           this.fotoPerfilUrl = res?.fotoPerfilUrl ?? null;
