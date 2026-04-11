@@ -42,12 +42,16 @@
     </div>
 
     <form (ngSubmit)="onLogin()">
+      <p class="auth-required-hint"><span class="auth-required-mark">*</span> Campos obrigatórios.</p>
+
       <div class="input-group">
-        <input type="email" name="email" [(ngModel)]="loginData.email" placeholder="Email" required>
+        <label class="auth-field-label" for="login-email">Email<span class="auth-required-mark" aria-hidden="true">*</span></label>
+        <input id="login-email" type="email" name="email" [(ngModel)]="loginData.email" placeholder="Email" required autocomplete="username" aria-required="true">
       </div>
 
       <div class="input-group">
-        <input type="password" name="password" [(ngModel)]="loginData.password" placeholder="Password" required>
+        <label class="auth-field-label" for="login-password">Password<span class="auth-required-mark" aria-hidden="true">*</span></label>
+        <input id="login-password" type="password" name="password" [(ngModel)]="loginData.password" placeholder="Password" required autocomplete="current-password" aria-required="true">
       </div>
 
       <button type="submit" class="btn-primary-global" [disabled]="isLoading">
