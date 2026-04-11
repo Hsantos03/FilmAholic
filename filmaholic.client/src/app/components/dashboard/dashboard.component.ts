@@ -187,9 +187,18 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
   searchHistory: string[] = [];
 
-  private readonly HISTORY_KEY = 'search_history';
+  private readonly HISTORY_KEY_PREFIX = 'search_history';
 
   private readonly MAX_HISTORY_ITEMS = 10;
+
+  /** Histórico por conta: evita partilha entre utilizadores no mesmo browser. */
+  private historyStorageKey(): string {
+    const id = localStorage.getItem('user_id');
+    if (id) {
+      return `${this.HISTORY_KEY_PREFIX}:${id}`;
+    }
+    return `${this.HISTORY_KEY_PREFIX}:_anon`;
+  }
 
 
 
@@ -1820,11 +1829,19 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
     try {
 
-      const stored = localStorage.getItem(this.HISTORY_KEY);
+      const stored = localStorage.getItem(this.historyStorageKey());
 
       if (stored) {
 
-        this.searchHistory = JSON.parse(stored);
+        const parsed = JSON.parse(stored) as unknown;
+
+        this.searchHistory = Array.isArray(parsed)
+          ? parsed.filter((x): x is string => typeof x === 'string')
+          : [];
+
+      } else {
+
+        this.searchHistory = [];
 
       }
 
@@ -1842,7 +1859,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
     try {
 
-      localStorage.setItem(this.HISTORY_KEY, JSON.stringify(this.searchHistory));
+      localStorage.setItem(this.historyStorageKey(), JSON.stringify(this.searchHistory));
 
     } catch {
 
