@@ -6,7 +6,7 @@ namespace FilmAholic.Server
     public class WeatherForecast
     {
         /// <summary>
-        /// A data à qual esta previsão meteorológica pertence.
+        /// A data � qual esta previs�o meteorol�gica pertence.
         /// </summary>
         public DateOnly Date { get; set; }
 
@@ -21,7 +21,7 @@ namespace FilmAholic.Server
         public int TemperatureF => 32 + (int)(TemperatureC / 0.5556);
 
         /// <summary>
-        /// Resumo textual curto da condição climática em vigor (ex: Quente, Frio, Ameno).
+        /// Resumo textual curto da condi��o clim�tica em vigor (ex: Quente, Frio, Ameno).
         /// </summary>
         public string? Summary { get; set; }
     }

@@ -2,6 +2,9 @@ using System.ComponentModel.DataAnnotations;
 
 namespace FilmAholic.Server.Models
 {
+    /// <summary>
+    /// Representa um voto em um post de uma comunidade.
+    /// </summary>
     public class ComunidadePostVoto
     {
         public int Id { get; set; }

@@ -3,6 +3,9 @@ using System.ComponentModel.DataAnnotations;
 
 namespace FilmAholic.Server.Models;
 
+/// <summary>
+/// Representa um utilizador na aplicação.
+/// </summary>
 public class Utilizador : IdentityUser
 {
     [Required]

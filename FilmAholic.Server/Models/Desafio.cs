@@ -1,5 +1,8 @@
 namespace FilmAholic.Server.Models;
 
+/// <summary>
+/// Representa um desafio.
+/// </summary>
 public class Desafio
 {
     public int Id { get; set; }

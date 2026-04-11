@@ -5,10 +5,37 @@ using Microsoft.Extensions.Logging;
 
 namespace FilmAholic.Server.Services;
 
+/// <summary>
+/// Serviço responsável por notificar os utilizadores sobre estreias de filmes.
+/// </summary>
 public static class QueroVerEstreiaNotifier
 {
     public const string Tipo = "FilmeDisponivel";
 
+    private static readonly TimeZoneInfo PortugalTimeZone = CreatePortugalTimeZone();
+
+    /// <summary>
+    /// Cria a informação de fuso horário para Portugal.
+    /// </summary>
+    private static TimeZoneInfo CreatePortugalTimeZone()
+    {
+        try
+        {
+            return TimeZoneInfo.FindSystemTimeZoneById("Europe/Lisbon");
+        }
+        catch (TimeZoneNotFoundException)
+        {
+            return TimeZoneInfo.FindSystemTimeZoneById("GMT Standard Time");
+        }
+        catch (InvalidTimeZoneException)
+        {
+            return TimeZoneInfo.FindSystemTimeZoneById("GMT Standard Time");
+        }
+    }
+
+    /// <summary>
+    /// Executa o serviço de notificações de estreias para um utilizador específico.
+    /// </summary>
     public static async Task<int> RunForUserAsync(
         FilmAholicDbContext db,
         IMovieService movieService,
@@ -95,6 +122,9 @@ public static class QueroVerEstreiaNotifier
         return added;
     }
 
+    /// <summary>
+    /// Executa o serviço de notificações de estreias para todos os utilizadores.
+    /// </summary>
     public static async Task RunForAllUsersAsync(
         FilmAholicDbContext db,
         IMovieService movieService,

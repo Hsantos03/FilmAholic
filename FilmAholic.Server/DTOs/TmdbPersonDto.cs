@@ -2,6 +2,9 @@ using System.Text.Json.Serialization;
 
 namespace FilmAholic.Server.DTOs;
 
+/// <summary>
+/// Representa a resposta de pessoas populares no TMDb.
+/// </summary>
 public class TmdbPopularPeopleResponse
 {
     [JsonPropertyName("page")]
@@ -20,6 +23,9 @@ public class TmdbPopularPeopleResponse
     public int TotalResults { get; set; }
 }
 
+/// <summary>
+/// Representa uma pessoa no TMDb.
+/// </summary>
 public class TmdbPersonDto
 {
     [JsonPropertyName("id")]
@@ -41,6 +47,9 @@ public class TmdbPersonDto
     public int Order { get; set; }
 }
 
+/// <summary>
+/// Representa um ator popular no TMDb.
+/// </summary>
 public class PopularActorDto
 {
     [JsonPropertyName("id")]
@@ -56,6 +65,9 @@ public class PopularActorDto
     public double Popularidade { get; set; }
 }
 
+/// <summary>
+/// Representa um membro do elenco no TMDb.
+/// </summary>
 public class CastMemberDto
 {
     public int Id { get; set; }
@@ -65,6 +77,9 @@ public class CastMemberDto
 }
 
 /// Response from TMDb GET /search/person
+/// <summary>
+/// Representa a resposta de pesquisa de pessoas no TMDb.
+/// </summary>
 public class TmdbSearchPersonResponse
 {
     [JsonPropertyName("page")]
@@ -80,6 +95,9 @@ public class TmdbSearchPersonResponse
     public int TotalResults { get; set; }
 }
 
+/// <summary>
+/// Representa um resultado de pesquisa de pessoa no TMDb.
+/// </summary>
 public class TmdbPersonSearchResult
 {
     [JsonPropertyName("id")]
@@ -95,13 +113,18 @@ public class TmdbPersonSearchResult
     public double Popularity { get; set; }
 }
 
-/// Response from TMDb GET /person/{id}/movie_credits
+/// <summary>
+/// Representa os créditos de filmes de uma pessoa no TMDb.
+/// </summary>
 public class TmdbPersonMovieCreditsResponse
 {
     [JsonPropertyName("cast")]
     public List<TmdbCastMovieDto> Cast { get; set; } = new();
 }
 
+/// <summary>
+/// Representa um crédito de filme de uma pessoa no TMDb.
+/// </summary>
 public class TmdbCastMovieDto
 {
     [JsonPropertyName("id")]
@@ -120,7 +143,9 @@ public class TmdbCastMovieDto
     public string? ReleaseDate { get; set; }
 }
 
-/// Response from TMDb GET /person/{id}
+/// <summary>
+/// Representa os detalhes de uma pessoa no TMDb.
+/// </summary>
 public class TmdbPersonDetailsDto
 {
     [JsonPropertyName("id")]
@@ -148,7 +173,9 @@ public class TmdbPersonDetailsDto
     public string? Deathday { get; set; }
 }
 
-/// API response: actor in search results (same shape as PopularActorDto for client)
+/// <summary>
+/// Representa um resultado de pesquisa de ator no TMDb.
+/// </summary>
 public class ActorSearchResultDto
 {
     public int Id { get; set; }
@@ -157,7 +184,9 @@ public class ActorSearchResultDto
     public double Popularidade { get; set; }
 }
 
-/// API response: movie in "movies by actor" list
+/// <summary>
+/// Representa um crédito de filme de uma pessoa no TMDb.
+/// </summary>
 public class ActorMovieDto
 {
     public int Id { get; set; }
@@ -167,7 +196,9 @@ public class ActorMovieDto
     public string? DataLancamento { get; set; }
 }
 
-/// API response: actor details page
+/// <summary>
+/// Representa os detalhes de uma pessoa no TMDb.
+/// </summary>
 public class ActorDetailsDto
 {
     public int Id { get; set; }

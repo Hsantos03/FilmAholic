@@ -3,24 +3,39 @@ using System.Text.Json.Serialization;
 
 namespace FilmAholic.Server.Models;
 
+
 /// <summary>
-/// Corpo da notificação ReminderJogo: JSON <c>{"t":"texto","i":0..9}</c> (variante = ícone por ordem das mensagens).
-/// Notificações antigas: texto plano com emoji no fim — ver <see cref="Parse"/>.
+/// Representa o corpo da notificação ReminderJogo em formato JSON.
 /// </summary>
 public static class ReminderJogoCorpoJson
 {
+    /// <summary>
+    /// Representa o payload da notificação ReminderJogo em formato JSON.
+    /// </summary>
     private sealed record Payload(
         [property: JsonPropertyName("t")] string T,
         [property: JsonPropertyName("i")] int I);
 
+
+    /// <summary>
+    /// Opções de serialização JSON para o corpo da notificação ReminderJogo.
+    /// </summary>
     private static readonly JsonSerializerOptions JsonOpts = new()
     {
         PropertyNamingPolicy = null
     };
 
+
+    /// <summary>
+    /// Serializa o corpo da notificação ReminderJogo em formato JSON.
+    /// </summary>
     public static string Serialize(int variante, string texto) =>
         JsonSerializer.Serialize(new Payload(texto, variante), JsonOpts);
 
+
+    /// <summary>
+    /// Analisa o corpo da notificação ReminderJogo em formato JSON ou texto legado.
+    /// </summary>
     public static (string Texto, int Variante) Parse(string? corpo)
     {
         if (string.IsNullOrWhiteSpace(corpo))

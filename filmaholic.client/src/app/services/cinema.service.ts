@@ -4,6 +4,9 @@ import { Observable, of } from 'rxjs';
 import { map, catchError } from 'rxjs/operators';
 import { environment } from '../../environments/environment';
 
+/// <summary>
+/// Interface que representa um filme em exibição nos cinemas, contendo informações como ID, título, poster, cinema, horários, gênero, duração, classificação, idioma, sala e link para mais detalhes.
+/// </summary>
 export interface CinemaMovie {
   id: string;
   titulo: string;
@@ -18,6 +21,10 @@ export interface CinemaMovie {
   link: string;
 }
 
+
+/// <summary>
+/// Interface que representa um local de cinema, contendo informações como ID, nome, morada, latitude, longitude, distância em km (opcional) e website (opcional).
+/// </summary>
 export interface CinemaVenue {
   id: string;
   nome: string;
@@ -31,19 +38,34 @@ export interface CinemaVenue {
 @Injectable({
   providedIn: 'root'
 })
+
+  /// <summary>
+  /// Serviço para operações relacionadas com cinemas, incluindo obtenção de cinemas próximos e filmes em exibição, bem como pesquisa de filmes por título.
+  /// </summary>
 export class CinemaService {
   private readonly apiBase = environment.apiBaseUrl || '';
   private readonly cinemaApi = this.apiBase ? `${this.apiBase}/api/cinema` : '/api/cinema';
 
+
+  /// <summary>
+  /// Construtor do serviço de cinema, injetando o HttpClient para comunicação com a API.
+  /// </summary>
   constructor(private http: HttpClient) {}
 
-  /** Lista de cinemas com coordenadas para o mapa (nome, morada, lat, lng). */
+
+  /// <summary>
+  /// Obtém a lista de cinemas próximos, retornando um array de objetos CinemaVenue.
+  /// </summary>
   getNearbyCinemas(): Observable<CinemaVenue[]> {
     return this.http.get<CinemaVenue[]>(`${this.cinemaApi}/proximos`).pipe(
       catchError(() => of([]))
     );
   }
 
+
+  /// <summary>
+  /// Obtém a lista de filmes em exibição nos cinemas, retornando um array de objetos CinemaMovie.
+  /// </summary>
   getCinemaMovies(): Observable<CinemaMovie[]> {
     // Agora usa o caminho relativo. O Angular sabe que deve chamar a API no mesmo domínio onde o site está hospedado
     return this.http.get<CinemaMovie[]>(`${this.cinemaApi}/em-cartaz`).pipe(
@@ -51,6 +73,10 @@ export class CinemaService {
     );
   }
 
+  /// <summary>
+  /// Fornece uma lista de filmes em exibição nos cinemas como dados mock, caso a chamada à API falhe.
+  /// Esta função retorna um array de objetos CinemaMovie com informações detalhadas sobre cada filme.
+  /// </summary>
   private getMockCinemaMovies(): CinemaMovie[] {
     return [
       {
@@ -121,6 +147,9 @@ export class CinemaService {
     ];
   }
 
+  /// <summary>
+  /// Pesquisa um filme por título, retornando o ID do filme se encontrado ou null caso contrário.
+  /// </summary>
   searchMovieByTitle(titulo: string): Observable<number | null> {
     // NUNCA uses localhost:5185 aqui, senão o site no Azure vai falhar sempre
     return this.http.get<any>(`${this.cinemaApi}/search-tmdb?titulo=${encodeURIComponent(titulo)}`).pipe(

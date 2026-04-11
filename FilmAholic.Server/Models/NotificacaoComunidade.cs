@@ -2,6 +2,9 @@ using System;
 
 namespace FilmAholic.Server.Models;
 
+/// <summary>
+/// Representa uma notificação para a comunidade.
+/// </summary>
 public class NotificacaoComunidade
 {
     public int Id { get; set; }

@@ -2,6 +2,9 @@ using System.ComponentModel.DataAnnotations;
 
 namespace FilmAholic.Server.Models;
 
+/// <summary>
+/// Representa uma medalha que pode ser obtida por um utilizador.
+/// </summary>
 public class Medalha
 {
     public int Id { get; set; }

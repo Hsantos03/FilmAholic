@@ -11,7 +11,9 @@ using System.IO;
 
 var builder = WebApplication.CreateBuilder(args);
 
-
+/// <summary>
+/// Configura os controladores e opções de serialização JSON.
+/// </summary>
 builder.Services.AddControllers().AddJsonOptions(options =>
 {
     options.JsonSerializerOptions.PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase;
@@ -21,12 +23,18 @@ builder.Services.AddControllers().AddJsonOptions(options =>
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
+/// <summary>
+/// Configura o contexto do banco de dados da aplicação.
+/// </summary>
 builder.Services.AddDbContext<FilmAholicDbContext>(options =>
     options.UseSqlServer(
         builder.Configuration.GetConnectionString("DefaultConnection"),
         sql => sql.EnableRetryOnFailure()
     ));
 
+/// <summary>
+/// Configura a identidade e as opções de autenticação da aplicação.
+/// </summary>
 builder.Services.AddIdentity<Utilizador, IdentityRole>(options =>
 {
     options.SignIn.RequireConfirmedEmail = true;
@@ -43,6 +51,9 @@ builder.Services.AddIdentity<Utilizador, IdentityRole>(options =>
 
 var authBuilder = builder.Services.AddAuthentication();
 
+/// <summary>
+/// Configura a autenticação do Google na aplicação.
+/// </summary>
 var googleClientId = builder.Configuration["Authentication:Google:ClientId"];
 var googleClientSecret = builder.Configuration["Authentication:Google:ClientSecret"];
 if (!string.IsNullOrEmpty(googleClientId) && !string.IsNullOrEmpty(googleClientSecret))
@@ -58,6 +69,9 @@ if (!string.IsNullOrEmpty(googleClientId) && !string.IsNullOrEmpty(googleClientS
     });
 }
 
+/// <summary>
+/// Configura a autenticação do Facebook na aplicação.
+/// </summary>
 var facebookAppId = builder.Configuration["Authentication:Facebook:AppId"];
 var facebookAppSecret = builder.Configuration["Authentication:Facebook:AppSecret"];
 if (!string.IsNullOrEmpty(facebookAppId) && !string.IsNullOrEmpty(facebookAppSecret))
@@ -77,6 +91,9 @@ if (!string.IsNullOrEmpty(facebookAppId) && !string.IsNullOrEmpty(facebookAppSec
     });
 }
 
+/// <summary>
+/// Configura os cookies de autenticação da aplicação.
+/// </summary>
 builder.Services.ConfigureApplicationCookie(options =>
 {
     options.Cookie.HttpOnly = true;
@@ -86,6 +103,9 @@ builder.Services.ConfigureApplicationCookie(options =>
     options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
 });
 
+/// <summary>
+/// Configura os cookies de autenticação externa da aplicação.
+/// </summary>
 builder.Services.ConfigureExternalCookie(options =>
 {
     options.Cookie.HttpOnly = true;
@@ -101,30 +121,54 @@ builder.Services.AddScoped<IEmailService, EmailService>();
 
 builder.Services.AddScoped<IPreferenciasService, PreferenciasService>();
 
+/// <summary>
+/// Configura o serviço de filmes na aplicação.
+/// </summary>
 builder.Services.AddHttpClient();
 builder.Services.AddScoped<IMovieService, MovieService>();
 
+/// <summary>
+/// Configura o serviço de medalhas na aplicação.
+/// </summary>
 builder.Services.AddScoped<MedalhaService>();
 
+/// <summary>
+/// Configura o serviço de cinema na aplicação.
+/// </summary>
 builder.Services.AddScoped<ICinemaScraperService, CinemaScraperService>();
 builder.Services.AddHostedService<CinemaMovieCacheService>();
 
+/// <summary>
+/// Configura o serviço de pré-carregamento de filmes na aplicação.
+/// </summary>
 builder.Services.AddMemoryCache();
 builder.Services.AddHostedService<TmdbUpcomingPreloadService>();
 builder.Services.AddHostedService<HomepageFeaturedPreloadService>();
 
+/// <summary>
+/// Configura o serviço de notificações periódicas na aplicação.
+/// </summary>
 builder.Services.Configure<PeriodicStatsNotificationOptions>(
     builder.Configuration.GetSection("PeriodicStatsNotifications"));
 builder.Services.AddHostedService<PeriodicStatsNotificationService>();
 
+/// <summary>
+/// Configura o serviço ReminderJogo na aplicação.
+/// </summary>
 builder.Services.Configure<ReminderJogoOptions>(
     builder.Configuration.GetSection("ReminderJogo"));
 builder.Services.AddHostedService<ReminderJogoService>();
 
+/// <summary>
+/// Configura o serviço QueroVerEstreia na aplicação.
+/// </summary>
 builder.Services.Configure<QueroVerEstreiaOptions>(
     builder.Configuration.GetSection("QueroVerEstreia"));
 builder.Services.AddHostedService<QueroVerEstreiaService>();
 
+/// <summary>
+/// Configura as políticas de CORS da aplicação.
+/// </summary>
 builder.Services.AddCors(options => {
     options.AddPolicy("AllowAngular",
         policy => policy.WithOrigins("http://localhost:4200", "https://localhost:50905", "http://localhost:50905", "https://localhost:7277", "http://localhost:7277")
@@ -164,6 +208,9 @@ app.MapControllers();
 
 app.MapFallbackToFile("/index.html");
 
+/// <summary>
+/// Configura o serviço de inicialização da aplicação.
+/// </summary>
 await using (var scope = app.Services.CreateAsyncScope())
 {
     var context = scope.ServiceProvider.GetRequiredService<FilmAholicDbContext>();
@@ -278,4 +325,7 @@ await using (var scope = app.Services.CreateAsyncScope())
     }
 }
 
+/// <summary>
+/// Inicia a aplicação.
+/// </summary>
 app.Run();

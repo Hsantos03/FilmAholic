@@ -2,6 +2,9 @@ using System;
 
 namespace FilmAholic.Server.Models;
 
+/// <summary>
+/// Representa um membro de uma comunidade.
+/// </summary>
 public class ComunidadeMembro
 {
     public int Id { get; set; }

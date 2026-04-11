@@ -4,12 +4,18 @@ using Microsoft.Extensions.Options;
 namespace FilmAholic.Server.Services;
 
 /// Verifica periodicamente se filmes na lista "Quero Ver" já estrearam / ficaram em streaming e cria notificações.
+/// <summary>
+/// Serviço responsável por gerir as notificações de estreias de filmes.
+/// </summary>
 public sealed class QueroVerEstreiaService : BackgroundService
 {
     private readonly IServiceScopeFactory _scopeFactory;
     private readonly ILogger<QueroVerEstreiaService> _logger;
     private readonly QueroVerEstreiaOptions _options;
 
+    /// <summary>
+    /// Inicializa uma nova instância do serviço de notificações de estreias de filmes.
+    /// </summary>
     public QueroVerEstreiaService(
         IServiceScopeFactory scopeFactory,
         IOptions<QueroVerEstreiaOptions> options,
@@ -20,6 +26,9 @@ public sealed class QueroVerEstreiaService : BackgroundService
         _options = options.Value;
     }
 
+    /// <summary>
+    /// Executa o serviço de notificações de estreias de filmes.
+    /// </summary>
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         if (!_options.Enabled)

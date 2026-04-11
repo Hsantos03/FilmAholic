@@ -5,23 +5,35 @@ using Microsoft.Extensions.Configuration;
 
 namespace FilmAholic.Server.Services;
 
+/// <summary>
+/// Serviço responsável por enviar emails.
+/// </summary>
 public interface IEmailService
 {
     Task SendVerificationEmailAsync(string email, string verificationToken, string userId);
     Task SendPasswordResetEmailAsync(string email, string callbackUrl);
 }
 
+/// <summary>
+/// Serviço responsável por enviar emails.
+/// </summary>
 public class EmailService : IEmailService
 {
     private readonly IConfiguration _configuration;
     private readonly ILogger<EmailService> _logger;
 
+    /// <summary>
+    /// Inicializa uma nova instância do serviço de envio de emails.
+    /// </summary>
     public EmailService(IConfiguration configuration, ILogger<EmailService> logger)
     {
         _configuration = configuration;
         _logger = logger;
     }
 
+    /// <summary>
+    /// Envia um email de verificação para o utilizador.
+    /// </summary>
     public async Task SendVerificationEmailAsync(string email, string verificationToken, string userId)
     {
         try
@@ -85,6 +97,9 @@ public class EmailService : IEmailService
         }
     }
 
+    /// <summary>
+    /// Envia um email de recuperação de password para o utilizador.
+    /// </summary>
     public async Task SendPasswordResetEmailAsync(string email, string callbackUrl)
     {
         try

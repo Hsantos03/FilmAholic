@@ -1,5 +1,8 @@
 namespace FilmAholic.Server.DTOs
 {
+    /// <summary>
+    /// Representa os dados necessários para criar um comentário, incluindo informações sobre o filme, texto do comentário e votos.
+    /// </summary>
     public class CreateCommentDTO
     {
         // Update Comments

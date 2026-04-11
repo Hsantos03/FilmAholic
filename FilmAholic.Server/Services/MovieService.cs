@@ -9,6 +9,9 @@ using System.Text.Json;
 
 namespace FilmAholic.Server.Services;
 
+/// <summary>
+/// Serviço responsável por gerenciar filmes e informações relacionadas.
+/// </summary>
 public class MovieService : IMovieService
 {
     private readonly IHttpClientFactory _httpClientFactory;
@@ -22,6 +25,9 @@ public class MovieService : IMovieService
     private readonly string _omdbBaseUrl = "https://www.omdbapi.com";
     private readonly string _omdbApiKey;
 
+    /// <summary>
+    /// Serviço responsável por gerenciar filmes e informações relacionadas.
+    /// </summary>
     public MovieService(
         IHttpClientFactory httpClientFactory,
         FilmAholicDbContext context,
@@ -49,6 +55,10 @@ public class MovieService : IMovieService
         }
     }
 
+
+    /// <summary>
+    /// Pesquisa filmes no TMDb com base na query fornecida.
+    /// </summary>
     public async Task<TmdbSearchResponse> SearchMoviesAsync(string query, int page = 1)
     {
         if (string.IsNullOrEmpty(_tmdbApiKey))
@@ -109,6 +119,10 @@ public class MovieService : IMovieService
         }
     }
 
+
+    /// <summary>
+    /// Obtém os detalhes de um filme do TMDb.
+    /// </summary>
     public async Task<TmdbMovieDto?> GetMovieDetailsFromTmdbAsync(int tmdbId, string language = "pt-PT")
     {
         if (string.IsNullOrEmpty(_tmdbApiKey))
@@ -143,6 +157,10 @@ public class MovieService : IMovieService
         }
     }
 
+
+    /// <summary>
+    /// Obtém os detalhes de um filme do OMDb.
+    /// </summary>
     public async Task<OmdbMovieDto?> GetMovieDetailsFromOmdbAsync(string imdbId)
     {
         if (string.IsNullOrEmpty(_omdbApiKey))
@@ -188,7 +206,10 @@ public class MovieService : IMovieService
             return null;
         }
     }
-
+    
+    /// <summary>
+    /// Obtém as informações de um filme, combinando dados do TMDb e OMDb.
+    /// </summary>
     public async Task<Filme?> GetMovieInfoAsync(int tmdbId)
     {
         // Get Portuguese version for synopsis and genres
@@ -241,7 +262,10 @@ public class MovieService : IMovieService
 
         return MapToFilme(tmdbMovieEn, tmdbMoviePt, omdbMovie);
     }
-
+    
+    /// <summary>
+    /// Obtém ou cria um filme a partir do TMDb.
+    /// </summary>
     public async Task<Filme> GetOrCreateMovieFromTmdbAsync(int tmdbId)
     {
         var existingMovie = await _context.Set<Filme>()
@@ -265,7 +289,10 @@ public class MovieService : IMovieService
 
         return movieInfo;
     }
-
+    
+    /// <summary>
+    /// Atualiza as informações de um filme a partir das APIs.
+    /// </summary>
     public async Task<Filme?> UpdateMovieFromApisAsync(int filmeId)
     {
         var filme = await _context.Set<Filme>().FindAsync(filmeId);
@@ -300,6 +327,9 @@ public class MovieService : IMovieService
         return filme;
     }
 
+    /// <summary>
+    /// Mapeia os dados do TMDb e OMDb para um objeto Filme.
+    /// </summary>
     private Filme MapToFilme(TmdbMovieDto tmdbMovieEn, TmdbMovieDto tmdbMoviePt, OmdbMovieDto? omdbMovie)
     {
         var posterUrl = TmdbPosterW500Url(tmdbMoviePt.PosterPath);
@@ -380,6 +410,9 @@ public class MovieService : IMovieService
         return filme;
     }
 
+    /// <summary>
+    /// Obtém os filmes populares do TMDb.
+    /// </summary>
     public async Task<List<Filme>> GetPopularMoviesAsync(int page = 1, int count = 20)
     {
         if (string.IsNullOrEmpty(_tmdbApiKey))
@@ -414,12 +447,14 @@ public class MovieService : IMovieService
         }
     }
 
+    /// <summary>
+    /// Gera a chave de cache para filmes populares com mínimo de votos.
+    /// </summary>
     private static string PopularMinVotesCacheKey(int count, int minVoteCount, int maxPages) =>
         $"tmdb-popular-minvotes:{count}:{minVoteCount}:{maxPages}";
 
     /// <summary>
-    /// Filmes populares do TMDB com mínimo de votos (vote_count).
-    /// Resultado em cache; preload diário (HomepageFeatured) mantém a landing rápida.
+    /// Obtém os filmes populares do TMDb com mínimo de votos.
     /// </summary>
     public async Task<List<Filme>> GetPopularMoviesWithMinVotesAsync(int count = 10, int minVoteCount = 500, int maxPages = 5)
     {
@@ -433,6 +468,9 @@ public class MovieService : IMovieService
         return list;
     }
 
+    /// <summary>
+    /// Atualiza o cache de filmes em destaque na página inicial.
+    /// </summary>
     public async Task RefreshHomepageFeaturedCacheAsync(CancellationToken cancellationToken = default)
     {
         var count = Math.Clamp(_configuration.GetValue<int>("HomepageFeatured:Count", 10), 1, 40);
@@ -447,8 +485,7 @@ public class MovieService : IMovieService
     }
 
     /// <summary>
-    /// Filmes populares do TMDB com mínimo de votos (vote_count).
-    /// Percorre várias páginas até encontrar suficientes filmes que satisfaçam o critério.
+    /// Obtém os filmes populares do TMDb com mínimo de votos.
     /// </summary>
     private async Task<List<Filme>> FetchPopularMoviesWithMinVotesUncachedAsync(int count, int minVoteCount, int maxPages, CancellationToken cancellationToken)
     {
@@ -521,6 +558,9 @@ public class MovieService : IMovieService
         }
     }
 
+    /// <summary>
+    /// Obtém os filmes em breve do TMDb.
+    /// </summary>
     public async Task<List<Filme>> GetUpcomingMoviesAsync(int page = 1, int count = 20)
     {
         var cacheHours = Math.Max(1, _configuration.GetValue<int>("TmdbUpcomingCacheHours", 24));
@@ -554,7 +594,10 @@ public class MovieService : IMovieService
             return new List<Filme>();
         }
     }
-
+    
+    /// <summary>
+    /// Obtém os filmes em breve acumulados do TMDb.
+    /// </summary>
     public async Task<List<Filme>> GetUpcomingMoviesAccumulatedAsync(
         int startPage,
         int desiredCount,
@@ -635,6 +678,9 @@ public class MovieService : IMovieService
         return result;
     }
 
+    /// <summary>
+    /// Obtém os filmes em breve do TMDb.
+    /// </summary>
     private async Task<TmdbSearchResponse?> FetchTmdbUpcomingPageAsync(int page)
     {
         var httpClient = _httpClientFactory.CreateClient();
@@ -652,6 +698,9 @@ public class MovieService : IMovieService
         });
     }
 
+    /// <summary>
+    /// Verifica se a data de lançamento do filme é igual ou posterior a uma data mínima.
+    /// </summary>
     private static bool TmdbListReleaseOnOrAfter(string? releaseDate, DateTime minDayUtc)
     {
         if (!TryParseTmdbDateOnly(releaseDate, out var d))
@@ -660,6 +709,9 @@ public class MovieService : IMovieService
         return d.Date >= minDayUtc.Date;
     }
 
+    /// <summary>
+    /// Obtém a data de lançamento do filme ou o valor máximo se não estiver disponível.
+    /// </summary>
     private static DateTime ParseTmdbListReleaseDateOrMax(string? releaseDate)
     {
         if (TryParseTmdbDateOnly(releaseDate, out var d))
@@ -668,6 +720,9 @@ public class MovieService : IMovieService
         return DateTime.MaxValue;
     }
 
+    /// <summary>
+    /// Tenta analisar a data de lançamento do TMDb.
+    /// </summary>
     private static bool TryParseTmdbDateOnly(string? releaseDate, out DateTime date)
     {
         date = default;
@@ -682,6 +737,9 @@ public class MovieService : IMovieService
             out date);
     }
 
+    /// <summary>
+    /// Verifica se a data de lançamento do filme é igual ou posterior a uma data mínima.
+    /// </summary>
     private static bool FilmeReleaseOnOrAfter(Filme f, DateTime minDayUtc)
     {
         if (f.ReleaseDate.HasValue)
@@ -693,7 +751,9 @@ public class MovieService : IMovieService
         return false;
     }
 
-    /// <summary>TMDB devolve <c>poster_path</c> tipo <c>/abc.jpg</c>; strings vazias não são null e geram URL inválida.</summary>
+    /// <summary>
+    /// Obtém a URL do poster do TMDb com largura de 500 pixels.
+    /// </summary>
     private static string TmdbPosterW500Url(string? posterPath)
     {
         if (string.IsNullOrWhiteSpace(posterPath))
@@ -706,6 +766,9 @@ public class MovieService : IMovieService
         return $"https://image.tmdb.org/t/p/w500{p}";
     }
 
+    /// <summary>
+    /// Obtém a lista de filmes mais bem avaliados.
+    /// </summary>
     public async Task<List<Filme>> GetTopRatedMoviesAsync(int page = 1, int count = 20)
     {
         if (string.IsNullOrEmpty(_tmdbApiKey))
@@ -740,6 +803,9 @@ public class MovieService : IMovieService
         }
     }
 
+    /// <summary>
+    /// Obtém a lista de filmes clássicos.
+    /// </summary>
     public async Task<List<Filme>> GetClassicDiscoverMoviesAsync(int page = 1, int count = 20, string? primaryReleaseDateLte = null, int minVoteCount = 500)
     {
         if (string.IsNullOrEmpty(_tmdbApiKey))
@@ -783,7 +849,9 @@ public class MovieService : IMovieService
         }
     }
 
-    /// <summary>Hidrata resultados TMDB (lista) para <see cref="Filme"/> com detalhes pt-PT + OMDb quando possível.</summary>
+    /// <summary>
+    /// Hidrata resultados TMDB (lista) para <see cref="Filme"/> com detalhes pt-PT + OMDb quando possível.
+    /// </summary>
     private async Task<List<Filme>> HydrateTmdbResultsToFilmesAsync(IReadOnlyList<TmdbMovieDto> results, int count, string sourceLabel)
     {
         var moviesToProcess = results.Where(m => !m.Adult).Take(count).ToList();
@@ -825,6 +893,9 @@ public class MovieService : IMovieService
         return movies;
     }
 
+    /// <summary>
+    /// Obtém os atores mais populares.
+    /// </summary>
     public async Task<List<PopularActorDto>> GetPopularActorsAsync(int page = 1, int count = 20)
     {
         if (string.IsNullOrEmpty(_tmdbApiKey))
@@ -884,6 +955,9 @@ public class MovieService : IMovieService
         }
     }
 
+    /// <summary>
+    /// Obtém a classificação do utilizador para um filme específico.
+    /// </summary>
     public async Task<RatingsDto> GetRatingsAsync(string? tmdbId, string? title)
     {
         var dto = new RatingsDto();
@@ -943,6 +1017,9 @@ public class MovieService : IMovieService
         return dto;
     }
 
+    /// <summary>
+    /// Obtém recomendações de filmes com base em um filme específico.
+    /// </summary>
     public async Task<List<Filme>> GetRecommendationsAsync(int tmdbId, int count = 10)
     {
         if (string.IsNullOrEmpty(_tmdbApiKey))
@@ -1017,6 +1094,9 @@ public class MovieService : IMovieService
         }
     }
 
+    /// <summary>
+    /// Obtém os atores mais populares com base em uma consulta.
+    /// </summary>
     public async Task<List<ActorSearchResultDto>> SearchActorsAsync(string query)
     {
         if (string.IsNullOrEmpty(_tmdbApiKey))
@@ -1065,6 +1145,9 @@ public class MovieService : IMovieService
         }
     }
 
+    /// <summary>
+    /// Obtém os detalhes de um ator com base no seu ID.
+    /// </summary>
     public async Task<ActorDetailsDto?> GetActorDetailsAsync(int personId)
     {
         if (string.IsNullOrEmpty(_tmdbApiKey))
@@ -1108,6 +1191,9 @@ public class MovieService : IMovieService
         }
     }
 
+    /// <summary>
+    /// Obtém os filmes de um ator com base no seu ID.
+    /// </summary>
     public async Task<List<ActorMovieDto>> GetMoviesByActorAsync(int personId)
     {
         if (string.IsNullOrEmpty(_tmdbApiKey))
@@ -1154,6 +1240,9 @@ public class MovieService : IMovieService
         }
     }
 
+    /// <summary>
+    /// Obtém os membros do elenco de um filme com base no seu ID.
+    /// </summary>
     public async Task<List<CastMemberDto>> GetCastAsync(int tmdbId)
     {
         try
@@ -1184,6 +1273,9 @@ public class MovieService : IMovieService
     }
 
 
+    /// <summary>
+    /// Verifica se um filme está disponível em streaming.
+    /// </summary>
     public async Task<bool> IsAvailableInStreamingAsync(int tmdbId)
     {
         var apiKey = _configuration["ExternalApis:TmdbApiKey"];
@@ -1207,7 +1299,6 @@ public class MovieService : IMovieService
                 return streaming.GetArrayLength() > 0;
             }
         }
-
         return false;
     }
 }

@@ -1,6 +1,8 @@
 namespace FilmAholic.Server.Models;
 
-// Tabela de junção para relação many-to-many entre Utilizador e Genero
+/// <summary>
+/// Representa a relação entre um utilizador e um género.
+/// </summary>
 public class UtilizadorGenero
 {
     public string UtilizadorId { get; set; } = "";

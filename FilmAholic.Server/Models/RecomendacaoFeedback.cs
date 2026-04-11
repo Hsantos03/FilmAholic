@@ -2,6 +2,9 @@
 
 namespace FilmAholic.Server.Models;
 
+/// <summary>
+/// Representa o feedback de uma recomendação de filme por um utilizador.
+/// </summary>
 public class RecomendacaoFeedback
 {
     public int Id { get; set; }

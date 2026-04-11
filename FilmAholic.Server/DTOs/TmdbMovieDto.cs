@@ -3,6 +3,9 @@ using System.Text.Json.Serialization;
 namespace FilmAholic.Server.DTOs;
 
 // DTOs for TMDb API responses
+/// <summary>
+/// Representa a resposta de pesquisa de filmes no TMDb.
+/// </summary>
 public class TmdbSearchResponse
 {
     [JsonPropertyName("page")]
@@ -18,6 +21,9 @@ public class TmdbSearchResponse
     public int TotalResults { get; set; }
 }
 
+/// <summary>
+/// Representa um filme no TMDb.
+/// </summary>
 public class TmdbMovieDto
 {
     [JsonPropertyName("id")]
@@ -64,6 +70,9 @@ public class TmdbMovieDto
     public bool Adult { get; set; } = false;
 }
 
+/// <summary>
+/// Representa um gênero de filme no TMDb.
+/// </summary>
 public class TmdbGenreDto
 {
     [JsonPropertyName("id")]

@@ -2,6 +2,9 @@ using System;
 
 namespace FilmAholic.Server.Models;
 
+/// <summary>
+/// Representa um cache de filmes em cinema.
+/// </summary>
 public class CinemaMovieCache
 {
     public int Id { get; set; }

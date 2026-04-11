@@ -2,6 +2,9 @@ using System.ComponentModel.DataAnnotations;
 
 namespace FilmAholic.Server.Models;
 
+/// <summary>
+/// Representa a exposição de uma medalha de um utilizador.
+/// </summary>
 public class UtilizadorMedalhaExposicao
 {
     [Required]

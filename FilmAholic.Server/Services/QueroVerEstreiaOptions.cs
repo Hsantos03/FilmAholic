@@ -1,6 +1,8 @@
 ﻿namespace FilmAholic.Server.Services;
 
+/// <summary>
 /// Configuração do job periódico que verifica lista "Quero ver" vs cinema/streaming (FR63).
+/// </summary>
 public sealed class QueroVerEstreiaOptions
 {
     public bool Enabled { get; set; } = true;

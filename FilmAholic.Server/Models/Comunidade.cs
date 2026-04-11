@@ -3,6 +3,9 @@ using System.Collections.Generic;
 
 namespace FilmAholic.Server.Models;
 
+/// <summary>
+/// Representa uma comunidade de utilizadores.
+/// </summary>
 public class Comunidade
 {
     public int Id { get; set; }

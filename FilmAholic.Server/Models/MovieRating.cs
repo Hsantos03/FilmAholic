@@ -2,6 +2,9 @@
 
 namespace FilmAholic.Server.Models
 {
+    /// <summary>
+    /// Representa a avaliação de um filme por um utilizador.
+    /// </summary>
     public class MovieRating
     {
         public int Id { get; set; }

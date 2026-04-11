@@ -5,7 +5,6 @@ import { FormsModule } from '@angular/forms';
 import { LOCALE_ID, NgModule } from '@angular/core';
 import { registerLocaleData } from '@angular/common';
 import localePt from '@angular/common/locales/pt';
-
 import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
 import { RegisterComponent } from './components/register/register.component';
@@ -35,6 +34,9 @@ import { HomePageComponent } from './components/homepage/homepage.component';
 
 registerLocaleData(localePt);
 
+/// <summary>
+/// Módulo principal da aplicação Angular, responsável por declarar os componentes, importar os módulos necessários e configurar os provedores para a aplicação FilmAholic.
+/// </summary>
 @NgModule({
   declarations: [
     AppComponent,

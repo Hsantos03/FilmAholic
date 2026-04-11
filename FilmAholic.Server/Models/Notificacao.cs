@@ -2,6 +2,9 @@ using System.Text.Json.Serialization;
 
 namespace FilmAholic.Server.Models;
 
+/// <summary>
+/// Representa uma notificação para um utilizador.
+/// </summary>
 public class Notificacao
 {
     public int Id { get; set; }

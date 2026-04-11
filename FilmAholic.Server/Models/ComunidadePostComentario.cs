@@ -2,6 +2,9 @@ using System;
 
 namespace FilmAholic.Server.Models
 {
+    /// <summary>
+    /// Representa um comentário em um post de uma comunidade.
+    /// </summary>
     public class ComunidadePostComentario
     {
         public int Id { get; set; }

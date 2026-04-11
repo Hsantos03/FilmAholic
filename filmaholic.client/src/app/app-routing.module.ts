@@ -22,6 +22,9 @@ import { AdminPanelComponent } from './components/admin-panel/admin-panel.compon
 import { HomePageComponent } from './components/homepage/homepage.component';
 import { AdminGuard } from './guards/admin.guard';
 
+/// <summary>
+/// Configura as rotas da aplicação, associando caminhos a componentes específicos e aplicando guardas de autenticação quando necessário.
+/// </summary>
 const routes: Routes = [
   { path: 'register', component: RegisterComponent },
   { path: 'login', component: LoginComponent },
@@ -48,6 +51,9 @@ const routes: Routes = [
   { path: '', redirectTo: '/home', pathMatch: 'full' }
 ];
 
+/// <summary>
+/// Configura o módulo de roteamento da aplicação, importando as rotas definidas e exportando o RouterModule para uso em outros módulos.
+/// </summary>
 @NgModule({
   imports: [RouterModule.forRoot(routes)],
   exports: [RouterModule]

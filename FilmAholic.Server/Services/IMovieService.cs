@@ -3,6 +3,9 @@ using FilmAholic.Server.Models;
 
 namespace FilmAholic.Server.Services;
 
+/// <summary>
+/// Serviço responsável por obter informações de filmes.
+/// </summary>
 public interface IMovieService
 {
     Task<TmdbSearchResponse> SearchMoviesAsync(string query, int page = 1);

@@ -2,6 +2,9 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace FilmAholic.Server.Models;
 
+/// <summary>
+/// Representa um filme.
+/// </summary>
 public class Filme
 {
     public int Id { get; set; }
