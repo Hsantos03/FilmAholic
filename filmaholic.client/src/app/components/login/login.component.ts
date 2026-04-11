@@ -21,6 +21,9 @@ export class LoginComponent implements OnInit {
   externalNome = '';
   externalEmail = '';
 
+  /** Rota interna para onde redirecionar após login (ex.: `/profile/{id}`). */
+  private pendingReturnUrl: string | null = null;
+
   constructor(
     private authService: AuthService,
     private profileService: ProfileService,
@@ -29,6 +32,11 @@ export class LoginComponent implements OnInit {
   ) { }
 
   ngOnInit() {
+    const ruSnap = this.route.snapshot.queryParamMap.get('returnUrl');
+    if (ruSnap && ruSnap.startsWith('/') && !ruSnap.startsWith('//')) {
+      this.pendingReturnUrl = ruSnap;
+    }
+
     // Verificar se veio de login externo bem-sucedido
     this.route.queryParams.subscribe(params => {
       if (params['externalSuccess'] === 'true') {
@@ -117,13 +125,17 @@ export class LoginComponent implements OnInit {
         localStorage.setItem('user_roles', JSON.stringify(res.roles ?? []));
         
         // Verificar se o utilizador já tem géneros favoritos
+        const returnAfter = this.pendingReturnUrl;
         this.profileService.obterGenerosFavoritos(res.id).subscribe({
           next: (generos) => {
             if (generos && generos.length > 0) {
-              // Se já tem géneros, vai para o dashboard
-              this.router.navigate(['/dashboard']);
+              if (returnAfter) {
+                this.pendingReturnUrl = null;
+                this.router.navigateByUrl(returnAfter);
+              } else {
+                this.router.navigate(['/dashboard']);
+              }
             } else {
-              // Se não tem géneros, redireciona para selecionar
               this.router.navigate(['/selecionar-generos']);
             }
           },

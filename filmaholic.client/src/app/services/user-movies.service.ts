@@ -25,27 +25,34 @@ export class UserMoviesService {
     return this.http.delete(`${this.apiUrl}/remove/${filmeId}`, { withCredentials: true });
   }
 
-  getList(jaViu: boolean): Observable<any[]> {
-    return this.http.get<any[]>(`${this.apiUrl}/list/${jaViu}`, { withCredentials: true });
+  getList(jaViu: boolean, forUserId?: string | null): Observable<any[]> {
+    return this.http.get<any[]>(this.appendForUserId(`${this.apiUrl}/list/${jaViu}`, forUserId), { withCredentials: true });
   }
 
-  getTotalHours(): Observable<number> {
-    return this.http.get<number>(`${this.apiUrl}/totalhours`, { withCredentials: true });
+  getTotalHours(forUserId?: string | null): Observable<number> {
+    return this.http.get<number>(this.appendForUserId(`${this.apiUrl}/totalhours`, forUserId), { withCredentials: true });
   }
 
-  getStats(params?: { from?: string; to?: string }): Observable<any> {
+  getStats(params?: { from?: string; to?: string }, forUserId?: string | null): Observable<any> {
     const q = params ? this.buildPeriodParams(params) : '';
-    return this.http.get<any>(`${this.apiUrl}/stats${q}`, { withCredentials: true });
+    return this.http.get<any>(this.appendForUserId(`${this.apiUrl}/stats${q}`, forUserId), { withCredentials: true });
   }
 
-  getStatsComparison(params?: { from?: string; to?: string }): Observable<StatsComparison> {
+  getStatsComparison(params?: { from?: string; to?: string }, forUserId?: string | null): Observable<StatsComparison> {
     const q = params ? this.buildPeriodParams(params) : '';
-    return this.http.get<StatsComparison>(`${this.apiUrl}/stats/comparison${q}`, { withCredentials: true });
+    return this.http.get<StatsComparison>(this.appendForUserId(`${this.apiUrl}/stats/comparison${q}`, forUserId), { withCredentials: true });
   }
 
-  getStatsCharts(params?: { from?: string; to?: string }): Observable<StatsCharts> {
+  getStatsCharts(params?: { from?: string; to?: string }, forUserId?: string | null): Observable<StatsCharts> {
     const q = params ? this.buildPeriodParams(params) : '';
-    return this.http.get<StatsCharts>(`${this.apiUrl}/stats/charts${q}`, { withCredentials: true });
+    return this.http.get<StatsCharts>(this.appendForUserId(`${this.apiUrl}/stats/charts${q}`, forUserId), { withCredentials: true });
+  }
+
+  private appendForUserId(url: string, forUserId?: string | null): string {
+    if (!forUserId?.trim()) return url;
+    return url.includes('?')
+      ? `${url}&forUserId=${encodeURIComponent(forUserId.trim())}`
+      : `${url}?forUserId=${encodeURIComponent(forUserId.trim())}`;
   }
 
   private buildPeriodParams(params: { from?: string; to?: string }): string {

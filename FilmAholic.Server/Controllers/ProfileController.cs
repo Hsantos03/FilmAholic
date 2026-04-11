@@ -60,7 +60,28 @@ namespace FilmAholic.Server.Controllers
                 .FirstOrDefaultAsync();
 
             if (user == null) return NotFound();
-            return Ok(user);
+
+            var callerId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var canSeeEmail = !string.IsNullOrEmpty(callerId)
+                && (string.Equals(callerId, id, StringComparison.Ordinal)
+                    || User.IsInRole("Administrador"));
+            if (canSeeEmail)
+                return Ok(user);
+
+            return Ok(new
+            {
+                user.id,
+                user.userName,
+                user.nome,
+                user.sobrenome,
+                user.fotoPerfilUrl,
+                user.capaUrl,
+                user.dataCriacao,
+                user.bio,
+                user.xp,
+                user.nivel,
+                user.generosFavoritos
+            });
         }
 
         // PUT: api/Profile/{id}
@@ -222,6 +243,44 @@ namespace FilmAholic.Server.Controllers
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
             var user = await _context.Users.FindAsync(userId);
+            if (user == null) return NotFound();
+
+            var filmes = new List<int>();
+            var atores = new List<string>();
+
+            try
+            {
+                if (!string.IsNullOrWhiteSpace(user.TopFilmes))
+                    filmes = JsonSerializer.Deserialize<List<int>>(user.TopFilmes) ?? new();
+
+                if (!string.IsNullOrWhiteSpace(user.TopAtores))
+                    atores = JsonSerializer.Deserialize<List<string>>(user.TopAtores) ?? new();
+            }
+            catch
+            {
+                filmes = new();
+                atores = new();
+            }
+
+            return Ok(new FavoritosDTO
+            {
+                Filmes = filmes,
+                Atores = atores
+            });
+        }
+
+        /// <summary>Favoritos (filmes/atores) de um utilizador — leitura para perfis de outros (autenticado).</summary>
+        [Authorize]
+        [HttpGet("{id}/favorites")]
+        public async Task<IActionResult> GetFavoritesForUser(string id)
+        {
+            if (string.IsNullOrWhiteSpace(id))
+                return BadRequest(new { message = "Id is required." });
+
+            var exists = await _context.Users.AnyAsync(u => u.Id == id);
+            if (!exists) return NotFound();
+
+            var user = await _context.Users.FindAsync(id);
             if (user == null) return NotFound();
 
             var filmes = new List<int>();

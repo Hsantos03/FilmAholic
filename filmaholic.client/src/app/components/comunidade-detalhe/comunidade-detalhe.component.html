@@ -328,7 +328,29 @@
 
       <article class="post-card" *ngFor="let p of sortedPosts">
         <div class="post-header">
-          <div class="post-author-info">
+          <a *ngIf="p.autorId" class="post-author-info post-author-profile-link" [routerLink]="['/profile', p.autorId]" [attr.title]="'Ver perfil de ' + (p.autorNome || '')">
+            <div class="post-avatar" [attr.title]="p.autorNome || ''">
+              <img *ngIf="p.autorFotoPerfilUrl?.trim()"
+                   class="post-avatar-img"
+                   [src]="p.autorFotoPerfilUrl"
+                   [alt]="p.autorNome || ''" />
+              <span *ngIf="!p.autorFotoPerfilUrl?.trim()">{{ getUserInitial(p.autorNome) }}</span>
+            </div>
+            <div class="post-autor-wrapper">
+              <span class="post-autor">{{ p.autorNome }}</span>
+              <span class="post-tag-separator" *ngIf="p.autorUserTag">|</span>
+              <span *ngIf="p.autorUserTag" class="post-autor-tag tooltip-trigger post-autor-tag-with-icon" [style.--tag-primary-color]="p.autorUserTagPrimaryColor || '#FF4081'" [style.--tag-secondary-color]="p.autorUserTagSecondaryColor || '#FFFFFF'">
+                <img *ngIf="p.autorUserTagIconUrl" [src]="API_URL + p.autorUserTagIconUrl" [alt]="p.autorUserTag" class="post-autor-tag-icon">
+                <span *ngIf="!p.autorUserTagIconUrl" class="post-autor-tag-fallback">🏅</span>
+                <span class="tag-gradient-text">{{ p.autorUserTag }}</span>
+                <span class="tooltip">
+                  <span class="tooltip-label">Como desbloquear</span>
+                  <span class="tooltip-desc">{{ p.autorUserTagDescription || 'Medalha especial desbloqueada!' }}</span>
+                </span>
+              </span>
+            </div>
+          </a>
+          <div *ngIf="!p.autorId" class="post-author-info">
             <div class="post-avatar" [attr.title]="p.autorNome || ''">
               <img *ngIf="p.autorFotoPerfilUrl?.trim()"
                    class="post-avatar-img"
@@ -440,7 +462,14 @@
             <div *ngIf="p.comentarios?.length === 0" class="no-comments">Ainda não há comentários.</div>
 
             <div class="comment-item" *ngFor="let c of p.comentarios">
-              <div class="comment-avatar" [attr.title]="c.autorNome || ''">
+              <a *ngIf="c.autorId" class="comment-avatar comment-profile-link" [routerLink]="['/profile', c.autorId]" [attr.title]="'Ver perfil de ' + (c.autorNome || '')">
+                <img *ngIf="c.autorFotoPerfilUrl?.trim()"
+                     class="comment-avatar-img"
+                     [src]="c.autorFotoPerfilUrl"
+                     [alt]="c.autorNome || ''" />
+                <span *ngIf="!c.autorFotoPerfilUrl?.trim()">{{ getUserInitial(c.autorNome) }}</span>
+              </a>
+              <div *ngIf="!c.autorId" class="comment-avatar" [attr.title]="c.autorNome || ''">
                 <img *ngIf="c.autorFotoPerfilUrl?.trim()"
                      class="comment-avatar-img"
                      [src]="c.autorFotoPerfilUrl"
@@ -449,7 +478,8 @@
               </div>
               <div class="comment-body">
                 <div class="comment-header">
-                  <span class="comment-author">{{ c.autorNome }}</span>
+                  <a *ngIf="c.autorId" class="comment-author comment-author-link" [routerLink]="['/profile', c.autorId]">{{ c.autorNome }}</a>
+                  <span *ngIf="!c.autorId" class="comment-author">{{ c.autorNome }}</span>
                   <span class="comment-tag-separator" *ngIf="c.autorUserTag">|</span>
                   <span *ngIf="c.autorUserTag" class="comment-autor-tag tooltip-trigger comment-autor-tag-with-icon" [style.--tag-primary-color]="c.autorUserTagPrimaryColor || '#FF4081'" [style.--tag-secondary-color]="c.autorUserTagSecondaryColor || '#FFFFFF'">
                     <img *ngIf="c.autorUserTagIconUrl" [src]="API_URL + c.autorUserTagIconUrl" [alt]="c.autorUserTag" class="comment-autor-tag-icon">
@@ -551,10 +581,12 @@
       <div *ngIf="membros.length === 0" class="empty">Nenhum membro encontrado.</div>
       <div class="membros-list">
         <div class="membro-item" *ngFor="let m of membros">
-          <div class="membro-avatar">{{ getUserInitial(m.userName) }}</div>
+          <a *ngIf="m.utilizadorId" class="membro-avatar membro-profile-link" [routerLink]="['/profile', m.utilizadorId]" [attr.title]="'Ver perfil de ' + m.userName">{{ getUserInitial(m.userName) }}</a>
+          <div *ngIf="!m.utilizadorId" class="membro-avatar">{{ getUserInitial(m.userName) }}</div>
           <div class="membro-info">
             <div class="membro-nome-wrapper">
-              <span class="membro-nome">{{ m.userName }}</span>
+              <a *ngIf="m.utilizadorId" class="membro-nome membro-nome-link" [routerLink]="['/profile', m.utilizadorId]">{{ m.userName }}</a>
+              <span *ngIf="!m.utilizadorId" class="membro-nome">{{ m.userName }}</span>
               <span class="membro-tag-separator" *ngIf="m.userTag">|</span>
               <span *ngIf="m.userTag" class="membro-tag tooltip-trigger membro-tag-with-icon" [style.--tag-primary-color]="m.userTagPrimaryColor || '#FF4081'" [style.--tag-secondary-color]="m.userTagSecondaryColor || '#FFFFFF'">
                 <img *ngIf="m.userTagIconUrl" [src]="API_URL + m.userTagIconUrl" [alt]="m.userTag" class="membro-tag-icon">

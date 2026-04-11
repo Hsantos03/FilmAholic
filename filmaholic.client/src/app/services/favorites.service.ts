@@ -23,8 +23,15 @@ export class FavoritesService {
     private http: HttpClient
   ){ }
 
+  /** Favoritos do utilizador com sessão. */
   getFavorites(): Observable<FavoritosDTO> {
     return this.http.get<FavoritosDTO>(`${this.apiUrl}/favorites`, { withCredentials: true });
+  }
+
+  /** Favoritos de outro utilizador (perfil público; requer sessão). */
+  getFavoritesForUser(userId: string): Observable<FavoritosDTO> {
+    const id = encodeURIComponent(userId);
+    return this.http.get<FavoritosDTO>(`${this.apiUrl}/${id}/favorites`, { withCredentials: true });
   }
 
   saveFavorites(dto: FavoritosDTO): Observable<any> {

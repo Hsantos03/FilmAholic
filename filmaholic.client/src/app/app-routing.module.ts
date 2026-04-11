@@ -30,6 +30,7 @@ const routes: Routes = [
   { path: 'reset-password', component: ResetPasswordComponent },
   { path: 'selecionar-generos', component: SelecionarGenerosComponent },
   { path: 'dashboard', component: DashboardComponent },
+  { path: 'profile/:userId', component: ProfileComponent },
   { path: 'profile', component: ProfileComponent },
   { path: 'search', component: SearchResultsComponent },
   { path: 'movie-detail/:id', component: MoviePageComponent },

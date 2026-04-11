@@ -1,6 +1,6 @@
-import { Component, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
 import { MenuService } from '../../services/menu.service';
 import { UserMoviesService, StatsComparison, StatsCharts, ChartDataPoint } from '../../services/user-movies.service';
@@ -8,8 +8,8 @@ import { Filme, FilmesService, ActorDto } from '../../services/filmes.service';
 import { FavoritesService, FavoritosDTO } from '../../services/favorites.service';
 import { ProfileService } from '../../services/profile.service';
 import { environment } from '../../../environments/environment';
-import { Subject, of } from 'rxjs';
-import { debounceTime, distinctUntilChanged, finalize, switchMap } from 'rxjs/operators';
+import { Subject, forkJoin, of } from 'rxjs';
+import { catchError, debounceTime, distinctUntilChanged, finalize, switchMap } from 'rxjs/operators';
 import { NotificacoesService } from '../../services/notificacoes.service';
 
 type StatsPeriod = 'all' | '7d' | '30d' | '3m' | '12m';
@@ -31,6 +31,9 @@ interface GraphSettings {
   styleUrls: ['./profile.component.css']
 })
 export class ProfileComponent implements OnInit {
+
+  /** Quando definido, estamos a ver o perfil deste utilizador (rota /profile/:userId). */
+  viewedProfileUserId: string | null = null;
 
   userName = localStorage.getItem('userName') || 'RandomUser';
   joined = '14 hours ago';
@@ -198,33 +201,48 @@ export class ProfileComponent implements OnInit {
   constructor(
     private http: HttpClient,
     private router: Router,
+    private route: ActivatedRoute,
     private authService: AuthService,
     public menuService: MenuService,
     private userMoviesService: UserMoviesService,
     private filmesService: FilmesService,
     private favoritesService: FavoritesService,
     private profileService: ProfileService,
-    private notificacoesService: NotificacoesService
+    private notificacoesService: NotificacoesService,
+    private cdr: ChangeDetectorRef
   ) { }
 
   get isAdmin(): boolean {
     return this.authService.isAdministrador();
   }
 
-  ngOnInit(): void {
-    const userId = localStorage.getItem('user_id');
+  get ownUserId(): string | null {
+    return localStorage.getItem('user_id');
+  }
 
+  /** Utilizador cujo perfil está a ser mostrado. */
+  get profileSubjectUserId(): string | null {
+    return this.viewedProfileUserId || this.ownUserId;
+  }
+
+  get isOwnProfile(): boolean {
+    if (!this.viewedProfileUserId) return true;
+    return this.viewedProfileUserId === this.ownUserId;
+  }
+
+  /** Rótulo nas barras de comparação (estatísticas): "Tu" no próprio perfil, genérico noutros. */
+  get statsComparisonUserLabel(): string {
+    return this.isOwnProfile ? 'Tu' : 'Utilizador';
+  }
+
+  private forUserMoviesQuery(): string | null | undefined {
+    return this.isOwnProfile ? undefined : this.viewedProfileUserId ?? undefined;
+  }
+
+  ngOnInit(): void {
     this.loadGraphSettings();
     this.loadCatalogo();
-    this.refreshAllListsAndStats();
-    this.loadFavorites();
-    this.loadConquistas();
 
-    this.favoritesService.favoritesChanged$.subscribe(() => {
-      this.loadFavorites();
-    });
-
-    // Setup actor search with debounce
     this.actorSearchTerms.pipe(
       debounceTime(300),
       distinctUntilChanged(),
@@ -246,8 +264,34 @@ export class ProfileComponent implements OnInit {
       }
     });
 
+    this.favoritesService.favoritesChanged$.subscribe(() => {
+      if (this.isOwnProfile) this.loadFavorites();
+    });
+
+    this.route.paramMap.subscribe(() => {
+      this.viewedProfileUserId = this.route.snapshot.paramMap.get('userId');
+      this.onProfileTargetChanged();
+    });
+  }
+
+  private onProfileTargetChanged(): void {
+    if (this.viewedProfileUserId && !this.ownUserId) {
+      this.router.navigate(['/login'], {
+        queryParams: { returnUrl: `/profile/${this.viewedProfileUserId}` }
+      });
+      return;
+    }
+
+    this.refreshAllListsAndStats();
+    this.loadFavorites();
+    if (!this.isOwnProfile) {
+      if (this.conquistasTab === 'todas') this.conquistasTab = 'minhas';
+    }
+    this.loadConquistas();
+
+    const userId = this.profileSubjectUserId;
     if (!userId) {
-      console.warn('No user_id in localStorage — using fallback values.');
+      console.warn('Sem utilizador para carregar o perfil.');
       return;
     }
 
@@ -265,8 +309,10 @@ export class ProfileComponent implements OnInit {
 
           this.bio = res?.bio ?? '';
           this.fotoPerfilUrl = res?.fotoPerfilUrl ?? null;
-          if (this.fotoPerfilUrl != null) localStorage.setItem('fotoPerfilUrl', this.fotoPerfilUrl);
-          else localStorage.removeItem('fotoPerfilUrl');
+          if (this.isOwnProfile) {
+            if (this.fotoPerfilUrl != null) localStorage.setItem('fotoPerfilUrl', this.fotoPerfilUrl);
+            else localStorage.removeItem('fotoPerfilUrl');
+          }
           this.capaUrl = res?.capaUrl ?? null;
 
           if (res?.dataCriacao) {
@@ -275,11 +321,8 @@ export class ProfileComponent implements OnInit {
 
           if (res?.xp !== undefined) {
             this.xp = res.xp;
-            // Use database level if available, otherwise calculate from XP
             this.level = res?.nivel ?? this.calcularNivelLocal(this.xp);
-            
-            // Check for level medals when profile loads
-            if (this.level >= 10) {
+            if (this.isOwnProfile && this.level >= 10) {
               this.checkLevelMedals();
             }
           }
@@ -542,26 +585,27 @@ export class ProfileComponent implements OnInit {
   }
 
   loadLists(): void {
-    this.userMoviesService.getList(false).subscribe({
+    const q = this.forUserMoviesQuery();
+    this.userMoviesService.getList(false, q).subscribe({
       next: (res) => (this.watchLater = res || []),
       error: () => (this.watchLater = [])
     });
 
-    this.userMoviesService.getList(true).subscribe({
+    this.userMoviesService.getList(true, q).subscribe({
       next: (res) => (this.watched = res || []),
       error: () => (this.watched = [])
     });
   }
 
   loadTotalHours(): void {
-    this.userMoviesService.getTotalHours().subscribe({
+    this.userMoviesService.getTotalHours(this.forUserMoviesQuery()).subscribe({
       next: (h) => (this.totalHours = h ?? 0),
       error: () => (this.totalHours = 0)
     });
   }
 
   loadStats(params?: { from?: string; to?: string }): void {
-    this.userMoviesService.getStats(params).subscribe({
+    this.userMoviesService.getStats(params, this.forUserMoviesQuery()).subscribe({
       next: (res) => (this.stats = res),
       error: () => (this.stats = null)
     });
@@ -569,7 +613,7 @@ export class ProfileComponent implements OnInit {
 
   loadStatsComparison(params?: { from?: string; to?: string }): void {
     this.isLoadingComparison = true;
-    this.userMoviesService.getStatsComparison(params).subscribe({
+    this.userMoviesService.getStatsComparison(params, this.forUserMoviesQuery()).subscribe({
       next: (res) => {
         this.statsComparison = res;
         this.isLoadingComparison = false;
@@ -583,7 +627,7 @@ export class ProfileComponent implements OnInit {
 
   loadStatsCharts(params?: { from?: string; to?: string }): void {
     this.isLoadingCharts = true;
-    this.userMoviesService.getStatsCharts(params).subscribe({
+    this.userMoviesService.getStatsCharts(params, this.forUserMoviesQuery()).subscribe({
       next: (res) => {
         this.chartData = res;
         this.periodWaffleCells = this.buildPeriodWaffleCells();
@@ -947,31 +991,54 @@ export class ProfileComponent implements OnInit {
 
 
   loadFavorites(): void {
-    this.favoritesService.getFavorites().subscribe({
+    const targetId = this.profileSubjectUserId;
+    if (!targetId) {
+      this.favoritosFilmes = [];
+      this.favoritosAtores = [];
+      return;
+    }
+
+    const requestedForProfileId = targetId;
+
+    const req$ = this.isOwnProfile
+      ? this.favoritesService.getFavorites()
+      : this.favoritesService.getFavoritesForUser(targetId);
+
+    req$.subscribe({
       next: (fav: FavoritosDTO) => {
-        const filmes = fav?.filmes ?? (fav as any)?.Filmes ?? [];
-        const atores = fav?.atores ?? (fav as any)?.Atores ?? [];
-        this.favoritosFilmes = Array.isArray(filmes) ? filmes : [];
+        if (requestedForProfileId !== this.profileSubjectUserId) return;
 
-        this.favoritosAtores = Array.isArray(atores) ? atores.map((nome: any) => {
-          const actorName = typeof nome === 'string' ? nome : nome.nome || '';
-          const cachedActor = this.getCachedActor(actorName);
+        const filmesRaw = fav?.filmes ?? (fav as any)?.Filmes ?? [];
+        const atoresRaw = fav?.atores ?? (fav as any)?.Atores ?? [];
 
-          if (cachedActor) {
-            return cachedActor;
-          }
+        this.favoritosFilmes = Array.isArray(filmesRaw)
+          ? [...new Set(filmesRaw.map((x: unknown) => Number(x)).filter((n): n is number => !Number.isNaN(n) && n > 0))]
+          : [];
 
-          return {
-            id: typeof nome === 'object' ? nome.id || 0 : 0,
-            nome: actorName,
-            fotoUrl: typeof nome === 'object' ? nome.fotoUrl || '' : '',
-            popularidade: typeof nome === 'object' ? nome.popularidade || 0 : 0
-          };
-        }) : [];
+        this.favoritosAtores = Array.isArray(atoresRaw)
+          ? atoresRaw
+              .map((nome: any) => {
+                const actorName =
+                  typeof nome === 'string'
+                    ? nome.trim()
+                    : String(nome?.nome ?? nome?.Nome ?? '').trim();
+                if (!actorName) return null;
+                const cachedActor = this.getCachedActor(actorName);
+                if (cachedActor) return cachedActor;
+                return {
+                  id: typeof nome === 'object' && nome ? Number(nome.id) || 0 : 0,
+                  nome: actorName,
+                  fotoUrl: typeof nome === 'object' && nome ? String(nome.fotoUrl ?? nome.FotoUrl ?? '') : '',
+                  popularidade: typeof nome === 'object' && nome ? Number(nome.popularidade) || 0 : 0
+                } as ActorDto;
+              })
+              .filter((a): a is ActorDto => a != null)
+          : [];
 
         this.ensureCatalogoHasFavorites();
       },
       error: () => {
+        if (requestedForProfileId !== this.profileSubjectUserId) return;
         this.favoritosFilmes = [];
         this.favoritosAtores = [];
       }
@@ -979,16 +1046,27 @@ export class ProfileComponent implements OnInit {
   }
 
   private ensureCatalogoHasFavorites(): void {
-    const missing = this.favoritosFilmes.filter(id => !this.catalogo.some(f => f.id === id));
-    missing.forEach(id => {
-      this.filmesService.getById(id).subscribe({
-        next: (f) => {
-          if (f && !this.catalogo.some(c => c.id === f.id)) {
-            this.catalogo.push(f);
-          }
-        },
-        error: () => { }
-      });
+    const missing = [
+      ...new Set(this.favoritosFilmes.filter(id => !this.catalogo.some(f => f.id === id)))
+    ];
+    if (missing.length === 0) {
+      this.cdr.markForCheck();
+      return;
+    }
+
+    forkJoin(
+      missing.map(id =>
+        this.filmesService.getById(id).pipe(catchError(() => of(null as Filme | null)))
+      )
+    ).subscribe((filmes) => {
+      let added = false;
+      for (const f of filmes) {
+        if (f && !this.catalogo.some(c => c.id === f.id)) {
+          this.catalogo.push(f);
+          added = true;
+        }
+      }
+      if (added) this.cdr.detectChanges();
     });
   }
 
@@ -1016,6 +1094,7 @@ export class ProfileComponent implements OnInit {
   }
 
   removeFromFavorites(filmeId: number): void {
+    if (!this.isOwnProfile) return;
     const idx = this.favoritosFilmes.indexOf(filmeId);
     if (idx >= 0) {
       this.favoritosFilmes.splice(idx, 1);
@@ -1107,11 +1186,14 @@ export class ProfileComponent implements OnInit {
   }
 
   removeAtorFavorito(actor: ActorDto): void {
+    if (!this.isOwnProfile) return;
     this.favoritosAtores = this.favoritosAtores.filter(a => a.nome !== actor.nome);
     this.saveFavorites();
   }
 
   private saveFavorites(): void {
+    if (!this.isOwnProfile) return;
+
     this.isSavingFavorites = true;
 
     const dto: FavoritosDTO = {
@@ -1124,6 +1206,12 @@ export class ProfileComponent implements OnInit {
       error: (err) => console.warn('saveFavorites failed', err),
       complete: () => (this.isSavingFavorites = false)
     });
+  }
+
+  /** URL do cartaz para grelha de favoritos (API pode devolver posterUrl ou PosterUrl). */
+  favPosterSrc(f: Filme): string {
+    const anyF = f as Filme & { PosterUrl?: string };
+    return (f.posterUrl || anyF.PosterUrl || '').trim() || 'https://via.placeholder.com/200x300';
   }
 
   get favoritosFilmesDetalhes(): Filme[] {
@@ -1343,7 +1431,7 @@ export class ProfileComponent implements OnInit {
     this.isLoadingGeneros = true;
     this.generosError = '';
 
-    const userId = localStorage.getItem('user_id') || '';
+    const userId = this.profileSubjectUserId || '';
 
     // Load available genres and user's favorite genres in parallel
     this.profileService.obterTodosGeneros().subscribe({
@@ -1396,6 +1484,7 @@ export class ProfileComponent implements OnInit {
   }
 
   salvarGenerosFavoritos(): void {
+    if (!this.isOwnProfile) return;
     this.isSavingGeneros = true;
     this.generosError = '';
 
@@ -1445,6 +1534,11 @@ export class ProfileComponent implements OnInit {
           this.isDeleting = false;
         }
       });
+  }
+
+  onMedalSlotClick(index: number): void {
+    if (!this.isOwnProfile) return;
+    this.openMedalSelector(index);
   }
 
   openMedalSelector(index: number): void {
@@ -1528,15 +1622,31 @@ export class ProfileComponent implements OnInit {
   }
 
   loadShowcasedMedals(): void {
-    this.profileService.obterMedalhasExposicao().subscribe({
-      next: (res) => {
-        this.showcasedMedals = res || [null, null, null];
-      },
-      error: (err) => {
-        console.error('Erro ao carregar medalhas em exposição:', err);
-        this.showcasedMedals = [null, null, null];
-      }
-    });
+    const uid = this.profileSubjectUserId;
+    if (!uid) {
+      this.showcasedMedals = [null, null, null];
+      return;
+    }
+    if (this.isOwnProfile) {
+      this.profileService.obterMedalhasExposicao().subscribe({
+        next: (res) => {
+          this.showcasedMedals = res || [null, null, null];
+        },
+        error: (err) => {
+          console.error('Erro ao carregar medalhas em exposição:', err);
+          this.showcasedMedals = [null, null, null];
+        }
+      });
+    } else {
+      this.http.get<any[]>(`${this.apiMedalhas}/utilizador/${encodeURIComponent(uid)}/exposicao`, { withCredentials: true }).subscribe({
+        next: (res) => {
+          this.showcasedMedals = res || [null, null, null];
+        },
+        error: () => {
+          this.showcasedMedals = [null, null, null];
+        }
+      });
+    }
   }
 
   loadUserTag(): void {
@@ -1778,27 +1888,51 @@ export class ProfileComponent implements OnInit {
 
 
   loadConquistas(): void {
-    this.http.get<any[]>(`${this.apiMedalhas}/pessoal`, { withCredentials: true })
-      .subscribe({
-        next: (res) => {
-          this.medalhasConquistadas = res || [];
-          // Load showcased medals from API
-          this.loadShowcasedMedals();
-          // Load user tag
-          this.loadUserTag();
-        },
-        error: (err) => {
-          console.error('Erro ao carregar medalhas:', err);
-          this.medalhasConquistadas = [];
-          this.showcasedMedals = [];
-        }
-      });
+    const uid = this.profileSubjectUserId;
+    if (!uid) {
+      this.medalhasConquistadas = [];
+      this.todasMedalhas = [];
+      this.showcasedMedals = [null, null, null];
+      return;
+    }
 
-    this.http.get<any[]>(`${this.apiMedalhas}/todas`, { withCredentials: true })
-      .subscribe({
-        next: (res) => (this.todasMedalhas = res || []),
-        error: () => (this.todasMedalhas = [])
-      });
+    if (this.isOwnProfile) {
+      this.http.get<any[]>(`${this.apiMedalhas}/pessoal`, { withCredentials: true })
+        .subscribe({
+          next: (res) => {
+            this.medalhasConquistadas = res || [];
+            this.loadShowcasedMedals();
+            this.loadUserTag();
+          },
+          error: (err) => {
+            console.error('Erro ao carregar medalhas:', err);
+            this.medalhasConquistadas = [];
+            this.showcasedMedals = [];
+          }
+        });
+
+      this.http.get<any[]>(`${this.apiMedalhas}/todas`, { withCredentials: true })
+        .subscribe({
+          next: (res) => (this.todasMedalhas = res || []),
+          error: () => (this.todasMedalhas = [])
+        });
+    } else {
+      this.userTag = null;
+      this.userTagPrimaryColor = null;
+      this.userTagSecondaryColor = null;
+      this.todasMedalhas = [];
+      this.http.get<any[]>(`${this.apiMedalhas}/utilizador/${encodeURIComponent(uid)}/conquistas`, { withCredentials: true })
+        .subscribe({
+          next: (res) => {
+            this.medalhasConquistadas = res || [];
+            this.loadShowcasedMedals();
+          },
+          error: () => {
+            this.medalhasConquistadas = [];
+            this.showcasedMedals = [null, null, null];
+          }
+        });
+    }
   }
 
   getMedalThreshold(medalName: string): number {

@@ -724,6 +724,22 @@
   display: block;
 }
 
+a.comment-profile-link {
+  text-decoration: none;
+  color: inherit;
+}
+
+a.comment-author-link {
+  text-decoration: none;
+  color: inherit;
+  font-weight: inherit;
+}
+
+a.comment-author-link:hover {
+  text-decoration: underline;
+  color: #ff4081;
+}
+
 .comment-body {
   flex: 1;
   min-width: 0;
@@ -1171,6 +1187,17 @@
   gap: 12px;
 }
 
+a.post-author-profile-link {
+  text-decoration: none;
+  color: inherit;
+  cursor: pointer;
+}
+
+a.post-author-profile-link:hover .post-autor {
+  text-decoration: underline;
+  color: #e8eaed;
+}
+
 .post-meta-footer {
   display: flex;
   align-items: center;
@@ -1409,6 +1436,21 @@
   font-size: 16px;
   color: #ff2f6d;
   flex-shrink: 0;
+}
+
+a.membro-profile-link {
+  text-decoration: none;
+  color: inherit;
+}
+
+a.membro-nome-link {
+  text-decoration: none;
+  color: inherit;
+}
+
+a.membro-nome-link:hover {
+  text-decoration: underline;
+  color: #ff4081;
 }
 
 .membro-info {

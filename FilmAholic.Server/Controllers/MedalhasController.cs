@@ -34,6 +34,57 @@ namespace FilmAholic.Server.Controllers
             return Ok(medalhas);
         }
 
+        // GET: api/medalhas/utilizador/{id}/conquistas
+        [HttpGet("utilizador/{id}/conquistas")]
+        public async Task<IActionResult> GetMedalhasDeUtilizador(string id)
+        {
+            if (_userManager.GetUserId(User) == null) return Unauthorized();
+            if (string.IsNullOrWhiteSpace(id)) return BadRequest();
+            var alvo = await _userManager.FindByIdAsync(id);
+            if (alvo == null) return NotFound();
+            var medalhas = await _medalhaService.GetMedalhasDoUtilizador(id);
+            return Ok(medalhas);
+        }
+
+        // GET: api/medalhas/utilizador/{id}/exposicao
+        [HttpGet("utilizador/{id}/exposicao")]
+        public async Task<IActionResult> GetExposicaoDeUtilizador(string id)
+        {
+            if (_userManager.GetUserId(User) == null) return Unauthorized();
+            if (string.IsNullOrWhiteSpace(id)) return BadRequest();
+            var alvo = await _userManager.FindByIdAsync(id);
+            if (alvo == null) return NotFound();
+
+            var exposicoes = await _context.UtilizadorMedalhasExposicao
+                .Where(e => e.UtilizadorId == id)
+                .Include(e => e.Medalha)
+                .OrderBy(e => e.SlotIndex)
+                .ToListAsync();
+
+            var result = new List<object?>();
+            for (int i = 0; i < 3; i++)
+            {
+                var exposicao = exposicoes.FirstOrDefault(e => e.SlotIndex == i);
+                if (exposicao?.Medalha != null)
+                {
+                    result.Add(new
+                    {
+                        id = exposicao.Medalha.Id,
+                        nome = exposicao.Medalha.Nome,
+                        descricao = exposicao.Medalha.Descricao,
+                        iconeUrl = exposicao.Medalha.IconeUrl,
+                        tag = exposicao.Tag
+                    });
+                }
+                else
+                {
+                    result.Add(null);
+                }
+            }
+
+            return Ok(result);
+        }
+
         // GET: api/medalhas/progresso
         [HttpGet("progresso")]
         public async Task<IActionResult> GetMeuProgresso()

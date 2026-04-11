@@ -24,6 +24,16 @@ namespace FilmAholic.Server.Controllers
             _medalhaService = medalhaService;
         }
 
+        /// <summary>Utilizador autenticado a consultar listas/estatísticas; <paramref name="forUserId"/> opcional para ver outro perfil.</summary>
+        private bool TryResolveProfileTarget(string? forUserId, out string targetUserId)
+        {
+            targetUserId = "";
+            var viewerId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (viewerId == null) return false;
+            targetUserId = string.IsNullOrWhiteSpace(forUserId) ? viewerId : forUserId.Trim();
+            return true;
+        }
+
         [HttpPost("add")]
         public async Task<IActionResult> AddMovie(int filmeId, bool jaViu)
         {
@@ -131,42 +141,42 @@ namespace FilmAholic.Server.Controllers
         }
 
         [HttpGet("list/{jaViu}")]
-        public async Task<IActionResult> GetList(bool jaViu)
+        public async Task<IActionResult> GetList(bool jaViu, [FromQuery] string? forUserId = null)
         {
-            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (userId == null) return Unauthorized();
+            if (!TryResolveProfileTarget(forUserId, out var targetUserId))
+                return Unauthorized();
 
             var movies = await _context.UserMovies
                 .Include(um => um.Filme)
-                .Where(um => um.UtilizadorId == userId && um.JaViu == jaViu)
+                .Where(um => um.UtilizadorId == targetUserId && um.JaViu == jaViu)
                 .ToListAsync();
 
             return Ok(movies);
         }
 
         [HttpGet("totalhours")]
-        public async Task<IActionResult> GetTotalHours()
+        public async Task<IActionResult> GetTotalHours([FromQuery] string? forUserId = null)
         {
-            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (userId == null) return Unauthorized();
+            if (!TryResolveProfileTarget(forUserId, out var targetUserId))
+                return Unauthorized();
 
             var totalMinutes = await _context.UserMovies
                 .Include(um => um.Filme)
-                .Where(um => um.UtilizadorId == userId && um.JaViu)
+                .Where(um => um.UtilizadorId == targetUserId && um.JaViu)
                 .SumAsync(um => um.Filme.Duracao);
 
             return Ok(totalMinutes / 60.0);
         }
 
         [HttpGet("stats")]
-        public async Task<IActionResult> GetStats([FromQuery] DateTime? from, [FromQuery] DateTime? to)
+        public async Task<IActionResult> GetStats([FromQuery] DateTime? from, [FromQuery] DateTime? to, [FromQuery] string? forUserId = null)
         {
-            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (userId == null) return Unauthorized();
+            if (!TryResolveProfileTarget(forUserId, out var targetUserId))
+                return Unauthorized();
 
             var query = _context.UserMovies
                 .Include(um => um.Filme)
-                .Where(um => um.UtilizadorId == userId && um.JaViu);
+                .Where(um => um.UtilizadorId == targetUserId && um.JaViu);
 
             query = ApplyPeriodFilter(query, from, to);
             var movies = await query.ToListAsync();
@@ -184,14 +194,14 @@ namespace FilmAholic.Server.Controllers
         }
 
         [HttpGet("stats/comparison")]
-        public async Task<IActionResult> GetStatsComparison([FromQuery] DateTime? from, [FromQuery] DateTime? to)
+        public async Task<IActionResult> GetStatsComparison([FromQuery] DateTime? from, [FromQuery] DateTime? to, [FromQuery] string? forUserId = null)
         {
-            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (userId == null) return Unauthorized();
+            if (!TryResolveProfileTarget(forUserId, out var targetUserId))
+                return Unauthorized();
 
             var userQuery = _context.UserMovies
                 .Include(um => um.Filme)
-                .Where(um => um.UtilizadorId == userId && um.JaViu);
+                .Where(um => um.UtilizadorId == targetUserId && um.JaViu);
             userQuery = ApplyPeriodFilter(userQuery, from, to);
             var userMovies = await userQuery.ToListAsync();
 
@@ -262,7 +272,7 @@ namespace FilmAholic.Server.Controllers
                     horasVsMedia = Math.Round(userTotalHoras - avgHorasPerUser, 1),
                     filmesMaisQueMedia = userTotalFilmes > avgFilmesPerUser,
                     horasMaisQueMedia = userTotalHoras > avgHorasPerUser,
-                    percentilFilmes = totalUsers > 1 ? CalculatePercentile(userId, allUserIds, allWatchedMovies) : 100
+                    percentilFilmes = totalUsers > 1 ? CalculatePercentile(targetUserId, allUserIds, allWatchedMovies) : 100
                 }
             });
         }
@@ -307,14 +317,14 @@ namespace FilmAholic.Server.Controllers
         }
 
         [HttpGet("stats/charts")]
-        public async Task<IActionResult> GetStatsCharts([FromQuery] DateTime? from, [FromQuery] DateTime? to)
+        public async Task<IActionResult> GetStatsCharts([FromQuery] DateTime? from, [FromQuery] DateTime? to, [FromQuery] string? forUserId = null)
         {
-            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (userId == null) return Unauthorized();
+            if (!TryResolveProfileTarget(forUserId, out var targetUserId))
+                return Unauthorized();
 
             var query = _context.UserMovies
                 .Include(um => um.Filme)
-                .Where(um => um.UtilizadorId == userId && um.JaViu);
+                .Where(um => um.UtilizadorId == targetUserId && um.JaViu);
             query = ApplyPeriodFilter(query, from, to);
             var movies = await query.ToListAsync();
 

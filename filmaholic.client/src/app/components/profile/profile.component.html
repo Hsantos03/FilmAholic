@@ -72,6 +72,7 @@
      [style.background-position]="'center'">
 
   <button type="button"
+          *ngIf="isOwnProfile"
           class="edit-btn"
           (click)="openEditCapa()"
           title="Editar capa">
@@ -88,6 +89,7 @@
       <img *ngIf="!fotoPerfilUrl" class="avatar-placeholder-img" src="assets/user-placeholder.png" alt="" width="72" height="72" aria-hidden="true" />
 
       <button type="button"
+              *ngIf="isOwnProfile"
               class="avatar-edit-btn"
               (click)="openEditAvatar()"
               title="Editar foto de perfil">
@@ -96,16 +98,16 @@
     </div>
 
     <aside class="profile-sidebar">
-      <button type="button" class="primary-btn" (click)="openEdit()">Editar conta</button>
+      <button type="button" *ngIf="isOwnProfile" class="primary-btn" (click)="openEdit()">Editar conta</button>
 
       <ul class="menu">
         <li class="menu-item" [class.active]="activeSection === 'overview'" (click)="showOverview()">Preferências</li>
         <li class="menu-item" [class.active]="activeSection === 'statistics'" (click)="showStatistics()">Estatísticas</li>
-        <li class="menu-item" (click)="goToNotificacoesSettings()">Definições de notificações</li>
+        <li class="menu-item" *ngIf="isOwnProfile" (click)="goToNotificacoesSettings()">Definições de notificações</li>
         <li class="menu-item" [class.active]="activeSection === 'conquistas'" (click)="showConquistas()">Conquistas</li>
         <li class="menu-item" [class.active]="activeSection === 'generos'" (click)="showGeneros()">Géneros</li>
-        <li class="logout" (click)="logout()">Terminar sessão</li>
-        <li class="logout" (click)="openDeleteConfirm()">Apagar conta</li>
+        <li class="logout" *ngIf="isOwnProfile" (click)="logout()">Terminar sessão</li>
+        <li class="logout" *ngIf="isOwnProfile" (click)="openDeleteConfirm()">Apagar conta</li>
       </ul>
 
       <div class="xp-level">
@@ -132,7 +134,7 @@
         <div class="medals-showcase">
           <h4>Medalhas em Exposição</h4>
           <div class="medals-row">
-            <div class="medal-slot" *ngFor="let slot of [0, 1, 2]; let i = index" (click)="openMedalSelector(i)" [class.empty]="!showcasedMedals[i]">
+            <div class="medal-slot" *ngFor="let slot of [0, 1, 2]; let i = index" (click)="onMedalSlotClick(i)" [class.empty]="!showcasedMedals[i]">
               <img *ngIf="showcasedMedals[i]?.iconeUrl" [src]="API_URL + showcasedMedals[i].iconeUrl" [alt]="showcasedMedals[i]?.nome" class="medal-img">
               <div *ngIf="!showcasedMedals[i]" class="medal-placeholder">+</div>
             </div>
@@ -143,7 +145,7 @@
         <div class="user-tag-section" *ngIf="medalhasConquistadas.length > 0">
           <div class="user-tag-header">
             <h4>Tag</h4>
-            <button type="button" class="tag-edit-btn" (click)="openTagModal()" title="Editar tag">
+            <button type="button" *ngIf="isOwnProfile" class="tag-edit-btn" (click)="openTagModal()" title="Editar tag">
               <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path></svg>
             </button>
           </div>
@@ -173,6 +175,10 @@
   <section class="profile-main">
 
     <ng-container *ngIf="activeSection === 'overview'">
+    <p class="profile-viewing-hint" *ngIf="!isOwnProfile">
+      <a routerLink="/dashboard">← Início</a>
+      <span> · A ver o perfil de outro utilizador</span>
+    </p>
     <div class="profile-info">
       <h2>{{ userName }}</h2>
       <div class="meta-row">
@@ -228,7 +234,8 @@
     <div class="section fav-section">
       <div class="section-title">
           <h3>Favoritos</h3>
-          <span class="subtitle">Top 10 Filmes &amp; Atores</span>
+          <span class="subtitle" *ngIf="isOwnProfile">Top 10 Filmes &amp; Atores</span>
+          <span class="subtitle" *ngIf="!isOwnProfile">Filmes e atores favoritos deste utilizador</span>
       </div>
 
       <div class="fav-header">
@@ -252,27 +259,30 @@
             <div class="fav-posters-grid" *ngIf="favoritosFilmesDetalhesTop10.length > 0; else noFavMovies">
             <div class="fav-poster"
                    *ngFor="let f of favoritosFilmesDetalhesTop10; let i = index"
-                 draggable="true"
+                 [draggable]="isOwnProfile"
                  [attr.data-index]="i"
-                 (dragstart)="onDragStart($event, i)"
-                 (dragover)="onDragOver($event)"
-                 (drop)="onDrop($event, i)"
-                 (dragend)="onDragEnd()"
+                 (dragstart)="isOwnProfile && onDragStart($event, i)"
+                 (dragover)="isOwnProfile && onDragOver($event)"
+                 (drop)="isOwnProfile && onDrop($event, i)"
+                 (dragend)="isOwnProfile && onDragEnd()"
                  [class.dragging]="draggedIndex === i"
                  [class.drag-over]="dragOverIndex === i"
-                   title="Arrasta para reordenar">
+                 [attr.title]="isOwnProfile ? 'Arrasta para reordenar' : f.titulo">
               <span class="position-badge">{{ i + 1 }}</span>
-              <img [src]="f.posterUrl"
+              <img [src]="favPosterSrc(f)"
                    [alt]="f.titulo"
-                   (dblclick)="removeFromFavorites(f.id)"
-                     [title]="f.titulo" />
+                   (dblclick)="isOwnProfile && removeFromFavorites(f.id)"
+                     [title]="isOwnProfile ? (f.titulo + ' — duplo clique para remover') : f.titulo" />
               </div>
           </div>
 
           <ng-template #noFavMovies>
-            <div class="fav-empty">
+            <div class="fav-empty" *ngIf="isOwnProfile">
                 A tua galáxia de favoritos ainda está vazia.<br />
                 <span class="fav-empty-hint">Usa "★ Favorito" nas páginas dos filmes (até {{ MAX_FAVORITES }}) para montar a tua própria saga.</span>
+            </div>
+            <div class="fav-empty" *ngIf="!isOwnProfile">
+                Este utilizador ainda não tem filmes favoritos no top 10.
             </div>
           </ng-template>
         </div>
@@ -284,7 +294,7 @@
               <span class="fav-mini">{{ favoritosAtoresTop10.length }}/10</span>
           </div>
 
-          <div class="fav-actor-add" style="position: relative;">
+          <div class="fav-actor-add" *ngIf="isOwnProfile" style="position: relative;">
             <input type="text"
                    [(ngModel)]="novoAtor"
                    (input)="onActorSearch(novoAtor)"
@@ -323,28 +333,31 @@
             <div class="fav-actors-grid" *ngIf="favoritosAtoresTop10.length > 0; else noFavActors">
               <div class="actor-tile"
                      *ngFor="let a of favoritosAtoresTop10; let i = index"
-                     draggable="true"
+                     [draggable]="isOwnProfile"
                      [attr.data-index]="i"
-                     (dragstart)="onActorDragStart($event, i)"
-                     (dragover)="onActorDragOver($event)"
-                     (drop)="onActorDrop($event, i)"
-                     (dragend)="onActorDragEnd()"
+                     (dragstart)="isOwnProfile && onActorDragStart($event, i)"
+                     (dragover)="isOwnProfile && onActorDragOver($event)"
+                     (drop)="isOwnProfile && onActorDrop($event, i)"
+                     (dragend)="isOwnProfile && onActorDragEnd()"
                      [class.dragging-actor]="draggedActorIndex === i"
                      [class.drag-over-actor]="dragOverActorIndex === i"
-                     title="Arrasta para reordenar">
+                     [attr.title]="isOwnProfile ? 'Arrasta para reordenar' : a.nome">
                 <span class="position-badge">{{ i + 1 }}</span>
                 <div class="actor-photo">
-                  <img *ngIf="a.fotoUrl" [src]="a.fotoUrl" [alt]="a.nome" (dblclick)="removeAtorFavorito(a)" title="Duplo clique para remover" />
-                  <div *ngIf="!a.fotoUrl" class="initial" (dblclick)="removeAtorFavorito(a)" title="Duplo clique para remover">{{ a.nome[0] }}</div>
+                  <img *ngIf="a.fotoUrl" [src]="a.fotoUrl" [alt]="a.nome" (dblclick)="isOwnProfile && removeAtorFavorito(a)" [title]="isOwnProfile ? 'Duplo clique para remover' : a.nome" />
+                  <div *ngIf="!a.fotoUrl" class="initial" (dblclick)="isOwnProfile && removeAtorFavorito(a)" [title]="isOwnProfile ? 'Duplo clique para remover' : a.nome">{{ a.nome[0] }}</div>
                 </div>
                 <div class="actor-name-label">{{ a.nome }}</div>
               </div>
             </div>
 
           <ng-template #noFavActors>
-            <div class="fav-empty">
+            <div class="fav-empty" *ngIf="isOwnProfile">
                 Ainda não escolheste o teu elenco de sonho.<br />
                 <span class="fav-empty-hint">Adiciona até {{ MAX_FAVORITES }} atores para o casting perfeito.</span>
+            </div>
+            <div class="fav-empty" *ngIf="!isOwnProfile">
+                Este utilizador ainda não tem atores favoritos no top 10.
             </div>
           </ng-template>
         </div>
@@ -357,7 +370,8 @@
         <div class="modal-box modal-favoritos-todos" (click)="$event.stopPropagation()">
           <button class="modal-close" (click)="closeVerTodosFavoritos()">&times;</button>
           <h3>Todos os favoritos</h3>
-          <p class="modal-fav-desc">Ordena, remove ou adiciona. Os primeiros 10 são o teu Top 10.</p>
+          <p class="modal-fav-desc" *ngIf="isOwnProfile">Ordena, remove ou adiciona. Os primeiros 10 são o teu Top 10.</p>
+          <p class="modal-fav-desc" *ngIf="!isOwnProfile">Lista completa de filmes e atores favoritos (só leitura).</p>
 
           <div class="fav-modal-grid">
             <div class="fav-modal-col">
@@ -365,19 +379,19 @@
               <div class="fav-posters-grid" *ngIf="favoritosFilmesDetalhes.length > 0; else noFavMoviesModal">
                 <div class="fav-poster"
                      *ngFor="let f of favoritosFilmesDetalhes; let i = index"
-                     draggable="true"
+                     [draggable]="isOwnProfile"
                      [attr.data-index]="i"
-                     (dragstart)="onDragStart($event, i)"
-                     (dragover)="onDragOver($event)"
-                     (drop)="onDrop($event, i)"
-                     (dragend)="onDragEnd()"
+                     (dragstart)="isOwnProfile && onDragStart($event, i)"
+                     (dragover)="isOwnProfile && onDragOver($event)"
+                     (drop)="isOwnProfile && onDrop($event, i)"
+                     (dragend)="isOwnProfile && onDragEnd()"
                      [class.dragging]="draggedIndex === i"
                      [class.drag-over]="dragOverIndex === i"
-                     title="Arrasta para reordenar">
+                     [attr.title]="isOwnProfile ? 'Arrasta para reordenar' : f.titulo">
                   <span class="position-badge">{{ i + 1 }}</span>
-                  <img [src]="f.posterUrl" [alt]="f.titulo"
-                       (dblclick)="removeFromFavorites(f.id)"
-                       [title]="f.titulo" />
+                  <img [src]="favPosterSrc(f)" [alt]="f.titulo"
+                       (dblclick)="isOwnProfile && removeFromFavorites(f.id)"
+                       [title]="isOwnProfile ? (f.titulo + ' — duplo clique para remover') : f.titulo" />
                 </div>
               </div>
               <ng-template #noFavMoviesModal>
@@ -387,7 +401,7 @@
 
             <div class="fav-modal-col">
               <h4>Atores ({{ favoritosAtores.length }})</h4>
-              <div class="fav-actor-add" style="position: relative;">
+              <div class="fav-actor-add" *ngIf="isOwnProfile" style="position: relative;">
                 <input type="text" [(ngModel)]="novoAtor" (input)="onActorSearch(novoAtor)" (blur)="hideSuggestionsWithDelay()" placeholder="Pesquisar ator real..."
                        [disabled]="isSavingFavorites || favoritosAtores.length >= MAX_FAVORITES" autocomplete="off" />
 
@@ -421,19 +435,19 @@
               <div class="fav-actors-grid" *ngIf="favoritosAtores.length > 0; else noFavActorsModal">
                 <div class="actor-tile"
                      *ngFor="let a of favoritosAtores; let i = index"
-                     draggable="true"
+                     [draggable]="isOwnProfile"
                      [attr.data-index]="i"
-                     (dragstart)="onActorDragStart($event, i)"
-                     (dragover)="onActorDragOver($event)"
-                     (drop)="onActorDrop($event, i)"
-                     (dragend)="onActorDragEnd()"
+                     (dragstart)="isOwnProfile && onActorDragStart($event, i)"
+                     (dragover)="isOwnProfile && onActorDragOver($event)"
+                     (drop)="isOwnProfile && onActorDrop($event, i)"
+                     (dragend)="isOwnProfile && onActorDragEnd()"
                      [class.dragging-actor]="draggedActorIndex === i"
                      [class.drag-over-actor]="dragOverActorIndex === i"
-                     title="Arrasta para reordenar">
+                     [attr.title]="isOwnProfile ? 'Arrasta para reordenar' : a.nome">
                   <span class="position-badge">{{ i + 1 }}</span>
                   <div class="actor-photo">
-                    <img *ngIf="a.fotoUrl" [src]="a.fotoUrl" [alt]="a.nome" (dblclick)="removeAtorFavorito(a)" title="Duplo clique para remover" />
-                    <div *ngIf="!a.fotoUrl" class="initial" (dblclick)="removeAtorFavorito(a)" title="Duplo clique para remover">{{ a.nome[0] }}</div>
+                    <img *ngIf="a.fotoUrl" [src]="a.fotoUrl" [alt]="a.nome" (dblclick)="isOwnProfile && removeAtorFavorito(a)" [title]="isOwnProfile ? 'Duplo clique para remover' : a.nome" />
+                    <div *ngIf="!a.fotoUrl" class="initial" (dblclick)="isOwnProfile && removeAtorFavorito(a)" [title]="isOwnProfile ? 'Duplo clique para remover' : a.nome">{{ a.nome[0] }}</div>
                   </div>
                   <div class="actor-name-label">{{ a.nome }}</div>
                 </div>
@@ -505,7 +519,7 @@
             <div class="comparison-label">Filmes vistos</div>
             <div class="comparison-bars">
               <div class="bar-row">
-                <span class="bar-label">Tu</span>
+                <span class="bar-label">{{ statsComparisonUserLabel }}</span>
                 <div class="bar-container">
                   <div class="bar user-bar"
                        [style.width.%]="getComparisonBarWidth(statsComparison.user.totalFilmes, statsComparison.global.mediaFilmesPorUtilizador)"
@@ -534,7 +548,7 @@
             <div class="comparison-label">Horas vistas</div>
             <div class="comparison-bars">
               <div class="bar-row">
-                <span class="bar-label">Tu</span>
+                <span class="bar-label">{{ statsComparisonUserLabel }}</span>
                 <div class="bar-container">
                   <div class="bar user-bar"
                        [style.width.%]="getComparisonBarWidth(statsComparison.user.totalHoras, statsComparison.global.mediaHorasPorUtilizador)"
@@ -575,7 +589,7 @@
         <div class="charts-header">
           <h3 class="charts-title">Estatísticas em gráfico</h3>
 
-          <div style="position: relative;">
+          <div style="position: relative;" *ngIf="isOwnProfile">
             <button class="graph-customize-btn"
                     [class.active]="showGraphCustomizeMenu"
                     (click)="toggleGraphCustomize()"
@@ -881,6 +895,7 @@
             🏅 Minhas Medalhas
           </button>
           <button class="conquistas-tab" 
+                  *ngIf="isOwnProfile"
                   [class.active]="conquistasTab === 'todas'"
                   (click)="conquistasTab = 'todas'">
             🎯 Todas as Medalhas
@@ -890,8 +905,9 @@
         <!-- Tab: Minhas Medalhas -->
         <div *ngIf="conquistasTab === 'minhas'">
           <div *ngIf="medalhasConquistadas.length === 0" class="conquistas-empty">
-            <span>Ainda não conquistaste nenhuma medalha.</span>
-            <small>Continua a usar a plataforma para desbloquear conquistas!</small>
+            <span *ngIf="isOwnProfile">Ainda não conquistaste nenhuma medalha.</span>
+            <span *ngIf="!isOwnProfile">Este utilizador ainda não tem medalhas.</span>
+            <small *ngIf="isOwnProfile">Continua a usar a plataforma para desbloquear conquistas!</small>
           </div>
 
           <div class="medalhas-lista" *ngIf="medalhasConquistadas.length > 0">
@@ -921,7 +937,7 @@
         </div>
 
         <!-- Tab: Todas as Medalhas -->
-        <div *ngIf="conquistasTab === 'todas'">
+        <div *ngIf="isOwnProfile && conquistasTab === 'todas'">
   <div class="medalhas-lista"> 
     <div class="medalha-card-row" *ngFor="let m of todasMedalhas" [class.conquistada]="m.conquistada">
   
@@ -961,7 +977,8 @@
     <ng-container *ngIf="activeSection === 'generos'">
       <div class="generos-view">
         <h2>Géneros Favoritos</h2>
-        <p class="generos-desc">Seleciona os teus géneros favoritos para personalizar as tuas recomendações.</p>
+        <p class="generos-desc" *ngIf="isOwnProfile">Seleciona os teus géneros favoritos para personalizar as tuas recomendações.</p>
+        <p class="generos-desc" *ngIf="!isOwnProfile">Géneros que este utilizador indicou como favoritos.</p>
 
         <div *ngIf="generosError" class="error-message">
           {{ generosError }}
@@ -975,7 +992,16 @@
           <p>A carregar géneros...</p>
         </div>
 
-        <div *ngIf="!isLoadingGeneros" style="margin-bottom: 20px; text-align: center;">
+        <ng-container *ngIf="!isOwnProfile && !isLoadingGeneros">
+          <div class="generos-grid" *ngIf="generosFavoritos.length > 0">
+            <ng-container *ngFor="let genero of generosDisponiveis">
+              <span *ngIf="isGeneroFavorito(genero.id)" class="genero-button selected genero-readonly">{{ genero.nome }}</span>
+            </ng-container>
+          </div>
+          <p *ngIf="generosFavoritos.length === 0" class="chart-empty" style="text-align: center;">Este utilizador ainda não definiu géneros favoritos.</p>
+        </ng-container>
+
+        <div *ngIf="isOwnProfile && !isLoadingGeneros" style="margin-bottom: 20px; text-align: center;">
           <button
             type="button"
             class="btn-select-all"
@@ -984,7 +1010,7 @@
           </button>
         </div>
 
-        <div *ngIf="!isLoadingGeneros" class="generos-grid">
+        <div *ngIf="isOwnProfile && !isLoadingGeneros" class="generos-grid">
           <button
             *ngFor="let genero of generosDisponiveis"
             type="button"
@@ -995,7 +1021,7 @@
           </button>
         </div>
 
-        <div *ngIf="!isLoadingGeneros" class="generos-actions">
+        <div *ngIf="isOwnProfile && !isLoadingGeneros" class="generos-actions">
           <p class="generos-count" *ngIf="generosFavoritos.length > 0">
             {{ generosFavoritos.length }} género(s) selecionado(s)
           </p>
