@@ -1099,7 +1099,7 @@
 
     <div class="filter-row" *ngIf="currentListType === 'watchLater'">
       <label for="wlFilter">Filtrar:</label>
-      <select id="wlFilter" [(ngModel)]="watchLaterFilter">
+      <select id="wlFilter" class="list-filter-select" [(ngModel)]="watchLaterFilter">
         <option value="all">Todos (mais recentes primeiro)</option>
         <option value="newest">Mais recentes primeiro</option>
         <option value="oldest">Mais antigos primeiro</option>
@@ -1110,7 +1110,7 @@
 
     <div class="filter-row" *ngIf="currentListType === 'watched'">
       <label for="watFilter">Filtrar:</label>
-      <select id="watFilter" [(ngModel)]="watchedFilter">
+      <select id="watFilter" class="list-filter-select" [(ngModel)]="watchedFilter">
         <option value="all">Todos (mais recentes primeiro)</option>
         <option value="newest">Mais recentes primeiro</option>
         <option value="oldest">Mais antigos primeiro</option>

@@ -307,9 +307,9 @@ describe('Movie Page Acceptance Tests', () => {
     cy.visit(`/movie-detail/${MOVIE_ID}`);
     cy.wait(['@getMovie', '@getComments']);
 
-    cy.on('window:confirm', () => true);
-
     cy.contains('.comment-btn.danger', 'Apagar').click();
+    cy.get('.comment-delete-dialog').should('be.visible');
+    cy.contains('.comment-delete-actions button.btn.danger', 'Apagar').click();
     cy.wait('@deleteComment');
 
     cy.get('.comment-item').should('not.exist');

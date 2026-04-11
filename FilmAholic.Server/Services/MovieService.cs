@@ -414,11 +414,43 @@ public class MovieService : IMovieService
         }
     }
 
+    private static string PopularMinVotesCacheKey(int count, int minVoteCount, int maxPages) =>
+        $"tmdb-popular-minvotes:{count}:{minVoteCount}:{maxPages}";
+
+    /// <summary>
+    /// Filmes populares do TMDB com mínimo de votos (vote_count).
+    /// Resultado em cache; preload diário (HomepageFeatured) mantém a landing rápida.
+    /// </summary>
+    public async Task<List<Filme>> GetPopularMoviesWithMinVotesAsync(int count = 10, int minVoteCount = 500, int maxPages = 5)
+    {
+        var cacheKey = PopularMinVotesCacheKey(count, minVoteCount, maxPages);
+        if (_cache.TryGetValue(cacheKey, out List<Filme>? cached) && cached != null)
+            return cached;
+
+        var list = await FetchPopularMoviesWithMinVotesUncachedAsync(count, minVoteCount, maxPages, CancellationToken.None);
+        var cacheHours = Math.Max(1, _configuration.GetValue<int>("HomepageFeatured:CacheHours", 24));
+        _cache.Set(cacheKey, list, TimeSpan.FromHours(cacheHours));
+        return list;
+    }
+
+    public async Task RefreshHomepageFeaturedCacheAsync(CancellationToken cancellationToken = default)
+    {
+        var count = Math.Clamp(_configuration.GetValue<int>("HomepageFeatured:Count", 10), 1, 40);
+        var minRatings = Math.Max(1, _configuration.GetValue<int>("HomepageFeatured:MinRatings", 500));
+        var maxPages = Math.Clamp(_configuration.GetValue<int>("HomepageFeatured:MaxPages", 10), 1, 20);
+        var cacheKey = PopularMinVotesCacheKey(count, minRatings, maxPages);
+        var cacheHours = Math.Max(1, _configuration.GetValue<int>("HomepageFeatured:CacheHours", 24));
+
+        var list = await FetchPopularMoviesWithMinVotesUncachedAsync(count, minRatings, maxPages, cancellationToken);
+        _cache.Set(cacheKey, list, TimeSpan.FromHours(cacheHours));
+        _logger.LogInformation("Homepage featured cache refreshed ({Count} filmes, chave {Key}).", list.Count, cacheKey);
+    }
+
     /// <summary>
     /// Filmes populares do TMDB com mínimo de votos (vote_count).
     /// Percorre várias páginas até encontrar suficientes filmes que satisfaçam o critério.
     /// </summary>
-    public async Task<List<Filme>> GetPopularMoviesWithMinVotesAsync(int count = 10, int minVoteCount = 500, int maxPages = 5)
+    private async Task<List<Filme>> FetchPopularMoviesWithMinVotesUncachedAsync(int count, int minVoteCount, int maxPages, CancellationToken cancellationToken)
     {
         if (string.IsNullOrEmpty(_tmdbApiKey))
         {
@@ -436,12 +468,14 @@ public class MovieService : IMovieService
 
             while (result.Count < count && page <= maxPages)
             {
+                cancellationToken.ThrowIfCancellationRequested();
+
                 var url = $"{_tmdbBaseUrl}/movie/popular?api_key={_tmdbApiKey}&page={page}&language=pt-PT";
 
-                var response = await httpClient.GetAsync(url);
+                var response = await httpClient.GetAsync(url, cancellationToken);
                 response.EnsureSuccessStatusCode();
 
-                var json = await response.Content.ReadAsStringAsync();
+                var json = await response.Content.ReadAsStringAsync(cancellationToken);
                 var searchResult = JsonSerializer.Deserialize<TmdbSearchResponse>(json, new JsonSerializerOptions
                 {
                     PropertyNameCaseInsensitive = false
@@ -480,7 +514,7 @@ public class MovieService : IMovieService
 
             return result.Take(count).ToList();
         }
-        catch (Exception ex)
+        catch (Exception ex) when (ex is not OperationCanceledException)
         {
             _logger.LogError(ex, "Error fetching popular movies with min votes from TMDb");
             return result;

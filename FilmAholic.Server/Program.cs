@@ -1,3 +1,4 @@
+using FilmAholic.Server.Authentication;
 using FilmAholic.Server.Data;
 using FilmAholic.Server.Models;
 using FilmAholic.Server.Services;
@@ -50,6 +51,7 @@ if (!string.IsNullOrEmpty(googleClientId) && !string.IsNullOrEmpty(googleClientS
         options.SaveTokens = true;
         options.Scope.Add("https://www.googleapis.com/auth/userinfo.email");
         options.Scope.Add("https://www.googleapis.com/auth/userinfo.profile");
+        options.Events.OnRemoteFailure = OAuthRemoteFailureHelper.HandleRemoteFailure;
     });
 }
 
@@ -68,6 +70,7 @@ if (!string.IsNullOrEmpty(facebookAppId) && !string.IsNullOrEmpty(facebookAppSec
         options.Fields.Add("email");
         options.Fields.Add("first_name");
         options.Fields.Add("last_name");
+        options.Events.OnRemoteFailure = OAuthRemoteFailureHelper.HandleRemoteFailure;
     });
 }
 
@@ -105,6 +108,7 @@ builder.Services.AddHostedService<CinemaMovieCacheService>();
 
 builder.Services.AddMemoryCache();
 builder.Services.AddHostedService<TmdbUpcomingPreloadService>();
+builder.Services.AddHostedService<HomepageFeaturedPreloadService>();
 
 builder.Services.Configure<PeriodicStatsNotificationOptions>(
     builder.Configuration.GetSection("PeriodicStatsNotifications"));

@@ -98,6 +98,11 @@ export class HigherOrLowerComponent implements OnInit {
 
   private holUsedFilmPairKeys = new Set<string>();
 
+  /** Por jogo: cada filme no máximo 2 vezes no ecrã (todas as rondas). */
+  private holFilmAppearanceCount = new Map<number, number>();
+  /** Por jogo: cada ator no máximo 2 vezes no ecrã. */
+  private holActorAppearanceCount = new Map<number, number>();
+
   showResults = false;
   resultWinner: 'left' | 'right' | 'either' | null = null;
   chosenSide: 'left' | 'right' | null = null;
@@ -252,6 +257,8 @@ export class HigherOrLowerComponent implements OnInit {
     this.holRatingsCache.clear();
     this.holActivePool = [];
     this.holUsedFilmPairKeys.clear();
+    this.holFilmAppearanceCount.clear();
+    this.holActorAppearanceCount.clear();
 
     if (this.gameCategory === 'actors') {
       this.startRound();
@@ -265,6 +272,8 @@ export class HigherOrLowerComponent implements OnInit {
           this.holRatingsCache.clear();
           this.holActivePool = [];
           this.holUsedFilmPairKeys.clear();
+          this.holFilmAppearanceCount.clear();
+          this.holActorAppearanceCount.clear();
           this.startRound();
         },
         error: () => {
@@ -311,6 +320,7 @@ export class HigherOrLowerComponent implements OnInit {
     this.rightFilm = picked.right;
     this.leftRating = picked.leftRating;
     this.rightRating = picked.rightRating;
+    this.holRegisterFilmsDisplayed(picked.left.id, picked.right.id);
     this.isLoadingPair = false;
   }
 
@@ -362,6 +372,33 @@ export class HigherOrLowerComponent implements OnInit {
     this.holUsedFilmPairKeys.add(this.holFilmPairKey(leftId, rightId));
   }
 
+  private holGetFilmAppearances(id: number): number {
+    return this.holFilmAppearanceCount.get(id) ?? 0;
+  }
+
+  /** Ambos os filmes ainda podem aparecer (cada um < 2 vezes neste jogo). */
+  private holFilmAppearancesAllowPair(leftId: number, rightId: number): boolean {
+    return this.holGetFilmAppearances(leftId) < 2 && this.holGetFilmAppearances(rightId) < 2;
+  }
+
+  private holRegisterFilmsDisplayed(leftId: number, rightId: number): void {
+    this.holFilmAppearanceCount.set(leftId, this.holGetFilmAppearances(leftId) + 1);
+    this.holFilmAppearanceCount.set(rightId, this.holGetFilmAppearances(rightId) + 1);
+  }
+
+  private holGetActorAppearances(id: number): number {
+    return this.holActorAppearanceCount.get(id) ?? 0;
+  }
+
+  private holActorAppearancesAllowPair(leftId: number, rightId: number): boolean {
+    return this.holGetActorAppearances(leftId) < 2 && this.holGetActorAppearances(rightId) < 2;
+  }
+
+  private holRegisterActorsDisplayed(leftId: number, rightId: number): void {
+    this.holActorAppearanceCount.set(leftId, this.holGetActorAppearances(leftId) + 1);
+    this.holActorAppearanceCount.set(rightId, this.holGetActorAppearances(rightId) + 1);
+  }
+
   /** Filmes deste jogo (lote embaralhado) ou, em fallback, todos com capa que já têm entrada no cache */
   private getHolFilmCandidates(): Filme[] {
     const pool = this.holActivePool.filter(f => this.hasCover(f));
@@ -399,6 +436,7 @@ export class HigherOrLowerComponent implements OnInit {
       const rightCandidate = this.pickRandomLocalFilmFromCache(12, this.minRatingThreshold, rules.minVoteCount);
       if (!leftCandidate || !rightCandidate) continue;
       if (leftCandidate.movie.id === rightCandidate.movie.id) continue;
+      if (!this.holFilmAppearancesAllowPair(leftCandidate.movie.id, rightCandidate.movie.id)) continue;
       if (!this.ratingGapMatchesDifficulty(leftCandidate.rating, rightCandidate.rating, rules)) continue;
       if (excludeUsedPairs && this.holIsFilmPairUsed(leftCandidate.movie.id, rightCandidate.movie.id)) continue;
       return {
@@ -444,6 +482,7 @@ export class HigherOrLowerComponent implements OnInit {
         if ((leftVc ?? 0) < rules.minVoteCount || (rightVc ?? 0) < rules.minVoteCount) continue;
       }
       if (!this.ratingGapMatchesDifficulty(leftVote, rightVote, rules)) continue;
+      if (!this.holFilmAppearancesAllowPair(leftCandidate.id, rightCandidate.id)) continue;
       if (excludeUsedPairs && this.holIsFilmPairUsed(leftCandidate.id, rightCandidate.id)) continue;
       return {
         left: leftCandidate,
@@ -465,6 +504,7 @@ export class HigherOrLowerComponent implements OnInit {
         tries++;
       }
       if (leftCandidate && rightCandidate) {
+        if (!this.holFilmAppearancesAllowPair(leftCandidate.movie.id, rightCandidate.movie.id)) continue;
         if (excludeUsedPairs && this.holIsFilmPairUsed(leftCandidate.movie.id, rightCandidate.movie.id)) continue;
         return {
           left: leftCandidate.movie,
@@ -495,6 +535,24 @@ export class HigherOrLowerComponent implements OnInit {
     }
 
     for (let t = 0; t < 16; t++) {
+      let i = Math.floor(Math.random() * candidates.length);
+      let j = Math.floor(Math.random() * candidates.length);
+      let tries3 = 0;
+      while (j === i && tries3 < 10) {
+        j = Math.floor(Math.random() * candidates.length);
+        tries3++;
+      }
+      const left = candidates[i];
+      const right = candidates[j];
+      const lr = this.holRatingsCache.get(left.id);
+      const rr = this.holRatingsCache.get(right.id);
+      if (lr == null || rr == null) continue;
+      if (!this.holFilmAppearancesAllowPair(left.id, right.id)) continue;
+      if (excludeUsedPairs && this.holIsFilmPairUsed(left.id, right.id)) continue;
+      return { left, right, leftRating: lr.tmdbVoteAverage ?? 0, rightRating: rr.tmdbVoteAverage ?? 0 };
+    }
+
+    for (let t = 0; t < 28; t++) {
       let i = Math.floor(Math.random() * candidates.length);
       let j = Math.floor(Math.random() * candidates.length);
       let tries3 = 0;
@@ -576,6 +634,7 @@ export class HigherOrLowerComponent implements OnInit {
     this.rightActor = pick.right;
     this.leftActorPopularity = this.leftActor.popularidade;
     this.rightActorPopularity = this.rightActor.popularidade;
+    this.holRegisterActorsDisplayed(this.leftActor.id, this.rightActor.id);
     this.isLoadingPair = false;
   }
 
@@ -608,12 +667,13 @@ export class HigherOrLowerComponent implements OnInit {
     const minGapMedium = 4;
     const maxGapHard = 9;
 
-    const tryPick = (predicate: (d: number) => boolean, maxAttempts: number): { i: number; j: number } | null => {
+    const tryPick = (predicate: (d: number) => boolean, maxAttempts: number, requireAppearanceCap: boolean): { i: number; j: number } | null => {
       for (let a = 0; a < maxAttempts; a++) {
         let i = Math.floor(Math.random() * pool.length);
         let j = Math.floor(Math.random() * pool.length);
         if (i === j) continue;
         if (pool[i].id === prevLeftId && pool[j].id === prevRightId) continue;
+        if (requireAppearanceCap && !this.holActorAppearancesAllowPair(pool[i].id, pool[j].id)) continue;
         const d = Math.abs(pool[i].popularidade - pool[j].popularidade);
         if (predicate(d)) return { i, j };
       }
@@ -623,24 +683,42 @@ export class HigherOrLowerComponent implements OnInit {
     let idx: { i: number; j: number } | null = null;
 
     if (this.gameDifficulty === 'easy') {
-      idx = tryPick(d => d >= minGapEasy, 28);
-      if (!idx) idx = tryPick(d => d >= minGapMedium, 22);
+      idx = tryPick(d => d >= minGapEasy, 36, true);
+      if (!idx) idx = tryPick(d => d >= minGapMedium, 28, true);
     } else if (this.gameDifficulty === 'hard') {
-      idx = tryPick(d => d > 0.05 && d <= maxGapHard, 36);
-      if (!idx) idx = tryPick(() => true, 18);
+      idx = tryPick(d => d > 0.05 && d <= maxGapHard, 48, true);
+      if (!idx) idx = tryPick(() => true, 28, true);
     } else {
-      idx = tryPick(d => d >= minGapMedium, 28);
-      if (!idx) idx = tryPick(() => true, 18);
+      idx = tryPick(d => d >= minGapMedium, 36, true);
+      if (!idx) idx = tryPick(() => true, 28, true);
+    }
+
+    if (!idx && pool.length >= 2) {
+      for (let t = 0; t < 100; t++) {
+        const i = Math.floor(Math.random() * pool.length);
+        const j = Math.floor(Math.random() * pool.length);
+        if (i === j) continue;
+        if (pool[i].id === prevLeftId && pool[j].id === prevRightId) continue;
+        if (!this.holActorAppearancesAllowPair(pool[i].id, pool[j].id)) continue;
+        idx = { i, j };
+        break;
+      }
+    }
+
+    /* Último recurso: ignora limite de 2× se o pool ficar esgotado (evita bloquear o jogo). */
+    if (!idx && pool.length >= 2) {
+      for (let t = 0; t < 60; t++) {
+        const i = Math.floor(Math.random() * pool.length);
+        const j = Math.floor(Math.random() * pool.length);
+        if (i === j) continue;
+        if (pool[i].id === prevLeftId && pool[j].id === prevRightId) continue;
+        idx = { i, j };
+        break;
+      }
     }
 
     if (!idx) {
-      let i = 0;
-      let j = 1;
-      if (pool.length >= 2) {
-        i = Math.floor(Math.random() * pool.length);
-        j = (i + 1) % pool.length;
-      }
-      idx = { i, j };
+      idx = { i: 0, j: Math.min(1, pool.length - 1) };
     }
 
     return { left: pool[idx.i], right: pool[idx.j] };
@@ -681,6 +759,7 @@ export class HigherOrLowerComponent implements OnInit {
       if (rightRatings == null) continue;
       const rightVote = rightRatings.tmdbVoteAverage ?? 0;
       if (rightVote <= minRating) continue;
+      if (!this.holFilmAppearancesAllowPair(leftCandidate.id, rightCandidate.id)) continue;
       if (excludeUsedPairs && this.holIsFilmPairUsed(leftCandidate.id, rightCandidate.id)) continue;
 
       return { left: leftCandidate, right: rightCandidate };
@@ -813,6 +892,7 @@ export class HigherOrLowerComponent implements OnInit {
           this.rightFilm = np.right;
           this.leftRating = np.leftRating;
           this.rightRating = np.rightRating;
+          this.holRegisterFilmsDisplayed(np.left.id, np.right.id);
           this.nextPair = undefined;
 
           this.notifier = null;

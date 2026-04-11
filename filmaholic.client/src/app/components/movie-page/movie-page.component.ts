@@ -70,6 +70,8 @@ export class MoviePageComponent implements OnInit, OnDestroy {
   editRating = 0;
   isSavingEdit = false;
   isDeletingComment = false;
+  /** Comentário em confirmação de apagar (modal in-app; evita `window.confirm`). */
+  commentToDelete: CommentDTO | null = null;
 
   recommendations: Filme[] = [];
   isLoadingRecommendations = false;
@@ -568,18 +570,31 @@ export class MoviePageComponent implements OnInit, OnDestroy {
     this.editRating = 0;
   }
 
-  deleteComment(c: CommentDTO): void {
-    if (!this.filme || !c.canEdit) return;
-    if (!confirm('Apagar este comentário?')) return;
+  openCommentDeleteConfirm(c: CommentDTO): void {
+    if (!this.filme || !c.canEdit || this.isDeletingComment) return;
+    this.commentError = '';
+    this.commentToDelete = c;
+  }
+
+  closeCommentDeleteConfirm(): void {
+    if (this.isDeletingComment) return;
+    this.commentToDelete = null;
+  }
+
+  confirmDeleteComment(): void {
+    const c = this.commentToDelete;
+    if (!this.filme || !c || !c.canEdit) return;
     this.isDeletingComment = true;
     this.commentsService.delete(c.id).subscribe({
       next: () => {
         this.comments = this.comments.filter(x => x.id !== c.id);
         this.isDeletingComment = false;
+        this.commentToDelete = null;
       },
       error: () => {
         this.commentError = 'Não foi possível apagar o comentário.';
         this.isDeletingComment = false;
+        this.commentToDelete = null;
       }
     });
   }

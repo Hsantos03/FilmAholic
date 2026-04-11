@@ -1220,7 +1220,18 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
   }
 
-
+  /**
+   * Índice do tracinho ativo (0 .. pageCount-1). A última página começa em
+   * maxIndex = total - visible, que pode não ser múltiplo de visible (ex.: 10 filmes, 4 visíveis → índice 6);
+   * floor(6/4) daria 1 em vez de 2.
+   */
+  private carouselActivePage(index: number, totalLength: number, visibleCount: number): number {
+    if (totalLength <= 0 || visibleCount <= 0) return 0;
+    const pageCount = Math.max(1, Math.ceil(totalLength / visibleCount));
+    const maxIndex = Math.max(0, totalLength - visibleCount);
+    if (index >= maxIndex) return pageCount - 1;
+    return Math.floor(index / visibleCount);
+  }
 
   get featuredVisible(): Filme[] {
 
@@ -1240,7 +1251,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
   get featuredActivePage(): number {
 
-    return Math.floor(this.featuredIndex / this.featuredVisibleCount);
+    return this.carouselActivePage(this.featuredIndex, this.featured.length, this.featuredVisibleCount);
 
   }
 
@@ -1332,7 +1343,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
   get top10ActivePage(): number {
 
-    return Math.floor(this.top10Index / this.top10VisibleCount);
+    return this.carouselActivePage(this.top10Index, this.top10.length, this.top10VisibleCount);
 
   }
 
@@ -1424,7 +1435,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
   get atoresActivePage(): number {
 
-    return Math.floor(this.atoresIndex / this.atoresVisibleCount);
+    return this.carouselActivePage(this.atoresIndex, this.atores.length, this.atoresVisibleCount);
 
   }
 

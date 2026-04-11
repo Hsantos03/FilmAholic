@@ -22,6 +22,9 @@ public interface IMovieService
     /// TMDB /movie/popular com filtro de mínimo de votos (vote_count).
     Task<List<Filme>> GetPopularMoviesWithMinVotesAsync(int count = 10, int minVoteCount = 500, int maxPages = 5);
 
+    /// Atualiza o cache usado por <see cref="GetPopularMoviesWithMinVotesAsync"/> (preload diário / arranque).
+    Task RefreshHomepageFeaturedCacheAsync(CancellationToken cancellationToken = default);
+
     /// TMDB /movie/upcoming — usado para preencher “novas estreias” quando a BD não tem filmes com releaseDate futuro.
     Task<List<Filme>> GetUpcomingMoviesAsync(int page = 1, int count = 20);
 

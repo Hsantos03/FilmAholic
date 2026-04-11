@@ -195,9 +195,21 @@
 }
 
 .feature-icon {
-  font-size: 2.5rem;
+  width: 72px;
+  height: 72px;
+  object-fit: contain;
   display: block;
-  margin-bottom: 15px;
+  margin: 0 auto 15px auto;
+  flex-shrink: 0;
+  filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.35));
+}
+
+.feature-icon--svg {
+  overflow: visible;
+}
+
+.feature-icon--games {
+  color: #fbbf24;
 }
 
 .feature-card h3 {

@@ -310,7 +310,7 @@
                     <button type="button"
                             class="comment-btn danger"
                             *ngIf="c.canEdit"
-                            (click)="deleteComment(c)"
+                            (click)="openCommentDeleteConfirm(c)"
                             [disabled]="isDeletingComment">
                       Apagar
                     </button>
@@ -393,4 +393,40 @@
     [steps]="movieDicasSteps"
     [startDelayMs]="1300">
   </app-dicas>
+
+  <!-- Confirmação de apagar comentário (usabilidade / acessibilidade — sem alert nativo) -->
+  <div class="modal-overlay comment-delete-overlay"
+       *ngIf="commentToDelete"
+       role="presentation"
+       (click)="closeCommentDeleteConfirm()">
+    <div class="modal-box comment-delete-dialog"
+         role="dialog"
+         aria-modal="true"
+         aria-labelledby="comment-delete-title"
+         (click)="$event.stopPropagation()">
+      <button type="button"
+              class="modal-close"
+              (click)="closeCommentDeleteConfirm()"
+              [disabled]="isDeletingComment"
+              aria-label="Fechar">×</button>
+
+      <h3 id="comment-delete-title">Apagar comentário</h3>
+      <p class="comment-delete-msg">Tens a certeza que queres apagar este comentário? Esta ação não pode ser anulada.</p>
+
+      <div class="modal-actions comment-delete-actions">
+        <button type="button"
+                class="btn ghost"
+                (click)="closeCommentDeleteConfirm()"
+                [disabled]="isDeletingComment">
+          Cancelar
+        </button>
+        <button type="button"
+                class="btn danger"
+                (click)="confirmDeleteComment()"
+                [disabled]="isDeletingComment">
+          {{ isDeletingComment ? 'A apagar…' : 'Apagar' }}
+        </button>
+      </div>
+    </div>
+  </div>
 </main>
