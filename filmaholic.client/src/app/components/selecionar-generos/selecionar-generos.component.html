@@ -57,8 +57,12 @@
       </button>
     </div>
 
-    <p *ngIf="generosSelecionados.length > 0" style="text-align: center; margin-top: 15px; color: #6c757d; font-size: 14px;">
-      {{ generosSelecionados.length }} género(s) selecionado(s) — o algoritmo já está a preparar recomendações 🔍🎬
+    <p *ngIf="generosSelecionados.length > 0" class="generos-hint-footer">
+      <span>{{ generosSelecionados.length }} género(s) selecionado(s) — o algoritmo já está a preparar recomendações</span>
+      <span class="generos-hint-icons" aria-hidden="true">
+        <img src="assets/hint-lupa.png" alt="" class="generos-hint-ico" width="22" height="22" />
+        <img src="assets/hint-claquete.png" alt="" class="generos-hint-ico" width="22" height="22" />
+      </span>
     </p>
   </div>
 

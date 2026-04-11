@@ -10,4 +10,7 @@
   <ItemGroup>
     <None Remove="src\assets\logo cinema nos.png" />
   </ItemGroup>
+  <ItemGroup>
+    <Folder Include="src\assets\generos-onboarding\" />
+  </ItemGroup>
 </Project>
