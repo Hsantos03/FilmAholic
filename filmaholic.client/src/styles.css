@@ -744,10 +744,24 @@ app-root > *:not(router-outlet) {
   gap: 12px;
   padding: 0 22px;
   background: linear-gradient(180deg, rgba(26, 32, 48, 0.99) 0%, rgba(16, 22, 34, 0.98) 100%);
-  border-bottom: 1px solid rgba(255, 64, 129, 0.32);
   box-shadow: 0 4px 28px rgba(0, 0, 0, 0.6);
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
+  overflow: hidden;
+}
+
+.topbar::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 100%;
+  height: 3px;
+  background: linear-gradient(90deg, var(--color-primary), #ff9ad1, var(--color-secondary), #80c0ff, var(--color-primary));
+  background-size: 200% 100%;
+  animation: neonBorderSweep 3s linear infinite;
+  box-shadow: 0 0 12px rgba(233, 30, 99, 0.8), 0 0 20px rgba(0, 123, 255, 0.6);
+  pointer-events: none;
 }
 
 .topbar-simple {
@@ -823,10 +837,34 @@ app-root > *:not(router-outlet) {
   padding: 0 24px;
   margin: 0 -24px 0 -24px;
   background: linear-gradient(180deg, rgba(26, 32, 48, 0.99) 0%, rgba(16, 22, 34, 0.98) 100%);
-  border-bottom: 1px solid rgba(255, 64, 129, 0.32);
+  border-bottom: none;
   box-shadow: 0 4px 28px rgba(0, 0, 0, 0.6);
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
+  overflow: hidden;
+}
+
+.cinema-map-topbar::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 100%;
+  height: 3px;
+  background: linear-gradient(90deg, var(--color-primary), #ff9ad1, var(--color-secondary), #80c0ff, var(--color-primary));
+  background-size: 200% 100%;
+  animation: neonBorderSweep 3s linear infinite;
+  box-shadow: 0 0 12px rgba(233, 30, 99, 0.8), 0 0 20px rgba(0, 123, 255, 0.6);
+  pointer-events: none;
+}
+
+@keyframes neonBorderSweep {
+  0% {
+    background-position: 0% 50%;
+  }
+  100% {
+    background-position: 200% 50%;
+  }
 }
 
 .cinema-map-topbar .top-actions {
@@ -866,22 +904,30 @@ app-root > *:not(router-outlet) {
    ============================================ */
 
 .auth-page-wrapper {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  width: 100vw;
-  height: 100vh;
+  position: relative;
+  width: 100%;
+  min-height: 100vh;
   display: flex;
   justify-content: center;
   align-items: center;
-  padding: 20px;
+  padding: 40px 20px;
   overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
   background: linear-gradient(rgba(0,0,0,0.7), rgba(0,0,0,0.7)), url('assets/fundo-cinema.png') no-repeat center center;
   background-size: cover;
   background-attachment: fixed;
   z-index: 999;
+}
+
+@media (max-width: 600px) {
+  .auth-page-wrapper {
+    align-items: flex-start;
+    padding: 30px 15px 50px;
+  }
+
+  .auth-card {
+    padding: 30px 20px;
+  }
 }
 
 .auth-card {
