@@ -1,5 +1,8 @@
 import { Pipe, PipeTransform } from '@angular/core';
 
+/// <summary>
+/// Pipe para formatar a duração de um filme em diferentes unidades de tempo.
+/// </summary>
 @Pipe({ name: 'formatDuration' })
 export class FormatDurationPipe implements PipeTransform {
   /**
