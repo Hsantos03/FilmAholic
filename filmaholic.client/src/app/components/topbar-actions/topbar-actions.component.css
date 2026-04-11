@@ -202,6 +202,11 @@
   gap: 10px;
 }
 
+.notif-section-header--compact {
+  padding-top: 8px;
+  padding-bottom: 6px;
+}
+
 .notifications-title {
   font-size: 11px;
   font-weight: 800;

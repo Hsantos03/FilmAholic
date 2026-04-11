@@ -53,9 +53,10 @@ export class TopbarActionsComponent implements OnInit, OnDestroy {
   upcomingUnreadPage = 0;
   upcomingReadPage = 0;
 
-  // ── Paginação das notificações unificadas ──
+  // ── Paginação: por ler vs vistas (listas separadas) ──
   readonly notifPageSize = 10;
   notifPage = 0;
+  readNotifPage = 0;
 
   filtrarEstreiasPorGeneros = true;
   proximasEstreiasSessaoAtiva = false;
@@ -141,6 +142,7 @@ export class TopbarActionsComponent implements OnInit, OnDestroy {
       this.upcomingUnreadPage = 0;
       this.upcomingReadPage = 0;
       this.notifPage = 0;
+      this.readNotifPage = 0;
       this.loadResumoFeed();
       this.loadReminderJogo();
       this.loadFilmeDisponivel();
@@ -180,7 +182,7 @@ export class TopbarActionsComponent implements OnInit, OnDestroy {
   }
 
   private loadPlataformaFeed(): void {
-    this.notificacoesService.getNotificacoesPlataformaFeed({ unreadLimit: 12, readLimit: 6 }).subscribe({
+    this.notificacoesService.getNotificacoesPlataformaFeed({ unreadLimit: 12, readLimit: 50 }).subscribe({
       next: (dto) => {
         this.plataformaFeed = dto ?? { unread: [], read: [] };
         this.cdr.markForCheck();
@@ -323,28 +325,77 @@ export class TopbarActionsComponent implements OnInit, OnDestroy {
     return Array.from(mapa.values()).sort((a, b) => b.data.getTime() - a.data.getTime());
   }
 
-  get notificacoesPaged(): NotificacaoUnificada[] {
-    const all = this.notificacoesOrdenadas;
+  get notificacoesNaoLidas(): NotificacaoUnificada[] {
+    return this.notificacoesOrdenadas.filter((n) => !n.lida);
+  }
+
+  get notificacoesLidas(): NotificacaoUnificada[] {
+    return this.notificacoesOrdenadas.filter((n) => !!n.lida);
+  }
+
+  get notificacoesNaoLidasPaged(): NotificacaoUnificada[] {
+    const all = this.notificacoesNaoLidas;
     const start = this.notifPage * this.notifPageSize;
     return all.slice(start, start + this.notifPageSize);
   }
 
-  get notifPagerVisible(): boolean { return this.notificacoesOrdenadas.length > this.notifPageSize; }
+  get notificacoesLidasPaged(): NotificacaoUnificada[] {
+    const all = this.notificacoesLidas;
+    const start = this.readNotifPage * this.notifPageSize;
+    return all.slice(start, start + this.notifPageSize);
+  }
 
-  get notifPageLabel(): string {
-    const total = this.notificacoesOrdenadas.length;
+  get notifUnreadPagerVisible(): boolean {
+    return this.notificacoesNaoLidas.length > this.notifPageSize;
+  }
+
+  get notifReadPagerVisible(): boolean {
+    return this.notificacoesLidas.length > this.notifPageSize;
+  }
+
+  get notifUnreadPageLabel(): string {
+    const total = this.notificacoesNaoLidas.length;
     if (total === 0) return '';
     return `${this.notifPage + 1} / ${Math.max(1, Math.ceil(total / this.notifPageSize))}`;
   }
 
-  get notifLastPage(): number { return Math.max(0, Math.ceil(this.notificacoesOrdenadas.length / this.notifPageSize) - 1); }
+  get notifReadPageLabel(): string {
+    const total = this.notificacoesLidas.length;
+    if (total === 0) return '';
+    return `${this.readNotifPage + 1} / ${Math.max(1, Math.ceil(total / this.notifPageSize))}`;
+  }
 
-  prevNotifPage(e: MouseEvent): void { e.stopPropagation(); this.notifPage = Math.max(0, this.notifPage - 1); }
-  nextNotifPage(e: MouseEvent): void { e.stopPropagation(); this.notifPage = Math.min(this.notifLastPage, this.notifPage + 1); }
+  get notifUnreadLastPage(): number {
+    return Math.max(0, Math.ceil(this.notificacoesNaoLidas.length / this.notifPageSize) - 1);
+  }
+
+  get notifReadLastPage(): number {
+    return Math.max(0, Math.ceil(this.notificacoesLidas.length / this.notifPageSize) - 1);
+  }
+
+  prevNotifUnreadPage(e: MouseEvent): void {
+    e.stopPropagation();
+    this.notifPage = Math.max(0, this.notifPage - 1);
+  }
+
+  nextNotifUnreadPage(e: MouseEvent): void {
+    e.stopPropagation();
+    this.notifPage = Math.min(this.notifUnreadLastPage, this.notifPage + 1);
+  }
+
+  prevNotifReadPage(e: MouseEvent): void {
+    e.stopPropagation();
+    this.readNotifPage = Math.max(0, this.readNotifPage - 1);
+  }
+
+  nextNotifReadPage(e: MouseEvent): void {
+    e.stopPropagation();
+    this.readNotifPage = Math.min(this.notifReadLastPage, this.readNotifPage + 1);
+  }
 
   private clampNotifPage(): void {
-    const max = this.notifLastPage;
-    if (this.notifPage > max) this.notifPage = max;
+    if (this.notifPage > this.notifUnreadLastPage) this.notifPage = this.notifUnreadLastPage;
+    if (this.readNotifPage > this.notifReadLastPage) this.readNotifPage = this.notifReadLastPage;
   }
 
   // ── Medal notifications ──

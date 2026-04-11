@@ -156,132 +156,168 @@
               </button>
             </div>
 
-            <div class="notif-cards-stack">
-            <div *ngFor="let n of notificacoesPaged"
-                 class="notif-card"
-                 [class.notif-card--read]="n.lida"
-                 [class.notif-card--jogo]="n.tipo === 'jogo'"
-                 (click)="onNotifClick($event, n)"
-                 role="menuitem">
+            <ng-template #notifCard let-n>
+              <div class="notif-card"
+                   [class.notif-card--read]="n.lida"
+                   [class.notif-card--jogo]="n.tipo === 'jogo'"
+                   (click)="onNotifClick($event, n)"
+                   role="menuitem">
 
-              <div class="notif-unread-dot" *ngIf="!n.lida" aria-hidden="true"></div>
+                <div class="notif-unread-dot" *ngIf="!n.lida" aria-hidden="true"></div>
 
-              <div class="notif-icon"
-                   [ngClass]="{
-                     'notif-icon--pink': n.tipo === 'comunidade',
-                     'notif-icon--purple': n.tipo === 'medalha' || n.tipo === 'jogo',
-                     'notif-icon--blue': n.tipo === 'filme',
-                     'notif-icon--green': n.tipo === 'resumo',
-                     'notif-icon--orange': n.tipo === 'plataforma'
-                   }">
-                <img *ngIf="n.tipo === 'medalha'"
-                     class="notif-icon-img"
-                     src="assets/179249.png"
-                     alt=""
-                     aria-hidden="true" />
-                <svg *ngIf="n.tipo === 'jogo'"
-                     class="notif-icon-svg notif-icon-svg--jogo"
-                     viewBox="0 0 24 24"
-                     fill="currentColor"
-                     aria-hidden="true">
-                  <path [attr.d]="reminderJogoIconPathD(n.raw)" />
-                </svg>
-                <svg *ngIf="n.tipo === 'comunidade'"
-                     class="notif-icon-svg notif-icon-svg--comunidade"
-                     viewBox="0 0 24 24"
-                     fill="currentColor"
-                     aria-hidden="true">
-                  <path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z" />
-                </svg>
-                <ng-container *ngIf="n.tipo !== 'medalha' && n.tipo !== 'jogo' && n.tipo !== 'comunidade'">{{
-                  n.tipo === 'filme' ? '🎬' :
-                  n.tipo === 'resumo' ? '📊' :
-                  n.tipo === 'plataforma' ? '📢' :
-                  ''
-                }}</ng-container>
-              </div>
+                <div class="notif-icon"
+                     [ngClass]="{
+                       'notif-icon--pink': n.tipo === 'comunidade',
+                       'notif-icon--purple': n.tipo === 'medalha' || n.tipo === 'jogo',
+                       'notif-icon--blue': n.tipo === 'filme',
+                       'notif-icon--green': n.tipo === 'resumo',
+                       'notif-icon--orange': n.tipo === 'plataforma'
+                     }">
+                  <img *ngIf="n.tipo === 'medalha'"
+                       class="notif-icon-img"
+                       src="assets/179249.png"
+                       alt=""
+                       aria-hidden="true" />
+                  <svg *ngIf="n.tipo === 'jogo'"
+                       class="notif-icon-svg notif-icon-svg--jogo"
+                       viewBox="0 0 24 24"
+                       fill="currentColor"
+                       aria-hidden="true">
+                    <path [attr.d]="reminderJogoIconPathD(n.raw)" />
+                  </svg>
+                  <svg *ngIf="n.tipo === 'comunidade'"
+                       class="notif-icon-svg notif-icon-svg--comunidade"
+                       viewBox="0 0 24 24"
+                       fill="currentColor"
+                       aria-hidden="true">
+                    <path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z" />
+                  </svg>
+                  <ng-container *ngIf="n.tipo !== 'medalha' && n.tipo !== 'jogo' && n.tipo !== 'comunidade'">{{
+                    n.tipo === 'filme' ? '🎬' :
+                    n.tipo === 'resumo' ? '📊' :
+                    n.tipo === 'plataforma' ? '📢' :
+                    ''
+                  }}</ng-container>
+                </div>
 
-              <div class="notif-body">
+                <div class="notif-body">
 
-                <ng-container *ngIf="n.tipo === 'plataforma'">
-                  <span class="notif-text"><strong>{{ n.raw.titulo }}</strong></span>
-                  <span class="notif-subtext">{{ n.raw.mensagem }}</span>
-                </ng-container>
+                  <ng-container *ngIf="n.tipo === 'plataforma'">
+                    <span class="notif-text"><strong>{{ n.raw.titulo }}</strong></span>
+                    <span class="notif-subtext">{{ n.raw.mensagem }}</span>
+                  </ng-container>
 
-                <ng-container *ngIf="n.tipo === 'comunidade'">
-                  <span class="notif-text">
-                    <ng-container [ngSwitch]="comunidadeNotifTipo(n.raw.tipo)">
-                      <ng-container *ngSwitchCase="'pedido_entrada'">Novo pedido para entrar na comunidade <strong>{{ n.raw.comunidadeNome }}</strong></ng-container>
-                      <ng-container *ngSwitchCase="'pedido_aprovado'">O teu pedido para a comunidade <strong>{{ n.raw.comunidadeNome }}</strong> foi aprovado ✅</ng-container>
-                      <ng-container *ngSwitchCase="'pedido_rejeitado'">O teu pedido para a comunidade <strong>{{ n.raw.comunidadeNome }}</strong> foi rejeitado ❌</ng-container>
-                      <ng-container *ngSwitchCase="'kick'">Foste expulso da comunidade <strong>{{ n.raw.comunidadeNome }}</strong></ng-container>
-                      <ng-container *ngSwitchCase="'banido'">Foste banido da comunidade <strong>{{ n.raw.comunidadeNome }}</strong></ng-container>
-                      <ng-container *ngSwitchDefault>Novas publicações em <strong>{{ n.raw.comunidadeNome }}</strong></ng-container>
-                    </ng-container>
-                  </span>
-                  <span class="comunidade-notif-desc comunidade-notif-desc--kickban" *ngIf="comunidadeKickBanCorpo(n.raw) as kb">{{ kb }}</span>
-                </ng-container>
-
-                <ng-container *ngIf="n.tipo === 'medalha'">
-                  <span class="notif-text">Desbloqueaste <strong>{{ n.raw.medalhaNome }}</strong></span>
-                  <span class="notif-subtext" *ngIf="n.raw.medalhaDescricao">{{ n.raw.medalhaDescricao }}</span>
-                </ng-container>
-
-                <ng-container *ngIf="n.tipo === 'jogo'">
-                  <span class="notif-text notif-text--jogo">{{ n.raw.corpo }}</span>
-                  <button type="button"
-                          class="notif-action-btn notif-action-btn--jogo"
-                          (click)="marcarReminderLidoEJogar($event, n.id)">
-                    Jogar agora
-                    <span class="notif-action-btn__arrow" aria-hidden="true">→</span>
-                  </button>
-                </ng-container>
-
-                <ng-container *ngIf="n.tipo === 'filme'">
-                  <span class="notif-text">{{ n.raw.corpo || n.raw.titulo }}</span>
-                </ng-container>
-
-                <ng-container *ngIf="n.tipo === 'resumo'">
-                  <span class="notif-text">Resumo semanal</span>
-                  <div class="resumo-mini-stats" *ngIf="n.raw.corpo">
-                    <span class="resumo-mini-stat">{{ n.raw.corpo.tempoTotalHoras }}h assistidas</span>
-                    <span class="resumo-mini-stat" *ngIf="n.raw.corpo.filmeMaisVistoSemanaPlataforma">
-                      🎥 {{ n.raw.corpo.filmeMaisVistoSemanaPlataforma.titulo }}
+                  <ng-container *ngIf="n.tipo === 'comunidade'">
+                    <span class="notif-text">
+                      <ng-container [ngSwitch]="comunidadeNotifTipo(n.raw.tipo)">
+                        <ng-container *ngSwitchCase="'pedido_entrada'">Novo pedido para entrar na comunidade <strong>{{ n.raw.comunidadeNome }}</strong></ng-container>
+                        <ng-container *ngSwitchCase="'pedido_aprovado'">O teu pedido para a comunidade <strong>{{ n.raw.comunidadeNome }}</strong> foi aprovado ✅</ng-container>
+                        <ng-container *ngSwitchCase="'pedido_rejeitado'">O teu pedido para a comunidade <strong>{{ n.raw.comunidadeNome }}</strong> foi rejeitado ❌</ng-container>
+                        <ng-container *ngSwitchCase="'kick'">Foste expulso da comunidade <strong>{{ n.raw.comunidadeNome }}</strong></ng-container>
+                        <ng-container *ngSwitchCase="'banido'">Foste banido da comunidade <strong>{{ n.raw.comunidadeNome }}</strong></ng-container>
+                        <ng-container *ngSwitchDefault>Novas publicações em <strong>{{ n.raw.comunidadeNome }}</strong></ng-container>
+                      </ng-container>
                     </span>
-                  </div>
-                  <div class="resumo-mini-genres" *ngIf="n.raw.corpo?.generosMaisVistos?.length">
-                    <span class="resumo-mini-genre" *ngFor="let g of n.raw.corpo.generosMaisVistos.slice(0, 3)">
-                      {{ g.nome }}
-                    </span>
-                  </div>
-                </ng-container>
+                    <span class="comunidade-notif-desc comunidade-notif-desc--kickban" *ngIf="comunidadeKickBanCorpo(n.raw) as kb">{{ kb }}</span>
+                  </ng-container>
 
-                <span class="notif-time">{{ n.data | date:'dd/MM/yyyy HH:mm' }}</span>
+                  <ng-container *ngIf="n.tipo === 'medalha'">
+                    <span class="notif-text">Desbloqueaste <strong>{{ n.raw.medalhaNome }}</strong></span>
+                    <span class="notif-subtext" *ngIf="n.raw.medalhaDescricao">{{ n.raw.medalhaDescricao }}</span>
+                  </ng-container>
+
+                  <ng-container *ngIf="n.tipo === 'jogo'">
+                    <span class="notif-text notif-text--jogo">{{ n.raw.corpo }}</span>
+                    <button type="button"
+                            class="notif-action-btn notif-action-btn--jogo"
+                            (click)="marcarReminderLidoEJogar($event, n.id)">
+                      Jogar agora
+                      <span class="notif-action-btn__arrow" aria-hidden="true">→</span>
+                    </button>
+                  </ng-container>
+
+                  <ng-container *ngIf="n.tipo === 'filme'">
+                    <span class="notif-text">{{ n.raw.corpo || n.raw.titulo }}</span>
+                  </ng-container>
+
+                  <ng-container *ngIf="n.tipo === 'resumo'">
+                    <span class="notif-text">Resumo semanal</span>
+                    <div class="resumo-mini-stats" *ngIf="n.raw.corpo">
+                      <span class="resumo-mini-stat">{{ n.raw.corpo.tempoTotalHoras }}h assistidas</span>
+                      <span class="resumo-mini-stat" *ngIf="n.raw.corpo.filmeMaisVistoSemanaPlataforma">
+                        🎥 {{ n.raw.corpo.filmeMaisVistoSemanaPlataforma.titulo }}
+                      </span>
+                    </div>
+                    <div class="resumo-mini-genres" *ngIf="n.raw.corpo?.generosMaisVistos?.length">
+                      <span class="resumo-mini-genre" *ngFor="let g of n.raw.corpo.generosMaisVistos.slice(0, 3)">
+                        {{ g.nome }}
+                      </span>
+                    </div>
+                  </ng-container>
+
+                  <span class="notif-time">{{ n.data | date:'dd/MM/yyyy HH:mm' }}</span>
+                </div>
+
+                <button type="button"
+                        class="notif-check-btn"
+                        *ngIf="!n.lida"
+                        (click)="marcarNotifComoLida($event, n)"
+                        aria-label="Marcar como lida">
+                  ✓
+                </button>
               </div>
+            </ng-template>
 
-              <button type="button"
-                      class="notif-check-btn"
-                      *ngIf="!n.lida"
-                      (click)="marcarNotifComoLida($event, n)"
-                      aria-label="Marcar como lida">
-                ✓
-              </button>
-            </div>
-            </div>
+            <ng-container *ngIf="notificacoesNaoLidas.length > 0">
+              <div class="notif-section-header notif-section-header--compact"
+                   *ngIf="notificacoesLidas.length > 0">
+                <span class="notifications-title">Por ler</span>
+              </div>
+              <div class="notif-cards-stack">
+                <ng-container *ngFor="let n of notificacoesNaoLidasPaged">
+                  <ng-container *ngTemplateOutlet="notifCard; context: { $implicit: n }"></ng-container>
+                </ng-container>
+              </div>
+              <div *ngIf="notifUnreadPagerVisible" class="notif-pager notif-pager--below-cards">
+                <button type="button" class="notif-pager-btn"
+                        (click)="prevNotifUnreadPage($event)"
+                        [disabled]="notifPage === 0">
+                  ‹
+                </button>
+                <span class="notif-pager-label">{{ notifUnreadPageLabel }}</span>
+                <button type="button" class="notif-pager-btn"
+                        (click)="nextNotifUnreadPage($event)"
+                        [disabled]="notifPage >= notifUnreadLastPage">
+                  ›
+                </button>
+              </div>
+            </ng-container>
 
-            <div *ngIf="notifPagerVisible" class="notif-pager notif-pager--below-cards">
-              <button type="button" class="notif-pager-btn"
-                      (click)="prevNotifPage($event)"
-                      [disabled]="notifPage === 0">
-                ‹
-              </button>
-              <span class="notif-pager-label">{{ notifPageLabel }}</span>
-              <button type="button" class="notif-pager-btn"
-                      (click)="nextNotifPage($event)"
-                      [disabled]="notifPage >= notifLastPage">
-                ›
-              </button>
-            </div>
+            <div *ngIf="notificacoesNaoLidas.length > 0 && notificacoesLidas.length > 0" class="notif-divider" style="margin-top: 6px;"></div>
+
+            <ng-container *ngIf="notificacoesLidas.length > 0">
+              <div class="notif-section-header notif-section-header--compact">
+                <span class="notifications-title">Vistas</span>
+              </div>
+              <div class="notif-cards-stack">
+                <ng-container *ngFor="let n of notificacoesLidasPaged">
+                  <ng-container *ngTemplateOutlet="notifCard; context: { $implicit: n }"></ng-container>
+                </ng-container>
+              </div>
+              <div *ngIf="notifReadPagerVisible" class="notif-pager notif-pager--below-cards">
+                <button type="button" class="notif-pager-btn"
+                        (click)="prevNotifReadPage($event)"
+                        [disabled]="readNotifPage === 0">
+                  ‹
+                </button>
+                <span class="notif-pager-label">{{ notifReadPageLabel }}</span>
+                <button type="button" class="notif-pager-btn"
+                        (click)="nextNotifReadPage($event)"
+                        [disabled]="readNotifPage >= notifReadLastPage">
+                  ›
+                </button>
+              </div>
+            </ng-container>
           </ng-container>
 
           <div *ngIf="notificacoesOrdenadas.length === 0" class="notifications-empty">
