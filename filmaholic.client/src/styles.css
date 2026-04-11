@@ -866,22 +866,30 @@ app-root > *:not(router-outlet) {
    ============================================ */
 
 .auth-page-wrapper {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  width: 100vw;
-  height: 100vh;
+  position: relative;
+  width: 100%;
+  min-height: 100vh;
   display: flex;
   justify-content: center;
   align-items: center;
-  padding: 20px;
+  padding: 40px 20px;
   overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
   background: linear-gradient(rgba(0,0,0,0.7), rgba(0,0,0,0.7)), url('assets/fundo-cinema.png') no-repeat center center;
   background-size: cover;
   background-attachment: fixed;
   z-index: 999;
+}
+
+@media (max-width: 600px) {
+  .auth-page-wrapper {
+    align-items: flex-start;
+    padding: 30px 15px 50px;
+  }
+
+  .auth-card {
+    padding: 30px 20px;
+  }
 }
 
 .auth-card {
