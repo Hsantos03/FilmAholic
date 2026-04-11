@@ -1,4 +1,4 @@
-﻿<!-- Topbar (hamburger + marca + notificações + perfil) -->
+<!-- Topbar (hamburger + marca + notificações + perfil) -->
 <header class="cinema-map-topbar profile-topbar">
   <button class="icon-btn" (click)="toggleMenu()" aria-label="Menu">
     <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
@@ -60,6 +60,10 @@
     </a>
   </div>
 </nav>
+
+<!-- PARTÍCULAS DE FUNDO -->
+<div class="bg-orb orb1"></div>
+<div class="bg-orb orb2"></div>
 
 <!-- Header (capa) -->
 <div class="profile-header"
@@ -329,10 +333,9 @@
                      [class.drag-over-actor]="dragOverActorIndex === i"
                      title="Arrasta para reordenar">
                 <span class="position-badge">{{ i + 1 }}</span>
-                <button class="remove-btn" (click)="removeAtorFavorito(a)">&times;</button>
                 <div class="actor-photo">
-                  <img *ngIf="a.fotoUrl" [src]="a.fotoUrl" [alt]="a.nome" />
-                  <div *ngIf="!a.fotoUrl" class="initial">{{ a.nome[0] }}</div>
+                  <img *ngIf="a.fotoUrl" [src]="a.fotoUrl" [alt]="a.nome" (dblclick)="removeAtorFavorito(a)" title="Duplo clique para remover" />
+                  <div *ngIf="!a.fotoUrl" class="initial" (dblclick)="removeAtorFavorito(a)" title="Duplo clique para remover">{{ a.nome[0] }}</div>
                 </div>
                 <div class="actor-name-label">{{ a.nome }}</div>
               </div>
@@ -415,8 +418,8 @@
                 </button>
       </div>
 
-              <div class="fav-actors-list" *ngIf="favoritosAtores.length > 0; else noFavActorsModal">
-                <div class="fav-actor-card"
+              <div class="fav-actors-grid" *ngIf="favoritosAtores.length > 0; else noFavActorsModal">
+                <div class="actor-tile"
                      *ngFor="let a of favoritosAtores; let i = index"
                      draggable="true"
                      [attr.data-index]="i"
@@ -427,13 +430,12 @@
                      [class.dragging-actor]="draggedActorIndex === i"
                      [class.drag-over-actor]="dragOverActorIndex === i"
                      title="Arrasta para reordenar">
-                  <div class="actor-avatar">
-                    <img *ngIf="a.fotoUrl" [src]="a.fotoUrl" [alt]="a.nome" />
-                    <span *ngIf="!a.fotoUrl" class="actor-initial">{{ a.nome.charAt(0).toUpperCase() }}</span>
-                  </div>
-                  <span class="actor-name">{{ a.nome }}</span>
                   <span class="position-badge">{{ i + 1 }}</span>
-                  <button type="button" class="actor-remove-btn" (click)="removeAtorFavorito(a)" [disabled]="isSavingFavorites" title="Remover">&times;</button>
+                  <div class="actor-photo">
+                    <img *ngIf="a.fotoUrl" [src]="a.fotoUrl" [alt]="a.nome" (dblclick)="removeAtorFavorito(a)" title="Duplo clique para remover" />
+                    <div *ngIf="!a.fotoUrl" class="initial" (dblclick)="removeAtorFavorito(a)" title="Duplo clique para remover">{{ a.nome[0] }}</div>
+                  </div>
+                  <div class="actor-name-label">{{ a.nome }}</div>
                 </div>
               </div>
 
