@@ -5,14 +5,19 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace FilmAholic.Server.Services;
 
-/// Pré-carrega (warm-up) os endpoints TMDB de “upcoming” numa janela de tempo.
+/// <summary>
+/// Serviço responsável por pré-carregar (warm-up) os endpoints TMDB de “upcoming” numa janela de tempo.
 /// Isto reduz a primeira resposta do menu de notificações após abrir o site.
+/// </summary>
 public class TmdbUpcomingPreloadService : BackgroundService
 {
     private readonly IServiceScopeFactory _serviceScopeFactory;
     private readonly IConfiguration _configuration;
     private readonly ILogger<TmdbUpcomingPreloadService> _logger;
 
+    /// <summary>
+    /// Inicializa uma nova instância do serviço de pré-carregamento de filmes TMDB.
+    /// </summary>
     public TmdbUpcomingPreloadService(
         IServiceScopeFactory serviceScopeFactory,
         IConfiguration configuration,
@@ -22,7 +27,10 @@ public class TmdbUpcomingPreloadService : BackgroundService
         _configuration = configuration;
         _logger = logger;
     }
-
+    
+    /// <summary>
+    /// Executa o serviço de pré-carregamento de filmes TMDB.
+    /// </summary>
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         var enabled = _configuration.GetValue<bool>("TmdbPreload:Enabled", true);
@@ -67,7 +75,10 @@ public class TmdbUpcomingPreloadService : BackgroundService
             }
         }
     }
-
+    
+    /// <summary>
+    /// Executa uma vez o ciclo completo de pré-carregamento de filmes TMDB de forma segura.
+    /// </summary>
     private async Task WarmOnce(CancellationToken stoppingToken, int startPage, int warmCount, int maxPagesToScan)
     {
         if (stoppingToken.IsCancellationRequested) return;

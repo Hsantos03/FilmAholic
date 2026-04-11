@@ -4,12 +4,19 @@ using Microsoft.EntityFrameworkCore;
 
 namespace FilmAholic.Server.Services;
 
+/// <summary>
+/// Serviço responsável por atualizar o cache de filmes em cinemas.
+/// </summary>
 public class CinemaMovieCacheService : BackgroundService
 {
     private readonly IServiceScopeFactory _scopeFactory;
     private readonly ILogger<CinemaMovieCacheService> _logger;
     private static readonly SemaphoreSlim _lock = new(1, 1);
 
+
+    /// <summary>
+    /// Inicializa uma nova instância do serviço de cache de filmes em cinemas.
+    /// </summary>
     public CinemaMovieCacheService(
         IServiceScopeFactory scopeFactory,
         ILogger<CinemaMovieCacheService> logger)
@@ -18,6 +25,10 @@ public class CinemaMovieCacheService : BackgroundService
         _logger = logger;
     }
 
+
+    /// <summary>
+    /// Executa o serviço de cache de filmes em cinemas.
+    /// </summary>
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         await TryRefreshIfNeeded(stoppingToken);
@@ -35,6 +46,10 @@ public class CinemaMovieCacheService : BackgroundService
         }
     }
 
+
+    /// <summary>
+    /// Tenta atualizar o cache de filmes em cinemas, se necessário.
+    /// </summary>
     private async Task TryRefreshIfNeeded(CancellationToken ct)
     {
         if (!await _lock.WaitAsync(0)) 
@@ -71,6 +86,9 @@ public class CinemaMovieCacheService : BackgroundService
         }
     }
 
+    /// <summary>
+    /// Atualiza o cache de filmes em cinemas.
+    /// </summary>
     private async Task RefreshCache(IServiceScope scope, FilmAholicDbContext db, CancellationToken ct)
     {
         var cinemaService = scope.ServiceProvider.GetRequiredService<ICinemaScraperService>();

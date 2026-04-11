@@ -5,12 +5,19 @@ using Microsoft.Extensions.Logging;
 
 namespace FilmAholic.Server.Services;
 
+/// <summary>
+/// Gera notificações de lembrete para o jogo Higher or Lower.
+/// </summary>
 public static class ReminderJogoGenerator
 {
     public const string TipoReminderJogo = "ReminderJogo";
     private static readonly TimeSpan InactividadeMinima = TimeSpan.FromDays(7);
     private static readonly TimeSpan IntervaloEntreNotificacoes = TimeSpan.FromDays(7);
 
+
+    /// <summary>
+    /// Executa um ciclo completo de geração de notificações ReminderJogo.
+    /// </summary>
     public static async Task RunFullCycleAsync(
         FilmAholicDbContext db,
         ILogger? logger,
@@ -71,8 +78,10 @@ public static class ReminderJogoGenerator
         logger?.LogInformation("ReminderJogoGenerator: cycle complete at {Now}", nowUtc);
     }
 
+    /// <summary>
     /// Garante uma notificação HoL quando elegível (mesmas regras que o ciclo diário),
     /// para não depender só do job em background após login/registo.
+    /// </summary>
     public static async Task EnsureForUserIfEligibleAsync(
         FilmAholicDbContext db,
         string utilizadorId,
@@ -131,5 +140,8 @@ public static class ReminderJogoGenerator
         logger?.LogDebug("ReminderJogoGenerator: ensured reminder for user {UserId}", utilizadorId);
     }
 
+    /// <summary>
+    /// Gera números aleatórios para seleção de mensagens.
+    /// </summary>
     private static readonly Random Rng = new();
 }

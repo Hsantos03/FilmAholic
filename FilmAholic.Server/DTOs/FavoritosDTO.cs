@@ -2,6 +2,9 @@ using System.Text.Json.Serialization;
 
 namespace FilmAholic.Server.DTOs
 {
+    /// <summary>
+    /// Representa os favoritos de um utilizador, incluindo filmes e atores favoritos.
+    /// </summary>
     public class FavoritosDTO
     {
         [JsonPropertyName("filmes")]

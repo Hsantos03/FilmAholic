@@ -8,6 +8,10 @@ using System.Security.Claims;
 
 namespace FilmAholic.Server.Controllers
 {
+    /// <summary>
+    /// Servidor de rastreamento do gamification dos minijogos (High-or-Lower, Quizzes).
+    /// Regista score, calcula distribuições progressivas de XP e atualiza as mecânicas diárias dependentes do streak do user.
+    /// </summary>
     [ApiController]
     [Route("api/game/history")]
     public class GameHistoryController : ControllerBase
@@ -20,6 +24,10 @@ namespace FilmAholic.Server.Controllers
         }
 
         // GET: api/game/history
+        /// <summary>
+        /// Devolve os rastros de 50 pontuações (Histórico de jogos) mais recentes do perfil ativo com metadados do tipo de categoria.
+        /// </summary>
+        /// <returns>Arraio imutável com pontuações.</returns>
         [Authorize]
         [HttpGet]
         public async Task<IActionResult> GetMyHistory()
@@ -37,6 +45,11 @@ namespace FilmAholic.Server.Controllers
         }
 
         // POST: api/game/history
+        /// <summary>
+        /// Cria uma nova entrada no histórico de jogos para o utilizador autenticado.
+        /// </summary>
+        /// <param name="dto">A estrutura de pontuação bruta contendo o rasto em JSON as escolhas nos rounds para replay UI.</param>
+        /// <returns>Estatísticas do jogador atualizadas em runtime e XP remanescente.</returns>
         [Authorize]
         [HttpPost]
         public async Task<IActionResult> saveResult([FromBody] GameHistoryCreateDto dto)
@@ -105,6 +118,12 @@ namespace FilmAholic.Server.Controllers
 
 
         // GET: api/game/history/leaderboard?category=films&top=10
+        /// <summary>
+        /// Obtém o ranking dos melhores jogadores em uma categoria específica.
+        /// </summary>
+        /// <param name="category">Categoria do jogo a avaliar peritos ("films", "higherLower").</param>
+        /// <param name="top">Recorte seletivo nativo de pódio ex: 10 ou 100 melhores.</param>
+        /// <returns>Ranking padronizado e ordenado.</returns>
         [HttpGet("leaderboard")]
         public async Task<IActionResult> GetLeaderboard(
             [FromQuery] string category = "films",
@@ -154,6 +173,11 @@ namespace FilmAholic.Server.Controllers
         }
 
 
+        /// <summary>
+        /// Calcula o nível do utilizador com base no XP total acumulado.
+        /// </summary>
+        /// <param name="xpTotal">Quantitativo absoluto angariado historicamente.</param>
+        /// <returns>Patamar de nível correspondente do sujeito.</returns>
         private static int CalcularNivel(int xpTotal)
         {
             int nivel = 1;
@@ -168,9 +192,11 @@ namespace FilmAholic.Server.Controllers
             return nivel;
         }
 
-        /// Calcula XP com bónus de streak.
-        /// Cada resposta consecutiva correta dá mais XP.
-        /// Streak 1 = 5 XP, Streak 2 = 7 XP, Streak 3 = 9 XP... (progressão: 5 + (streak-1)*2)
+        /// <summary>
+        /// Calcula o XP total com base na pontuação e streaks.
+        /// </summary>
+        /// <param name="score">O patamar final do quiz atingido.</param>
+        /// <returns>XP bruto extraído dessa run.</returns>
         private static int CalcularXPComStreak(int score)
         {
             if (score <= 0) return 0;
@@ -192,6 +218,10 @@ namespace FilmAholic.Server.Controllers
             return xpTotal;
         }
 
+        /// <summary>
+        /// Obtém as estatísticas do jogador autenticado, incluindo taxa de acerto e máximo global.
+        /// </summary>
+        /// <returns>Estatuto estatístico do Jogador: taxa de acerto e máximo global.</returns>
         [Authorize]
         [HttpGet("stats")]
         public async Task<IActionResult> GetStats()
@@ -227,6 +257,9 @@ namespace FilmAholic.Server.Controllers
         }
     }
 
+    /// <summary>
+    /// Cria uma nova entrada de histórico de jogo para o utilizador autenticado.
+    /// </summary>
     public class GameHistoryCreateDto
     {
         public int Score { get; set; }

@@ -2,6 +2,9 @@ using FilmAholic.Server.Models;
 
 namespace FilmAholic.Server.Data
 {
+    /// <summary>
+    /// Representa a semente de medalhas na aplicação.
+    /// </summary>
     public static class MedalhaSeed
     {
         public static List<Medalha> Medalhas = new()

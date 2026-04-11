@@ -1,5 +1,8 @@
 namespace FilmAholic.Server.DTOs
 {
+    /// <summary>
+    /// Representa um comentário feito por um utilizador, incluindo informações como ID, texto, classificação, datas de criação e edição, e detalhes do utilizador.
+    /// </summary>
     public class CommentDTO
     {
         public int Id { get; set; }
@@ -30,6 +33,10 @@ namespace FilmAholic.Server.DTOs
         public int DislikeCount { get; set; }
         public int MyVote { get; set; }
     }
+
+    /// <summary>
+    /// Representa uma lista paginada de comentários, incluindo os comentários e a contagem total.
+    /// </summary>
     public class PaginatedCommentsDTO
     {
         public List<CommentDTO> Comments { get; set; } = new();

@@ -2,6 +2,9 @@ using System.ComponentModel.DataAnnotations;
 
 namespace FilmAholic.Server.Models
 {
+    /// <summary>
+    /// Representa um comentário de um utilizador.
+    /// </summary>
     public class Comments
     {
         public int Id { get; set; }

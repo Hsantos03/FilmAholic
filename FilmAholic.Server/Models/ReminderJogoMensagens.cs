@@ -1,8 +1,13 @@
 namespace FilmAholic.Server.Models;
 
-/// <summary>Templates do reminder HoL (variante 0..9 = ordem do ícone no cliente).</summary>
+/// <summary>
+/// Mensagens do reminder HoL (variante 0..9 = ordem do ícone no cliente).
+/// </summary>
 public static class ReminderJogoMensagens
 {
+    /// <summary>
+    /// Textos das mensagens do reminder HoL sem emojis.
+    /// </summary>
     public static readonly string[] TextosSemEmoji =
     [
         "Desafia-te e tenta chegar ao topo da Leaderboard!",
@@ -17,6 +22,9 @@ public static class ReminderJogoMensagens
         "A tua posição na Leaderboard depende de ti. Não a deixes escapar!"
     ];
 
+    /// <summary>
+    /// Textos das mensagens do reminder HoL com emojis.
+    /// </summary>
     public static readonly string[] LegacyCorpoComEmoji =
     [
         "Desafia-te e tenta chegar ao topo da Leaderboard! 🎮",

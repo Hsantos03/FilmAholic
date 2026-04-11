@@ -5,12 +5,17 @@ using Microsoft.EntityFrameworkCore;
 
 namespace FilmAholic.Server.Services;
 
-/// <summary>Lógica partilhada entre o <see cref="PeriodicStatsNotificationService"/> e o endpoint de teste imediato.</summary>
+/// <summary>
+/// Lógica partilhada entre o <see cref="PeriodicStatsNotificationService"/> e o endpoint de teste imediato.
+/// </summary>
 public static class PeriodicStatsNotificationGenerator
 {
     public const string TipoResumo = "ResumoEstatisticas";
     private static readonly JsonSerializerOptions JsonOpts = new() { PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
 
+    /// <summary>
+    /// Obtém o intervalo de resumo com base na frequência fornecida.
+    /// </summary>
     public static TimeSpan GetResumoInterval(string? frequencia)
     {
         var f = (frequencia ?? string.Empty).Trim();
@@ -20,6 +25,9 @@ public static class PeriodicStatsNotificationGenerator
             : TimeSpan.FromDays(7);
     }
 
+    /// <summary>
+    /// Obtém o filme mais visto na semana na plataforma.
+    /// </summary>
     public static async Task<ResumoFilmeComunidadeDto?> GetFilmeMaisVistoSemanaPlataformaAsync(
         FilmAholicDbContext db,
         DateTime nowUtc,
@@ -50,6 +58,9 @@ public static class PeriodicStatsNotificationGenerator
         };
     }
 
+    /// <summary>
+    /// Executa um ciclo completo de geração de notificações periódicas de estatísticas.
+    /// </summary>
     public static async Task RunFullCycleAsync(
         FilmAholicDbContext db,
         PeriodicStatsNotificationOptions options,

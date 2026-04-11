@@ -9,6 +9,9 @@ using System.Security.Claims;
 
 namespace FilmAholic.Server.Controllers
 {
+    /// <summary>
+    /// Cria e gere as medalhas (insígneas) dos utilizadores, permitindo a visualização e exposição das mesmas.
+    /// </summary>
     [Authorize]
     [ApiController]
     [Route("api/[controller]")]
@@ -26,6 +29,9 @@ namespace FilmAholic.Server.Controllers
         }
 
         // GET: api/medalhas/pessoal
+        /// <summary>
+        /// Obtém a lista de medalhas do utilizador autenticado.
+        /// </summary>
         [HttpGet("pessoal")]
         public async Task<IActionResult> GetMinhasMedalhas()
         {
@@ -35,6 +41,10 @@ namespace FilmAholic.Server.Controllers
         }
 
         // GET: api/medalhas/utilizador/{id}/conquistas
+        /// <summary>
+        /// Obtém a lista de medalhas de um utilizador específico.
+        /// </summary>
+        /// <param name="id">GuID User String identificadora.</param>
         [HttpGet("utilizador/{id}/conquistas")]
         public async Task<IActionResult> GetMedalhasDeUtilizador(string id)
         {
@@ -86,6 +96,9 @@ namespace FilmAholic.Server.Controllers
         }
 
         // GET: api/medalhas/progresso
+        /// <summary>
+        /// Obtém o progresso das medalhas do utilizador autenticado.
+        /// </summary>
         [HttpGet("progresso")]
         public async Task<IActionResult> GetMeuProgresso()
         {
@@ -95,6 +108,9 @@ namespace FilmAholic.Server.Controllers
         }
 
         // GET: api/medalhas/todas
+        /// <summary>
+        /// Obtém a lista completa de todas as medalhas disponíveis.
+        /// </summary>
         [HttpGet("todas")]
         public async Task<IActionResult> GetTodasMedalhas()
         {
@@ -104,6 +120,9 @@ namespace FilmAholic.Server.Controllers
         }
 
         // POST: api/medalhas/check
+        /// <summary>
+        /// Verifica todas as conquistas do utilizador autenticado.
+        /// </summary>
         [HttpPost("check")]
         public async Task<IActionResult> CheckMedalhas()
         {
@@ -134,6 +153,9 @@ namespace FilmAholic.Server.Controllers
         }
 
         // POST: api/medalhas/check/movies
+        /// <summary>
+        /// Verifica as conquistas relacionadas a filmes assistidos do utilizador autenticado.
+        /// </summary>
         [HttpPost("check/movies")]
         public async Task<IActionResult> CheckMovieMedalhas()
         {
@@ -162,10 +184,13 @@ namespace FilmAholic.Server.Controllers
                 return StatusCode(500, new { message = "Error checking movie medalhas", error = ex.Message });
             }
         }
-    
 
-    // POST: api/medalhas/check-level
-    [HttpPost("check-level")]
+
+        // POST: api/medalhas/check-level
+        /// <summary>
+        /// Verifica as conquistas relacionadas ao nível do utilizador autenticado.
+        /// </summary>
+        [HttpPost("check-level")]
         public async Task<IActionResult> CheckLevelMedals()
         {
             var userId = _userManager.GetUserId(User) ?? User.FindFirstValue(ClaimTypes.NameIdentifier);
@@ -190,6 +215,9 @@ namespace FilmAholic.Server.Controllers
         }
 
         // POST: api/medalhas/check-comunidade
+        /// <summary>
+        /// Verifica as conquistas relacionadas à participação em comunidades do utilizador autenticado.
+        /// </summary>
         [HttpPost("check-comunidade")]
         public async Task<IActionResult> CheckComunidadeMedals()
         {
@@ -216,6 +244,9 @@ namespace FilmAholic.Server.Controllers
         }
 
         // POST: api/medalhas/check-desafios
+        /// <summary>
+        /// Verifica as conquistas relacionadas aos desafios diários do utilizador autenticado.
+        /// </summary>
         [HttpPost("check-desafios")]
         public async Task<IActionResult> CheckDesafiosMedals()
         {
@@ -245,6 +276,9 @@ namespace FilmAholic.Server.Controllers
         }
 
         // POST: api/medalhas/check-higher-or-lower
+        /// <summary>
+        /// Verifica as conquistas relacionadas ao minijogo "Higher or Lower" do utilizador autenticado.
+        /// </summary>
         [HttpPost("check-higher-or-lower")]
         public async Task<IActionResult> CheckHigherOrLowerMedals()
         {
@@ -271,6 +305,9 @@ namespace FilmAholic.Server.Controllers
         }
 
         // GET: api/medalhas/exposicao
+        /// <summary>
+        /// Obtém a exposição de medalhas do utilizador autenticado.
+        /// </summary>
         [HttpGet("exposicao")]
         public async Task<IActionResult> GetMedalhasExposicao()
         {
@@ -308,6 +345,10 @@ namespace FilmAholic.Server.Controllers
         }
 
         // PUT: api/medalhas/exposicao
+        /// <summary>
+        /// Atualiza a exposição de medalhas do utilizador autenticado.
+        /// </summary>
+        /// <param name="request">Submissão contendo Index Slot da gaveta HTML entre 0 a 2 e MedalhaId.</param>
         [HttpPut("exposicao")]
         public async Task<IActionResult> UpdateMedalhasExposicao([FromBody] UpdateExposicaoRequest request)
         {
@@ -355,6 +396,9 @@ namespace FilmAholic.Server.Controllers
         }
     }
 
+    /// <summary>
+    /// Atualiza a exposição de medalhas do utilizador autenticado.
+    /// </summary>
     public class UpdateExposicaoRequest
     {
         public int SlotIndex { get; set; }

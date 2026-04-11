@@ -1,6 +1,9 @@
 import http from 'k6/http';
 import { sleep, check } from 'k6';
 
+/// <summary>
+/// Configurações do teste de carga para a API de Filmes
+/// </summary>
 export const options = {
     stages: [
         { duration: '30s', target: 10 },
@@ -13,6 +16,9 @@ export const options = {
     },
 };
 
+/// <summary>
+/// Função principal do teste de carga, que realiza uma requisição GET para a API de Filmes
+/// </summary>
 export default function () {
     const res = http.get('https://localhost:7277/api/Filmes', {
         insecureSkipTLSVerify: true,

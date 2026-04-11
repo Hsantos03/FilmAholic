@@ -1,5 +1,8 @@
 namespace FilmAholic.Server.Models;
 
+/// <summary>
+/// Representa as preferências de notificação de um utilizador.
+/// </summary>
 public class PreferenciasNotificacao
 {
     public int Id { get; set; }

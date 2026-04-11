@@ -1,5 +1,8 @@
 namespace FilmAholic.Server.Services;
 
+/// <summary>
+/// Opções de configuração para notificações periódicas de estatísticas.
+/// </summary>
 public class PeriodicStatsNotificationOptions
 {
     public bool Enabled { get; set; } = true;

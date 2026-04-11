@@ -11,6 +11,10 @@ using System.Security.Claims;
 
 namespace FilmAholic.Server.Controllers
 {
+    /// <summary>
+    /// Fornece as identidades, gestão de credenciais e segurança de tokens.
+    /// Opera logins integrados com correio eletrónico, senhas bem como SSO (Single Sign-On) face ao Facebook e Google.
+    /// </summary>
     [ApiController]
     [Route("api/[controller]")] // A rota será: api/autenticacao
     public class AutenticacaoController : ControllerBase
@@ -22,6 +26,16 @@ namespace FilmAholic.Server.Controllers
         private readonly IConfiguration _configuration;
         private readonly FilmAholicDbContext _context;
 
+        /// <summary>
+        /// Construtor de inicialização do Módulo de Autenticação.
+        /// Estabelece pontes para os gerentes virtuais do Microsoft Identity Core.
+        /// </summary>
+        /// <param name="userManager">Validador nuclear dos domínios da conta.</param>
+        /// <param name="signInManager">Validador transiente responsável por gerar as Cookies.</param>
+        /// <param name="emailService">Conexão despachante para caixas SMTP SendGrid de reenvio de confirmações.</param>
+        /// <param name="logger">Escreve saídas estruturadas dos bugs de conexão no log.</param>
+        /// <param name="configuration">Variáveis sensíveis configuráveis nativamente.</param>
+        /// <param name="context">Base de dados relacional adjacente.</param>
         public AutenticacaoController(
             UserManager<Utilizador> userManager,
             SignInManager<Utilizador> signInManager,
@@ -38,6 +52,12 @@ namespace FilmAholic.Server.Controllers
             _context = context;
         }
 
+        /// <summary>
+        /// Cria uma conta nova sob as normas europeias e estabelece os mecanismos do novo perfil.
+        /// É enviado uma chave gerada para o email afim de verificação posterior.
+        /// </summary>
+        /// <param name="model">Enclave seguro da portabilidade do formulário front-end de registo.</param>
+        /// <returns>Emissão de alerta sobre a obrigação de conferir a caixa de e-mail.</returns>
         [HttpPost("registar")]
         public async Task<IActionResult> Registar([FromBody] RegistoRequest model)
         {
@@ -103,6 +123,10 @@ namespace FilmAholic.Server.Controllers
             });
         }
 
+        /// <summary>
+        /// Recolhe dados de maneira a saber se o utilizador está autenticado.
+        /// </summary>
+        /// <returns>Descreve se existem dados em cache logados ou não. Envia falso nulo se estiver desligado.</returns>
         [HttpGet("sessao")]
         [AllowAnonymous]
         public async Task<IActionResult> ObterSessao()
@@ -140,6 +164,11 @@ namespace FilmAholic.Server.Controllers
             });
         }
 
+        /// <summary>
+        /// Emite cookies ligados ao perfil do sujeito sob a introdução do par (Email / Password).
+        /// </summary>
+        /// <param name="model">Porta DTO com as credenciais codificadas e e-mail em plain-text.</param>
+        /// <returns>Dados abertos fundamentais da identidade (Username e Nome) caso o cofre corresponda, 401 caso não correspoda.</returns>
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] LoginRequest model)
         {
@@ -176,6 +205,12 @@ namespace FilmAholic.Server.Controllers
             return Unauthorized(new { message = "Password incorreta." });
         }
 
+        /// <summary>
+        /// Reavalia o correio assinado pelo Token emitido após o sucesso na rota /registar (via GET via E-mail Html ou POST estrito).
+        /// </summary>
+        /// <param name="userId">Endereçamento base em formato String do sujeito.</param>
+        /// <param name="token">Chave longa codificada do Identity associada intrinsecamente ao ato primário da assinatura inicial.</param>
+        /// <returns>Informa e redireciona face à veracidade e validade temporal (Expirado/Ativo).</returns>
         [HttpGet("confirmar-email")]
         [HttpPost("confirmar-email")]
         public async Task<IActionResult> ConfirmarEmail([FromQuery] string userId, [FromQuery] string token)
@@ -214,6 +249,11 @@ namespace FilmAholic.Server.Controllers
             return BadRequest(new { message = "Erro ao confirmar email. O token pode estar expirado ou inválido.", errors = result.Errors });
         }
 
+        /// <summary>
+        /// Recria e envia um novo ingresso encriptado para a porta da caixa de correio, para verificar o email pendente.
+        /// </summary>
+        /// <param name="model">Enclave do pedido pedindo a morada de correio eletrónico associada localmente.</param>
+        /// <returns>Sinal limpo 200 alertando de envio com sucesso de SMTP.</returns>
         [HttpPost("reenviar-email-verificacao")]
         public async Task<IActionResult> ReenviarEmailVerificacao([FromBody] ReenviarEmailRequest model)
         {
@@ -241,6 +281,11 @@ namespace FilmAholic.Server.Controllers
             }
         }
 
+        /// <summary>
+        /// Envia um link URL auto-gerado para o processo de recuperação de password por email.
+        /// </summary>
+        /// <param name="model">Modelo solicitando a credencial principal do email para onde reencaminhar o pedido.</param>
+        /// <returns>Dispositivo final opaco alertando o desfecho idêntico que dissimula ataques de fishing se o e-mail não existir.</returns>
         [HttpPost("forgot-password")]
         public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordRequest model)
         {
@@ -267,6 +312,11 @@ namespace FilmAholic.Server.Controllers
             }
         }
 
+        /// <summary>
+        /// Injeta o override ou reconstrução de uma palavra-passe nova usando o Token temporal recebido no /forgot-password.
+        /// </summary>
+        /// <param name="model">Contêm correio eletrónico, token decifrado oriundo do link e nova passphrase complexa.</param>
+        /// <returns>Mensagem definindo que o cofre foi mudado com sucesso ou os erros da password policy.</returns>
         [HttpPost("reset-password")]
         public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordDTO model)
         {
@@ -283,6 +333,10 @@ namespace FilmAholic.Server.Controllers
             return BadRequest(new { message = "Erro ao redefinir password.", errors = result.Errors });
         }
 
+        /// <summary>
+        /// Elimina as cookies passados contidos via browser e finaliza ativamente a sessão HTTP e Identity.
+        /// </summary>
+        /// <returns>Liberta local Storage emitindo 200 OK sem token.</returns>
         [HttpPost("logout")]
         public async Task<IActionResult> Logout()
         {
@@ -300,6 +354,12 @@ namespace FilmAholic.Server.Controllers
         }
 
         // Endpoints para autenticação externa (OAuth)
+
+        /// <summary>
+        /// Portal que empurra o front-end para o logótipo e a infraestrutura de login da Google OAuth Provider.
+        /// Injeta o Client e o Secret em runtime.
+        /// </summary>
+        /// <returns>Desafio de Autenticação Remota com redirect automático do URL Scheme.</returns>
         [HttpGet("google-login")]
         public IActionResult GoogleLogin()
         {
@@ -319,6 +379,11 @@ namespace FilmAholic.Server.Controllers
             return Challenge(properties, "Google");
         }
 
+        /// <summary>
+        /// Portal que submete a sessão a um portal OAuth Facebook.
+        /// Baseado nas chaves expostas nas env vars da aplicação de backend do Azure.
+        /// </summary>
+        /// <returns>Desafio configurado e submetido às APIs do META corp.</returns>
         [HttpGet("facebook-login")]
         public IActionResult FacebookLogin()
         {
@@ -338,18 +403,32 @@ namespace FilmAholic.Server.Controllers
             return Challenge(properties, "Facebook");
         }
 
+        /// <summary>
+        ///  Página final pós preenchimento de login com Google Oauth.
+        /// </summary>
+        /// <returns>Encontra o provider Google e tenta o login direto sem palavra passe.</returns>
         [HttpGet("google-callback")]
         public async Task<IActionResult> GoogleCallback()
         {
             return await HandleExternalLoginCallback("Google");
         }
 
+        /// <summary>
+        /// Página final pós preenchimento de login com Facebook Oauth.
+        /// </summary>
+        /// <returns>Tratamento do sinal Callback retornando logado ou falso.</returns>
         [HttpGet("facebook-callback")]
         public async Task<IActionResult> FacebookCallback()
         {
             return await HandleExternalLoginCallback("Facebook");
         }
 
+        /// <summary>
+        /// Processador encapsulado da resposta Callback providenciada tanto pelos servidores da META como os da Google.
+        /// Avalia assinaturas temporárias do payload OpenID Connect providenciado pelo provider.
+        /// </summary>
+        /// <param name="provider">Designação String ("Google" ou "Facebook") lida ativamente para logging e personalização das tags.</param>
+        /// <returns>Redirects diretos para a homepage do Angular com querystrings que assinalam fracasso ou permissos atribuídos na App.</returns>
         private async Task<IActionResult> HandleExternalLoginCallback(string provider)
         {
             var error = Request.Query["error"].ToString();
@@ -458,9 +537,8 @@ namespace FilmAholic.Server.Controllers
         }
 
         /// <summary>
-        /// <see cref="UserManager{TUser}.FindByEmailAsync"/> usa SingleOrDefault — com o mesmo email em mais de uma linha
-        /// em AspNetUsers a exceção "Sequence contains more than one element" rebenta. Isto devolve a conta mais antiga (Id)
-        /// e regista aviso para corrigires duplicados na BD.
+        /// <see cref="UserManager{TUser}.FindByEmailAsync"/> usa SingleOrDefault~.
+        /// Isto devolve a conta mais antiga (Id) e regista aviso para corrigires duplicados na BD.
         /// </summary>
         private async Task<Utilizador?> FindUserByEmailSafeAsync(string? email, CancellationToken cancellationToken = default)
         {
@@ -484,6 +562,10 @@ namespace FilmAholic.Server.Controllers
             return matches[0];
         }
 
+        /// <summary>
+        /// Emite requisição síncrona aos geradores internos de Missões ou Preferências para garantir que uma conta tem os rows necessários instanciados na BD após o logon bem-sucedido.
+        /// </summary>
+        /// <param name="userId">Primary key extraída ativamente das tabelas AspNet ao login.</param>
         private async Task TryEnsureReminderJogoOnLoginAsync(string userId)
         {
             try
@@ -496,6 +578,11 @@ namespace FilmAholic.Server.Controllers
             }
         }
 
+        /// <summary>
+        /// Calcula qual será o domínio principal subscrito em Configurações. 
+        /// Usado para o envio de emails contendo ligações baseadas em "localhost" durante desenvolvimento face às do Azure em fase Prod.
+        /// </summary>
+        /// <returns>URL Canonical Formatado.</returns>
         private string GetFrontendBaseUrl()
         {
             var host = Request.Host.Value ?? "";
@@ -525,6 +612,9 @@ namespace FilmAholic.Server.Controllers
         }
     }
 
+    /// <summary>
+    /// Formulário submetido para criação de uma nova conta.
+    /// </summary>
     public class RegistoRequest
     {
         public string UserName { get; set; } = "";
@@ -535,22 +625,34 @@ namespace FilmAholic.Server.Controllers
         public DateTime DataNascimento { get; set; }
     }
 
+    /// <summary>
+    /// Modelo de credenciais limpas para acesso a cookies de sessão.
+    /// </summary>
     public class LoginRequest
     {
         public string Email { get; set; } = "";
         public string Password { get; set; } = "";
     }
 
+    /// <summary>
+    /// É usado para reemissão de código para SMTP.
+    /// </summary>
     public class ReenviarEmailRequest
     {
         public string Email { get; set; } = "";
     }
 
+    /// <summary>
+    /// Pedido leve que desponta fluxo de recuperação na UI.
+    /// </summary>
     public class ForgotPasswordRequest
     {
         public string Email { get; set; } = "";
     }
 
+    /// <summary>
+    /// O submetido após a introdução nas rotas de Esqueci a Palavra Passe.
+    /// </summary>
     public class ResetPasswordDTO
     {
         public string Email { get; set; } = "";

@@ -2,6 +2,9 @@ using FilmAholic.Server.Models;
 
 namespace FilmAholic.Server.Data
 {
+    /// <summary>
+    /// Representa a semente de filmes na aplicação.
+    /// </summary>
     public static class FilmSeed
     {
         public static List<Filme> Filmes = new()

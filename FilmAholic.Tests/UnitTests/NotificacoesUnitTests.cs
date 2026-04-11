@@ -314,7 +314,7 @@ namespace FilmAholic.Tests.UnitTests
                     Tipo = "ResumoEstatisticas",
                     Corpo = "{\"tempoTotalHoras\":20}",
                     CriadaEm = DateTime.UtcNow.AddDays(-2),
-                    LidaEm = DateTime.UtcNow.AddDays(-1)
+                    LidaEm = DateTime.UtcNow.AddHours(-12)
                 });
 
                 await context.SaveChangesAsync();

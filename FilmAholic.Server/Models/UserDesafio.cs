@@ -3,6 +3,9 @@ using System.Text.Json.Serialization;
 
 namespace FilmAholic.Server.Models
 {
+    /// <summary>
+    /// Representa a relação entre um utilizador e um desafio.
+    /// </summary>
     public class UserDesafio
     {
         public int Id { get; set; }

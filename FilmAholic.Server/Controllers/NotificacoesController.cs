@@ -8,6 +8,10 @@ using Microsoft.EntityFrameworkCore;
 
 namespace FilmAholic.Server.Controllers
 {
+    /// <summary>
+    /// Servidor encarregue do ecossistema de Notificados da app, gilhando ementas locais de recomendações passivas baseadas nas Preferencias.
+    /// Contem o Job/Engine explícito de "NovaEstreia", "ResumoSemanal" e Anúncios globais do perfil Admin.
+    /// </summary>
     [ApiController]
     [Route("api/[controller]")]
     public class NotificacoesController : ControllerBase
@@ -35,11 +39,17 @@ namespace FilmAholic.Server.Controllers
             _movieService = movieService;
         }
 
+        /// <summary>
+        /// Atalho simples para extrair o Subject Identificator standard subjacente ao HTTP Token portado no Request.
+        /// </summary>
         private string? GetUserId()
         {
             return User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue("sub");
         }
 
+        /// <summary>
+        /// Busca definições explícitas de envio de sininhos da DB, ou no inverso, popula imediatamente e guarda uma "factory setting" padrão ao detetar a conta nua.
+        /// </summary>
         private async Task<PreferenciasNotificacao> GetOrCreatePreferenciasNotificacaoAsync(string userId)
         {
             var prefs = await _context.PreferenciasNotificacao
@@ -63,6 +73,9 @@ namespace FilmAholic.Server.Controllers
             return prefs;
         }
 
+        /// <summary>
+        /// Converte a frequência de notificação em um intervalo de tempo.
+        /// </summary>
         private static TimeSpan GetFrequencyInterval(string? frequencia)
         {
             return (frequencia ?? string.Empty).Trim().ToLowerInvariant() switch
@@ -73,6 +86,9 @@ namespace FilmAholic.Server.Controllers
             };
         }
 
+        /// <summary>
+        /// Verifica se é possível gerar uma nova notificação de estreia para o utilizador com base nas suas preferências e no horário atual.
+        /// </summary>
         private async Task<bool> CanGenerateNovaEstreiaAsync(string userId, PreferenciasNotificacao prefs, DateTime nowUtc)
         {
             if (!prefs.NovaEstreiaAtiva) return false;
@@ -88,6 +104,9 @@ namespace FilmAholic.Server.Controllers
             return nowUtc - lastCreatedAt.Value >= interval;
         }
 
+        /// <summary>
+        /// Verifica se um filme está prestes a ser lançado com base na data de lançamento ou no ano.
+        /// </summary>
         private static bool IsUpcoming(Filme f, DateTime nowUtc, DateTime endUtc, int maxAnoAhead)
         {
             if (f == null) return false;
@@ -114,6 +133,9 @@ namespace FilmAholic.Server.Controllers
             return false;
         }
 
+        /// <summary>
+        /// Gera uma chave de ordenação para um filme com base na data de lançamento ou no ano.
+        /// </summary>
         private static DateTime SortKey(Filme f, DateTime nowUtc, int maxAnoAhead)
         {
             if (f.ReleaseDate.HasValue) return f.ReleaseDate.Value;
@@ -121,7 +143,9 @@ namespace FilmAholic.Server.Controllers
             return new DateTime(nowUtc.Year + maxAnoAhead, 1, 1, 0, 0, 0, DateTimeKind.Utc);
         }
 
+        /// <summary>
         /// Nomes em PT da tabela <c>Generos</c> → id oficial de género no TMDB (movie).
+        /// </summary>
         private static readonly Dictionary<string, int> GeneroNomeParaTmdbId = new(StringComparer.OrdinalIgnoreCase)
         {
             ["Ação"] = 28,
@@ -142,6 +166,9 @@ namespace FilmAholic.Server.Controllers
             ["Western"] = 37,
         };
 
+        /// <summary>
+        /// Verifica se um filme corresponde aos géneros favoritos do utilizador.
+        /// </summary>
         private bool GenreMatches(Filme f, List<string> favoriteGenres)
         {
             if (favoriteGenres == null || favoriteGenres.Count == 0) return false;
@@ -149,6 +176,9 @@ namespace FilmAholic.Server.Controllers
 
             var generoText = f.Genero ?? string.Empty;
 
+            /// <summary>
+            /// Normaliza uma string removendo acentos, espaços em branco e convertendo para minúsculas.
+            /// </summary>
             static string Norm(string? s)
             {
                 if (s == null) return string.Empty;
@@ -237,8 +267,10 @@ namespace FilmAholic.Server.Controllers
             return false;
         }
 
-        /// Retorna a lista de filmes para “NovaEstreia” já filtrada por géneros favoritos e histórico.
+        /// <summary>
+        /// Obtém a lista de filmes para "NovaEstreia" já filtrada por géneros favoritos e histórico.
         /// Também cria notificações em `Notificacoes` para os filmes elegíveis.
+        /// </summary>
         [HttpGet("nova-estreia")]
         public async Task<ActionResult<List<Filme>>> GetNovaEstreia(
             [FromQuery] int limit = 5,
@@ -411,17 +443,26 @@ namespace FilmAholic.Server.Controllers
             return Ok(unreadMovies);
         }
 
+        /// <summary>
+        /// Estrutura que agrupa notificações de novas estreias lidas e não lidas.
+        /// </summary>
         public class NovaEstreiaFeedDto
         {
             public List<Filme> Unread { get; set; } = new();
             public List<Filme> Read { get; set; } = new();
         }
 
+        /// <summary>
+        /// DTO para transporte de uma lista de IDs do TMDB que já foram marcados como lidos.
+        /// </summary>
         public class LidosTmdbIdsDto
         {
             public List<int> LidosTmdbIds { get; set; } = new();
         }
 
+        /// <summary>
+        /// Obtém a lista de IDs do TMDB dos filmes que já foram marcados como lidos pelo utilizador.
+        /// </summary>
         [HttpGet("nova-estreia/lidos-tmdb-ids")]
         public async Task<ActionResult<LidosTmdbIdsDto>> GetLidosTmdbIds([FromQuery] string? ids = null)
         {
@@ -471,6 +512,9 @@ namespace FilmAholic.Server.Controllers
             return Ok(new LidosTmdbIdsDto { LidosTmdbIds = lidos });
         }
 
+        /// <summary>
+        /// Converte uma lista de IDs do TMDB em formato CSV para uma lista de inteiros.
+        /// </summary>
         private static List<int> ParseTmdbIdList(string? csv, int max)
         {
             if (string.IsNullOrWhiteSpace(csv)) return new List<int>();
@@ -485,6 +529,9 @@ namespace FilmAholic.Server.Controllers
             return r.Distinct().ToList();
         }
 
+        /// <summary>
+        /// Obtém a lista de próximas estreias personalizadas para o utilizador, filtradas por preferências e géneros.
+        /// </summary>
         [HttpGet("proximas-estreias")]
         public async Task<ActionResult<List<Filme>>> GetProximasEstreiasPersonalizadas(
             [FromQuery] int page = 1,
@@ -554,6 +601,9 @@ namespace FilmAholic.Server.Controllers
                 }
             }
 
+            /// <summary>
+            /// Verifica se um filme já foi visto pelo utilizador (por ID de BD ou TMDB).
+            /// </summary>
             bool IsWatched(Filme f)
             {
                 if (f.Id > 0) return watchedSet.Contains(f.Id);
@@ -572,7 +622,9 @@ namespace FilmAholic.Server.Controllers
             return Ok(filtered);
         }
 
-        /// Feed para a UI: devolve não lidas + lidas (últimas N) para o menu de notificações.
+        /// <summary>
+        /// Obtém a lista de próximas estreias personalizadas para o utilizador, filtradas por preferências e géneros.
+        /// </summary>
         [HttpGet("nova-estreia/feed")]
         public async Task<ActionResult<NovaEstreiaFeedDto>> GetNovaEstreiaFeed(
             [FromQuery] int unreadLimit = 5,
@@ -664,7 +716,9 @@ namespace FilmAholic.Server.Controllers
             });
         }
 
-        /// Endpoint de diagnóstico para perceber porque a lista devolvida fica pequena.
+        /// <summary>
+        /// Obtém informações de diagnóstico sobre as próximas estreias para o utilizador, incluindo contagens de candidatos, elegíveis e notificações.
+        /// </summary>
         [HttpGet("nova-estreia/debug")]
         public async Task<ActionResult<NovaEstreiaDebugDto>> DebugNovaEstreia(
             [FromQuery] int limit = 5,
@@ -872,6 +926,9 @@ namespace FilmAholic.Server.Controllers
             return Ok(dto);
         }
 
+        /// <summary>
+        /// Sinaliza no sistema que uma notificação de Nova Estreia foi formalmente vista pelo utilizador, preenchendo o LidaEm.
+        /// </summary>
         [HttpPut("nova-estreia/{filmeId:int}/lida")]
         public async Task<IActionResult> MarcarNovaEstreiaComoLida([FromRoute] int filmeId)
         {
@@ -913,6 +970,9 @@ namespace FilmAholic.Server.Controllers
             PropertyNamingPolicy = JsonNamingPolicy.CamelCase
         };
 
+        /// <summary>
+        /// Obtém as preferências de notificação do utilizador.
+        /// </summary>
         [HttpGet("preferencias-notificacao")]
         public async Task<ActionResult<PreferenciasNotificacaoDto>> GetPreferenciasNotificacao()
         {
@@ -933,6 +993,9 @@ namespace FilmAholic.Server.Controllers
             });
         }
 
+        /// <summary>
+        /// Atualiza as preferências de notificação do utilizador.
+        /// </summary>
         [HttpPut("preferencias-notificacao")]
         public async Task<IActionResult> PutPreferenciasNotificacao([FromBody] PreferenciasNotificacaoDto dto)
         {
@@ -975,7 +1038,9 @@ namespace FilmAholic.Server.Controllers
             return NoContent();
         }
 
-        /// Feed FR70: resumos periódicos de estatísticas (lidas / não lidas).
+        /// <summary>
+        /// Obtém o feed de resumos de estatísticas do utilizador, incluindo itens lidos e não lidos.
+        /// </summary>
         [HttpGet("resumo-estatisticas/feed")]
         public async Task<ActionResult<ResumoEstatisticasFeedDto>> GetResumoEstatisticasFeed(
             [FromQuery] int unreadLimit = 5,
@@ -996,6 +1061,9 @@ namespace FilmAholic.Server.Controllers
 
             var lidaVisivelDesde = NotificacaoLidaCutoffAgoraUtc();
 
+            /// <summary>
+            /// Desserializa o corpo JSON de um resumo de estatísticas.
+            /// </summary>
             static ResumoEstatisticasCorpoDto? ParseCorpo(string? raw)
             {
                 if (string.IsNullOrWhiteSpace(raw)) return null;
@@ -1042,6 +1110,9 @@ namespace FilmAholic.Server.Controllers
             });
         }
 
+        /// <summary>
+        /// Marca um resumo de estatísticas como lido.
+        /// </summary>
         [HttpPut("resumo-estatisticas/{id:int}/lida")]
         public async Task<IActionResult> MarcarResumoEstatisticasComoLida([FromRoute] int id)
         {
@@ -1061,7 +1132,9 @@ namespace FilmAholic.Server.Controllers
             return NoContent();
         }
 
-        /// Contagem de notificações de resumo estatísticas não lidas.
+        /// <summary>
+        /// Obtém a contagem de resumos de estatísticas não lidos.
+        /// </summary>
         [HttpGet("resumo-estatisticas/unread-count")]
         public async Task<ActionResult<int>> GetResumoEstatisticasUnreadCount()
         {
@@ -1075,7 +1148,10 @@ namespace FilmAholic.Server.Controllers
             return Ok(count);
         }
 
-        /// Feed de notificações de comunidade (novas publicações).
+        /// <summary>
+        /// Obtém o feed de notificações de uma comunidade específica. 
+        /// Apenas membros ativos da comunidade podem visualizar o feed.
+        /// </summary>
         [HttpGet("comunidade/feed")]
         public async Task<ActionResult<NotificacaoComunidadeFeedDto>> GetNotificacoesComunidadeFeed(
             [FromQuery] int unreadLimit = 20,
@@ -1171,7 +1247,9 @@ namespace FilmAholic.Server.Controllers
             }
         }
 
-        /// Contagem de notificações de comunidade não lidas.
+        /// <summary>
+        /// Obtém a contagem de notificações de comunidade não lidas.
+        /// </summary>
         [HttpGet("comunidade/unread-count")]
         public async Task<ActionResult<int>> GetNotificacoesComunidadeUnreadCount()
         {
@@ -1185,7 +1263,9 @@ namespace FilmAholic.Server.Controllers
             return Ok(count);
         }
 
-        /// Marcar uma notificação de comunidade como lida.
+        /// <summary>
+        /// Marca uma notificação de comunidade como lida.
+        /// </summary>
         [HttpPut("comunidade/{id:int}/lida")]
         public async Task<IActionResult> MarcarNotificacaoComunidadeComoLida([FromRoute] int id)
         {
@@ -1204,6 +1284,9 @@ namespace FilmAholic.Server.Controllers
             return NoContent();
         }
 
+        /// <summary>
+        /// Marca todas as notificações de comunidade como lidas.
+        /// </summary>
         [HttpPut("comunidade/marcar-todas-lidas")]
         public async Task<IActionResult> MarcarTodasNotificacoesComunidadeComoLidas()
         {
@@ -1223,6 +1306,9 @@ namespace FilmAholic.Server.Controllers
             return NoContent();
         }
 
+        /// <summary>
+        /// Obtém o feed de lembretes de jogo para o utilizador.
+        /// </summary>
         [HttpGet("reminder-jogo/feed")]
         public async Task<IActionResult> GetReminderJogoFeed()
         {
@@ -1248,6 +1334,10 @@ namespace FilmAholic.Server.Controllers
             return Ok(notifs);
         }
 
+
+        /// <summary>
+        /// Marca um lembrete de jogo como lido.
+        /// </summary>
         [HttpPut("reminder-jogo/{id:int}/lida")]
         public async Task<IActionResult> MarcarReminderJogoComoLida([FromRoute] int id)
         {
@@ -1264,7 +1354,9 @@ namespace FilmAholic.Server.Controllers
             return NoContent();
         }
 
-        /// Contagem de notificações de reminder de jogo não lidas.
+        /// <summary>
+        /// Obtém a contagem de lembretes de jogo não lidos para o utilizador.
+        /// </summary>
         [HttpGet("reminder-jogo/unread-count")]
         public async Task<ActionResult<int>> GetReminderJogoUnreadCount()
         {
@@ -1278,7 +1370,9 @@ namespace FilmAholic.Server.Controllers
         }
 
         // ── Medal notifications ──
-
+        /// <summary>
+        /// Obtém o feed de notificações de medalha para o utilizador.
+        /// </summary>
         [HttpGet("medalha/feed")]
         public async Task<ActionResult<NotificacaoMedalhaFeedDto>> GetNotificacoesMedalhaFeed(
             [FromQuery] int unreadLimit = 20,
@@ -1334,6 +1428,9 @@ namespace FilmAholic.Server.Controllers
             return Ok(new NotificacaoMedalhaFeedDto { Unread = unread, Read = read });
         }
 
+        /// <summary>
+        /// Obtém a contagem de notificações de medalha não lidas para o utilizador.
+        /// </summary>
         [HttpGet("medalha/unread-count")]
         public async Task<ActionResult<int>> GetNotificacoesMedalhaUnreadCount()
         {
@@ -1347,6 +1444,9 @@ namespace FilmAholic.Server.Controllers
             return Ok(count);
         }
 
+        /// <summary>
+        /// Marca uma notificação de medalha como lida para o utilizador.
+        /// </summary>
         [HttpPut("medalha/{id}/lida")]
         public async Task<IActionResult> MarcarNotificacaoMedalhaComoLida(int id)
         {
@@ -1365,7 +1465,9 @@ namespace FilmAholic.Server.Controllers
             return NoContent();
         }
 
-        /// <summary>Marcar todas as notificações de medalhas como lidas.</summary>
+        /// <summary>
+        /// Marca todas as notificações de medalha como lidas para o utilizador.
+        /// </summary>
         [HttpPut("medalha/marcar-todas-lidas")]
         public async Task<IActionResult> MarcarTodasNotificacoesMedalhaComoLidas()
         {
@@ -1385,7 +1487,9 @@ namespace FilmAholic.Server.Controllers
             return NoContent();
         }
 
-        /// Marca TODAS as notificações de todos os tipos como lidas (Global).
+        /// <summary>
+        /// Marca todas as notificações de todos os tipos como lidas (Global).
+        /// </summary>
         [HttpPut("marcar-todas-lidas-global")]
         public async Task<IActionResult> MarcarTodasNotificacoesLidasGlobal()
         {
@@ -1416,7 +1520,9 @@ namespace FilmAholic.Server.Controllers
             return NoContent();
         }
 
+        /// <summary>
         /// Feed de anúncios globais da plataforma (admin → todos os utilizadores com email confirmado).
+        /// </summary>
         [HttpGet("plataforma/feed")]
         public async Task<ActionResult<NotificacaoPlataformaFeedDto>> GetPlataformaFeed(
             [FromQuery] int unreadLimit = 20,
@@ -1447,6 +1553,9 @@ namespace FilmAholic.Server.Controllers
                 .Take(readLimit)
                 .ToListAsync();
 
+            /// <summary>
+            /// Mapeia uma notificação de anúncio de plataforma para um DTO.
+            /// </summary>
             static NotificacaoPlataformaItemDto Map(Notificacao n)
             {
                 var (titulo, mensagem) = ParseAnuncioPlataformaCorpo(n.Corpo);
@@ -1467,6 +1576,9 @@ namespace FilmAholic.Server.Controllers
             });
         }
 
+        /// <summary>
+        /// Obtém a contagem de notificações não lidas de anúncios da plataforma para o utilizador atual.
+        /// </summary>
         [HttpGet("plataforma/unread-count")]
         public async Task<ActionResult<int>> GetPlataformaUnreadCount()
         {
@@ -1479,6 +1591,9 @@ namespace FilmAholic.Server.Controllers
             return Ok(n);
         }
 
+        /// <summary>
+        /// Marca uma notificação de anúncio de plataforma como lida para o utilizador atual.
+        /// </summary>
         [HttpPut("plataforma/{id:int}/lida")]
         public async Task<IActionResult> MarcarPlataformaComoLida([FromRoute] int id)
         {
@@ -1495,6 +1610,9 @@ namespace FilmAholic.Server.Controllers
             return NoContent();
         }
 
+        /// <summary>
+        /// Analisa o corpo de uma notificação de anúncio de plataforma e extrai o título e a mensagem.
+        /// </summary>
         private static (string Titulo, string Mensagem) ParseAnuncioPlataformaCorpo(string? corpo)
         {
             if (string.IsNullOrWhiteSpace(corpo))
@@ -1514,6 +1632,9 @@ namespace FilmAholic.Server.Controllers
             }
         }
 
+        /// <summary>
+        /// Obtém o feed de notificações de filmes disponíveis para o utilizador atual.
+        /// </summary>
         [HttpGet("filme-disponivel/feed")]
         public async Task<IActionResult> GetFilmeDisponivelFeed()
         {
@@ -1541,6 +1662,9 @@ namespace FilmAholic.Server.Controllers
             return Ok(items);
         }
 
+        /// <summary>
+        /// Marca uma notificação de filme disponível como lida para o utilizador atual.
+        /// </summary>
         [HttpPut("filme-disponivel/{id:int}/lida")]
         public async Task<IActionResult> MarcarFilmeDisponivelComoLida([FromRoute] int id)
         {
@@ -1557,7 +1681,9 @@ namespace FilmAholic.Server.Controllers
             return NoContent();
         }
 
-        /// Contagem de notificações de filme disponível não lidas.
+        /// <summary>
+        /// Obtém a contagem de notificações de filme disponível não lidas para o utilizador atual.
+        /// </summary>
         [HttpGet("filme-disponivel/unread-count")]
         public async Task<ActionResult<int>> GetFilmeDisponivelUnreadCount()
         {
@@ -1571,6 +1697,9 @@ namespace FilmAholic.Server.Controllers
         }
 
 
+        /// <summary>
+        /// Molde simplificado para representação de Anúncio da Plataforma lido/criado.
+        /// </summary>
         public class NotificacaoPlataformaItemDto
         {
             public int Id { get; set; }
@@ -1580,12 +1709,18 @@ namespace FilmAholic.Server.Controllers
             public DateTime? LidaEm { get; set; }
         }
 
+        /// <summary>
+        /// Envelope que junta anúncios passados e novos num único payload JSON para o UI.
+        /// </summary>
         public class NotificacaoPlataformaFeedDto
         {
             public List<NotificacaoPlataformaItemDto> Unread { get; set; } = new();
             public List<NotificacaoPlataformaItemDto> Read { get; set; } = new();
         }
 
+        /// <summary>
+        /// Payload para as notificações do tipo Filme Disponibilizado no mercado.
+        /// </summary>
         public class FilmeDisponivelFeedItemDto
         {
             public int Id { get; set; }
@@ -1596,6 +1731,9 @@ namespace FilmAholic.Server.Controllers
             public DateTime? LidaEm { get; set; }
         }
 
+        /// <summary>
+        /// Molde laboratorial escondido usado na Rota Debug para calibrar as Notificações face às Preferences e BD Stats de um utilizador.
+        /// </summary>
         public class NovaEstreiaDebugDto
         {
             public string? UserId { get; set; }
@@ -1613,13 +1751,15 @@ namespace FilmAholic.Server.Controllers
             public int DesiredCreateCount { get; set; }
             public int PoolToConsiderCount { get; set; }
             public int UnreadNotificationsCount { get; set; }
+            public int ReadNotificationsCount { get; set; }
 
             public List<FilmePreviewDto> UnreadPreview { get; set; } = new();
-
-            public int ReadNotificationsCount { get; set; }
             public List<FilmePreviewDto> ReadPreview { get; set; } = new();
         }
 
+        /// <summary>
+        /// Recorte mínimo com a chave, título, e data de Estreia apenas, poupando network I/O nos side panels de notificações.
+        /// </summary>
         public class FilmePreviewDto
         {
             public int FilmeId { get; set; }
@@ -1628,13 +1768,20 @@ namespace FilmAholic.Server.Controllers
             public int? Ano { get; set; }
         }
 
+        /// <summary>
+        /// Objeto transacional com chaves boolean e strings ("Diária", "Semanal") para reescrita da Entity PreferenciasNotificacao.
+        /// </summary>
         public class PreferenciasNotificacaoDto
         {
             public bool NovaEstreiaAtiva { get; set; } = true;
             public string NovaEstreiaFrequencia { get; set; } = "Diaria";
+            /// <summary>
             /// Null se o cliente não enviou o campo (mantém valor na BD).
+            /// </summary>
             public bool? ResumoEstatisticasAtiva { get; set; }
+            /// <summary>
             /// Null ou vazio: mantém frequência na BD.
+            /// </summary>
             public string? ResumoEstatisticasFrequencia { get; set; }
 
             public bool ReminderJogoAtiva { get; set; } = true;
@@ -1642,6 +1789,9 @@ namespace FilmAholic.Server.Controllers
             public bool FilmeDisponivelAtiva { get; set; } = true;
         }
 
+        /// <summary>
+        /// Representa uma ficha técnica pontual do e-mail/feed estatístico semanal.
+        /// </summary>
         public class ResumoEstatisticasFeedItemDto
         {
             public int Id { get; set; }
@@ -1650,12 +1800,18 @@ namespace FilmAholic.Server.Controllers
             public ResumoEstatisticasCorpoDto? Corpo { get; set; }
         }
 
+        /// <summary>
+        /// Empacotador para feed unificado de Estatísticas Separadas por leitura.
+        /// </summary>
         public class ResumoEstatisticasFeedDto
         {
             public List<ResumoEstatisticasFeedItemDto> Unread { get; set; } = new();
             public List<ResumoEstatisticasFeedItemDto> Read { get; set; } = new();
         }
 
+        /// <summary>
+        /// Item de notificação relacionado a uma comunidade, incluindo informações sobre posts e respostas.
+        /// </summary>
         public class NotificacaoComunidadeItemDto
         {
             public int Id { get; set; }
@@ -1668,12 +1824,18 @@ namespace FilmAholic.Server.Controllers
             public DateTime? LidaEm { get; set; }
         }
 
+        /// <summary>
+        /// Feed aglutinador de threads das Comunidades subscritas e Posts respondidos.
+        /// </summary>
         public class NotificacaoComunidadeFeedDto
         {
             public List<NotificacaoComunidadeItemDto> Unread { get; set; } = new();
             public List<NotificacaoComunidadeItemDto> Read { get; set; } = new();
         }
 
+        /// <summary>
+        /// Item de notificação relacionado a uma medalha, incluindo informações sobre a medalha e seu status.
+        /// </summary>
         public class NotificacaoMedalhaItemDto
         {
             public int Id { get; set; }
@@ -1685,12 +1847,18 @@ namespace FilmAholic.Server.Controllers
             public DateTime? lidaEm { get; set; }
         }
 
+        /// <summary>
+        /// Feed aglutinador de medalhas lidas e não lidas.
+        /// </summary>
         public class NotificacaoMedalhaFeedDto
         {
             public List<NotificacaoMedalhaItemDto> Unread { get; set; } = new();
             public List<NotificacaoMedalhaItemDto> Read { get; set; } = new();
         }
 
+        /// <summary>
+        /// Motor utilitário que desencripta o Payload JSON de medalhas dinâmicas usando TryGet de dicionários C#.
+        /// </summary>
         private static T ParseMedalhaProperty<T>(string corpo, string propertyName, T defaultValue)
         {
             if (string.IsNullOrEmpty(corpo))
@@ -1708,7 +1876,6 @@ namespace FilmAholic.Server.Controllers
             {
                 // Ignore parsing errors
             }
-
             return defaultValue;
         }
     }

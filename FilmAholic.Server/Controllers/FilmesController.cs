@@ -9,6 +9,10 @@ using System.Text.Json;
 
 namespace FilmAholic.Server.Controllers
 {
+    /// <summary>
+    /// Ponto genérico de controlo da listagem, busca e curadoria dos filmes registados ou remotos do projeto API.
+    /// Providencia a agregação para detalhes profundos, integração com TMDB e trailers interativos.
+    /// </summary>
     [ApiController]
     [Route("api/[controller]")]
     public class FilmesController : ControllerBase
@@ -18,6 +22,13 @@ namespace FilmAholic.Server.Controllers
         private readonly IConfiguration _configuration;
         private readonly IHttpClientFactory _httpClientFactory;
 
+        /// <summary>
+        /// Construtor matriz base que constrói este terminal a partir de HTTP Factories e gestores de injeção.
+        /// </summary>
+        /// <param name="movieService">Os recursos utilitários isolados para manipulação de filmes.</param>
+        /// <param name="context">Entity framework Db Context subjacente e responsável pelas sessões diretas do repositório.</param>
+        /// <param name="configuration">Variáveis de leitura no appSettings face às chaves de acesso externas (Ex: YouTube).</param>
+        /// <param name="httpClientFactory">Disposição para aceder a clientes http não vinculados (usado para APIs diretas não integradas nativamente).</param>
         public FilmesController(IMovieService movieService, FilmAholicDbContext context, IConfiguration configuration, IHttpClientFactory httpClientFactory)
         {
             _movieService = movieService;
@@ -26,6 +37,10 @@ namespace FilmAholic.Server.Controllers
             _httpClientFactory = httpClientFactory;
         }
 
+        /// <summary>
+        /// Obter todos os filmes arquivados localmente. Tem a precaução proactiva de capturar os populares caso o banco local conste vazio (Ex: 1ª utilização).
+        /// </summary>
+        /// <returns>Tabela contendo os registos serializados.</returns>
         [HttpGet]
         public async Task<IActionResult> GetAll()
         {
@@ -74,6 +89,12 @@ namespace FilmAholic.Server.Controllers
             return Ok(allMovies);
         }
 
+        /// <summary>
+        /// Inicia pesquisa exata via motor próprio de busca. Funciona suportando a paginação e a query via TMDB API.
+        /// </summary>
+        /// <param name="query">A designação literal total ou por blocos da longa metragem ansiada.</param>
+        /// <param name="page">A secção da página a puxar (padrão é de 1).</param>
+        /// <returns>A lista JSON das ocorrências equiparadas ou aproximação da frase da query.</returns>
         [HttpGet("search")]
         public async Task<IActionResult> SearchMovies([FromQuery] string query, [FromQuery] int page = 1)
         {
@@ -98,8 +119,12 @@ namespace FilmAholic.Server.Controllers
         }
 
         /// <summary>
-        /// TMDB: lista de próximos lançamentos (paginação do TMDB).
+        /// TMDB: lista de próximos lançamentos (paginação do TMDB acumulada).
+        /// Revalida a data atual em UTC para devolver estritamente antecipados não transacionados em sala.
         /// </summary>
+        /// <param name="page">Ponto de partida logarítmico (paginação).</param>
+        /// <param name="count">O teto a alcançar, forçado num máximo de cerca de 40 para garantir integridade do tráfego.</param>
+        /// <returns>Produções confirmadas ainda sob alçada global da não-estreia.</returns>
         [HttpGet("upcoming")]
         public async Task<IActionResult> GetUpcoming([FromQuery] int page = 1, [FromQuery] int count = 20)
         {
@@ -127,7 +152,16 @@ namespace FilmAholic.Server.Controllers
         }
 
 
-        /// Filmes “clássicos” via TMDB: nota + mín. votos = 500).
+        /// <summary>
+        /// Filmes “Clássicos” via TMDB: nota + construtos minímos em avaliadores (geralmente fixos a mais de 500 votos para legitimar).
+        /// Aceita diferentes canais e fontes (Discovery normal contra o Top_Rated TMDB).
+        /// </summary>
+        /// <param name="fonte">Raminho de pesquisa base (discover / top_rated).</param>
+        /// <param name="page">Folha de resultados numéricos.</param>
+        /// <param name="count">Número massificado de quantos filmes pretendidos.</param>
+        /// <param name="ateData">Filtro teto contendo a data máxima para balizar "Clássico".</param>
+        /// <param name="minVotos">Filtragem arbitrária impedindo filmes obscuros com pontuações altíssimamente enviesadas.</param>
+        /// <returns>Matriz com os ícones mais reputados sob os filtros exigidos.</returns>
         [HttpGet("classicos")]
         public async Task<IActionResult> GetClassicos(
             [FromQuery] string fonte = "discover",
@@ -161,6 +195,11 @@ namespace FilmAholic.Server.Controllers
             }
         }
 
+        /// <summary>
+        /// Fornece o leque de todos os campos específicos de um filme, através de um sistema decrescente de queda para procura (Base de dados interna Local ID -> TMDB ID Local -> TMDB API call de contingência).
+        /// </summary>
+        /// <param name="id">A chave remota única ou código primário indexado.</param>
+        /// <returns>As propriedades expandidas de forma exclusiva à peça audiovisual.</returns>
         [HttpGet("{id:int}")]
         public async Task<IActionResult> GetById(int id)
         {
@@ -195,6 +234,11 @@ namespace FilmAholic.Server.Controllers
             return Ok(filme);
         }
 
+        /// <summary>
+        /// Encaminha o pedido de recolha das meta tags numéricas exatas apenas pela vertente oficial remota TMDb sem compromissos com local.
+        /// </summary>
+        /// <param name="tmdbId">ID gerado pela TheMovieDataBase Oficial.</param>
+        /// <returns>Representação íntegra descarregada online do perfil cinemático.</returns>
         [HttpGet("tmdb/{tmdbId}")]
         public async Task<IActionResult> GetMovieFromTmdb(int tmdbId)
         {
@@ -218,6 +262,11 @@ namespace FilmAholic.Server.Controllers
             }
         }
 
+        /// <summary>
+        /// Transpõe intencionalmente a peça em bruto via repositório TMDb integrando e forçando a estada e cacheamento interno deste para o banco local.
+        /// </summary>
+        /// <param name="tmdbId">O identificativo que remanesce na ligação remota e unicamente lá.</param>
+        /// <returns>Os dados processados, convertidos e criados no lado da BD, com o novo índice interno.</returns>
         [HttpPost("tmdb/{tmdbId}")]
         public async Task<IActionResult> AddMovieFromTmdb(int tmdbId)
         {
@@ -237,6 +286,11 @@ namespace FilmAholic.Server.Controllers
         }
 
         
+        /// <summary>
+        /// Força a renovação parcial de conteúdo de um filme interno, recorrendo novamente as comunicações com as APIs para limpar discrepâncias ou lacunas face à data atual.
+        /// </summary>
+        /// <param name="id">Local ID mapeado para encontrar correspondência com o TMDB Id atachado.</param>
+        /// <returns>Atualiza e regressa a versão mutada pelo update.</returns>
         [HttpPut("{id}/update")]
         public async Task<IActionResult> UpdateMovie(int id)
         {
@@ -256,6 +310,11 @@ namespace FilmAholic.Server.Controllers
             }
         }
 
+        /// <summary>
+        /// Agrega as votações globais originárias do TMDb associadas com a película procurada.
+        /// </summary>
+        /// <param name="id">O referencial que pode ser interno ou em fase de fallback o número serial do TMDb em si.</param>
+        /// <returns>Uma entidade de listagem das votações críticas.</returns>
         [HttpGet("{id}/ratings")]
         public async Task<IActionResult> GetRatings(int id)
         {
@@ -272,6 +331,13 @@ namespace FilmAholic.Server.Controllers
             return Ok(ratings);
         }
 
+        /// <summary>
+        /// Baseado intimamente com os pares recomendados para a obra especificada (O "Filmes Similares a este...").
+        /// Transpõe resultados nativos de IA baseados pelas semelhanças das fichas técnicas via TMDB.
+        /// </summary>
+        /// <param name="id">Chave de reconhecimento da peça (Interno ou TMDB direto).</param>
+        /// <param name="count">O somatório das sugestões adjuntas retornáveis.</param>
+        /// <returns>Uma panóplia em loop de objectos <see cref="Models.Filme"/> semanticamente iguais.</returns>
         [HttpGet("{id}/recomendacoes")]
         public async Task<IActionResult> GetRecommendations(int id, [FromQuery] int count = 10)
         {
@@ -311,6 +377,12 @@ namespace FilmAholic.Server.Controllers
             return Ok(recommendations);
         }
 
+        /// <summary>
+        /// Obtêm todo o repertório humano associado e creditado à obra de referência.
+        /// Inclui diretores, atrizes secundárias, realizadores.
+        /// </summary>
+        /// <param name="id">Índex da produção.</param>
+        /// <returns>Vetor denso listando e providenciando fotografias, papéis interpretativos e nomes legais das equipas envolvidas.</returns>
         [HttpGet("{id}/cast")]
         public async Task<IActionResult> GetCast(int id)
         {
@@ -332,6 +404,12 @@ namespace FilmAholic.Server.Controllers
             return Ok(cast);
         }
 
+        /// <summary>
+        /// Apanha a antevisão promocional visual oficial veiculada via Plataformas Digitais de Video (Youtube).
+        /// Estabelece uma conexão Http bruta ao feed de Videos do TMDB perante o ID e formatação linguistica ("pt-PT" vs "en-US") regressando preferencialmente um Trailer.
+        /// </summary>
+        /// <param name="id">Referência à obra pretendida.</param>
+        /// <returns>Devolve uma URL crua pronta a ser embebida ou percurrida se disponível de facto, 404 caso não desponte.</returns>
         [HttpGet("{id:int}/trailer")]
         public async Task<IActionResult> GetTrailer(int id)
         {
@@ -370,8 +448,13 @@ namespace FilmAholic.Server.Controllers
             return Ok(new { url = $"https://www.youtube.com/watch?v={trailerKey}" });
         }
 
-        /// Filmes mais populares do TMDB com mínimo de 500 classificações (vote_count).
-        /// Busca da API TMDB os filmes populares e filtra apenas os que têm 500+ votos.
+        /// <summary>
+        /// Filmes mais populares do TMDB com mínimo de 500 classificações enraigado.
+        /// Busca da API remota as entidades populares e reduz com firmeza aos que têm uma densidade notável na comunidade.
+        /// </summary>
+        /// <param name="count">Máximo listado pretendido na chamada.</param>
+        /// <param name="minRatings">O filtro limitador para que possua o selo social.</param>
+        /// <returns>Enchimento paginado massivo.</returns>
         [HttpGet("populares-comunidade")]
         public async Task<IActionResult> GetPopularCommunityMovies([FromQuery] int count = 10, [FromQuery] int minRatings = 500)
         {

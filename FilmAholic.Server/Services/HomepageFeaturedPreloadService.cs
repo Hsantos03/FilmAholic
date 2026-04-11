@@ -6,7 +6,7 @@ using Microsoft.Extensions.DependencyInjection;
 namespace FilmAholic.Server.Services;
 
 /// <summary>
-/// Pré-carrega a lista “Filmes em Destaque” da landing (api/filmes/populares-comunidade) para memória.
+/// Serviço responsável por pré-carregar a lista "Filmes em Destaque" da landing (api/filmes/populares-comunidade) para memória.
 /// Arranque imediato + repetição diária à hora UTC configurada (predefinição: 00:00 UTC ≈ meia-noite em UTC).
 /// </summary>
 public class HomepageFeaturedPreloadService : BackgroundService
@@ -25,6 +25,9 @@ public class HomepageFeaturedPreloadService : BackgroundService
         _logger = logger;
     }
 
+    /// <summary>
+    /// Executa o serviço de pré-carregamento de filmes em destaque.
+    /// </summary>
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         var enabled = _configuration.GetValue<bool>("HomepageFeatured:Enabled", true);
@@ -69,6 +72,9 @@ public class HomepageFeaturedPreloadService : BackgroundService
         }
     }
 
+    /// <summary>
+    /// Executa o pré-carregamento de filmes em destaque.
+    /// </summary>
     private async Task WarmOnce(CancellationToken stoppingToken)
     {
         if (stoppingToken.IsCancellationRequested)

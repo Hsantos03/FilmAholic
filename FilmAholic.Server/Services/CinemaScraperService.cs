@@ -4,6 +4,9 @@ using System.Net;
 
 namespace FilmAholic.Server.Services;
 
+/// <summary>
+/// Serviço responsável por fazer scraping de filmes em cinemas.
+/// </summary>
 public class CinemaScraperService : ICinemaScraperService
 {
     private readonly ILogger<CinemaScraperService> _logger;
@@ -19,6 +22,10 @@ public class CinemaScraperService : ICinemaScraperService
         "https://cinecartaz.publico.pt/cinema/cinemacity-classic-alvalade-221112"
     };
 
+
+    /// <summary>
+    /// Inicializa uma nova instância do serviço de scraping de filmes em cinemas.
+    /// </summary>
     public CinemaScraperService(
         ILogger<CinemaScraperService> logger,
         IHttpClientFactory httpClientFactory)
@@ -27,6 +34,9 @@ public class CinemaScraperService : ICinemaScraperService
         _httpClientFactory = httpClientFactory;
     }
 
+    /// <summary>
+    /// Faz scraping de todos os filmes em cinemas.
+    /// </summary>
     public async Task<List<CinemaMovieDto>> ScrapeAllAsync(CancellationToken ct = default)
     {
         var results = new List<CinemaMovieDto>();
@@ -84,6 +94,9 @@ public class CinemaScraperService : ICinemaScraperService
         return results;
     }
 
+    /// <summary>
+    /// Faz scraping de filmes com tentativas de repetição em caso de falha.
+    /// </summary>
     private async Task<List<CinemaMovieDto>> ScrapeWithRetryAsync(
         Func<Task<List<CinemaMovieDto>>> scraper,
         string name,
@@ -108,6 +121,9 @@ public class CinemaScraperService : ICinemaScraperService
         return new List<CinemaMovieDto>();
     }
 
+    /// <summary>
+    /// Faz scraping de filmes de um cinema específico.
+    /// </summary>
     private async Task<List<CinemaMovieDto>> ScrapeCinecartazAsync(string url, string cinemaNome)
     {
         // Forçar o uso de protocolos de segurança modernos compatíveis
@@ -123,15 +139,6 @@ public class CinemaScraperService : ICinemaScraperService
         doc.LoadHtml(html);
 
         var movies = new List<CinemaMovieDto>();
-
-        // No Cinecartaz, cada filme está numa <div> que contém:
-        // - <img> com o poster
-        // - <h3> com o título (ou às vezes <h2>)
-        // - Parágrafo com "De:", "Com:", classificação
-        // - Link "Saber mais"
-        
-        // Estratégia: encontrar todos os blocos que têm <img> + <h3> + link "Saber mais"
-        // Isto corresponde a elementos que contêm estes 3 componentes juntos
         
         var allDivs = doc.DocumentNode.SelectNodes("//div[.//img and (.//h3 or .//h2) and .//a[contains(text(), 'Saber mais')]]");
 
@@ -164,6 +171,10 @@ public class CinemaScraperService : ICinemaScraperService
             .ToList();
     }
 
+
+    /// <summary>
+    /// Extrai informações de um filme a partir de um nó HTML.
+    /// </summary>
     private CinemaMovieDto? ExtractMovieFromNode(HtmlNode node, string cinemaNome)
     {
         // No Cinecartaz, cada filme está numa <div> com img + h3 título + p com "De:", "Com:", classificação, sessões, link "Saber mais"
@@ -220,6 +231,9 @@ public class CinemaScraperService : ICinemaScraperService
         };
     }
 
+    /// <summary>
+    /// Formata a duração de um filme.
+    /// </summary>
     private string FormatDuration(string duracao)
     {
         if (string.IsNullOrWhiteSpace(duracao))

@@ -5,6 +5,9 @@ using Microsoft.EntityFrameworkCore;
 
 namespace FilmAholic.Server.Services
 {
+    /// <summary>
+    /// Serviço responsável por gerenciar medalhas dos utilizadores.
+    /// </summary>
     public class MedalhaService
     {
         private readonly FilmAholicDbContext _context;
@@ -14,6 +17,9 @@ namespace FilmAholic.Server.Services
             _context = context;
         }
 
+        /// <summary>
+        /// Atribui uma medalha ao utilizador.
+        /// </summary>
         private async Task AtribuirMedalha(string userId, int medalhaId)
         {
             var registo = new UtilizadorMedalha
@@ -27,6 +33,9 @@ namespace FilmAholic.Server.Services
             await _context.SaveChangesAsync();
         }
 
+        /// <summary>
+        /// Cria uma notificação de medalha para o utilizador.
+        /// </summary>
         private async Task CriarNotificacaoMedalha(string userId, Medalha medalha)
         {
             var notificacao = new Notificacao
@@ -46,16 +55,25 @@ namespace FilmAholic.Server.Services
             await _context.SaveChangesAsync();
         }
 
+        /// <summary>
+        /// Verifica as conquistas de filmes vistos do utilizador.
+        /// </summary>
         public async Task<List<Medalha>> VerificarConquistasFilmeVisto(string userId)
         {
             return await VerificarConquistas(userId, "filmesVistos");
         }
 
+        /// <summary>
+        /// Verifica as conquistas de nível do utilizador.
+        /// </summary>
         public async Task<List<Medalha>> VerificarConquistasNivel(string userId)
         {
             return await VerificarConquistas(userId, "nivel");
         }
 
+        /// <summary>
+        /// Verifica as conquistas de nível do utilizador.
+        /// </summary>
         public async Task<List<Medalha>> VerificarMedalhasNivel(string userId)
         {
             var user = await _context.Users.FindAsync(userId);
@@ -64,16 +82,25 @@ namespace FilmAholic.Server.Services
             return await VerificarConquistas(userId, "nivel");
         }
 
+        /// <summary>
+        /// Verifica as conquistas de desafios diários do utilizador.
+        /// </summary>
         public async Task<List<Medalha>> VerificarConquistasDesafios(string userId)
         {
             return await VerificarConquistas(userId, "desafiosDiarios");
         }
 
+        /// <summary>
+        /// Verifica as conquistas de jogos "Higher or Lower" do utilizador.
+        /// </summary>
         public async Task<List<Medalha>> VerificarConquistasHigherOrLower(string userId)
         {
             return await VerificarConquistas(userId, "higherOrLower");
         }
 
+        /// <summary>
+        /// Verifica as conquistas de comunidades do utilizador.
+        /// </summary>
         public async Task<List<Medalha>> VerificarConquistasComunidades(string userId)
         {
             var medalhasNovas = new List<Medalha>();
@@ -85,6 +112,9 @@ namespace FilmAholic.Server.Services
             return medalhasNovas.Distinct().ToList();
         }
 
+        /// <summary>
+        /// Verifica todas as conquistas do utilizador.
+        /// </summary>
         public async Task<List<Medalha>> VerificarTodasConquistas(string userId)
         {
             var todasMedalhasNovas = new List<Medalha>();
@@ -98,6 +128,9 @@ namespace FilmAholic.Server.Services
             return todasMedalhasNovas.Distinct().ToList();
         }
 
+        /// <summary>
+        /// Verifica as conquistas do utilizador com base no critério especificado.
+        /// </summary>
         public async Task<List<Medalha>> VerificarConquistas(string userId, string criterioTipo)
         {
             var medalhasNovas = new List<Medalha>();
@@ -152,6 +185,9 @@ namespace FilmAholic.Server.Services
             return medalhasNovas;
         }
 
+        /// <summary>
+        /// Obtém as medalhas do utilizador.
+        /// </summary>
         public async Task<List<object>> GetMedalhasDoUtilizador(string userId)
         {
             return await _context.UtilizadorMedalhas
@@ -170,6 +206,9 @@ namespace FilmAholic.Server.Services
                 .ToListAsync<object>();
         }
 
+        /// <summary>
+        /// Obtém o número de vitórias consecutivas do utilizador no jogo "Higher or Lower".
+        /// </summary>
         private async Task<int> GetConsecutiveHigherOrLowerWins(string userId)
         {
             return await _context.GameHistories
@@ -177,6 +216,9 @@ namespace FilmAholic.Server.Services
                 .MaxAsync(gh => (int?)gh.Score ?? 0);
         }
 
+        /// <summary>
+        /// Obtém o progresso atual do utilizador com base no critério especificado.
+        /// </summary>
         public async Task<int> GetCurrentProgress(string userId, string criterioTipo)
         {
             return criterioTipo switch
@@ -198,6 +240,9 @@ namespace FilmAholic.Server.Services
             };
         }
 
+        /// <summary>
+        /// Obtém todas as medalhas com o progresso do utilizador.
+        /// </summary>
         public async Task<List<MedalhaProgressoDto>> GetTodasComProgresso(string userId)
         {
             try
