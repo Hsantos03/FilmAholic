@@ -150,7 +150,11 @@ namespace FilmAholic.Server.Migrations
                     PosterUrl = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     Duracao = table.Column<int>(type: "int", nullable: false),
                     Ano = table.Column<int>(type: "int", nullable: true),
-                    ReleaseDate = table.Column<DateTime>(type: "datetime2", nullable: true)
+                    ReleaseDate = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    ImdbRating = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    Metascore = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    RottenTomatoes = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    LastRatingsUpdate = table.Column<DateTime>(type: "datetime2", nullable: true)
                 },
                 constraints: table =>
                 {
