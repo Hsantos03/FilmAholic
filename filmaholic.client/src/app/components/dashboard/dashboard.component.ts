@@ -393,20 +393,21 @@ export class DashboardComponent implements OnInit, OnDestroy {
     if (window.innerWidth < 1100) return;
 
     const y = window.scrollY || document.documentElement.scrollTop || 0;
-    const delta = y - this.popcornScrollLastY;
+    const delta = Math.abs(y - this.popcornScrollLastY);
     this.popcornScrollLastY = y;
-    if (delta < 28) return;
+    if (delta < 35) return;
 
     const now = Date.now();
-    if (now - this.popcornScrollThrottleMs < 220) return;
+    if (now - this.popcornScrollThrottleMs < 450) return;
     this.popcornScrollThrottleMs = now;
 
     const primarySide: 'left' | 'right' = this.popcornDropSeq % 2 === 0 ? 'left' : 'right';
     this.pushPopcornDrop(primarySide, 0);
 
-    if (delta >= 72) {
+    // Drop on the other side only if scrolling a bit faster
+    if (delta >= 120) {
       const other: 'left' | 'right' = primarySide === 'left' ? 'right' : 'left';
-      window.setTimeout(() => this.pushPopcornDrop(other, 0), 70 + Math.random() * 50);
+      window.setTimeout(() => this.pushPopcornDrop(other, 0), 100 + Math.random() * 80);
     }
   }
 
@@ -414,12 +415,13 @@ export class DashboardComponent implements OnInit, OnDestroy {
     if (typeof window === 'undefined') return;
 
     const id = ++this.popcornDropSeq;
-    const edgePx = 6 + Math.random() * 72;
-    const topPx = 84 + Math.random() * 72;
-    const driftPx = (Math.random() - 0.5) * 130;
+    // Increased edge distance so they fall further towards the center
+    const edgePx = 50 + Math.random() * 200;
+    const topPx = 84 + Math.random() * 120;
+    const driftPx = (Math.random() - 0.5) * 160;
     const rotationEnd = 380 + Math.random() * 620;
     const durationMs = 2600 + Math.random() * 1800;
-    const sizePx = Math.round(20 + Math.random() * 16);
+    const sizePx = Math.round(22 + Math.random() * 20);
 
     const drop: DashboardPopcornDrop = {
       id,
@@ -433,8 +435,9 @@ export class DashboardComponent implements OnInit, OnDestroy {
       sizePx
     };
     this.popcornDrops = [...this.popcornDrops, drop];
-    if (this.popcornDrops.length > 22) {
-      this.popcornDrops = this.popcornDrops.slice(-22);
+    // Allow more popcorns on screen
+    if (this.popcornDrops.length > 15) {
+      this.popcornDrops = this.popcornDrops.slice(-15);
     }
 
     window.setTimeout(() => {
@@ -1357,7 +1360,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
     setTimeout(() => {
 
-      this.featuredIndex = Math.max(0, this.featuredIndex - this.featuredVisibleCount);
+      this.featuredIndex = Math.max(0, (this.featuredActivePage - 1) * this.featuredVisibleCount);
 
       this.featuredSlideDir = 'right';
 
@@ -1389,7 +1392,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
     setTimeout(() => {
 
-      this.featuredIndex = Math.min(maxIndex, this.featuredIndex + this.featuredVisibleCount);
+      this.featuredIndex = Math.min(maxIndex, (this.featuredActivePage + 1) * this.featuredVisibleCount);
 
       this.featuredSlideDir = 'left';
 
@@ -1449,7 +1452,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
     setTimeout(() => {
 
-      this.top10Index = Math.max(0, this.top10Index - this.top10VisibleCount);
+      this.top10Index = Math.max(0, (this.top10ActivePage - 1) * this.top10VisibleCount);
 
       this.top10SlideDir = 'right';
 
@@ -1481,7 +1484,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
     setTimeout(() => {
 
-      this.top10Index = Math.min(maxIndex, this.top10Index + this.top10VisibleCount);
+      this.top10Index = Math.min(maxIndex, (this.top10ActivePage + 1) * this.top10VisibleCount);
 
       this.top10SlideDir = 'left';
 
@@ -1541,7 +1544,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
     setTimeout(() => {
 
-      this.atoresIndex = Math.max(0, this.atoresIndex - this.atoresVisibleCount);
+      this.atoresIndex = Math.max(0, (this.atoresActivePage - 1) * this.atoresVisibleCount);
 
       this.atoresSlideDir = 'right';
 
@@ -1573,7 +1576,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
     setTimeout(() => {
 
-      this.atoresIndex = Math.min(maxIndex, this.atoresIndex + this.atoresVisibleCount);
+      this.atoresIndex = Math.min(maxIndex, (this.atoresActivePage + 1) * this.atoresVisibleCount);
 
       this.atoresSlideDir = 'left';
 
