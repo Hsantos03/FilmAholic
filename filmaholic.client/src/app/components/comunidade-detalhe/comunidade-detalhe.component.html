@@ -67,7 +67,9 @@
 
   <div *ngIf="!isLoading && accessDeniedBan" class="ban-access-denied">
     <div class="ban-access-denied__card">
-      <div class="ban-access-denied__icon" aria-hidden="true">⛔</div>
+      <div class="ban-access-denied__icon" aria-hidden="true">
+        <img src="assets/membro-banir.png" alt="" class="ban-access-denied__icon-img" />
+      </div>
       <h2 class="ban-access-denied__title">Não tens acesso a esta comunidade</h2>
       <p *ngIf="banComunidadeNome" class="ban-access-denied__nome"><strong>{{ banComunidadeNome }}</strong></p>
       <p class="ban-access-denied__msg">{{ banAccessMessage }}</p>
@@ -564,14 +566,14 @@
           <span class="membro-data">Entrou {{ m.dataEntrada | date:'dd/MM/yyyy':'':'pt-PT' }}</span>
 
           <div class="membro-actions" *ngIf="isAdmin && m.utilizadorId !== currentUserId">
-            <button class="kick-btn punish-btn" (click)="openCastigoModal(m)" title="Castigar membro">
-              ⏱️
+            <button class="kick-btn punish-btn" (click)="openCastigoModal(m)" title="Castigar membro" type="button" aria-label="Castigar membro">
+              <img class="membro-action-icon" src="assets/membro-castigo.png" alt="" width="22" height="22" aria-hidden="true" />
             </button>
-            <button class="kick-btn" (click)="openKickModal(m)" title="Expulsar membro">
-              ✕
+            <button class="kick-btn" (click)="openKickModal(m)" title="Expulsar membro" type="button" aria-label="Expulsar membro">
+              <img class="membro-action-icon" src="assets/membro-expulsar.png" alt="" width="22" height="22" aria-hidden="true" />
             </button>
-            <button class="kick-btn ban-btn" (click)="openBanModal(m)" title="Banir membro">
-              ⛔
+            <button class="kick-btn ban-btn" (click)="openBanModal(m)" title="Banir membro" type="button" aria-label="Banir membro">
+              <img class="membro-action-icon" src="assets/membro-banir.png" alt="" width="22" height="22" aria-hidden="true" />
             </button>
           </div>
 
@@ -811,7 +813,7 @@
   <div class="modal-box modal-box--danger" (click)="$event.stopPropagation()">
     <button class="modal-close" (click)="closeCastigoModal()">&times;</button>
     <div class="delete-modal-icon">
-      <span style="font-size: 32px;">⏱️</span>
+      <img class="castigo-modal-icon-img" src="assets/membro-castigo.png" alt="" width="44" height="44" aria-hidden="true" />
     </div>
     <h3>Castigar membro</h3>
     <p class="delete-modal-msg">Escolhe quanto tempo o membro <strong>{{ membroToCastigar?.userName }}</strong> ficará impedido de fazer novas publicações.</p>
@@ -840,9 +842,12 @@
     <button class="modal-close" type="button" (click)="closeKickModal()">&times;</button>
 
     <div class="delete-modal-icon">
-      <svg width="40" height="40" viewBox="0 0 24 24" fill="currentColor">
-        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm5 11H7v-2h10v2z" />
-      </svg>
+      <img class="castigo-modal-icon-img"
+           [src]="kickMode === 'ban' ? 'assets/membro-banir.png' : 'assets/membro-expulsar.png'"
+           alt=""
+           width="44"
+           height="44"
+           aria-hidden="true" />
     </div>
 
     <h3>{{ kickMode === 'ban' ? 'Banir membro?' : 'Expulsar membro?' }}</h3>

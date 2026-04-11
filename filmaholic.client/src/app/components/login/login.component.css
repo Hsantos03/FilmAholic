@@ -1,3 +1,21 @@
+.auth-alert--error {
+  margin-bottom: 1rem;
+  padding: 0.85rem 1.1rem;
+  border-radius: 12px;
+  font-size: 0.9rem;
+  line-height: 1.45;
+  color: rgba(254, 226, 232, 0.95);
+  background: linear-gradient(
+    135deg,
+    rgba(88, 28, 28, 0.55),
+    rgba(50, 20, 24, 0.72)
+  );
+  border: 1px solid rgba(251, 113, 133, 0.45);
+  box-shadow:
+    0 0 0 1px rgba(244, 63, 94, 0.12),
+    0 8px 24px rgba(0, 0, 0, 0.22);
+}
+
 /* Sucesso: verde em modo escuro (UX convencional), sem verde “bootstrap” claro */
 
 .auth-alert--success {
@@ -42,4 +60,22 @@
 .auth-alert__text strong {
   color: #ecfdf5;
   font-weight: 700;
+}
+
+.login-email-verify__title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 0;
+  margin-bottom: 0.5rem;
+  color: #856404;
+  font-size: 1.05rem;
+  font-weight: 800;
+}
+
+.login-email-verify__warn-icon {
+  width: 26px;
+  height: 26px;
+  object-fit: contain;
+  flex-shrink: 0;
 }
