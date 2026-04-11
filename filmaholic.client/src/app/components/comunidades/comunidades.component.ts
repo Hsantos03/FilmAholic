@@ -220,6 +220,11 @@ export class ComunidadesComponent implements OnInit {
       return;
     }
 
+    if (this.newLimiteMembros !== null && this.newLimiteMembros > 500) {
+      this.createError = 'O limite de membros não pode exceder 500.';
+      return;
+    }
+
     const fd = new FormData();
     fd.append('nome', this.newNome.trim());
     fd.append('descricao', this.newDescricao?.trim() || '');

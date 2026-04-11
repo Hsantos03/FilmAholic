@@ -230,13 +230,25 @@
 
       <form (submit)="createCommunity(); $event.preventDefault();">
         <label for="nome">Nome</label>
-        <input id="nome" name="nome" type="text" [(ngModel)]="newNome" required />
+        <input id="nome" name="nome" type="text" [(ngModel)]="newNome" required maxlength="30" />
+        <div *ngIf="newNome && newNome.length >= 30" class="length-warning">
+          <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"></path><path d="M12 9v4"></path><path d="M12 17h.01"></path></svg>
+          <span>Número de caracteres excedido (máximo 30).</span>
+        </div>
 
         <label for="descricao">Descrição</label>
-        <textarea id="descricao" name="descricao" rows="4" [(ngModel)]="newDescricao"></textarea>
+        <textarea id="descricao" name="descricao" rows="4" [(ngModel)]="newDescricao" maxlength="150"></textarea>
+        <div *ngIf="newDescricao && newDescricao.length >= 150" class="length-warning">
+          <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"></path><path d="M12 9v4"></path><path d="M12 17h.01"></path></svg>
+          <span>Número de caracteres excedido (máximo 150).</span>
+        </div>
 
         <label for="limiteMembros">Limite de membros (opcional)</label>
-        <input id="limiteMembros" name="limiteMembros" type="number" min="1" [(ngModel)]="newLimiteMembros" />
+        <input id="limiteMembros" name="limiteMembros" type="number" min="1" max="500" [(ngModel)]="newLimiteMembros" />
+        <div *ngIf="newLimiteMembros && newLimiteMembros > 500" class="length-warning">
+          <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"></path><path d="M12 9v4"></path><path d="M12 17h.01"></path></svg>
+          <span>O limite de membros não pode exceder 500.</span>
+        </div>
 
         <div class="spoiler-toggle-container visibility-toggle-container">
           <div class="spoiler-toggle-info visibility-toggle-info">
@@ -267,7 +279,7 @@
 
         <div class="modal-actions">
           <button type="button" class="cancel-btn" (click)="closeCreate()" [disabled]="isCreating">Cancelar</button>
-          <button type="button" class="save-btn" (click)="createCommunity()" [disabled]="isCreating">
+          <button type="button" class="save-btn" (click)="createCommunity()" [disabled]="isCreating || (newNome && newNome.length > 30) || (newDescricao && newDescricao.length > 150) || (newLimiteMembros && newLimiteMembros > 500)">
             {{ isCreating ? 'A criar…' : 'Criar' }}
           </button>
         </div>
