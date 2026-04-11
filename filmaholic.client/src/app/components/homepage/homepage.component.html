@@ -12,35 +12,36 @@
   <div class="content-wrapper">
     <!-- Logo Section -->
     <div class="logo-section">
-      <div class="logo-container">
-        <!-- COLOCAR A IMAGEM DO LOGO AQUI: filmaholic.client/src/assets/logo.png -->
-        <img src="assets/logo.png" alt="FilmAholic Logo" class="main-logo" 
-             onerror="this.style.display='none'; this.nextElementSibling.style.display='flex'">
-        <!-- Logo Fallback (CSS/SVG) quando a imagem não existe -->
-        <div class="logo-fallback" style="display: none;">
-          <div class="logo-icon"></div>
-          <span class="logo-text">FILMAHOLIC</span>
-        </div>
+      <div class="logo-lockup">
+        <img src="assets/icon.png" alt="" class="landing-app-icon" width="380" />
+        <h1 class="landing-wordmark">FILMAHOLIC</h1>
       </div>
-      <h1 class="tagline">O vício perfeito para cinéfilos</h1>
+      <div class="tagline-block">
+        <span class="tagline-line">O vício perfeito para</span>
+        <span class="tagline-line">cinéfilos</span>
+      </div>
     </div>
 
     <!-- Features Preview -->
     <div class="features-section">
       <div class="feature-card">
-        <img class="feature-icon" src="assets/landing-feature-clapper.png" alt="Claquete de cinema" width="72" height="72" />
+        <div class="feature-icon-frame">
+          <img class="feature-icon" src="assets/landing-feature-clapper.png" alt="" width="76" height="76" />
+        </div>
         <h3>Descobre Filmes</h3>
         <p>Explora milhares de filmes e encontra os teus favoritos</p>
       </div>
       <div class="feature-card">
-        <img class="feature-icon" src="assets/landing-feature-star.png" alt="Estrela de avaliação" width="72" height="72" />
+        <div class="feature-icon-frame">
+          <img class="feature-icon" src="assets/landing-feature-star.png" alt="" width="76" height="76" />
+        </div>
         <h3>Avalia & Comenta</h3>
         <p>Partilha as tuas opiniões e lê as de outros cinéfilos</p>
       </div>
       <div class="feature-card">
-        <svg class="feature-icon feature-icon--svg feature-icon--games" viewBox="0 0 24 24" fill="currentColor" width="72" height="72" role="img" aria-label="Jogos e desafios">
-          <path d="M21 6H3c-1.1 0-2 .9-2 2v8c0 1.1.9 2 2 2h18c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm-10 7H8v3H6v-3H3v-2h3V8h2v3h3v2zm4.5 2c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm4-3c-.83 0-1.5-.67-1.5-1.5S18.67 9 19.5 9s1.5.67 1.5 1.5-.67 1.5-1.5 1.5z" />
-        </svg>
+        <div class="feature-icon-frame">
+          <img class="feature-icon" src="assets/reminder-jogo-notif.png" alt="" width="76" height="76" />
+        </div>
         <h3>Jogos & Desafios</h3>
         <p>Participa em jogos e desafios com a comunidade</p>
       </div>

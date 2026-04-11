@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" role="img" aria-label="FilmAholic">
+  <rect width="32" height="32" rx="9" fill="#ff2f6d"/>
+  <rect x="12" y="7" width="8" height="18" rx="1.5" fill="#fff"/>
+  <rect x="9.25" y="9" width="2.2" height="2.2" rx="0.45" fill="#ff2f6d"/>
+  <rect x="9.25" y="14.4" width="2.2" height="2.2" rx="0.45" fill="#ff2f6d"/>
+  <rect x="9.25" y="19.8" width="2.2" height="2.2" rx="0.45" fill="#ff2f6d"/>
+  <rect x="20.55" y="9" width="2.2" height="2.2" rx="0.45" fill="#ff2f6d"/>
+  <rect x="20.55" y="14.4" width="2.2" height="2.2" rx="0.45" fill="#ff2f6d"/>
+  <rect x="20.55" y="19.8" width="2.2" height="2.2" rx="0.45" fill="#ff2f6d"/>
+</svg>
