@@ -215,10 +215,12 @@
                         <ng-container *ngSwitchCase="'pedido_rejeitado'">O teu pedido para a comunidade <strong>{{ n.raw.comunidadeNome }}</strong> foi rejeitado ❌</ng-container>
                         <ng-container *ngSwitchCase="'kick'">Foste expulso da comunidade <strong>{{ n.raw.comunidadeNome }}</strong></ng-container>
                         <ng-container *ngSwitchCase="'banido'">Foste banido da comunidade <strong>{{ n.raw.comunidadeNome }}</strong></ng-container>
+                        <ng-container *ngSwitchCase="'comunidade_eliminada'">A comunidade <strong>{{ n.raw.comunidadeNome }}</strong> foi eliminada.</ng-container>
                         <ng-container *ngSwitchDefault>Novas publicações em <strong>{{ n.raw.comunidadeNome }}</strong></ng-container>
                       </ng-container>
                     </span>
                     <span class="comunidade-notif-desc comunidade-notif-desc--kickban" *ngIf="comunidadeKickBanCorpo(n.raw) as kb">{{ kb }}</span>
+                    <span class="comunidade-notif-desc comunidade-notif-desc--kickban" *ngIf="comunidadeEliminadaMensagemExtra(n.raw) as em">{{ em }}</span>
                   </ng-container>
 
                   <ng-container *ngIf="n.tipo === 'medalha'">

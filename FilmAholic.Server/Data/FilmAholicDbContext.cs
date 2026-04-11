@@ -377,7 +377,8 @@ public class FilmAholicDbContext : IdentityDbContext<Utilizador>
             e.HasOne(x => x.Comunidade)
              .WithMany()
              .HasForeignKey(x => x.ComunidadeId)
-             .OnDelete(DeleteBehavior.NoAction);
+             .IsRequired(false)
+             .OnDelete(DeleteBehavior.SetNull);
 
             e.HasOne(x => x.Post)
              .WithMany()

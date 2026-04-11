@@ -133,7 +133,7 @@ namespace FilmAholic.Server.Controllers
                 {
                     Id = c.Id,
                     UserId = c.UserId,
-                    UserName = c.UserId != null && userNameByUserId.TryGetValue(c.UserId, out var uname) && !string.IsNullOrEmpty(uname) ? uname : c.UserName,
+                    UserName = ResolveCommentListUserName(c, userNameByUserId),
                     FotoPerfilUrl = c.UserId != null && fotoByUserId.TryGetValue(c.UserId, out var url) ? url : null,
                     UserTag = c.UserId != null && userTagByUserId.TryGetValue(c.UserId, out var tag) ? tag : null,
                     UserTagDescription = c.UserId != null && userTagDescByUserId.TryGetValue(c.UserId, out var tagDesc) ? tagDesc : null,
@@ -303,7 +303,9 @@ namespace FilmAholic.Server.Controllers
             {
                 Id = comment.Id,
                 UserId = comment.UserId,
-                UserName = commentUser != null ? (!string.IsNullOrEmpty(commentUser.UserName) && !commentUser.UserName.Contains("@") ? commentUser.UserName : commentUser.Nome + " " + commentUser.Sobrenome) : comment.UserName,
+                UserName = commentUser != null
+                    ? (!string.IsNullOrEmpty(commentUser.UserName) && !commentUser.UserName.Contains("@") ? commentUser.UserName : commentUser.Nome + " " + commentUser.Sobrenome)
+                    : (string.IsNullOrEmpty(comment.UserId) ? comment.UserName : "Conta Eliminada"),
                 FotoPerfilUrl = fotoUrl,
                 UserTag = userTag,
                 UserTagDescription = tagDescription,
@@ -409,6 +411,17 @@ namespace FilmAholic.Server.Controllers
                 DislikeCount = dislikeCount,
                 MyVote = myVote
             });
+        }
+
+        private static string ResolveCommentListUserName(Comments c, Dictionary<string, string?> userNameByUserId)
+        {
+            if (!string.IsNullOrEmpty(c.UserId) &&
+                userNameByUserId.TryGetValue(c.UserId, out var resolved) &&
+                !string.IsNullOrEmpty(resolved))
+                return resolved;
+            if (string.IsNullOrEmpty(c.UserId))
+                return string.IsNullOrEmpty(c.UserName) ? "Conta Eliminada" : c.UserName;
+            return "Conta Eliminada";
         }
     }
 }

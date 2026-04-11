@@ -274,7 +274,12 @@ export class TopbarActionsComponent implements OnInit, OnDestroy {
 
   openComunidadeFromNotif(item: NotificacaoComunidadeItemDto): void {
     this.isNotificationsOpen = false;
-    if (this.comunidadeNotifTipo(item.tipo) === 'pedido_entrada') {
+    const t = this.comunidadeNotifTipo(item.tipo);
+    if (t === 'comunidade_eliminada' || item.comunidadeId == null) {
+      this.router.navigate(['/comunidades']);
+      return;
+    }
+    if (t === 'pedido_entrada') {
       this.router.navigate(['/comunidades', item.comunidadeId], { queryParams: { tab: 'membros' } });
       return;
     }
@@ -290,6 +295,17 @@ export class TopbarActionsComponent implements OnInit, OnDestroy {
     if (t !== 'kick' && t !== 'banido') return null;
     const s = n.corpo?.trim();
     return s && s.length > 0 ? s : null;
+  }
+
+  comunidadeEliminadaMensagemExtra(n: NotificacaoComunidadeItemDto): string | null {
+    if (this.comunidadeNotifTipo(n.tipo) !== 'comunidade_eliminada') return null;
+    try {
+      const o = JSON.parse(n.corpo || '{}') as { mensagem?: string };
+      const m = o.mensagem?.trim();
+      return m && m.length > 0 ? m : null;
+    } catch {
+      return null;
+    }
   }
 
   private static parseLidaEm(iso?: string | null): Date | null {

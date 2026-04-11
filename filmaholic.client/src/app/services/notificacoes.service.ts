@@ -68,10 +68,10 @@ export interface ResumoEstatisticasFeedDto {
 /// </summary>
 export interface NotificacaoComunidadeItemDto {
   id: number;
-  comunidadeId: number;
+  comunidadeId?: number | null;
   comunidadeNome: string;
   postId?: number | null;
-  tipo: 'post' | 'pedido_entrada' | 'pedido_aprovado' | 'pedido_rejeitado' | 'kick' | 'banido';
+  tipo: 'post' | 'pedido_entrada' | 'pedido_aprovado' | 'pedido_rejeitado' | 'kick' | 'banido' | 'comunidade_eliminada';
   corpo?: string | null;
   criadaEm: string;
   lidaEm?: string | null;
