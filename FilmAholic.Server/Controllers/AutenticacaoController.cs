@@ -4,6 +4,7 @@ using FilmAholic.Server.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using System.Security.Claims;
 
@@ -132,7 +133,7 @@ namespace FilmAholic.Server.Controllers
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] LoginRequest model)
         {
-            var user = await _userManager.FindByEmailAsync(model.Email);
+            var user = await FindUserByEmailSafeAsync(model.Email);
             if (user == null) return Unauthorized(new { message = "Utilizador não encontrado." });
 
             if (!await _userManager.IsEmailConfirmedAsync(user))
@@ -206,7 +207,7 @@ namespace FilmAholic.Server.Controllers
         [HttpPost("reenviar-email-verificacao")]
         public async Task<IActionResult> ReenviarEmailVerificacao([FromBody] ReenviarEmailRequest model)
         {
-            var user = await _userManager.FindByEmailAsync(model.Email);
+            var user = await FindUserByEmailSafeAsync(model.Email);
             if (user == null)
             {
                 return Ok(new { message = "Se o email existir e não estiver confirmado, um novo email de verificação foi enviado." });
@@ -235,7 +236,7 @@ namespace FilmAholic.Server.Controllers
         {
             if (string.IsNullOrEmpty(model.Email)) return BadRequest(new { message = "Email é obrigatório." });
 
-            var user = await _userManager.FindByEmailAsync(model.Email);
+            var user = await FindUserByEmailSafeAsync(model.Email);
 
             if (user == null) return Ok(new { message = "Se o email existir, enviámos as instruções." });
 
@@ -261,7 +262,7 @@ namespace FilmAholic.Server.Controllers
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
 
-            var user = await _userManager.FindByEmailAsync(model.Email);
+            var user = await FindUserByEmailSafeAsync(model.Email);
             if (user == null) return BadRequest(new { message = "Erro ao processar o pedido." });
 
             var result = await _userManager.ResetPasswordAsync(user, model.Token, model.NewPassword);
@@ -385,7 +386,7 @@ namespace FilmAholic.Server.Controllers
                 return Redirect($"{angularUrl}/login?error=Não foi possível obter o email do {provider}");
             }
 
-            var existingUser = await _userManager.FindByEmailAsync(email);
+            var existingUser = await FindUserByEmailSafeAsync(email);
             if (existingUser != null)
             {
                 var addLoginResult = await _userManager.AddLoginAsync(existingUser, info);
@@ -444,6 +445,33 @@ namespace FilmAholic.Server.Controllers
             await TryEnsureReminderJogoOnLoginAsync(newUser.Id);
             var angularUrlFinal = GetFrontendBaseUrl();
             return Redirect($"{angularUrlFinal}/login?externalSuccess=true&nome={Uri.EscapeDataString(newUser.Nome)}&email={Uri.EscapeDataString(newUser.Email)}&userId={Uri.EscapeDataString(newUser.Id)}");
+        }
+
+        /// <summary>
+        /// <see cref="UserManager{TUser}.FindByEmailAsync"/> usa SingleOrDefault — com o mesmo email em mais de uma linha
+        /// em AspNetUsers a exceção "Sequence contains more than one element" rebenta. Isto devolve a conta mais antiga (Id)
+        /// e regista aviso para corrigires duplicados na BD.
+        /// </summary>
+        private async Task<Utilizador?> FindUserByEmailSafeAsync(string? email, CancellationToken cancellationToken = default)
+        {
+            if (string.IsNullOrWhiteSpace(email)) return null;
+            var normalized = _userManager.NormalizeEmail(email);
+            if (string.IsNullOrEmpty(normalized)) return null;
+
+            var matches = await _userManager.Users
+                .Where(u => u.NormalizedEmail == normalized)
+                .OrderBy(u => u.Id)
+                .ToListAsync(cancellationToken);
+
+            if (matches.Count == 0) return null;
+            if (matches.Count > 1)
+            {
+                _logger.LogWarning(
+                    "AspNetUsers tem {Count} contas com NormalizedEmail={Normalized}. Esperado 1. A usar Id={UserId}. Remove duplicados (mesmo email).",
+                    matches.Count, normalized, matches[0].Id);
+            }
+
+            return matches[0];
         }
 
         private async Task TryEnsureReminderJogoOnLoginAsync(string userId)
