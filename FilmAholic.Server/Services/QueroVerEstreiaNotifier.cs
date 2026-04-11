@@ -32,9 +32,9 @@ public static class QueroVerEstreiaNotifier
             return TimeZoneInfo.FindSystemTimeZoneById("GMT Standard Time");
         }
     }
-    
+
     /// <summary>
-    /// Notifica os utilizadores sobre estreias de filmes.
+    /// Executa o serviço de notificações de estreias para um utilizador específico.
     /// </summary>
     public static async Task<int> RunForUserAsync(
         FilmAholicDbContext db,
