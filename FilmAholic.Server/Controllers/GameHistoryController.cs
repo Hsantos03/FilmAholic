@@ -130,18 +130,17 @@ namespace FilmAholic.Server.Controllers
             var userIds = filtered.Select(x => x.UtilizadorId).ToList();
             var users = await _context.Users
                 .Where(u => userIds.Contains(u.Id))
-                .Select(u => new { u.Id, u.Nome, u.Sobrenome, u.FotoPerfilUrl, u.Nivel, u.XP })
+                .Select(u => new { u.Id, u.UserName, u.Nome, u.Sobrenome, u.FotoPerfilUrl, u.Nivel, u.XP })
                 .ToListAsync();
 
             var result = filtered.Select((x, i) =>
             {
                 var user = users.FirstOrDefault(u => u.Id == x.UtilizadorId);
-                var nomeCompleto = ((user?.Nome ?? "") + " " + (user?.Sobrenome ?? "")).Trim();
                 return new
                 {
                     rank = i + 1,
                     utilizadorId = x.UtilizadorId,
-                    userName = string.IsNullOrEmpty(nomeCompleto) ? "Anónimo" : nomeCompleto,
+                    userName = user != null ? (!string.IsNullOrEmpty(user.UserName) && !user.UserName.Contains("@") ? user.UserName : $"{user.Nome} {user.Sobrenome}".Trim()) : "Anónimo",
                     fotoPerfilUrl = user?.FotoPerfilUrl,
                     nivel = user?.Nivel ?? 1,
                     xp = user?.XP ?? 0,

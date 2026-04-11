@@ -38,6 +38,7 @@ namespace FilmAholic.Server.Controllers
                 var commentIds = comments.Select(c => c.Id).ToList();
 
                 var userIds = comments.Select(c => c.UserId).Where(uid => uid != null).Distinct().ToList();
+                Dictionary<string, string?> userNameByUserId = new();
                 Dictionary<string, string?> fotoByUserId = new();
                 Dictionary<string, string?> userTagByUserId = new();
                 Dictionary<string, string?> userTagDescByUserId = new();
@@ -48,8 +49,9 @@ namespace FilmAholic.Server.Controllers
                 {
                     var userData = await _context.Set<Utilizador>()
                         .Where(u => userIds.Contains(u.Id))
-                        .Select(u => new { u.Id, u.FotoPerfilUrl, u.UserTag, u.UserTagPrimaryColor, u.UserTagSecondaryColor })
+                        .Select(u => new { u.Id, u.UserName, u.Nome, u.Sobrenome, u.FotoPerfilUrl, u.UserTag, u.UserTagPrimaryColor, u.UserTagSecondaryColor })
                         .ToListAsync();
+                    userNameByUserId = userData.ToDictionary(x => x.Id, x => !string.IsNullOrEmpty(x.UserName) && !x.UserName.Contains("@") ? x.UserName : x.Nome + " " + x.Sobrenome);
                     fotoByUserId = userData.ToDictionary(x => x.Id, x => x.FotoPerfilUrl);
                     userTagByUserId = userData.ToDictionary(x => x.Id, x => x.UserTag);
                     userTagPrimaryColorByUserId = userData.ToDictionary(x => x.Id, x => x.UserTagPrimaryColor);
@@ -109,7 +111,7 @@ namespace FilmAholic.Server.Controllers
                 var dtos = comments.Select(c => new CommentDTO
                 {
                     Id = c.Id,
-                    UserName = c.UserName,
+                    UserName = c.UserId != null && userNameByUserId.TryGetValue(c.UserId, out var uname) && !string.IsNullOrEmpty(uname) ? uname : c.UserName,
                     FotoPerfilUrl = c.UserId != null && fotoByUserId.TryGetValue(c.UserId, out var url) ? url : null,
                     UserTag = c.UserId != null && userTagByUserId.TryGetValue(c.UserId, out var tag) ? tag : null,
                     UserTagDescription = c.UserId != null && userTagDescByUserId.TryGetValue(c.UserId, out var tagDesc) ? tagDesc : null,
@@ -159,11 +161,10 @@ namespace FilmAholic.Server.Controllers
                 var user = await _context.Set<Utilizador>().FindAsync(userId);
                 if (user != null)
                 {
-                    var nomeCompleto = $"{user.Nome?.Trim() ?? ""} {user.Sobrenome?.Trim() ?? ""}".Trim();
-                    if (!string.IsNullOrEmpty(nomeCompleto))
-                        displayName = nomeCompleto;
-                    else if (!string.IsNullOrEmpty(user.UserName) && !user.UserName.Contains("@"))
+                    if (!string.IsNullOrEmpty(user.UserName) && !user.UserName.Contains("@"))
                         displayName = user.UserName;
+                    else
+                        displayName = $"{user.Nome?.Trim() ?? ""} {user.Sobrenome?.Trim() ?? ""}".Trim();
                 }
 
                 if (displayName == "User")
@@ -266,7 +267,7 @@ namespace FilmAholic.Server.Controllers
             return Ok(new CommentDTO
             {
                 Id = comment.Id,
-                UserName = comment.UserName,
+                UserName = commentUser != null ? (!string.IsNullOrEmpty(commentUser.UserName) && !commentUser.UserName.Contains("@") ? commentUser.UserName : commentUser.Nome + " " + commentUser.Sobrenome) : comment.UserName,
                 FotoPerfilUrl = fotoUrl,
                 UserTag = userTag,
                 UserTagDescription = tagDescription,

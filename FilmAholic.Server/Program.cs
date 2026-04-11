@@ -15,6 +15,8 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllers().AddJsonOptions(options =>
 {
     options.JsonSerializerOptions.PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase;
+    options.JsonSerializerOptions.Converters.Add(new FilmAholic.Server.Converters.UtcDateTimeConverter());
+    options.JsonSerializerOptions.Converters.Add(new FilmAholic.Server.Converters.NullableUtcDateTimeConverter());
 });
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();

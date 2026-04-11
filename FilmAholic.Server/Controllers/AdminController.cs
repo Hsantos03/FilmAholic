@@ -188,7 +188,7 @@ public class AdminController : ControllerBase
                 AutorId = p.UtilizadorId,
                 AutorNome = _context.Users.OfType<Utilizador>()
                     .Where(u => u.Id == p.UtilizadorId)
-                    .Select(u => u.Nome + " " + u.Sobrenome)
+                    .Select(u => !string.IsNullOrEmpty(u.UserName) && !u.UserName.Contains("@") ? u.UserName : u.Nome + " " + u.Sobrenome)
                     .FirstOrDefault() ?? "Utilizador removido"
             })
             .ToListAsync();
@@ -208,7 +208,7 @@ public class AdminController : ControllerBase
             .Join(_context.Users, m => m.UtilizadorId, u => u.Id, (m, u) => new
             {
                 utilizadorId = m.UtilizadorId,
-                nome = u.Nome + " " + u.Sobrenome,
+                nome = !string.IsNullOrEmpty(u.UserName) && !u.UserName.Contains("@") ? u.UserName : u.Nome + " " + u.Sobrenome,
                 email = u.Email,
                 m.Role
             })
