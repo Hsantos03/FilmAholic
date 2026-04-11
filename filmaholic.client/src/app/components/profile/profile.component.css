@@ -505,21 +505,40 @@
     cursor: not-allowed;
   }
 .cancel-btn {
-  background-color: #1a2a3a;
-  color: #6c757d;
-  border: 1px solid #1a2a3a;
+  background-color: rgba(255, 255, 255, 0.06);
+  color: rgba(255, 255, 255, 0.88);
+  border: 1px solid rgba(255, 255, 255, 0.14);
   padding: 15px 30px;
   border-radius: 10px;
   cursor: pointer;
-  font-weight: 500;
+  font-weight: 600;
   font-size: 16px;
-  transition: 0.3s;
+  transition: 0.2s ease;
   min-width: 100px;
 }
   .cancel-btn:hover:not(:disabled) {
-    background-color: #2a3a4a;
-    border-color: var(--color-primary);
-    color: white;
+    background-color: rgba(255, 255, 255, 0.1);
+    border-color: rgba(233, 30, 99, 0.45);
+    color: #fff;
+  }
+
+/* Remover foto (perfil/capa): ação destrutiva secundária, alinhada ao tema — evita vermelho “bootstrap” ao lado do primário rosa */
+.modal-remover-btn {
+  background-color: rgba(255, 255, 255, 0.05);
+  color: rgba(252, 165, 165, 0.95);
+  border: 1px solid rgba(248, 113, 113, 0.35);
+  padding: 15px 30px;
+  border-radius: 10px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 16px;
+  transition: 0.2s ease;
+  min-width: 100px;
+}
+  .modal-remover-btn:hover:not(:disabled) {
+    background-color: rgba(239, 68, 68, 0.15);
+    border-color: rgba(248, 113, 113, 0.55);
+    color: #fecaca;
   }
 .remove-btn {
   background-color: #8b0000;
@@ -2314,18 +2333,19 @@
   flex: 1;
   min-width: 150px;
   padding: 15px 30px;
-  background-color: #1a2a3a;
-  color: #6c757d;
-  border: 1px solid #1a2a3a;
+  background-color: rgba(255, 255, 255, 0.06);
+  color: rgba(255, 255, 255, 0.88);
+  border: 1px solid rgba(255, 255, 255, 0.14);
   border-radius: 10px;
   font-size: 16px;
-  font-weight: 500;
+  font-weight: 600;
   cursor: pointer;
-  transition: 0.3s;
+  transition: 0.2s ease;
 }
 .btn-cancelar:hover {
-  border-color: var(--color-primary);
-  color: var(--text-primary);
+  background-color: rgba(255, 255, 255, 0.1);
+  border-color: rgba(233, 30, 99, 0.45);
+  color: #fff;
 }
 .btn-guardar {
   flex: 1;
