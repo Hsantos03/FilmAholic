@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable, of } from 'rxjs';
 import { environment } from '../../environments/environment';
-import { catchError } from 'rxjs/operators';
+import { catchError, map } from 'rxjs/operators';
 
 
 export interface ComunidadeDto {
@@ -154,6 +154,14 @@ export class ComunidadesService {
 
   getPosts(id: number): Observable<PostDto[]> {
     return this.http.get<PostDto[]>(`${this.apiUrl}/${id}/posts`, { withCredentials: true }).pipe(
+      map(posts => {
+        posts.forEach(p => {
+          if (p.dataCriacao && !p.dataCriacao.endsWith('Z')) {
+            p.dataCriacao += 'Z';
+          }
+        });
+        return posts;
+      }),
       catchError(() => of([]))
     );
   }
@@ -273,6 +281,14 @@ export class ComunidadesService {
 
   getComentarios(comunidadeId: number, postId: number): Observable<ComentarioDto[]> {
     return this.http.get<ComentarioDto[]>(`${this.apiUrl}/${comunidadeId}/posts/${postId}/comentarios`, { withCredentials: true }).pipe(
+      map(comentarios => {
+        comentarios.forEach(c => {
+          if (c.dataCriacao && !c.dataCriacao.endsWith('Z')) {
+            c.dataCriacao += 'Z';
+          }
+        });
+        return comentarios;
+      }),
       catchError(() => of([]))
     );
   }
