@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
@@ -416,7 +416,7 @@ namespace FilmAholic.Server.Controllers
                     UtilizadorId = m.UtilizadorId,
                     UserName = _context.Users.OfType<Utilizador>()
                         .Where(u => u.Id == m.UtilizadorId)
-                        .Select(u => u.Nome + " " + u.Sobrenome)
+                        .Select(u => !string.IsNullOrEmpty(u.UserName) && !u.UserName.Contains("@") ? u.UserName : u.Nome + " " + u.Sobrenome)
                         .FirstOrDefault() ?? "Utilizador removido",
                     Role = m.Role,
                     Status = m.Status,
@@ -510,8 +510,8 @@ namespace FilmAholic.Server.Controllers
                 .OfType<Utilizador>()
                 .AsNoTracking()
                 .Where(u => membros.Contains(u.Id))
-                .Select(u => new { u.Id, NomeCompleto = u.Nome + " " + u.Sobrenome })
-                .ToDictionaryAsync(u => u.Id, u => u.NomeCompleto.Trim());
+                .Select(u => new { u.Id, NomeCompleto = !string.IsNullOrEmpty(u.UserName) && !u.UserName.Contains("@") ? u.UserName : u.Nome + " " + u.Sobrenome })
+                .ToDictionaryAsync(u => u.Id, u => u.NomeCompleto ?? string.Empty);
 
             var stats = await _context.UserMovies
                 .AsNoTracking()
@@ -586,7 +586,7 @@ namespace FilmAholic.Server.Controllers
                     ImagemUrl = p.ImagemUrl != null ? baseUrl + p.ImagemUrl : null,
                     AutorNome = _context.Users.OfType<Utilizador>()
                         .Where(u => u.Id == p.UtilizadorId)
-                        .Select(u => u.Nome + " " + u.Sobrenome)
+                        .Select(u => !string.IsNullOrEmpty(u.UserName) && !u.UserName.Contains("@") ? u.UserName : u.Nome + " " + u.Sobrenome)
                         .FirstOrDefault() ?? "Utilizador removido",
                     AutorFotoPerfilUrl = _context.Users.OfType<Utilizador>()
                         .Where(u => u.Id == p.UtilizadorId)
@@ -767,7 +767,7 @@ namespace FilmAholic.Server.Controllers
                     Conteudo = post.Conteudo,
                     DataCriacao = post.DataCriacao,
                     AutorId = userId,
-                    AutorNome = autor != null ? (autor.Nome + " " + autor.Sobrenome).Trim() : "Desconhecido",
+                    AutorNome = autor != null ? (!string.IsNullOrEmpty(autor.UserName) && !autor.UserName.Contains("@") ? autor.UserName : autor.Nome + " " + autor.Sobrenome) : "Desconhecido",
                     ImagemUrl = post.ImagemUrl != null ? $"{baseUrl}{post.ImagemUrl}" : null,
 
                     LikesCount = 0,
@@ -957,7 +957,7 @@ namespace FilmAholic.Server.Controllers
                     UtilizadorId = p.UtilizadorId,
                     UserName = _context.Users.OfType<Utilizador>()
                         .Where(u => u.Id == p.UtilizadorId)
-                        .Select(u => u.Nome + " " + u.Sobrenome)
+                        .Select(u => !string.IsNullOrEmpty(u.UserName) && !u.UserName.Contains("@") ? u.UserName : u.Nome + " " + u.Sobrenome)
                         .FirstOrDefault() ?? "Utilizador removido",
                     DataPedido = p.DataPedido
                 })
@@ -1206,7 +1206,7 @@ namespace FilmAholic.Server.Controllers
                     UtilizadorId = m.UtilizadorId,
                     UserName = _context.Users.OfType<Utilizador>()
                         .Where(u => u.Id == m.UtilizadorId)
-                        .Select(u => u.Nome + " " + u.Sobrenome)
+                        .Select(u => !string.IsNullOrEmpty(u.UserName) && !u.UserName.Contains("@") ? u.UserName : u.Nome + " " + u.Sobrenome)
                         .FirstOrDefault() ?? "Utilizador removido",
                     Role = m.Role,
                     Status = m.Status,
@@ -1513,7 +1513,7 @@ namespace FilmAholic.Server.Controllers
                     AutorId = c.UtilizadorId,
                     AutorNome = _context.Users.OfType<Utilizador>()
                         .Where(u => u.Id == c.UtilizadorId)
-                        .Select(u => u.Nome + " " + u.Sobrenome)
+                        .Select(u => !string.IsNullOrEmpty(u.UserName) && !u.UserName.Contains("@") ? u.UserName : u.Nome + " " + u.Sobrenome)
                         .FirstOrDefault() ?? "Utilizador removido",
                     AutorFotoPerfilUrl = _context.Users.OfType<Utilizador>()
                         .Where(u => u.Id == c.UtilizadorId)
@@ -1626,7 +1626,7 @@ namespace FilmAholic.Server.Controllers
                 Conteudo = comentario.Conteudo,
                 DataCriacao = comentario.DataCriacao,
                 AutorId = userId,
-                AutorNome = autor != null ? (autor.Nome + " " + autor.Sobrenome).Trim() : "Desconhecido",
+                AutorNome = autor != null ? (!string.IsNullOrEmpty(autor.UserName) && !autor.UserName.Contains("@") ? autor.UserName : autor.Nome + " " + autor.Sobrenome) : "Desconhecido",
                 AutorFotoPerfilUrl = autor?.FotoPerfilUrl,
                 AutorUserTag = autor?.UserTag,
                 AutorUserTagDescription = tagDescription,
