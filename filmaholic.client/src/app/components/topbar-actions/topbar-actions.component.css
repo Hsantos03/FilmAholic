@@ -479,6 +479,7 @@
   justify-content: center;
   flex-shrink: 0;
   font-size: 17px;
+  overflow: visible;
 }
 
 .notif-icon--purple {
@@ -512,15 +513,16 @@
   display: block;
 }
 
+.notif-icon-img--resumo {
+  width: 28px;
+  height: 28px;
+}
+
 .notif-icon-svg {
   width: 24px;
   height: 24px;
   display: block;
   flex-shrink: 0;
-}
-
-.notif-icon-svg--jogo {
-  color: #c4b5fd;
 }
 
 .notif-icon-svg--comunidade {
@@ -669,11 +671,22 @@
 }
 
 .resumo-mini-stat {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
   font-size: 11px;
   color: rgba(255, 255, 255, 0.6);
   background: rgba(255, 255, 255, 0.06);
   padding: 2px 8px;
   border-radius: 12px;
+}
+
+.resumo-mini-stat-icon {
+  width: 12px;
+  height: 12px;
+  flex-shrink: 0;
+  object-fit: contain;
+  display: block;
 }
 
 .resumo-mini-genres {
