@@ -635,13 +635,65 @@ export class TopbarActionsComponent implements OnInit, OnDestroy {
 
   marcarTodasNotificacoesLidas(e: MouseEvent): void {
     e.stopPropagation();
-    if (this.comunidadeUnreadCount > 0) this.marcarTodasComunidadeLidas(e);
-    if (this.medalhaUnreadCount > 0) this.marcarTodasMedalhasComoLidas();
-    if (this.plataformaUnreadCount > 0) {
-      // Loop rápido para limpar as da plataforma caso existam
-      this.plataformaFeed.unread?.forEach(p => this.marcarPlataformaLida(e, p));
-    }
-    setTimeout(() => this.clampNotifPage(), 0);
+    this.notificacoesService.marcarTodasNotificacoesLidasGlobal().subscribe({
+      next: () => {
+        const now = new Date().toISOString();
+
+        // 1. Resumo
+        this.resumoFeed = {
+          unread: [],
+          read: [
+            ...(this.resumoFeed.unread ?? []).map((x) => ({ ...x, lidaEm: now })),
+            ...(this.resumoFeed.read ?? [])
+          ].slice(0, 50)
+        };
+        this.resumoUnreadCount = 0;
+
+        // 2. Comunidade
+        this.comunidadeFeed = {
+          unread: [],
+          read: [
+            ...(this.comunidadeFeed.unread ?? []).map((x) => ({ ...x, lidaEm: now })),
+            ...(this.comunidadeFeed.read ?? [])
+          ].slice(0, 50)
+        };
+        this.comunidadeUnreadCount = 0;
+
+        // 3. Medalha
+        this.medalhaFeed = {
+          unread: [],
+          read: [
+            ...(this.medalhaFeed.unread ?? []).map((x) => ({ ...x, lidaEm: now })),
+            ...(this.medalhaFeed.read ?? [])
+          ].slice(0, 50)
+        };
+        this.medalhaUnreadCount = 0;
+
+        // 4. Plataforma
+        this.plataformaFeed = {
+          unread: [],
+          read: [
+            ...(this.plataformaFeed.unread ?? []).map((x) => ({ ...x, lidaEm: now })),
+            ...(this.plataformaFeed.read ?? [])
+          ].slice(0, 50)
+        };
+        this.plataformaUnreadCount = 0;
+
+        // 5. Jogo (ReminderJogo)
+        this.reminderJogo = this.reminderJogo.map((r) => ({ ...r, lidaEm: now }));
+        this.reminderJogoUnreadCount = 0;
+
+        // 6. Filme (FilmeDisponivel)
+        this.filmeDisponivel = this.filmeDisponivel.map((f) => ({ ...f, lidaEm: now }));
+        this.filmeDisponivelUnreadCount = 0;
+
+        // Força atualização da bolinha externa
+        this.notificacoesService.refreshNotificationBadges();
+
+        setTimeout(() => this.clampNotifPage(), 0);
+        this.cdr.markForCheck();
+      }
+    });
   }
 
   // ── Funções de Estreias (Upcoming) ──
