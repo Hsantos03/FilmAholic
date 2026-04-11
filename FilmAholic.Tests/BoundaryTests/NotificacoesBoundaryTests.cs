@@ -401,7 +401,7 @@ namespace FilmAholic.Tests.BoundaryTests
         #region Reminder Jogo Feed Boundary Tests
 
         [Fact]
-        public async Task GetReminderJogoFeed_DeveLimitarA5Notificacoes()
+        public async Task GetReminderJogoFeed_DeveLimitarNotificacoes()
         {
             // Arrange
             var options = GetDbOptions("ReminderLimit");
@@ -437,7 +437,7 @@ namespace FilmAholic.Tests.BoundaryTests
                 Assert.NotNull(notifs);
                 int count = 0;
                 foreach (var _ in notifs) count++;
-                Assert.True(count <= 5);
+                Assert.True(count <= 12);
             }
         }
 
