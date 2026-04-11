@@ -1180,16 +1180,16 @@ namespace FilmAholic.Server.Controllers
 
             var rows = await _context.Notificacoes
                 .AsNoTracking()
-                .Where(n => n.UtilizadorId == userId && n.Tipo == TipoReminderJogo && n.LidaEm == null)
+                .Where(n => n.UtilizadorId == userId && n.Tipo == TipoReminderJogo)
                 .OrderByDescending(n => n.CriadaEm)
-                .Take(5)
-                .Select(n => new { n.Id, n.Corpo, n.CriadaEm })
+                .Take(12)
+                .Select(n => new { n.Id, n.Corpo, n.CriadaEm, n.LidaEm })
                 .ToListAsync();
 
             var notifs = rows.Select(n =>
             {
                 var p = ReminderJogoCorpoJson.Parse(n.Corpo);
-                return new { id = n.Id, corpo = p.Texto, variante = p.Variante, criadaEm = n.CriadaEm };
+                return new { id = n.Id, corpo = p.Texto, variante = p.Variante, criadaEm = n.CriadaEm, lidaEm = n.LidaEm };
             }).ToList();
 
             return Ok(notifs);
@@ -1254,8 +1254,8 @@ namespace FilmAholic.Server.Controllers
                 medalhaNome = ParseMedalhaProperty<string>(n.Corpo, "medalhaNome", ""),
                 medalhaDescricao = ParseMedalhaProperty<string>(n.Corpo, "medalhaDescricao", ""),
                 medalhaIconeUrl = ParseMedalhaProperty<string>(n.Corpo, "medalhaIconeUrl", ""),
-                criadaEm = n.CriadaEm.ToString("yyyy-MM-ddTHH:mm:ss"),
-                lidaEm = n.LidaEm != null ? n.LidaEm.Value.ToString("yyyy-MM-ddTHH:mm:ss") : null
+                criadaEm = n.CriadaEm,
+                lidaEm = n.LidaEm
             }).ToList();
 
             var readNotifications = await _context.Notificacoes
@@ -1272,8 +1272,8 @@ namespace FilmAholic.Server.Controllers
                 medalhaNome = ParseMedalhaProperty<string>(n.Corpo, "medalhaNome", ""),
                 medalhaDescricao = ParseMedalhaProperty<string>(n.Corpo, "medalhaDescricao", ""),
                 medalhaIconeUrl = ParseMedalhaProperty<string>(n.Corpo, "medalhaIconeUrl", ""),
-                criadaEm = n.CriadaEm.ToString("yyyy-MM-ddTHH:mm:ss"),
-                lidaEm = n.LidaEm != null ? n.LidaEm.Value.ToString("yyyy-MM-ddTHH:mm:ss") : null
+                criadaEm = n.CriadaEm,
+                lidaEm = n.LidaEm
             }).ToList();
 
             return Ok(new NotificacaoMedalhaFeedDto { Unread = unread, Read = read });
@@ -1324,6 +1324,37 @@ namespace FilmAholic.Server.Controllers
                 .ToListAsync();
 
             foreach (var n in unread)
+                n.LidaEm = nowUtc;
+
+            await _context.SaveChangesAsync();
+            return NoContent();
+        }
+
+        /// Marca TODAS as notificações de todos os tipos como lidas (Global).
+        [HttpPut("marcar-todas-lidas-global")]
+        public async Task<IActionResult> MarcarTodasNotificacoesLidasGlobal()
+        {
+            var userId = GetUserId();
+            if (string.IsNullOrWhiteSpace(userId))
+                return Unauthorized();
+
+            var nowUtc = DateTime.UtcNow;
+
+            // 1. Notificações genéricas (Notificacoes table)
+            // Inclui: NovaEstreia, FilmeDisponivel, ResumoEstatisticas, ReminderJogo, AnuncioPlataforma, Medalha
+            var unreadGeneral = await _context.Notificacoes
+                .Where(n => n.UtilizadorId == userId && n.LidaEm == null)
+                .ToListAsync();
+
+            foreach (var n in unreadGeneral)
+                n.LidaEm = nowUtc;
+
+            // 2. Notificações de comunidade (NotificacoesComunidade table)
+            var unreadComunidade = await _context.NotificacoesComunidade
+                .Where(n => n.UtilizadorId == userId && n.LidaEm == null)
+                .ToListAsync();
+
+            foreach (var n in unreadComunidade)
                 n.LidaEm = nowUtc;
 
             await _context.SaveChangesAsync();
@@ -1434,16 +1465,17 @@ namespace FilmAholic.Server.Controllers
 
             var items = await _context.Notificacoes
                 .AsNoTracking()
-                .Where(n => n.UtilizadorId == userId && n.Tipo == TipoFilmeDisponivel && n.LidaEm == null)
+                .Where(n => n.UtilizadorId == userId && n.Tipo == TipoFilmeDisponivel)
                 .OrderByDescending(n => n.CriadaEm)
-                .Take(30)
+                .Take(40)
                 .Select(n => new FilmeDisponivelFeedItemDto
                 {
                     Id = n.Id,
                     FilmeId = n.FilmeId,
                     Titulo = n.Filme != null ? n.Filme.Titulo : null,
                     Corpo = n.Corpo ?? "",
-                    CriadaEm = n.CriadaEm
+                    CriadaEm = n.CriadaEm,
+                    LidaEm = n.LidaEm
                 })
                 .ToListAsync();
 
@@ -1479,6 +1511,7 @@ namespace FilmAholic.Server.Controllers
             return Ok(count);
         }
 
+
         public class NotificacaoPlataformaItemDto
         {
             public int Id { get; set; }
@@ -1501,6 +1534,7 @@ namespace FilmAholic.Server.Controllers
             public string? Titulo { get; set; }
             public string Corpo { get; set; } = "";
             public DateTime CriadaEm { get; set; }
+            public DateTime? LidaEm { get; set; }
         }
 
         public class NovaEstreiaDebugDto
@@ -1588,8 +1622,8 @@ namespace FilmAholic.Server.Controllers
             public string medalhaNome { get; set; } = "";
             public string medalhaDescricao { get; set; } = "";
             public string medalhaIconeUrl { get; set; } = "";
-            public string criadaEm { get; set; } = "";
-            public string? lidaEm { get; set; }
+            public DateTime criadaEm { get; set; }
+            public DateTime? lidaEm { get; set; }
         }
 
         public class NotificacaoMedalhaFeedDto

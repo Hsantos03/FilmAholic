@@ -307,4 +307,9 @@ export class NotificacoesService {
   marcarNotificacaoPlataformaComoLida(id: number): Observable<void> {
     return this.http.put<void>(`${this.apiUrl}/plataforma/${id}/lida`, {}, { withCredentials: true });
   }
+
+  marcarTodasNotificacoesLidasGlobal(): Observable<void> {
+    return this.http.put<void>(`${this.apiUrl}/marcar-todas-lidas-global`, {}, { withCredentials: true });
+  }
 }
+
