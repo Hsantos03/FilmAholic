@@ -8,6 +8,9 @@ using System.Security.Claims;
 
 namespace FilmAholic.Server.Controllers
 {
+    /// <summary>
+    /// Hub central de rastreamento do consumo de media do utilizador ("Já Vi", Watchlist) e do forte processamento de agregações JSON para pintar os ChartJS.
+    /// </summary>
     [Authorize]
     [ApiController]
     [Route("api/usermovies")]
@@ -24,7 +27,9 @@ namespace FilmAholic.Server.Controllers
             _medalhaService = medalhaService;
         }
 
-        /// <summary>Utilizador autenticado a consultar listas/estatísticas; <paramref name="forUserId"/> opcional para ver outro perfil.</summary>
+        /// <summary>
+        /// Tenta resolver o alvo do perfil com base no ID do utilizador fornecido ou no utilizador autenticado.
+        /// </summary>
         private bool TryResolveProfileTarget(string? forUserId, out string targetUserId)
         {
             targetUserId = "";
@@ -34,6 +39,12 @@ namespace FilmAholic.Server.Controllers
             return true;
         }
 
+
+        /// <summary>
+        /// Adiciona um filme à lista do utilizador, seja na seção "Vistos" ou "Para Ver".
+        /// </summary>
+        /// <param name="filmeId">O Id Relacional do Catálogo.</param>
+        /// <param name="jaViu">Se a entidade pretende que adicione à zona "Vistos", ou "Para Ver".</param>
         [HttpPost("add")]
         public async Task<IActionResult> AddMovie(int filmeId, bool jaViu)
         {
@@ -123,6 +134,10 @@ namespace FilmAholic.Server.Controllers
             return Ok();
         }
 
+        /// <summary>
+        /// Remove um filme da lista do utilizador, seja na seção "Vistos" ou "Para Ver".
+        /// </summary>
+        /// <param name="filmeId">Identity relacional na db principal.</param>
         [HttpDelete("remove/{filmeId}")]
         public async Task<IActionResult> RemoveMovie(int filmeId)
         {
@@ -140,6 +155,9 @@ namespace FilmAholic.Server.Controllers
             return Ok();
         }
 
+        /// <summary>
+        /// Recupera a lista de filmes do utilizador, filtrando por status "Já Vistos" ou "Para Ver".
+        /// </summary>
         [HttpGet("list/{jaViu}")]
         public async Task<IActionResult> GetList(bool jaViu, [FromQuery] string? forUserId = null)
         {
@@ -154,6 +172,9 @@ namespace FilmAholic.Server.Controllers
             return Ok(movies);
         }
 
+        /// <summary>
+        /// Calcula o total de horas de filmes assistidos pelo utilizador.
+        /// </summary>
         [HttpGet("totalhours")]
         public async Task<IActionResult> GetTotalHours([FromQuery] string? forUserId = null)
         {
@@ -168,6 +189,9 @@ namespace FilmAholic.Server.Controllers
             return Ok(totalMinutes / 60.0);
         }
 
+        /// <summary>
+        /// Recupera estatísticas detalhadas sobre os filmes assistidos pelo utilizador, incluindo contagens por género e duração total.
+        /// </summary>
         [HttpGet("stats")]
         public async Task<IActionResult> GetStats([FromQuery] DateTime? from, [FromQuery] DateTime? to, [FromQuery] string? forUserId = null)
         {
@@ -193,6 +217,9 @@ namespace FilmAholic.Server.Controllers
             });
         }
 
+        /// <summary>
+        /// Compara as estatísticas do utilizador com as métricas globais, incluindo percentagens por género e médias por utilizador.
+        /// </summary>
         [HttpGet("stats/comparison")]
         public async Task<IActionResult> GetStatsComparison([FromQuery] DateTime? from, [FromQuery] DateTime? to, [FromQuery] string? forUserId = null)
         {
@@ -277,6 +304,9 @@ namespace FilmAholic.Server.Controllers
             });
         }
 
+        /// <summary>
+        /// Aplica filtros de período (data de início e fim) à consulta de filmes do utilizador.
+        /// </summary>
         private static IQueryable<UserMovie> ApplyPeriodFilter(IQueryable<UserMovie> query, DateTime? from, DateTime? to)
         {
             if (from.HasValue)
@@ -286,6 +316,9 @@ namespace FilmAholic.Server.Controllers
             return query;
         }
 
+        /// <summary>
+        /// Conta as ocorrências individuais de cada género nos filmes do utilizador.
+        /// </summary>
         private static List<(string genero, int total)> CountByIndividualGenreTyped(IEnumerable<UserMovie> movies)
         {
             return movies
@@ -300,6 +333,9 @@ namespace FilmAholic.Server.Controllers
                 .ToList();
         }
 
+        /// <summary>
+        /// Calcula o percentil do utilizador em relação ao consumo de filmes em comparação com todos os utilizadores.
+        /// </summary>
         private int CalculatePercentile(string userId, List<string> allUserIds, List<UserMovie> allWatchedMovies)
         {
             var userCounts = allUserIds
@@ -316,6 +352,9 @@ namespace FilmAholic.Server.Controllers
             return (int)Math.Round((double)usersWithLessOrEqual / userCounts.Count * 100);
         }
 
+        /// <summary>
+        /// Gera dados para gráficos baseados em ChartJS, organizando visualizações em baldes e intervalos predefinidos de Ano, Mês, Dia e Séculos correspondentes às datas de lançamento dos filmes avaliados.
+        /// </summary>
         [HttpGet("stats/charts")]
         public async Task<IActionResult> GetStatsCharts([FromQuery] DateTime? from, [FromQuery] DateTime? to, [FromQuery] string? forUserId = null)
         {
@@ -579,6 +618,9 @@ namespace FilmAholic.Server.Controllers
             });
         }
 
+        /// <summary>
+        /// Atualiza o progresso do utilizador nos desafios ativos relacionados com o género do filme assistido.
+        /// </summary>
         private async Task HandleDesafioProgressAsync(string userId, Filme filme)
         {
             if (filme == null || string.IsNullOrWhiteSpace(filme.Genero)) return;

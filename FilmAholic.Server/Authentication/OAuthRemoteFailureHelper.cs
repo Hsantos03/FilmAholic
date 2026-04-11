@@ -6,11 +6,17 @@ using Microsoft.Extensions.DependencyInjection;
 namespace FilmAholic.Server.Authentication;
 
 /// <summary>
+/// Classe auxiliar estática para lidar com falhas de correlação remotas durante o processo de autenticação OAuth (como o Google).
 /// Quando o utilizador volta atrás no browser após OAuth, o GET a /signin-google pode repetir-se sem o cookie de correlação
-/// (já consumido) — gera "Correlation failed". Tratamos aqui com redirect ao frontend em vez de página de exceção.
+/// (já consumido) — gera "Correlation failed".
 /// </summary>
 public static class OAuthRemoteFailureHelper
 {
+    /// <summary>
+    /// Lida com a falha de autenticação redirecionando o utilizador de volta para a página de login do frontend com uma mensagem de erro compreensível.
+    /// </summary>
+    /// <param name="context"> O contexto da falha remota que contém a exceção e o contexto HTTP.</param>
+    /// <returns>Uma tarefa concluída que assinala a finalização do processo.</returns>
     public static Task HandleRemoteFailure(RemoteFailureContext context)
     {
         context.HandleResponse();
@@ -21,6 +27,12 @@ public static class OAuthRemoteFailureHelper
         return Task.CompletedTask;
     }
 
+    /// <summary>
+    /// Calcula e devolve o URL base do frontend para redirecionar, baseado na configuração ou host atual.
+    /// </summary>
+    /// <param name="http"> O contexto HTTP do pedido atual.</param>
+    /// <param name="configuration"> A interface de configuração da aplicação para consultar definições do URL.</param>
+    /// <returns>Uma string que representa o URL base do frontend.</returns>
     private static string ResolveFrontendBaseUrl(HttpContext http, IConfiguration configuration)
     {
         var host = http.Request.Host.Value ?? "";
@@ -46,6 +58,11 @@ public static class OAuthRemoteFailureHelper
         return $"{scheme}://{host}";
     }
 
+    /// <summary>
+    /// Cria uma mensagem legível para o utilizador com base numa exceção recebida do fornecedor OAuth.
+    /// </summary>
+    /// <param name="failure"> Exceção recebida contendo as causas da falha.</param>
+    /// <returns> Uma string com a mensagem traduzida e direcionada para o utilizador final.</returns>
     private static string UserFacingMessage(Exception? failure)
     {
         if (failure == null)

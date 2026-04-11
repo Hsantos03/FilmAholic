@@ -8,6 +8,10 @@ using Microsoft.EntityFrameworkCore;
 
 namespace FilmAholic.Server.Controllers
 {
+    /// <summary>
+    /// Fornecedor assíncrono de operações elementares (CRUD) de crítica individual.
+    /// Exclusivamente atrelado à publicação de pequenos parágrafos e reações numéticas diretamente numa Movie Page.
+    /// </summary>
     [ApiController]
     [Route("api/comments")]
     public class CommentsController : ControllerBase
@@ -15,12 +19,25 @@ namespace FilmAholic.Server.Controllers
         private readonly FilmAholicDbContext _context;
         private readonly ILogger<CommentsController> _logger;
 
+        /// <summary>
+        /// Injeta repositório EF e Logger para as gravações e monitorização no pipeline de logs.
+        /// </summary>
+        /// <param name="context">Base de dados SQlite.</param>
+        /// <param name="logger">Output stream para consola e Application Insights.</param>
         public CommentsController(FilmAholicDbContext context, ILogger<CommentsController> logger)
         {
             _context = context;
             _logger = logger;
         }
 
+        /// <summary>
+        /// Devolve a cascata de comentários para ser pintada num scroll debaixo da sinopse da pelicula.
+        /// Anexa Tags de recompensa passivas e Links de Perfil para a Interface.
+        /// </summary>
+        /// <param name="movieId">Primary Id representativo do Filme no TMDB.</param>
+        /// <param name="page">Indíce numérico da listagem pedida.</param>
+        /// <param name="pageSize">Densidade de conteúdo a cuspir nesta iteração temporal.</param>
+        /// <returns>Fragmento paginado e formatado em propriedades contendo a estrutura CommentDTOs e métricas relativas aos corações que recebeu.</returns>
         [HttpGet("movie/{movieId:int}")]
         public async Task<IActionResult> GetByMovie(int movieId, [FromQuery] int page = 1, [FromQuery] int pageSize = 5)
         {
@@ -141,6 +158,12 @@ namespace FilmAholic.Server.Controllers
             }
         }
 
+        /// <summary>
+        /// Mostra uma descrição sobre a obra e constrói a associação entre utilizador / TMDb ID efetuando guardas defensivas sobre submissões nulas.
+        /// Resgata o Username original pelo Identity NameIdentifier.
+        /// </summary>
+        /// <param name="dto">Recetáculo que abarca o Movie ID e o String cru do texto.</param>
+        /// <returns>Uma cópia perfeitamente mapeada 201 com o novo timestamp e medalha atrelada se obtida.</returns>
         [Authorize]
         [HttpPost]
         public async Task<ActionResult<CommentDTO>> Create([FromBody] CreateCommentDTO dto)
@@ -230,6 +253,13 @@ namespace FilmAholic.Server.Controllers
             }
         }
 
+        /// <summary>
+        /// Substitui uma reflexão existente a quem invoca a Primary Key de Autor nos conformes de Policy Authorize.
+        /// Atualiza também o timestamp local "DataEdicao" como alterado.
+        /// </summary>
+        /// <param name="id">Índice relacional (Identidade da table Comment).</param>
+        /// <param name="dto">O novo pedaço textual cru a ser enxertado.</param>
+        /// <returns>Novo objeto renderizado após recomputação no EntityFramework, guardando e preservando Likes Count.</returns>
         [Authorize]
         [HttpPut("{id:int}")]
         public async Task<ActionResult<CommentDTO>> Update(int id, [FromBody] CreateCommentDTO dto)
@@ -290,6 +320,11 @@ namespace FilmAholic.Server.Controllers
             });
         }
 
+        /// <summary>
+        /// Remove o input do fórum/crítica caso se pertença à instância referenciada.
+        /// </summary>
+        /// <param name="id">Índice estrito para procurar no tracking DbContext.</param>
+        /// <returns>HTTP Final 204 No Content confirmando vazio com aval de transação.</returns>
         [Authorize]
         [HttpDelete("{id:int}")]
         public async Task<IActionResult> Delete(int id)
@@ -306,6 +341,13 @@ namespace FilmAholic.Server.Controllers
             return NoContent();
         }
 
+        /// <summary>
+        /// Vota Like/Dislike. Apaga se o utilizador refizer toggle sobre ele próprio.
+        /// Revalida a totalidade pós ação.
+        /// </summary>
+        /// <param name="id">A Primary Key original da tabela associada à obra a intercetar.</param>
+        /// <param name="dto">Atributo reencaminhador com '1', '-1' ou '0'.</param>
+        /// <returns>Espelho sumário (CreateCommentDTO pseudo) mas englobado para dar reset às barras estatísticas no Angular após Toggle.</returns>
         [Authorize]
         [HttpPost("{id:int}/vote")]
         public async Task<ActionResult<CreateCommentDTO>> Vote(int id, [FromBody] CreateCommentDTO dto)

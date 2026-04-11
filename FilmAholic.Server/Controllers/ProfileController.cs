@@ -11,6 +11,10 @@ using System.Text.Json;
 
 namespace FilmAholic.Server.Controllers
 {
+    /// <summary>
+    /// Controlador centralizado para extração e mutação de dados identitários do indivíduo.
+    /// Gere a exclusão de conta e o vínculo de tags e favoritos anexos à entidade ASP.NET User.
+    /// </summary>
     [ApiController]
     [Route("api/[controller]")]
     public class ProfileController : ControllerBase
@@ -30,6 +34,11 @@ namespace FilmAholic.Server.Controllers
         }
 
         // GET: api/Profile/{id}
+        /// <summary>
+        /// Devolve a vista detalhada de um perfil público de utilizador pelo seu UUID.
+        /// Exclui o Email se o requerente não for dono ou Admin.
+        /// </summary>
+        /// <param name="id">A Primary Key em base de GUID nativo do Identity.</param>
         [HttpGet("{id}")]
         public async Task<IActionResult> GetUserById(string id)
         {
@@ -85,6 +94,11 @@ namespace FilmAholic.Server.Controllers
         }
 
         // PUT: api/Profile/{id}
+        /// <summary>
+        /// Atualiza os campos modificáveis do perfil do utilizador.
+        /// </summary>
+        /// <param name="id">Primary Key GUID do utilizador alvo.</param>
+        /// <param name="dto">Campos modificáveis que passaram pelo front-end.</param>
         [HttpPut("{id}")]
         public async Task<IActionResult> UpdateProfile(string id, [FromBody] UpdateProfileDto dto)
         {
@@ -131,6 +145,10 @@ namespace FilmAholic.Server.Controllers
         }
 
         // DELETE: api/Profile/{id}
+        /// <summary>
+        /// Exclui a conta do utilizador e todos os dados associados, mantendo apenas posts e reviews com "Conta Eliminada".
+        /// </summary>
+        /// <param name="id">GuID restrito perfeitamente comparado face aos JWT Claims.</param>
         [Authorize]
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteAccount(string id)
@@ -188,6 +206,9 @@ namespace FilmAholic.Server.Controllers
         }
 
         // GET: api/Profile/generos
+        /// <summary>
+        /// Retorna todos os géneros disponíveis na plataforma.
+        /// </summary>
         [HttpGet("generos")]
         public async Task<IActionResult> ObterTodosGeneros()
         {
@@ -196,6 +217,9 @@ namespace FilmAholic.Server.Controllers
         }
 
         // GET: api/Profile/{id}/generos-favoritos
+        /// <summary>
+        /// Retorna os géneros favoritos de um utilizador específico.
+        /// </summary>
         [HttpGet("{id}/generos-favoritos")]
         public async Task<IActionResult> ObterGenerosFavoritos(string id)
         {
@@ -207,6 +231,11 @@ namespace FilmAholic.Server.Controllers
         }
 
         // PUT: api/Profile/{id}/generos-favoritos
+        /// <summary>
+        /// Atualiza os géneros favoritos de um utilizador específico.
+        /// </summary>
+        /// <param name="id">GUID do Alvo.</param>
+        /// <param name="dto">As N-IDs provenientes da resposta.</param>
         [HttpPut("{id}/generos-favoritos")]
         public async Task<IActionResult> AtualizarGenerosFavoritos(string id, [FromBody] AtualizarGenerosFavoritosDto dto)
         {
@@ -237,6 +266,9 @@ namespace FilmAholic.Server.Controllers
             }
         }
 
+        /// <summary>
+        /// Retorna os filmes e atores favoritos do utilizador autenticado.
+        /// </summary>
         [Authorize]
         [HttpGet("favorites")]
         public async Task<IActionResult> GetFavorites()
@@ -269,7 +301,9 @@ namespace FilmAholic.Server.Controllers
             });
         }
 
-        /// <summary>Favoritos (filmes/atores) de um utilizador — leitura para perfis de outros (autenticado).</summary>
+        /// <summary>
+        /// Retorna os filmes e atores favoritos de um utilizador específico.
+        /// </summary>
         [Authorize]
         [HttpGet("{id}/favorites")]
         public async Task<IActionResult> GetFavoritesForUser(string id)
@@ -307,8 +341,12 @@ namespace FilmAholic.Server.Controllers
             });
         }
 
+        /// <summary> Constante fixa do Limite aceitável em guardas anti-bot. </summary>
         private const int MaxFavoritesStored = 50;
 
+        /// <summary>
+        /// Atualiza os filmes e atores favoritos do utilizador autenticado.
+        /// </summary>
         [Authorize]
         [HttpPut("favorites")]
         public async Task<IActionResult> UpdateFavorites([FromBody] FavoritosDTO dto)
@@ -325,6 +363,9 @@ namespace FilmAholic.Server.Controllers
         }
 
         // GET: api/Profile/tag
+        /// <summary>
+        /// Retorna a tag do utilizador autenticado juntamente com as cores primária e secundária.
+        /// </summary>
         [Authorize]
         [HttpGet("tag")]
         public async Task<IActionResult> GetUserTag()
@@ -337,6 +378,9 @@ namespace FilmAholic.Server.Controllers
         }
 
         // PUT: api/Profile/tag
+        /// <summary>
+        /// Atualiza a tag do utilizador autenticado juntamente com as cores primária e secundária.
+        /// </summary>
         [Authorize]
         [HttpPut("tag")]
         public async Task<IActionResult> UpdateUserTag([FromBody] UpdateUserTagDto dto)
@@ -362,9 +406,12 @@ namespace FilmAholic.Server.Controllers
             await _context.SaveChangesAsync();
             return Ok(new { tag = user.UserTag, primaryColor = user.UserTagPrimaryColor, secondaryColor = user.UserTagSecondaryColor });
         }
-        
+
 
         // DTOs
+        /// <summary>
+        /// Molde robusto usado para aceitar o Payload formatado do Formulário de Edição (Angular).
+        /// </summary>
         public class UpdateProfileDto
         {
             public string? UserName { get; set; }
@@ -375,11 +422,17 @@ namespace FilmAholic.Server.Controllers
             public string? CapaUrl { get; set; }
         }
 
+        /// <summary>
+        /// Recetáculo contendo as int Keys dos genêros (TMDb) selecionados nas caixas do modal.
+        /// </summary>
         public class AtualizarGenerosFavoritosDto
         {
             public List<int>? GeneroIds { get; set; }
         }
 
+        /// <summary>
+        /// Payload com submissão hexadécima ou nome cru vindo das opções CSS da Tag em destaque.
+        /// </summary>
         public class UpdateUserTagDto
         {
             public string? Tag { get; set; }

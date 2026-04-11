@@ -10,6 +10,10 @@ using System.Text.Json;
 
 namespace FilmAholic.Server.Controllers
 {
+    /// <summary>
+    /// Controlador desenhado para a exposição de listagens e localizações geográficas das Salas de Cinema Físicas, 
+    /// conjugando cartazes extraidos em tempo real pelo serviço Scraper nas várias distribuidoras Nacionais.
+    /// </summary>
     [ApiController]
     [Route("api/[controller]")]
     public class CinemaController : ControllerBase
@@ -18,6 +22,12 @@ namespace FilmAholic.Server.Controllers
         private readonly HttpClient _httpClient;
         private readonly FilmAholicDbContext _context;
 
+        /// <summary>
+        /// Construtor com as dependências de rotas de HTTP, Gestor de Configs e injetor de Db Context.
+        /// </summary>
+        /// <param name="configuration">Ficheiros de variáveis de ambiente.</param>
+        /// <param name="httpClientFactory">Motor cru de chamadas a agentes web.</param>
+        /// <param name="context">Intermediador relacional SQLite.</param>
         public CinemaController(IConfiguration configuration, IHttpClientFactory httpClientFactory, FilmAholicDbContext context)
         {
             _configuration = configuration;
@@ -25,6 +35,11 @@ namespace FilmAholic.Server.Controllers
             _context = context;
         }    
 
+        /// <summary>
+        /// Remove a requisição diária cacheada aos servidores Scraper para obter as obras patentes a nível de cartaz em Portugal.
+        /// Aguarda até o Serviço de Background estar concluído (Aproximadamente 30s) caso seja uma base de dados vazia para precaver falta de dados.
+        /// </summary>
+        /// <returns>Formatação anonima padronizada detalhando duração, links e pósteres físicos.</returns>
         [HttpGet("em-cartaz")]
         public async Task<IActionResult> GetFilmesEmCartaz()
         {
@@ -73,7 +88,10 @@ namespace FilmAholic.Server.Controllers
             return Ok(new List<object>());
         }
 
-        /// <summary>Lista de cinemas com nome, morada e coordenadas para o mapa de cinemas próximos.</summary>
+        /// <summary>
+        /// Lista fixa de infraestruturas físicas de cinema (NOS, City) presentes no território Nacional para os markers num mapa UI georreferenciado.
+        /// </summary>
+        /// <returns>Objetos com as Moradas, Coordenadas de GPS exatas dos Shoppings/Stands.</returns>
         [HttpGet("proximos")]
         public IActionResult GetCinemasProximos()
         {
@@ -284,6 +302,12 @@ namespace FilmAholic.Server.Controllers
             return Ok(cinemas);
         }
 
+        /// <summary>
+        /// Comporta uma procura reativa não exata na plataforma orgânica do TMDB com suporte ao ano atual ou decrescente face ao título aproximado.
+        /// Exclusivamente concebida para associar IDs a filmes que possamos referenciar mas não possuímos de imediato na cache da BD.
+        /// </summary>
+        /// <param name="titulo">Corda textual (Query string) exata oriunda dos scrapers de horários e moradas lidos nas páginas de cinemas.</param>
+        /// <returns>Local Id espelhado do TMDB encontrado pelo seu motor interno para criar convergência.</returns>
         [HttpGet("search-tmdb")]
         public async Task<IActionResult> SearchTmdb([FromQuery] string titulo)
         {
@@ -331,7 +355,10 @@ namespace FilmAholic.Server.Controllers
             return NotFound();
         }
 
-        // GET: api/Profile/cinemas-favoritos
+        /// <summary>
+        /// Obtem um Array convertido de cadeias relativas a infraestruturas que são favoritas pelo leitor.
+        /// </summary>
+        /// <returns>Tabela alfanumerica dos identificadores base registados a gosto.</returns>
         [Authorize]
         [HttpGet("cinemas-favoritos")]
         public async Task<IActionResult> GetCinemasFavoritos()
@@ -350,7 +377,11 @@ namespace FilmAholic.Server.Controllers
             catch { return Ok(new List<string>()); }
         }
 
-        // POST: api/Profile/cinemas-favoritos/toggle
+        /// <summary>
+        /// Adiciona caso não se encontre presente o Id especificado na Lista de Salas favoritas do membro; retira ativamente se a correspondência for removida na verificação.
+        /// </summary>
+        /// <param name="dto">Chave Identificadora da entidade cinema em JSON submetida no Body HTTP.</param>
+        /// <returns>Estado do interruptor atualizado (IsFavorito).</returns>
         [Authorize]
         [HttpPost("cinemas-favoritos/toggle")]
         public async Task<IActionResult> ToggleCinemaFavorito([FromBody] ToggleCinemaFavoritoDto dto)
@@ -394,11 +425,17 @@ namespace FilmAholic.Server.Controllers
         }
 
 
+        /// <summary>
+        /// Estrutura para receção de uma ação toggle.
+        /// </summary>
         public class ToggleCinemaFavoritoDto
         {
             public string? CinemaId { get; set; }
         }
 
+        /// <summary>
+        /// Retrato de um cinema sobre a sua exibição e o seu horário.
+        /// </summary>
         public class CinemaMovieDto
         {
             public string Id { get; set; } = "";
@@ -414,6 +451,9 @@ namespace FilmAholic.Server.Controllers
             public string Link { get; set; } = "";
         }
 
+        /// <summary>
+        /// Local geográfico fixo da sala representante do shopping em questão.
+        /// </summary>
         public class CinemaVenueDto
         {
             public string Id { get; set; } = "";

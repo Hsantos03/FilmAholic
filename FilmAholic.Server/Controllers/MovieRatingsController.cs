@@ -1,4 +1,4 @@
-﻿using System.Security.Claims;
+using System.Security.Claims;
 using FilmAholic.Server.Data;
 using FilmAholic.Server.DTOs;
 using FilmAholic.Server.Models;
@@ -8,6 +8,10 @@ using Microsoft.EntityFrameworkCore;
 
 namespace FilmAholic.Server.Controllers
 {
+    /// <summary>
+    /// Controlador gerador e distribuidor de avaliações e classificações numéricas (ratings).
+    /// Regista qual a pontuação dos vários utilizadores face às longas metragens.
+    /// </summary>
     [ApiController]
     [Route("api/movieratings")]
     public class MovieRatingsController : ControllerBase
@@ -19,8 +23,11 @@ namespace FilmAholic.Server.Controllers
             _context = context;
         }
 
-        // GET api/movieratings/5
-        // devolve média, total votos, e o voto do utilizador (se autenticado)
+        /// <summary>
+        /// Obtém a cotação global do filme correspondente, o total de votos aglomerados e o voto específico se o utilizador estiver em sessão.
+        /// </summary>
+        /// <param name="movieId">Identificação primária do filme em território interno e na base de dados.</param>
+        /// <returns>Transfere um resumo das estatísticas sob forma do objeto <see cref="MovieRatingDTO"/>.</returns>
         [HttpGet("{movieId:int}")]
         public async Task<ActionResult<MovieRatingDTO>> Get(int movieId)
         {
@@ -58,8 +65,12 @@ namespace FilmAholic.Server.Controllers
             });
         }
 
-        // PUT api/movieratings/5  body: { score: 0..10 }
-        // cria ou atualiza o voto do utilizador (1 voto por filme)
+        /// <summary>
+        /// Cria iterativamente ou ajusta de imediato o voto atual do utilizador para esse filme (limitado intencionalmente a 1).
+        /// </summary>
+        /// <param name="movieId">ID numérico unívoco da obra cinematográfica alvo.</param>
+        /// <param name="dto">O portador com a pontuação de 0 a 10.</param>
+        /// <returns>As estatísticas recém-calculadas incorporando o voto em perspetiva.</returns>
         [Authorize]
         [HttpPut("{movieId:int}")]
         public async Task<ActionResult<MovieRatingDTO>> Upsert(int movieId, [FromBody] RatingsDto dto)
@@ -104,7 +115,11 @@ namespace FilmAholic.Server.Controllers
             return await Get(movieId);
         }
 
-        // DELETE api/movieratings/5  -> remove o teu voto
+        /// <summary>
+        /// Elimina permanentemente o voto deixado pelo utilizador perante o filme parametrizado, deitando fora do somatório a sua pontuação.
+        /// </summary>
+        /// <param name="movieId">Número da longa-metragem sujeita à ação de remoção.</param>
+        /// <returns>Sinal 204 NoContent assim que processada a limpeza.</returns>
         [Authorize]
         [HttpDelete("{movieId:int}")]
         public async Task<IActionResult> Clear(int movieId)
