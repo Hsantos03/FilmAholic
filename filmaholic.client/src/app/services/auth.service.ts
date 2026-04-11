@@ -4,12 +4,14 @@ import { Observable, of } from 'rxjs';
 import { Router } from '@angular/router';
 import { catchError, finalize, map, tap } from 'rxjs/operators';
 import { environment } from '../../environments/environment';
+import { SessionTerminationService, SessaoTerminadaMotivo } from './session-termination.service';
 
 /// <summary>
 /// Interface que representa a sessão do utilizador, contendo informações sobre autenticação, ID, email, nome, sobrenome, nome de utilizador e roles.
 /// </summary>
 export interface SessaoDto {
   authenticated: boolean;
+  sessaoTerminadaMotivo?: SessaoTerminadaMotivo;
   id?: string;
   email?: string;
   nome?: string;
@@ -30,11 +32,14 @@ export class AuthService {
   private readonly apiBase = environment.apiBaseUrl || '';
   private apiUrl = this.apiBase ? `${this.apiBase}/api/autenticacao` : '/api/autenticacao';
 
-
-  /// <summary>
-  /// Construtor do serviço de autenticação, injetando o HttpClient para comunicação com a API e o Router para navegação após logout.
-  /// </summary>
-  constructor(private http: HttpClient, private router: Router) { }
+    /// <summary>
+    /// Construtor do serviço de autenticação, injetando o HttpClient para comunicação com a API e o Router para navegação após logout.
+    /// </summary>
+  constructor(
+    private http: HttpClient,
+    private router: Router,
+    private sessionTermination: SessionTerminationService
+  ) {}
 
 
   /// <summary>
@@ -65,6 +70,11 @@ export class AuthService {
   refreshSessaoRoles(): Observable<void> {
     return this.obterSessao().pipe(
       tap((s) => {
+        const motivo = s.sessaoTerminadaMotivo;
+        if (motivo === 'bloqueada' || motivo === 'eliminada') {
+          this.sessionTermination.notify(motivo);
+          return;
+        }
         if (s.authenticated) {
           if (s.id) localStorage.setItem('user_id', s.id);
           const nome = (s.nome ?? '').trim();

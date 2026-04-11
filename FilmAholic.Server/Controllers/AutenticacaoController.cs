@@ -1,6 +1,7 @@
 using FilmAholic.Server.Models;
 using FilmAholic.Server.Data;
 using FilmAholic.Server.Services;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -139,7 +140,16 @@ namespace FilmAholic.Server.Controllers
 
             var user = await _userManager.FindByIdAsync(userId);
             if (user == null)
-                return Ok(new { authenticated = false });
+            {
+                await HttpContext.SignOutAsync(IdentityConstants.ApplicationScheme);
+                return Ok(new { authenticated = false, sessaoTerminadaMotivo = "eliminada" });
+            }
+
+            if (await _userManager.IsLockedOutAsync(user))
+            {
+                await HttpContext.SignOutAsync(IdentityConstants.ApplicationScheme);
+                return Ok(new { authenticated = false, sessaoTerminadaMotivo = "bloqueada" });
+            }
 
             var roles = await _userManager.GetRolesAsync(user);
             return Ok(new

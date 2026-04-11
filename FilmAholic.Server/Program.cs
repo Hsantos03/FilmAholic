@@ -1,5 +1,6 @@
 using FilmAholic.Server.Authentication;
 using FilmAholic.Server.Data;
+using FilmAholic.Server.Middleware;
 using FilmAholic.Server.Models;
 using FilmAholic.Server.Services;
 using Microsoft.AspNetCore.Identity;
@@ -201,8 +202,8 @@ if (app.Environment.IsDevelopment())
 app.UseCors("AllowAngular");
 
 app.UseAuthentication();
+app.UseMiddleware<AccountStatusMiddleware>();
 app.UseAuthorization();
-
 
 app.MapControllers();
 

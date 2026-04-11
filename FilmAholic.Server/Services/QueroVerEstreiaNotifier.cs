@@ -32,9 +32,9 @@ public static class QueroVerEstreiaNotifier
             return TimeZoneInfo.FindSystemTimeZoneById("GMT Standard Time");
         }
     }
-
+    
     /// <summary>
-    /// Executa o serviço de notificações de estreias para um utilizador específico.
+    /// Notifica os utilizadores sobre estreias de filmes.
     /// </summary>
     public static async Task<int> RunForUserAsync(
         FilmAholicDbContext db,
@@ -88,10 +88,19 @@ public static class QueroVerEstreiaNotifier
             if (!int.TryParse(filme.TmdbId, System.Globalization.NumberStyles.Integer, System.Globalization.CultureInfo.InvariantCulture, out var tmdbId))
                 continue;
 
-            var estreou = filme.ReleaseDate.HasValue && filme.ReleaseDate.Value <= nowUtc;
-            var streaming = !estreou && await movieService.IsAvailableInStreamingAsync(tmdbId);
+            if (!filme.ReleaseDate.HasValue)
+                continue;
 
-            if (!estreou && !streaming) continue;
+            var hojePortugal = TimeZoneInfo.ConvertTimeFromUtc(nowUtc, PortugalTimeZone).Date;
+            var releaseDay = filme.ReleaseDate.Value.Date;
+
+            // "Hoje" = dia civil em Portugal (Europe/Lisbon); datas de estreia já passadas não disparam cinema.
+            var estreouHoje = releaseDay == hojePortugal;
+            // Streaming só para estreias ainda futuras em relação a hoje em Portugal.
+            var streaming =
+                releaseDay > hojePortugal && await movieService.IsAvailableInStreamingAsync(tmdbId);
+
+            if (!estreouHoje && !streaming) continue;
 
             var alreadyNotified = await db.Notificacoes
                 .AnyAsync(n =>
@@ -105,7 +114,7 @@ public static class QueroVerEstreiaNotifier
                 UtilizadorId = userId,
                 FilmeId = filme.Id,
                 Tipo = Tipo,
-                Corpo = estreou
+                Corpo = estreouHoje
                     ? $"🎬 {filme.Titulo} estreou hoje nos cinema!"
                     : $"📺 {filme.Titulo} já está disponível em streaming!",
                 CriadaEm = nowUtc

@@ -71,20 +71,9 @@
       <!-- Carousel -->
       <div *ngIf="!isLoading" class="carousel-container">
         <div class="carousel-track">
-          <!-- First set of movies -->
-          <div class="movie-card" *ngFor="let movie of featuredMovies">
+          <div class="movie-card" *ngFor="let movie of carouselMovies">
             <div class="movie-poster">
-              <img [src]="movie.posterUrl || 'assets/placeholder-logo.png'" [alt]="movie.titulo">
-            </div>
-            <div class="movie-info">
-              <h4>{{ movie.titulo }}</h4>
-              <span class="movie-year">{{ movie.ano || movie.releaseDate?.substring(0,4) || 'N/A' }}</span>
-            </div>
-          </div>
-          <!-- Duplicate set for infinite scroll effect -->
-          <div class="movie-card" *ngFor="let movie of featuredMovies">
-            <div class="movie-poster">
-              <img [src]="movie.posterUrl || 'assets/placeholder-logo.png'" [alt]="movie.titulo">
+              <img [src]="movie.posterUrl || 'assets/icon.png'" [alt]="movie.titulo">
             </div>
             <div class="movie-info">
               <h4>{{ movie.titulo }}</h4>

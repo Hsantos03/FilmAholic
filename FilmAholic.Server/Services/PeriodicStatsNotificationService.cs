@@ -41,7 +41,7 @@ public sealed class PeriodicStatsNotificationService : BackgroundService
 
         while (!stoppingToken.IsCancellationRequested)
         {
-            var delay = DelayUntilNextRunUtc(_options.HourUtc, _options.MinuteUtc);
+            var delay = BackgroundServiceScheduling.DelayUntilNextRunUtc(_options.HourUtc, _options.MinuteUtc);
             try
             {
                 await Task.Delay(delay, stoppingToken);

@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { HttpClientModule } from '@angular/common/http';
+import { HTTP_INTERCEPTORS, HttpClientModule } from '@angular/common/http';
 import { BrowserModule } from '@angular/platform-browser';
 import { FormsModule } from '@angular/forms';
 import { LOCALE_ID, NgModule } from '@angular/core';
@@ -31,6 +31,9 @@ import { NotificacoesConfigComponent } from './components/notificacoes-config/no
 import { OnboardingTourComponent } from './components/onboarding-tour/onboarding-tour.component';
 import { AdminPanelComponent } from './components/admin-panel/admin-panel.component';
 import { HomePageComponent } from './components/homepage/homepage.component';
+import { SocialAuthButtonsComponent } from './components/social-auth-buttons/social-auth-buttons.component';
+import { SessionTerminatedOverlayComponent } from './components/session-terminated-overlay/session-terminated-overlay.component';
+import { SessionTerminationInterceptor } from './interceptors/session-termination.interceptor';
 
 registerLocaleData(localePt);
 
@@ -43,6 +46,7 @@ registerLocaleData(localePt);
     FormatDurationPipe,
     RegisterComponent,
     LoginComponent,
+    SocialAuthButtonsComponent,
     EmailConfirmadoComponent,
     ForgotPasswordComponent,
     ResetPasswordComponent,
@@ -61,7 +65,8 @@ registerLocaleData(localePt);
     ComunidadeDetalheComponent,
     NotificacoesConfigComponent,
     OnboardingTourComponent,
-    AdminPanelComponent
+    AdminPanelComponent,
+    SessionTerminatedOverlayComponent
   ],
   imports: [
     BrowserModule,
@@ -71,7 +76,11 @@ registerLocaleData(localePt);
     AppRoutingModule,
     HomePageComponent
   ],
-  providers: [{provide: LOCALE_ID, useValue: 'pt-PT'}, ComunidadesService],
+  providers: [
+    { provide: LOCALE_ID, useValue: 'pt-PT' },
+    ComunidadesService,
+    { provide: HTTP_INTERCEPTORS, useClass: SessionTerminationInterceptor, multi: true }
+  ],
   bootstrap: [AppComponent]
 })
 export class AppModule { }

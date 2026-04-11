@@ -15,9 +15,13 @@ import { environment } from '../../../environments/environment';
 @Component({
   selector: 'app-movie-page',
   templateUrl: './movie-page.component.html',
-  styleUrls: ['./movie-page.component.css', '../dashboard/dashboard.component.css']
+  styleUrls: ['./movie-page.component.css']
 })
 export class MoviePageComponent implements OnInit, OnDestroy {
+  private static readonly posterFallback = 'assets/cinema-clapper.png';
+
+  /** Quando o URL do poster falha a carregar (rede, 404, CSP), usa fallback local. */
+  posterLoadFailed = false;
   filme: Filme | null = null;
   overview: string | null = null;
 
@@ -202,7 +206,7 @@ export class MoviePageComponent implements OnInit, OnDestroy {
           titulo: cinemaTitle || 'Cinema Movie',
           duracao: cinemaDuration ? this.parseDuration(cinemaDuration) : 120,
           genero: cinemaGenre || 'Ação',
-          posterUrl: cinemaPoster || 'assets/placeholder-poster.jpg'
+          posterUrl: cinemaPoster || 'assets/cinema-clapper.png'
         };
         this.isLoading = false;
 
@@ -252,6 +256,8 @@ export class MoviePageComponent implements OnInit, OnDestroy {
     this.trailerDicaReady = false;
     this.showTrailer = false;
     this.safeTrailerUrl = null;
+
+    this.posterLoadFailed = false;
   }
 
   get canComment(): boolean {
@@ -340,7 +346,7 @@ export class MoviePageComponent implements OnInit, OnDestroy {
           titulo: 'Cinema Movie',
           duracao: 120,
           genero: 'Ação',
-          posterUrl: 'assets/placeholder-poster.jpg'
+          posterUrl: 'assets/cinema-clapper.png'
         };
         this.isLoading = false;
         
@@ -770,7 +776,8 @@ export class MoviePageComponent implements OnInit, OnDestroy {
   }
 
   recommendationPoster(f: Filme): string {
-    return f?.posterUrl || 'https://via.placeholder.com/300x450?text=Poster';
+    const u = (f?.posterUrl || '').trim();
+    return u || MoviePageComponent.posterFallback;
   }
 
   goToRecommendation(r: Filme): void {
@@ -903,8 +910,40 @@ export class MoviePageComponent implements OnInit, OnDestroy {
     });
   }
 
+  /** Mostra aviso quando não há URL de capa, é só o placeholder local, ou a imagem falhou a carregar. */
+  get showNoPosterNotice(): boolean {
+    if (!this.filme) {
+      return false;
+    }
+    if (this.posterLoadFailed) {
+      return true;
+    }
+    const t = (this.filme.posterUrl || '').trim();
+    if (!t) {
+      return true;
+    }
+    return t === MoviePageComponent.posterFallback;
+  }
+
   posterOf(): string {
-    return this.filme?.posterUrl || 'https://via.placeholder.com/300x450?text=Poster';
+    if (this.posterLoadFailed) {
+      return MoviePageComponent.posterFallback;
+    }
+    const raw = (this.filme?.posterUrl || '').trim();
+    if (!raw) {
+      return MoviePageComponent.posterFallback;
+    }
+    if (raw.startsWith('/') && !raw.startsWith('//')) {
+      return `https://image.tmdb.org/t/p/w500${raw}`;
+    }
+    return raw;
+  }
+
+  onPosterError(): void {
+    if (this.posterLoadFailed) {
+      return;
+    }
+    this.posterLoadFailed = true;
   }
 
   goBack(): void {

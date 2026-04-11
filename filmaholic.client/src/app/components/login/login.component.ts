@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { AuthService } from '../../services/auth.service';
+import { SessionTerminationService } from '../../services/session-termination.service';
 import { ProfileService } from '../../services/profile.service';
 import { Router, ActivatedRoute } from '@angular/router';
 
@@ -27,6 +28,7 @@ export class LoginComponent implements OnInit {
   constructor(
     private authService: AuthService,
     private profileService: ProfileService,
+    private sessionTermination: SessionTerminationService,
     private router: Router,
     private route: ActivatedRoute
   ) { }
@@ -117,6 +119,7 @@ export class LoginComponent implements OnInit {
     
     this.authService.login(this.loginData).subscribe({
       next: (res) => {
+        this.sessionTermination.reset();
         this.isLoading = false;
         localStorage.removeItem('fotoPerfilUrl');
         localStorage.setItem('user_nome', res.nome);

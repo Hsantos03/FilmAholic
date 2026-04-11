@@ -883,6 +883,17 @@
 
 
 
+      <ng-template #medalProgressInner>
+        <div class="progress-info">
+          <span class="progress-text">{{ medalProgress.current }}/{{ medalProgress.target }} dias</span>
+          <span class="next-medal" *ngIf="medalProgress.nextMedalName !== 'Todas conquistadas!'">Próxima: {{ medalProgress.nextMedalName }}</span>
+          <span class="next-medal" *ngIf="medalProgress.nextMedalName === 'Todas conquistadas!'">🎉 Todas as medalhas conquistadas!</span>
+        </div>
+        <div class="progress-bar">
+          <div class="progress-fill" [style.width.%]="medalProgress.percentage"></div>
+        </div>
+      </ng-template>
+
       <div class="medal-notifications" *ngIf="medalSuccessMessage || medalErrorMessage || medalProgress.target > 0">
 
         <div class="state success" *ngIf="medalSuccessMessage">
@@ -890,23 +901,7 @@
           {{ medalSuccessMessage }}
 
           <div class="medal-progress" *ngIf="medalProgress.target > 0">
-
-            <div class="progress-info">
-
-              <span class="progress-text">{{ medalProgress.current }}/{{ medalProgress.target }} dias</span>
-
-              <span class="next-medal" *ngIf="medalProgress.nextMedalName !== 'Todas conquistadas!'">Próxima: {{ medalProgress.nextMedalName }}</span>
-
-              <span class="next-medal" *ngIf="medalProgress.nextMedalName === 'Todas conquistadas!'">🎉 Todas as medalhas conquistadas!</span>
-
-            </div>
-
-            <div class="progress-bar">
-
-              <div class="progress-fill" [style.width.%]="medalProgress.percentage"></div>
-
-            </div>
-
+            <ng-container *ngTemplateOutlet="medalProgressInner"></ng-container>
           </div>
 
         </div>
@@ -918,23 +913,7 @@
           <div class="progress-title">Progresso dos Desafios Diários</div>
 
           <div class="medal-progress">
-
-            <div class="progress-info">
-
-              <span class="progress-text">{{ medalProgress.current }}/{{ medalProgress.target }} dias</span>
-
-              <span class="next-medal" *ngIf="medalProgress.nextMedalName !== 'Todas conquistadas!'">Próxima: {{ medalProgress.nextMedalName }}</span>
-
-              <span class="next-medal" *ngIf="medalProgress.nextMedalName === 'Todas conquistadas!'">🎉 Todas as medalhas conquistadas!</span>
-
-            </div>
-
-            <div class="progress-bar">
-
-              <div class="progress-fill" [style.width.%]="medalProgress.percentage"></div>
-
-            </div>
-
+            <ng-container *ngTemplateOutlet="medalProgressInner"></ng-container>
           </div>
 
         </div>

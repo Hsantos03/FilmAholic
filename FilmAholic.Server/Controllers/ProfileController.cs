@@ -45,6 +45,7 @@ namespace FilmAholic.Server.Controllers
             if (string.IsNullOrWhiteSpace(id))
                 return BadRequest(new { message = "Id is required." });
 
+            var now = DateTimeOffset.UtcNow;
             var user = await _context.Users
                 .Where(u => u.Id == id)
                 .Select(u => new
@@ -60,6 +61,7 @@ namespace FilmAholic.Server.Controllers
                     bio = u.Bio,
                     xp = u.XP,
                     nivel = u.Nivel,
+                    contaBloqueada = u.LockoutEnabled && u.LockoutEnd != null && u.LockoutEnd > now,
                     generosFavoritos = u.GenerosFavoritos.Select(ug => new
                     {
                         id = ug.Genero.Id,
@@ -89,6 +91,7 @@ namespace FilmAholic.Server.Controllers
                 user.bio,
                 user.xp,
                 user.nivel,
+                user.contaBloqueada,
                 user.generosFavoritos
             });
         }
