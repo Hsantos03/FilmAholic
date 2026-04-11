@@ -747,7 +747,8 @@ app-root > *:not(router-outlet) {
   box-shadow: 0 4px 28px rgba(0, 0, 0, 0.6);
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
-  overflow: hidden;
+  /* visible: overflow:hidden (commit AMonteiro316) recortava o menu do sino (.notifications-menu). */
+  overflow: visible;
 }
 
 .topbar::after {
@@ -841,7 +842,7 @@ app-root > *:not(router-outlet) {
   box-shadow: 0 4px 28px rgba(0, 0, 0, 0.6);
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
-  overflow: hidden;
+  overflow: visible;
 }
 
 .cinema-map-topbar::after {
