@@ -176,6 +176,8 @@ namespace FilmAholic.Server.Controllers
                     comment.UserId = null; // Remove the user ID reference
                 }
 
+                await ComunidadeEliminacaoAoRemoverConta.ExecutarAsync(_context, id);
+
                 // Delete the user account
                 var result = await _userManager.DeleteAsync(user);
                 if (!result.Succeeded)
