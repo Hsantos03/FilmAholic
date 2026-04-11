@@ -1,5 +1,24 @@
 <div class="page">
 
+  <div class="popcorn-rain" aria-hidden="true">
+    <div class="popcorn-rain__layer">
+      <img *ngFor="let p of popcornDrops; trackBy: trackPopcornDrop"
+           class="popcorn-rain__kernel"
+           [class.popcorn-rain__kernel--left]="p.side === 'left'"
+           [class.popcorn-rain__kernel--right]="p.side === 'right'"
+           [style.left.px]="p.side === 'left' ? p.edgePx : null"
+           [style.right.px]="p.side === 'right' ? p.edgePx : null"
+           [style.top.px]="p.topPx"
+           [style.width.px]="p.sizePx"
+           [style.animation-duration.ms]="p.durationMs"
+           [style.animation-delay.ms]="p.delayMs"
+           [style.--pop-drift]="p.driftPx + 'px'"
+           [style.--pop-rot]="p.rotationEnd + 'deg'"
+           src="assets/popCorn.png"
+           alt="" />
+    </div>
+  </div>
+
   <header class="topbar">
 
     <button type="button" class="icon-btn" data-tour="dashboard-menu" (click)="toggleMenu()" aria-label="Menu">

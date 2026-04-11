@@ -2921,3 +2921,85 @@ a.brand.active {
 
 }
 
+/* ── Chuva de pipocas (scroll) — cantos, sem balde ── */
+.popcorn-rain {
+  pointer-events: none;
+  position: fixed;
+  inset: 0;
+  z-index: 12;
+  overflow: hidden;
+}
+
+/* Brilho muito subtil nos “cantos do ecrã” (substitui o balde) */
+.popcorn-rain::before,
+.popcorn-rain::after {
+  content: "";
+  position: absolute;
+  top: 56px;
+  width: min(200px, 22vw);
+  height: min(240px, 32vh);
+  pointer-events: none;
+  opacity: 0.07;
+  background: radial-gradient(ellipse 80% 70% at 50% 0%, rgba(255, 214, 140, 0.55) 0%, transparent 72%);
+}
+
+.popcorn-rain::before {
+  left: 0;
+}
+
+.popcorn-rain::after {
+  right: 0;
+}
+
+.popcorn-rain__layer {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 13;
+}
+
+.popcorn-rain__kernel {
+  position: fixed;
+  height: auto;
+  max-width: 40px;
+  object-fit: contain;
+  will-change: transform, opacity;
+  animation-name: popcorn-rain-fall;
+  animation-timing-function: cubic-bezier(0.22, 0.61, 0.36, 1);
+  animation-fill-mode: both;
+  filter:
+    drop-shadow(0 0 10px rgba(255, 220, 160, 0.55))
+    drop-shadow(0 3px 6px rgba(0, 0, 0, 0.35));
+}
+
+@keyframes popcorn-rain-fall {
+  0% {
+    transform: translate3d(0, -18px, 0) rotate(-18deg) scale(0.65);
+    opacity: 0;
+  }
+  12% {
+    opacity: 1;
+    transform: translate3d(calc(var(--pop-drift, 0px) * 0.12), 0, 0) rotate(calc(var(--pop-rot, 540deg) * 0.08)) scale(1.05);
+  }
+  55% {
+    opacity: 0.98;
+    transform: translate3d(calc(var(--pop-drift, 0px) * 0.52), 48vh, 0) rotate(calc(var(--pop-rot, 540deg) * 0.48)) scale(1);
+  }
+  100% {
+    transform: translate3d(var(--pop-drift, 24px), calc(100vh + 72px), 0) rotate(var(--pop-rot, 540deg)) scale(0.92);
+    opacity: 0;
+  }
+}
+
+@media (max-width: 1099.98px) {
+  .popcorn-rain {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .popcorn-rain {
+    display: none !important;
+  }
+}
+

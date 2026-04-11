@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, ElementRef, ViewChild } from '@angular/core';
+import { Component, OnInit, OnDestroy, ElementRef, ViewChild, HostListener } from '@angular/core';
 
 import { Router, ActivatedRoute } from '@angular/router';
 
@@ -42,6 +42,19 @@ export interface SearchResultItem {
 
   posterUrl: string;
 
+}
+
+/** Pipocas ao scroll — cantos superiores, sem balde */
+interface DashboardPopcornDrop {
+  id: number;
+  side: 'left' | 'right';
+  edgePx: number;
+  topPx: number;
+  driftPx: number;
+  rotationEnd: number;
+  durationMs: number;
+  delayMs: number;
+  sizePx: number;
 }
 
 
@@ -254,6 +267,13 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
   private onDocumentClickBound = (e: MouseEvent) => this.onDocumentClick(e);
 
+  /** Efeito pipocas nas margens (desativado com prefers-reduced-motion ou ecrã estreito) */
+  popcornDrops: DashboardPopcornDrop[] = [];
+  private popcornScrollLastY = 0;
+  private popcornScrollThrottleMs = 0;
+  private popcornDropSeq = 0;
+  private popcornMotionEnabled = true;
+
 
 
   constructor(
@@ -320,6 +340,11 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
     document.addEventListener('click', this.onDocumentClickBound);
 
+    this.popcornMotionEnabled =
+      typeof window !== 'undefined' &&
+      !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    this.popcornScrollLastY = window.scrollY || document.documentElement.scrollTop || 0;
+
 
 
     this.searchSub = this.searchTerm$.pipe(
@@ -362,7 +387,64 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
   }
 
+  @HostListener('window:scroll')
+  onWindowScrollPopcorn(): void {
+    if (!this.popcornMotionEnabled || typeof window === 'undefined') return;
+    if (window.innerWidth < 1100) return;
 
+    const y = window.scrollY || document.documentElement.scrollTop || 0;
+    const delta = y - this.popcornScrollLastY;
+    this.popcornScrollLastY = y;
+    if (delta < 28) return;
+
+    const now = Date.now();
+    if (now - this.popcornScrollThrottleMs < 220) return;
+    this.popcornScrollThrottleMs = now;
+
+    const primarySide: 'left' | 'right' = this.popcornDropSeq % 2 === 0 ? 'left' : 'right';
+    this.pushPopcornDrop(primarySide, 0);
+
+    if (delta >= 72) {
+      const other: 'left' | 'right' = primarySide === 'left' ? 'right' : 'left';
+      window.setTimeout(() => this.pushPopcornDrop(other, 0), 70 + Math.random() * 50);
+    }
+  }
+
+  private pushPopcornDrop(side: 'left' | 'right', delayMs: number): void {
+    if (typeof window === 'undefined') return;
+
+    const id = ++this.popcornDropSeq;
+    const edgePx = 6 + Math.random() * 72;
+    const topPx = 84 + Math.random() * 72;
+    const driftPx = (Math.random() - 0.5) * 130;
+    const rotationEnd = 380 + Math.random() * 620;
+    const durationMs = 2600 + Math.random() * 1800;
+    const sizePx = Math.round(20 + Math.random() * 16);
+
+    const drop: DashboardPopcornDrop = {
+      id,
+      side,
+      edgePx,
+      topPx,
+      driftPx,
+      rotationEnd,
+      durationMs,
+      delayMs,
+      sizePx
+    };
+    this.popcornDrops = [...this.popcornDrops, drop];
+    if (this.popcornDrops.length > 22) {
+      this.popcornDrops = this.popcornDrops.slice(-22);
+    }
+
+    window.setTimeout(() => {
+      this.popcornDrops = this.popcornDrops.filter(p => p.id !== id);
+    }, durationMs + delayMs + 200);
+  }
+
+  trackPopcornDrop(_index: number, p: DashboardPopcornDrop): number {
+    return p.id;
+  }
 
   ngOnDestroy(): void {
 
@@ -372,7 +454,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
     document.removeEventListener('click', this.onDocumentClickBound);
 
-
+    this.popcornDrops = [];
 
     if (this.countdownTimer) {
 
