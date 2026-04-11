@@ -12,6 +12,8 @@ import { FilmesService } from '../../services/filmes.service';
 })
 export class HomePageComponent implements OnInit {
   featuredMovies: any[] = [];
+  /** Duplicado para o carrossel infinito (mesma ordem ×2). */
+  carouselMovies: any[] = [];
   isLoading = true;
 
   constructor(
@@ -29,6 +31,7 @@ export class HomePageComponent implements OnInit {
     this.filmesService.getPopularesComunidade(10, 500).subscribe({
       next: (movies) => {
         this.featuredMovies = movies.slice(0, 10);
+        this.syncCarouselMovies();
         this.isLoading = false;
       },
       error: () => {
@@ -40,10 +43,12 @@ export class HomePageComponent implements OnInit {
         }).subscribe({
           next: (movies) => {
             this.featuredMovies = movies.slice(0, 10);
+            this.syncCarouselMovies();
             this.isLoading = false;
           },
           error: () => {
             this.featuredMovies = [];
+            this.carouselMovies = [];
             this.isLoading = false;
           }
         });
@@ -57,5 +62,10 @@ export class HomePageComponent implements OnInit {
 
   navigateToLogin() {
     this.router.navigate(['/login']);
+  }
+
+  private syncCarouselMovies(): void {
+    const m = this.featuredMovies;
+    this.carouselMovies = m.length ? [...m, ...m] : [];
   }
 }

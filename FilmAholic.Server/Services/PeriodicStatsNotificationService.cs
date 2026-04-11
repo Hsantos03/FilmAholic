@@ -32,7 +32,7 @@ public sealed class PeriodicStatsNotificationService : BackgroundService
 
         while (!stoppingToken.IsCancellationRequested)
         {
-            var delay = DelayUntilNextRunUtc(_options.HourUtc, _options.MinuteUtc);
+            var delay = BackgroundServiceScheduling.DelayUntilNextRunUtc(_options.HourUtc, _options.MinuteUtc);
             try
             {
                 await Task.Delay(delay, stoppingToken);
@@ -60,14 +60,4 @@ public sealed class PeriodicStatsNotificationService : BackgroundService
         }
     }
 
-    internal static TimeSpan DelayUntilNextRunUtc(int hourUtc, int minuteUtc)
-    {
-        var now = DateTime.UtcNow;
-        var h = Math.Clamp(hourUtc, 0, 23);
-        var m = Math.Clamp(minuteUtc, 0, 59);
-        var next = new DateTime(now.Year, now.Month, now.Day, h, m, 0, DateTimeKind.Utc);
-        if (now >= next)
-            next = next.AddDays(1);
-        return next - now;
-    }
 }

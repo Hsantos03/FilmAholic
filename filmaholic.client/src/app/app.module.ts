@@ -32,6 +32,7 @@ import { NotificacoesConfigComponent } from './components/notificacoes-config/no
 import { OnboardingTourComponent } from './components/onboarding-tour/onboarding-tour.component';
 import { AdminPanelComponent } from './components/admin-panel/admin-panel.component';
 import { HomePageComponent } from './components/homepage/homepage.component';
+import { SocialAuthButtonsComponent } from './components/social-auth-buttons/social-auth-buttons.component';
 
 registerLocaleData(localePt);
 
@@ -41,6 +42,7 @@ registerLocaleData(localePt);
     FormatDurationPipe,
     RegisterComponent,
     LoginComponent,
+    SocialAuthButtonsComponent,
     EmailConfirmadoComponent,
     ForgotPasswordComponent,
     ResetPasswordComponent,

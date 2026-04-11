@@ -732,6 +732,8 @@ app-root > *:not(router-outlet) {
   position: sticky;
   top: 0;
   z-index: 1000;
+  /* Ancorar o ::after da barra e evitar saltos de layout */
+  isolation: isolate;
   width: 100%;
   max-width: 100%;
   min-height: 76px;
@@ -914,8 +916,7 @@ app-root > *:not(router-outlet) {
   padding: 40px 20px;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
-  background: linear-gradient(rgba(0,0,0,0.7), rgba(0,0,0,0.7)), url('assets/fundo-cinema.png') no-repeat center center;
-  background-size: cover;
+  background: linear-gradient(160deg, #0f0a12 0%, #1a1018 40%, #0a0e16 70%, #120810 100%);
   background-attachment: fixed;
   z-index: 999;
 }

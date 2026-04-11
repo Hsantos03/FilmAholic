@@ -12,8 +12,9 @@
     <div class="movie-card">
       <aside class="poster-col">
         <div class="poster-tour-anchor" data-tour="movie-poster">
-          <img class="movie-poster" [src]="posterOf()" [alt]="f.titulo" />
+          <img class="movie-poster" [src]="posterOf()" [alt]="f.titulo" (error)="onPosterError()" />
         </div>
+        <p *ngIf="showNoPosterNotice" class="poster-no-cover-notice" role="status">Este filme não possui capa.</p>
         <button *ngIf="trailerUrl" type="button" class="trailer-btn" data-tour="movie-trailer" (click)="openTrailer()">▶ Ver Trailer</button>
       </aside>
       <div class="trailer-modal" *ngIf="showTrailer" (click)="closeTrailer()">

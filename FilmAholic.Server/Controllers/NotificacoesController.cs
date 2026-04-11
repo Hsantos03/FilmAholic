@@ -27,6 +27,8 @@ namespace FilmAholic.Server.Controllers
 
         private static DateTime NotificacaoLidaVisivelDesdeUtc(DateTime agoraUtc) => agoraUtc - NotificacaoLidaRetencao;
 
+        private static DateTime NotificacaoLidaCutoffAgoraUtc() => NotificacaoLidaVisivelDesdeUtc(DateTime.UtcNow);
+
         public NotificacoesController(FilmAholicDbContext context, IMovieService movieService)
         {
             _context = context;
@@ -992,7 +994,7 @@ namespace FilmAholic.Server.Controllers
             if (!prefs.ResumoEstatisticasAtiva)
                 return Ok(new ResumoEstatisticasFeedDto());
 
-            var lidaVisivelDesde = NotificacaoLidaVisivelDesdeUtc(DateTime.UtcNow);
+            var lidaVisivelDesde = NotificacaoLidaCutoffAgoraUtc();
 
             static ResumoEstatisticasCorpoDto? ParseCorpo(string? raw)
             {
@@ -1088,7 +1090,7 @@ namespace FilmAholic.Server.Controllers
             if (readLimit < 0) readLimit = 0;
             if (readLimit > 50) readLimit = 50;
 
-            var lidaVisivelDesde = NotificacaoLidaVisivelDesdeUtc(DateTime.UtcNow);
+            var lidaVisivelDesde = NotificacaoLidaCutoffAgoraUtc();
 
             var unread = await _context.NotificacoesComunidade
                 .AsNoTracking()
@@ -1193,7 +1195,7 @@ namespace FilmAholic.Server.Controllers
             var userId = GetUserId();
             if (string.IsNullOrWhiteSpace(userId)) return Unauthorized();
 
-            var lidaVisivelDesde = NotificacaoLidaVisivelDesdeUtc(DateTime.UtcNow);
+            var lidaVisivelDesde = NotificacaoLidaCutoffAgoraUtc();
 
             var rows = await _context.Notificacoes
                 .AsNoTracking()
@@ -1257,7 +1259,7 @@ namespace FilmAholic.Server.Controllers
             if (readLimit < 0) readLimit = 0;
             if (readLimit > 50) readLimit = 50;
 
-            var lidaVisivelDesde = NotificacaoLidaVisivelDesdeUtc(DateTime.UtcNow);
+            var lidaVisivelDesde = NotificacaoLidaCutoffAgoraUtc();
 
             var unreadNotifications = await _context.Notificacoes
                 .AsNoTracking()
@@ -1395,7 +1397,7 @@ namespace FilmAholic.Server.Controllers
             if (readLimit < 0) readLimit = 0;
             if (readLimit > 50) readLimit = 50;
 
-            var lidaVisivelDesde = NotificacaoLidaVisivelDesdeUtc(DateTime.UtcNow);
+            var lidaVisivelDesde = NotificacaoLidaCutoffAgoraUtc();
 
             var unreadRaw = await _context.Notificacoes
                 .AsNoTracking()
@@ -1484,7 +1486,7 @@ namespace FilmAholic.Server.Controllers
             var userId = GetUserId();
             if (string.IsNullOrEmpty(userId)) return Unauthorized();
 
-            var lidaVisivelDesde = NotificacaoLidaVisivelDesdeUtc(DateTime.UtcNow);
+            var lidaVisivelDesde = NotificacaoLidaCutoffAgoraUtc();
 
             var items = await _context.Notificacoes
                 .AsNoTracking()

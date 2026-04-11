@@ -38,7 +38,7 @@ public sealed class ReminderJogoService : BackgroundService
 
         while (!stoppingToken.IsCancellationRequested)
         {
-            var delay = DelayUntilNextRunUtc(_options.HourUtc, _options.MinuteUtc);
+            var delay = BackgroundServiceScheduling.DelayUntilNextRunUtc(_options.HourUtc, _options.MinuteUtc);
             try { await Task.Delay(delay, stoppingToken); }
             catch (OperationCanceledException) { break; }
 
@@ -60,12 +60,4 @@ public sealed class ReminderJogoService : BackgroundService
         }
     }
 
-    internal static TimeSpan DelayUntilNextRunUtc(int hourUtc, int minuteUtc)
-    {
-        var now = DateTime.UtcNow;
-        var next = new DateTime(now.Year, now.Month, now.Day,
-            Math.Clamp(hourUtc, 0, 23), Math.Clamp(minuteUtc, 0, 59), 0, DateTimeKind.Utc);
-        if (now >= next) next = next.AddDays(1);
-        return next - now;
-    }
 }

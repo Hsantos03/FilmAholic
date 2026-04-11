@@ -35,6 +35,24 @@
       </div>
 
       <ng-container *ngIf="activeNotifTab === 'estreias'">
+        <ng-template #linhaEstreiaNotif let-m let-comBotaoMarcar="comBotaoMarcar">
+          <div class="notification-item" [class.read]="!comBotaoMarcar"
+               (click)="openNotificationMovie(m)"
+               role="menuitem">
+            <img [src]="posterOf(m)" [alt]="m.titulo" class="notification-poster" (error)="onPosterBroken($event)" />
+            <div class="notification-meta">
+              <span class="notification-movie-title">{{ m.titulo }}</span>
+              <span class="notification-date">{{ releaseLabel(m) }}</span>
+            </div>
+            <button *ngIf="comBotaoMarcar" type="button"
+                    class="notification-mark-read"
+                    (click)="marcarComoLida($event, m)"
+                    aria-label="Marcar como vista">
+              ✓
+            </button>
+          </div>
+        </ng-template>
+
         <ng-container *ngIf="hasUpcomingList; else noUpcoming">
 
           <div *ngIf="showEstreiasGenreFilter"
@@ -62,22 +80,9 @@
                 <span class="notifications-title">A estrear</span>
               </div>
               <div class="notif-upcoming-list">
-                <div *ngFor="let m of upcomingUnreadPaged"
-                     class="notification-item"
-                     (click)="openNotificationMovie(m)"
-                     role="menuitem">
-                  <img [src]="posterOf(m)" [alt]="m.titulo" class="notification-poster" (error)="onPosterBroken($event)" />
-                  <div class="notification-meta">
-                    <span class="notification-movie-title">{{ m.titulo }}</span>
-                    <span class="notification-date">{{ releaseLabel(m) }}</span>
-                  </div>
-                  <button type="button"
-                          class="notification-mark-read"
-                          (click)="marcarComoLida($event, m)"
-                          aria-label="Marcar como vista">
-                    ✓
-                  </button>
-                </div>
+                <ng-container *ngFor="let m of upcomingUnreadPaged">
+                  <ng-container *ngTemplateOutlet="linhaEstreiaNotif; context: { $implicit: m, comBotaoMarcar: true }"></ng-container>
+                </ng-container>
               </div>
               <div *ngIf="upcomingUnreadPagerVisible" class="notif-pager">
                 <button type="button" class="notif-pager-btn"
@@ -106,16 +111,9 @@
                 <span class="notifications-title">Já vistas</span>
               </div>
               <div class="notif-upcoming-list">
-                <div *ngFor="let m of upcomingReadPaged"
-                     class="notification-item read"
-                     (click)="openNotificationMovie(m)"
-                     role="menuitem">
-                  <img [src]="posterOf(m)" [alt]="m.titulo" class="notification-poster" (error)="onPosterBroken($event)" />
-                  <div class="notification-meta">
-                    <span class="notification-movie-title">{{ m.titulo }}</span>
-                    <span class="notification-date">{{ releaseLabel(m) }}</span>
-                  </div>
-                </div>
+                <ng-container *ngFor="let m of upcomingReadPaged">
+                  <ng-container *ngTemplateOutlet="linhaEstreiaNotif; context: { $implicit: m, comBotaoMarcar: false }"></ng-container>
+                </ng-container>
               </div>
               <div *ngIf="upcomingReadPagerVisible" class="notif-pager">
                 <button type="button" class="notif-pager-btn"

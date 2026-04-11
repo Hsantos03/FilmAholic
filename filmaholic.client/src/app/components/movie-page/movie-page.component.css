@@ -1,3 +1,15 @@
+/* Estados de carregamento / erro (evita depender do CSS da dashboard nesta página) */
+.state {
+  color: rgba(255, 255, 255, 0.85);
+  margin-bottom: 12px;
+  text-align: center;
+  padding: 24px 16px;
+}
+
+.state.error {
+  color: #ff6b6b;
+}
+
 .movie-page-inner {
   padding: 20px;
   color: #fff;
@@ -34,6 +46,15 @@
   height: 460px;
   object-fit: cover;
   border-radius: 14px;
+}
+
+.poster-no-cover-notice {
+  margin: 10px 0 0;
+  padding: 0 4px;
+  font-size: 13px;
+  line-height: 1.35;
+  color: rgba(255, 255, 255, 0.55);
+  text-align: center;
 }
 
 .hours {

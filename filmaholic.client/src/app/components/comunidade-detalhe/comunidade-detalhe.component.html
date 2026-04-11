@@ -268,7 +268,7 @@
         <!-- Movie Attachment Section -->
         <div class="movie-attachment-section">
           <div *ngIf="filmeSelecionado" class="selected-movie-tag">
-            <img [src]="filmeSelecionado.poster_path ? 'https://image.tmdb.org/t/p/w92' + filmeSelecionado.poster_path : 'assets/no-poster.png'" class="smt-poster">
+            <img [src]="filmeSelecionado.poster_path ? 'https://image.tmdb.org/t/p/w92' + filmeSelecionado.poster_path : 'assets/cinema-clapper.png'" class="smt-poster">
             <div class="selected-movie-info">
               <span class="smt-label">FILME ANEXADO</span>
               <span class="smt-title">{{ filmeSelecionado.title }}</span>
@@ -293,7 +293,7 @@
 
             <ul *ngIf="resultadosFilmes.length > 0" class="movie-search-results">
               <li *ngFor="let filme of resultadosFilmes" (click)="selecionarFilme(filme)">
-                <img [src]="filme.poster_path ? 'https://image.tmdb.org/t/p/w92' + filme.poster_path : 'assets/no-poster.png'">
+                <img [src]="filme.poster_path ? 'https://image.tmdb.org/t/p/w92' + filme.poster_path : 'assets/cinema-clapper.png'">
                 <div class="res-info">
                   <span class="res-title">{{ filme.title }}</span>
                   <span class="res-year">{{ filme.release_date | date:'yyyy' }}</span>
