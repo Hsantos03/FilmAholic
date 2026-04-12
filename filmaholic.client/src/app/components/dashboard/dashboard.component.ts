@@ -971,47 +971,51 @@ export class DashboardComponent implements OnInit, OnDestroy {
   /// Carrega os filmes em destaque, top 10 e atores populares, atualizando os estados de carregamento e tratamento de erros conforme necessário.
   /// </summary>
   private loadMovies(): void {
-
     this.isLoadingMovies = true;
-
     this.errorMovies = '';
 
-
-
+    // Carregar filmes gerais para o Top 10 e Pesquisa
     this.filmesService.getAll().subscribe({
-
       next: (res) => {
-
         this.movies = res || [];
-
-        this.featured = this.movies.slice(0, 12);
-
         this.top10 = this.movies.slice(0, 10);
-
-        this.featuredIndex = 0;
-
         this.top10Index = 0;
 
-        this.isLoadingMovies = false;
-
+        // Carregar 50 filmes populares específicos para a secção "Em Destaque"
+        this.filmesService.getPopularesComunidade(50, 200).subscribe({
+          next: (popRes) => {
+            const pool = popRes && popRes.length > 0 ? popRes : this.movies.slice(0, 50);
+            this.featured = this.shuffleArray([...pool]);
+            this.featuredIndex = 0;
+            this.isLoadingMovies = false;
+          },
+          error: () => {
+            // Fallback para a lista geral se a API falhar
+            this.featured = this.shuffleArray([...this.movies.slice(0, 50)]);
+            this.featuredIndex = 0;
+            this.isLoadingMovies = false;
+          }
+        });
       },
-
       error: () => {
-
-        this.errorMovies = 'Não foi possí­vel carregar os filmes.';
-
+        this.errorMovies = 'Não foi possível carregar os filmes.';
         this.movies = [];
-
         this.featured = [];
-
         this.top10 = [];
-
         this.isLoadingMovies = false;
-
       }
-
     });
+  }
 
+  /// <summary>
+  /// Baralha um array utilizando o algoritmo Fisher-Yates.
+  /// </summary>
+  private shuffleArray<T>(array: T[]): T[] {
+    for (let i = array.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [array[i], array[j]] = [array[j], array[i]];
+    }
+    return array;
   }
 
 
