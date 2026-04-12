@@ -374,11 +374,13 @@ public class FilmAholicDbContext : IdentityDbContext<Utilizador>
              .HasForeignKey(x => x.UtilizadorId)
              .OnDelete(DeleteBehavior.Cascade);
 
+            // SQL Server: SET NULL aqui cria caminho em cascata duplicado (Comunidade -> Posts -> Notif).
+            // Anular ComunidadeId na app antes de apagar a comunidade.
             e.HasOne(x => x.Comunidade)
              .WithMany()
              .HasForeignKey(x => x.ComunidadeId)
              .IsRequired(false)
-             .OnDelete(DeleteBehavior.SetNull);
+             .OnDelete(DeleteBehavior.NoAction);
 
             e.HasOne(x => x.Post)
              .WithMany()

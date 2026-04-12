@@ -893,7 +893,7 @@ namespace FilmAholic.Server.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<int>("ComunidadeId")
+                    b.Property<int?>("ComunidadeId")
                         .HasColumnType("int");
 
                     b.Property<string>("Corpo")
@@ -1570,8 +1570,7 @@ namespace FilmAholic.Server.Migrations
                     b.HasOne("FilmAholic.Server.Models.Comunidade", "Comunidade")
                         .WithMany()
                         .HasForeignKey("ComunidadeId")
-                        .OnDelete(DeleteBehavior.NoAction)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.NoAction);
 
                     b.HasOne("FilmAholic.Server.Models.ComunidadePost", "Post")
                         .WithMany()

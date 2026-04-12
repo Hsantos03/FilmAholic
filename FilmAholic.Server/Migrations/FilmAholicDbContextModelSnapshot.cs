@@ -1567,7 +1567,7 @@ namespace FilmAholic.Server.Migrations
                     b.HasOne("FilmAholic.Server.Models.Comunidade", "Comunidade")
                         .WithMany()
                         .HasForeignKey("ComunidadeId")
-                        .OnDelete(DeleteBehavior.SetNull);
+                        .OnDelete(DeleteBehavior.NoAction);
 
                     b.HasOne("FilmAholic.Server.Models.ComunidadePost", "Post")
                         .WithMany()

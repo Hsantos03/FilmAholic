@@ -482,6 +482,11 @@ namespace FilmAholic.Server.Controllers
             DeleteImageFile(comunidade.BannerFileName, "comunidades");
             DeleteImageFile(comunidade.IconFileName, "comunidades/icons");
 
+            // Evita violar FK: SQL Server não permite SET NULL nesta relação (caminhos em cascata).
+            await _context.NotificacoesComunidade
+                .Where(n => n.ComunidadeId == id)
+                .ExecuteUpdateAsync(s => s.SetProperty(n => n.ComunidadeId, (int?)null));
+
             _context.Comunidades.Remove(comunidade);
             await _context.SaveChangesAsync();
 

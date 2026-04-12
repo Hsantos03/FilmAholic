@@ -59,7 +59,7 @@ public static class ComunidadeEliminacaoAoRemoverConta
                 context.NotificacoesComunidade.Add(new NotificacaoComunidade
                 {
                     UtilizadorId = uid,
-                    ComunidadeId = cid,
+                    ComunidadeId = null,
                     PostId = null,
                     Tipo = TipoNotificacao,
                     Corpo = corpo,

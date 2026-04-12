@@ -760,7 +760,7 @@ namespace FilmAholic.Server.Migrations
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
                     UtilizadorId = table.Column<string>(type: "nvarchar(450)", nullable: false),
-                    ComunidadeId = table.Column<int>(type: "int", nullable: false),
+                    ComunidadeId = table.Column<int>(type: "int", nullable: true),
                     PostId = table.Column<int>(type: "int", nullable: true),
                     Tipo = table.Column<string>(type: "nvarchar(40)", maxLength: 40, nullable: false),
                     Corpo = table.Column<string>(type: "nvarchar(2000)", maxLength: 2000, nullable: true),
