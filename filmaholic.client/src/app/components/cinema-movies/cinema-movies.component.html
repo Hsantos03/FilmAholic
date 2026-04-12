@@ -157,11 +157,11 @@
   </div>
 
   <!-- CONTEÚDO -->
-  <div *ngIf="!isLoading && !error" class="cinema-content" data-tour="cinema-movies-catalog">
+  <div *ngIf="!isLoading && !error" class="cinema-content">
 
     <!-- ── CINEMA NOS ── -->
     <section *ngIf="nosMovies.length > 0" class="cinema-section">
-      <div class="section-header">
+      <div class="section-header" data-tour="cinema-movies-catalog">
         <div class="section-badge nos-badge">
           <img class="cinema-ico cinema-ico--section" src="assets/cinema-clapper.png" alt="" aria-hidden="true" />
           Cinema NOS
@@ -240,7 +240,7 @@
 
     <!-- ── CINEMA CITY ── -->
     <section *ngIf="cineplaceMovies.length > 0" class="cinema-section">
-      <div class="section-header">
+      <div class="section-header" [attr.data-tour]="nosMovies.length === 0 ? 'cinema-movies-catalog' : null">
         <div class="section-badge city-badge">
           <img class="cinema-ico cinema-ico--section" src="assets/cinema-clapper.png" alt="" aria-hidden="true" />
           Cinema City

@@ -224,8 +224,19 @@ export class OnboardingTourComponent implements AfterViewInit, OnDestroy {
       return;
     }
 
-    const r = el.getBoundingClientRect();
+    const raw = el.getBoundingClientRect();
     const pad = 8;
+    const vh = window.innerHeight;
+    // Alvo mais alto que ~2/3 do ecrã: usar só a faixa visível para destaque e para ancorar o popover
+    // (ex.: contentores que englobam vários carrosséis — evita buraco gigante e tooltip no meio dos cartazes).
+    let r = raw;
+    if (raw.height > vh * 0.65) {
+      const visTop = Math.max(raw.top, 0);
+      const visBottom = Math.min(raw.bottom, vh);
+      const visH = Math.max(visBottom - visTop, 56);
+      r = new DOMRect(raw.left, visTop, raw.width, visH);
+    }
+
     const br = window.getComputedStyle(el).borderRadius;
     this.highlightRadius = br && br !== '0px' ? br : '12px';
 
