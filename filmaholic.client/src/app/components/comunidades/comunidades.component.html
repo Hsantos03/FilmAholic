@@ -140,14 +140,14 @@
                    role="button"
                    tabindex="0"
                    [attr.aria-label]="c.isCurrentUserBanned ? (c.nome + ', comunidade onde foste banido') : c.nome">
-            <div class="card-banner" *ngIf="c.bannerUrl" [style.background-image]="'url(' + c.bannerUrl + ')'"></div>
-            <div class="card-banner card-banner--empty" *ngIf="!c.bannerUrl" aria-hidden="true"></div>
+            <div class="card-banner" *ngIf="capaUrl(c)" [style.background-image]="'url(' + capaUrl(c) + ')'"></div>
+            <div class="card-banner card-banner--empty" *ngIf="!capaUrl(c)" aria-hidden="true"></div>
             <div class="card-badge-wrap">
               <div class="card-badge"
-                   [class.has-photo]="!!c.iconUrl"
-                   [style.background-image]="c.iconUrl ? 'url(' + c.iconUrl + ')' : 'none'"
+                   [class.has-photo]="!!iconeUrl(c)"
+                   [style.background-image]="iconeUrl(c) ? 'url(' + iconeUrl(c) + ')' : 'none'"
                    aria-hidden="true">
-                <span *ngIf="!c.iconUrl">{{ initialLetra(c.nome) }}</span>
+                <span *ngIf="!iconeUrl(c)">{{ initialLetra(c.nome) }}</span>
               </div>
             </div>
             <div class="card-body">
@@ -192,14 +192,14 @@
                    role="button"
                    tabindex="0"
                    [attr.aria-label]="c.isCurrentUserBanned ? (c.nome + ', comunidade onde foste banido') : c.nome">
-            <div class="card-banner" *ngIf="c.bannerUrl" [style.background-image]="'url(' + c.bannerUrl + ')'"></div>
-            <div class="card-banner card-banner--empty" *ngIf="!c.bannerUrl" aria-hidden="true"></div>
+            <div class="card-banner" *ngIf="capaUrl(c)" [style.background-image]="'url(' + capaUrl(c) + ')'"></div>
+            <div class="card-banner card-banner--empty" *ngIf="!capaUrl(c)" aria-hidden="true"></div>
             <div class="card-badge-wrap">
               <div class="card-badge"
-                   [class.has-photo]="!!c.iconUrl"
-                   [style.background-image]="c.iconUrl ? 'url(' + c.iconUrl + ')' : 'none'"
+                   [class.has-photo]="!!iconeUrl(c)"
+                   [style.background-image]="iconeUrl(c) ? 'url(' + iconeUrl(c) + ')' : 'none'"
                    aria-hidden="true">
-                <span *ngIf="!c.iconUrl">{{ initialLetra(c.nome) }}</span>
+                <span *ngIf="!iconeUrl(c)">{{ initialLetra(c.nome) }}</span>
               </div>
             </div>
             <div class="card-body">

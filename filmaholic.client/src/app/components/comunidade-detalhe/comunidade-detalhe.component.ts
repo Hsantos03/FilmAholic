@@ -1,6 +1,6 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { ComunidadesService, ComunidadeDto, ComunidadePedidoEntradaDto, MembroDto, PostDto, RankingMembroDto } from '../../services/comunidades.service';
+import { ComunidadesService, ComunidadeDto, ComunidadePedidoEntradaDto, MembroDto, PostDto, RankingMembroDto, resolveComunidadeMediaUrl } from '../../services/comunidades.service';
 import { MenuService } from '../../services/menu.service';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Subscription } from 'rxjs';
@@ -711,6 +711,14 @@ export class ComunidadeDetalheComponent implements OnInit, OnDestroy {
   goBack(): void { this.router.navigate(['/comunidades']); }
 
   goToDashboardDesafios(): void { this.router.navigate(['/dashboard'], { queryParams: { openDesafios: '1' } }); }
+
+  capaUrl(): string | null {
+    return resolveComunidadeMediaUrl(this.comunidade?.bannerUrl);
+  }
+
+  iconeUrl(): string | null {
+    return resolveComunidadeMediaUrl(this.comunidade?.iconUrl);
+  }
 
   initialLetra(nome: string | undefined): string {
     const t = (nome || '?').trim();

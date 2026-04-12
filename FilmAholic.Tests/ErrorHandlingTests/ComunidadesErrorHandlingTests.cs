@@ -10,6 +10,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using FilmAholic.Tests;
 using Moq;
 using Xunit;
 
@@ -26,7 +27,7 @@ namespace FilmAholic.Tests.ErrorHandlingTests
 
         private static ComunidadesController CreateControllerWithUser(FilmAholicDbContext context, IWebHostEnvironment env, ILogger<ComunidadesController> logger, string userId)
         {
-            var controller = new ComunidadesController(context, env, logger);
+            var controller = new ComunidadesController(context, env, logger, TestMovieServiceMocks.ForComunidadesController());
             var user = new ClaimsPrincipal(new ClaimsIdentity(new Claim[]
             {
                 new Claim(ClaimTypes.NameIdentifier, userId)
@@ -41,7 +42,7 @@ namespace FilmAholic.Tests.ErrorHandlingTests
 
         private static ComunidadesController CreateControllerWithoutAuth(FilmAholicDbContext context, IWebHostEnvironment env, ILogger<ComunidadesController> logger)
         {
-            var controller = new ComunidadesController(context, env, logger);
+            var controller = new ComunidadesController(context, env, logger, TestMovieServiceMocks.ForComunidadesController());
             controller.ControllerContext = new ControllerContext
             {
                 HttpContext = new DefaultHttpContext { User = new ClaimsPrincipal() }
@@ -386,7 +387,7 @@ namespace FilmAholic.Tests.ErrorHandlingTests
 
             using (var context = new FilmAholicDbContext(options))
             {
-                var controller = new ComunidadesController(context, env, logger);
+                var controller = new ComunidadesController(context, env, logger, TestMovieServiceMocks.ForComunidadesController());
 
                 // Act
                 var result = await controller.GetById(99999);

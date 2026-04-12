@@ -6,6 +6,7 @@ using System.Security.Claims;
 using FilmAholic.Server.Data;
 using FilmAholic.Server.DTOs;
 using FilmAholic.Server.Models;
+using FilmAholic.Server.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
@@ -26,6 +27,7 @@ namespace FilmAholic.Server.Controllers
         private readonly FilmAholicDbContext _context;
         private readonly IWebHostEnvironment _env;
         private readonly ILogger<ComunidadesController> _logger;
+        private readonly IMovieService _movieService;
 
         /// <summary>
         /// Declaração inicial das instâncias logísticas precisadas pela gestão avançada de fóruns.
@@ -33,11 +35,13 @@ namespace FilmAholic.Server.Controllers
         /// <param name="context">DbContext injetado.</param>
         /// <param name="env">Providencia a raiz principal para gravamentos assíncronos das imagens enviadas por form data.</param>
         /// <param name="logger">Esquematiza os registos logísticos de falhas para terminal.</param>
-        public ComunidadesController(FilmAholicDbContext context, IWebHostEnvironment env, ILogger<ComunidadesController> logger)
+        /// <param name="movieService">Resolve o id TMDb enviado no formulário do post para o id interno <see cref="Filme"/>.</param>
+        public ComunidadesController(FilmAholicDbContext context, IWebHostEnvironment env, ILogger<ComunidadesController> logger, IMovieService movieService)
         {
             _context = context;
             _env = env;
             _logger = logger;
+            _movieService = movieService;
         }
 
         /// <summary>
@@ -844,6 +848,22 @@ namespace FilmAholic.Server.Controllers
 
             var imagemFileName = await SaveImageAsync(form.Imagem, "posts");
 
+            // O cliente envia o id numérico do TMDb (pesquisa themoviedb.org), não o Id da tabela Filmes.
+            // Guardar o id interno evita abrir o filme errado em /movie-detail/{id}.
+            int? filmeIdInterno = null;
+            if (form.FilmeId.HasValue && form.FilmeId.Value > 0)
+            {
+                try
+                {
+                    var filme = await _movieService.GetOrCreateMovieFromTmdbAsync(form.FilmeId.Value);
+                    filmeIdInterno = filme.Id;
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "Não foi possível resolver TMDb id {TmdbId} para post na comunidade {ComunidadeId}", form.FilmeId.Value, id);
+                }
+            }
+
             var post = new ComunidadePost
             {
                 ComunidadeId = id,
@@ -854,8 +874,8 @@ namespace FilmAholic.Server.Controllers
                 DataCriacao = DateTime.UtcNow,
                 DataAtualizacao = DateTime.UtcNow,
                 TemSpoiler = form.TemSpoiler,
-                FilmeId = form.FilmeId,           
-                FilmeTitulo = form.FilmeTitulo,  
+                FilmeId = filmeIdInterno,
+                FilmeTitulo = form.FilmeTitulo,
                 FilmePosterUrl = form.FilmePosterUrl
             };
 

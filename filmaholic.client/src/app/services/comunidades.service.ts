@@ -4,6 +4,30 @@ import { Observable, of } from 'rxjs';
 import { environment } from '../../environments/environment';
 import { catchError, map } from 'rxjs/operators';
 
+/**
+ * A API monta URLs absolutas com `Request.Scheme`/`Host`. Em dev com proxy, Azure ou cabeçalhos errados,
+ * o host pode não coincidir com `environment.apiBaseUrl` — o browser pede imagens ao sítio errado e a capa/ícone falham.
+ * Força ficheiros em `/uploads/...` a usar a mesma base que o cliente usa para a API.
+ */
+export function resolveComunidadeMediaUrl(url: string | null | undefined): string | null {
+  if (url == null) return null;
+  const s = String(url).trim();
+  if (!s) return null;
+  const base = (environment.apiBaseUrl || '').replace(/\/$/, '');
+  if (!base) return s;
+  if (s.startsWith('/uploads')) {
+    return `${base}${s}`;
+  }
+  try {
+    const u = new URL(s);
+    if (u.pathname.startsWith('/uploads')) {
+      return `${base}${u.pathname}${u.search}${u.hash}`;
+    }
+  } catch {
+    return s;
+  }
+  return s;
+}
 
 /// <summary>
 /// Interface que representa uma comunidade, contendo informações como ID, nome, descrição, limite de membros, status de privacidade, status de banimento do usuário atual,

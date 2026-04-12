@@ -82,16 +82,16 @@
   <div *ngIf="!isLoading && !accessDeniedBan && error" class="state error">{{ error }}</div>
 
   <div *ngIf="comunidade && !accessDeniedBan" class="comunidade-card">
-    <div class="banner" *ngIf="comunidade.bannerUrl" [style.background-image]="'url(' + comunidade.bannerUrl + ')'"></div>
-      <div class="banner banner--empty" *ngIf="!comunidade.bannerUrl" aria-hidden="true"></div>
+    <div class="banner" *ngIf="capaUrl()" [style.background-image]="'url(' + capaUrl() + ')'"></div>
+      <div class="banner banner--empty" *ngIf="!capaUrl()" aria-hidden="true"></div>
 
     <div class="content">
         <div class="comunidade-heading">
           <div class="comunidade-badge"
-               [class.has-photo]="!!comunidade.iconUrl"
-               [style.background-image]="comunidade.iconUrl ? 'url(' + comunidade.iconUrl + ')' : 'none'"
+               [class.has-photo]="!!iconeUrl()"
+               [style.background-image]="iconeUrl() ? 'url(' + iconeUrl() + ')' : 'none'"
                aria-hidden="true">
-            <span *ngIf="!comunidade.iconUrl">{{ initialLetra(comunidade.nome) }}</span>
+            <span *ngIf="!iconeUrl()">{{ initialLetra(comunidade.nome) }}</span>
           </div>
           <div class="comunidade-heading-text">
       <h1>{{ comunidade.nome }}</h1>
@@ -724,9 +724,9 @@
       <img [src]="editBannerPreview" alt="Nova capa" />
       <button type="button" class="remove-img-btn" (click)="editBannerFile = null; editBannerPreview = null">✕ Remover</button>
     </div>
-    <div *ngIf="!editBannerPreview && comunidade?.bannerUrl && !editRemoveBanner" class="current-img-hint">
+    <div *ngIf="!editBannerPreview && capaUrl() && !editRemoveBanner" class="current-img-hint">
       <span>Capa atual:</span>
-      <img [src]="comunidade!.bannerUrl!" alt="Capa atual" class="thumb" />
+      <img [src]="capaUrl()!" alt="Capa atual" class="thumb" />
       <button type="button" class="remove-current-img-btn" (click)="removeCurrentBanner()">✕ Remover</button>
     </div>
 
@@ -743,9 +743,9 @@
       <img [src]="editIconPreview" alt="Novo ícone" />
       <button type="button" class="remove-img-btn" (click)="editIconFile = null; editIconPreview = null">✕ Remover</button>
     </div>
-    <div *ngIf="!editIconPreview && comunidade?.iconUrl && !editRemoveIcon" class="current-img-hint">
+    <div *ngIf="!editIconPreview && iconeUrl() && !editRemoveIcon" class="current-img-hint">
       <span>Ícone atual:</span>
-      <img [src]="comunidade!.iconUrl!" alt="Ícone atual" class="thumb" />
+      <img [src]="iconeUrl()!" alt="Ícone atual" class="thumb" />
       <button type="button" class="remove-current-img-btn" (click)="removeCurrentIcon()">✕ Remover</button>
     </div>
 

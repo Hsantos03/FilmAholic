@@ -10,6 +10,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using FilmAholic.Tests;
 using Moq;
 using Xunit;
 
@@ -26,7 +27,7 @@ namespace FilmAholic.Tests.DataIntegrityTests
 
         private static ComunidadesController CreateControllerWithUser(FilmAholicDbContext context, IWebHostEnvironment env, ILogger<ComunidadesController> logger, string userId)
         {
-            var controller = new ComunidadesController(context, env, logger);
+            var controller = new ComunidadesController(context, env, logger, TestMovieServiceMocks.ForComunidadesController());
             var user = new ClaimsPrincipal(new ClaimsIdentity(new Claim[]
             {
                 new Claim(ClaimTypes.NameIdentifier, userId)

@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
-import { ComunidadesService, ComunidadeDto, SugestaoFilmeComunidade } from '../../services/comunidades.service';
+import { ComunidadesService, ComunidadeDto, SugestaoFilmeComunidade, resolveComunidadeMediaUrl } from '../../services/comunidades.service';
 import { MenuService } from '../../services/menu.service';
 import { AuthService } from '../../services/auth.service';
 import { HttpClient } from '@angular/common/http';
@@ -352,6 +352,20 @@ export class ComunidadesComponent implements OnInit {
     this.router.navigate(['/dashboard'], { queryParams: { openDesafios: '1' } });
   }
   
+  /// <summary>
+  /// URL da capa alinhada à base da API (evita host errado nas respostas JSON).
+  /// </summary>
+  capaUrl(c: ComunidadeDto): string | null {
+    return resolveComunidadeMediaUrl(c.bannerUrl);
+  }
+
+  /// <summary>
+  /// URL do ícone alinhada à base da API.
+  /// </summary>
+  iconeUrl(c: ComunidadeDto): string | null {
+    return resolveComunidadeMediaUrl(c.iconUrl);
+  }
+
   /// <summary>
   /// Retorna a primeira letra de um nome, em maiúscula.
   /// </summary>
