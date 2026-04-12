@@ -151,7 +151,7 @@
   </div>
 
   <!-- FILME NÃO ENCONTRADO -->
-  <div class="movie-not-found" *ngIf="movieNotFound">
+  <div #movieNotFoundMsg class="movie-not-found" *ngIf="movieNotFound">
     <img class="cinema-ico cinema-ico--notfound" src="assets/cinema-clapper.png" alt="" aria-hidden="true" />
     <p>O filme <strong>{{ movieNotFound }}</strong> ainda não está disponível na base de dados.</p>
   </div>

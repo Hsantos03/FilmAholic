@@ -72,7 +72,7 @@
       <div *ngIf="!isLoading" class="carousel-container">
         <div class="carousel-track">
           <div class="movie-card" *ngFor="let movie of carouselMovies">
-            <div class="movie-poster">
+            <div class="movie-poster" (click)="onMovieClick(movie)">
               <img [src]="movie.posterUrl || 'assets/icon.png'" [alt]="movie.titulo">
             </div>
             <div class="movie-info">
@@ -89,4 +89,21 @@
   <footer class="landing-footer">
     <p>© 2026 FilmAholic - A tua paixão pelo cinema</p>
   </footer>
+
+  <!-- Login Required Message Overlay -->
+  <div class="login-message-overlay" [class.show]="showLoginMessage">
+    <div class="login-message-content">
+      <div class="message-icon">
+        <span class="lock-icon">🔒</span>
+      </div>
+      <div class="message-text">
+        <h3>Acesso Restrito</h3>
+        <p>Para ver os detalhes dos filmes e explorar todas as funcionalidades, por favor faz login na tua conta.</p>
+      </div>
+      <div class="message-actions">
+        <button class="btn-message login" (click)="navigateToLogin()">Fazer Login</button>
+        <button class="btn-message close" (click)="closeLoginMessage()">Agora não</button>
+      </div>
+    </div>
+  </div>
 </div>

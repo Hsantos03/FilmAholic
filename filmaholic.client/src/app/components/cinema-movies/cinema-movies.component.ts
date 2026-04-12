@@ -65,6 +65,13 @@ export class CinemaMoviesComponent implements OnInit, OnDestroy, AfterViewInit {
 
   @ViewChild('carouselNos') carouselNosRef!: ElementRef;
   @ViewChild('carouselCineplace') carouselCineplaceRef!: ElementRef;
+  @ViewChild('movieNotFoundMsg') set movieNotFoundMsg(content: ElementRef) {
+    if (content) {
+      setTimeout(() => {
+        content.nativeElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }, 0);
+    }
+  }
 
   private currentXNos = 0;
   private currentXCineplace = 0;

@@ -18,6 +18,8 @@ export class HomePageComponent implements OnInit {
   /** Duplicado para o carrossel infinito (mesma ordem ×2). */
   carouselMovies: any[] = [];
   isLoading = true;
+  showLoginMessage = false;
+  private messageTimeout: any;
 
   /// <summary>
   /// Representa a página inicial da aplicação.
@@ -66,6 +68,33 @@ export class HomePageComponent implements OnInit {
         });
       }
     });
+  }
+
+  /// <summary>
+  /// Manipula o clique num filme. Na landing page, mostra sempre uma mensagem de login necessário,
+  /// impedindo a navegação para os detalhes do filme.
+  /// </summary>
+  onMovieClick(movie: any) {
+    // Nesta página, mostramos sempre a mensagem e nunca navegamos, conforme pedido.
+    this.showLoginMessage = true;
+    
+    // Remove a mensagem após 5 segundos
+    if (this.messageTimeout) {
+      clearTimeout(this.messageTimeout);
+    }
+    this.messageTimeout = setTimeout(() => {
+      this.showLoginMessage = false;
+    }, 5000);
+  }
+
+  /// <summary>
+  /// Fecha manualmente a mensagem de login.
+  /// </summary>
+  closeLoginMessage() {
+    this.showLoginMessage = false;
+    if (this.messageTimeout) {
+      clearTimeout(this.messageTimeout);
+    }
   }
 
   /// <summary>
