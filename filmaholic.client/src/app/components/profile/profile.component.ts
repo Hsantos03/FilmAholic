@@ -9,7 +9,8 @@ import { FavoritesService, FavoritosDTO } from '../../services/favorites.service
 import { ProfileService } from '../../services/profile.service';
 import { environment } from '../../../environments/environment';
 import { Subject, forkJoin, of } from 'rxjs';
-import { catchError, debounceTime, distinctUntilChanged, finalize, switchMap } from 'rxjs/operators';
+import { catchError, debounceTime, distinctUntilChanged, finalize, map, switchMap } from 'rxjs/operators';
+import { AtoresService, ActorSearchResult } from '../../services/atores.service';
 import { NotificacoesService } from '../../services/notificacoes.service';
 
 type StatsPeriod = 'all' | '7d' | '30d' | '3m' | '12m';
@@ -239,6 +240,7 @@ export class ProfileComponent implements OnInit {
     private favoritesService: FavoritesService,
     private profileService: ProfileService,
     private notificacoesService: NotificacoesService,
+    private atoresService: AtoresService,
     private cdr: ChangeDetectorRef
   ) { }
 
@@ -1323,12 +1325,58 @@ export class ProfileComponent implements OnInit {
           : [];
 
         this.ensureCatalogoHasFavorites();
+        this.ensureFavoritosAtoresPhotos(requestedForProfileId);
       },
       error: () => {
         if (requestedForProfileId !== this.profileSubjectUserId) return;
         this.favoritosFilmes = [];
         this.favoritosAtores = [];
       }
+    });
+  }
+
+  /// <summary>
+  /// A API guarda só nomes de atores; preenche foto/id via pesquisa TMDB para perfil próprio e de outros.
+  /// </summary>
+  private ensureFavoritosAtoresPhotos(expectedProfileId: string): void {
+    const need = this.favoritosAtores.filter(
+      a => a?.nome && !String(a.fotoUrl ?? '').trim()
+    );
+    if (need.length === 0) {
+      this.cdr.markForCheck();
+      return;
+    }
+
+    forkJoin(
+      need.map(actor =>
+        this.atoresService.searchActors(actor.nome).pipe(
+          catchError(() => of([] as ActorSearchResult[])),
+          map((results): { actor: ActorDto; best: ActorSearchResult | null } => {
+            if (!results?.length) {
+              return { actor, best: null };
+            }
+            const target = actor.nome.trim().toLowerCase();
+            const exact = results.find(
+              r => (r.nome || '').trim().toLowerCase() === target
+            );
+            return { actor, best: exact ?? results[0] ?? null };
+          })
+        )
+      )
+    ).subscribe(rows => {
+      if (expectedProfileId !== this.profileSubjectUserId) return;
+      let changed = false;
+      for (const { actor, best } of rows) {
+        if (!best?.fotoUrl) continue;
+        actor.id = best.id;
+        actor.fotoUrl = best.fotoUrl;
+        this.cacheActorData(actor);
+        changed = true;
+      }
+      if (changed) {
+        this.favoritosAtores = [...this.favoritosAtores];
+      }
+      this.cdr.detectChanges();
     });
   }
 

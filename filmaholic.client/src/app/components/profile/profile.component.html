@@ -265,6 +265,7 @@
             <div class="fav-posters-grid" *ngIf="favoritosFilmesDetalhesTop10.length > 0; else noFavMovies">
             <div class="fav-poster"
                    *ngFor="let f of favoritosFilmesDetalhesTop10; let i = index"
+                 [class.fav-poster--visitor]="!isOwnProfile"
                  [draggable]="isOwnProfile"
                  [attr.data-index]="i"
                  (dragstart)="isOwnProfile && onDragStart($event, i)"
@@ -273,12 +274,21 @@
                  (dragend)="isOwnProfile && onDragEnd()"
                  [class.dragging]="draggedIndex === i"
                  [class.drag-over]="dragOverIndex === i"
-                 [attr.title]="isOwnProfile ? 'Arrasta para reordenar' : f.titulo">
-              <span class="position-badge">{{ i + 1 }}</span>
-              <img [src]="favPosterSrc(f)"
-                   [alt]="f.titulo"
-                   (dblclick)="isOwnProfile && removeFromFavorites(f.id)"
-                     [title]="isOwnProfile ? (f.titulo + ' — duplo clique para remover') : f.titulo" />
+                 [attr.title]="isOwnProfile ? 'Arrasta para reordenar' : null">
+              <a *ngIf="!isOwnProfile && f.id"
+                 class="fav-poster-link"
+                 [routerLink]="['/movie-detail', f.id]"
+                 [attr.title]="f.titulo">
+                <span class="position-badge">{{ i + 1 }}</span>
+                <img [src]="favPosterSrc(f)" [alt]="f.titulo" />
+              </a>
+              <ng-container *ngIf="isOwnProfile">
+                <span class="position-badge">{{ i + 1 }}</span>
+                <img [src]="favPosterSrc(f)"
+                     [alt]="f.titulo"
+                     (dblclick)="removeFromFavorites(f.id)"
+                     [title]="f.titulo + ' — duplo clique para remover'" />
+              </ng-container>
               </div>
           </div>
 
@@ -385,6 +395,7 @@
               <div class="fav-posters-grid" *ngIf="favoritosFilmesDetalhes.length > 0; else noFavMoviesModal">
                 <div class="fav-poster"
                      *ngFor="let f of favoritosFilmesDetalhes; let i = index"
+                     [class.fav-poster--visitor]="!isOwnProfile"
                      [draggable]="isOwnProfile"
                      [attr.data-index]="i"
                      (dragstart)="isOwnProfile && onDragStart($event, i)"
@@ -393,11 +404,21 @@
                      (dragend)="isOwnProfile && onDragEnd()"
                      [class.dragging]="draggedIndex === i"
                      [class.drag-over]="dragOverIndex === i"
-                     [attr.title]="isOwnProfile ? 'Arrasta para reordenar' : f.titulo">
-                  <span class="position-badge">{{ i + 1 }}</span>
-                  <img [src]="favPosterSrc(f)" [alt]="f.titulo"
-                       (dblclick)="isOwnProfile && removeFromFavorites(f.id)"
-                       [title]="isOwnProfile ? (f.titulo + ' — duplo clique para remover') : f.titulo" />
+                     [attr.title]="isOwnProfile ? 'Arrasta para reordenar' : null">
+                  <a *ngIf="!isOwnProfile && f.id"
+                     class="fav-poster-link"
+                     [routerLink]="['/movie-detail', f.id]"
+                     [attr.title]="f.titulo"
+                     (click)="closeVerTodosFavoritos()">
+                    <span class="position-badge">{{ i + 1 }}</span>
+                    <img [src]="favPosterSrc(f)" [alt]="f.titulo" />
+                  </a>
+                  <ng-container *ngIf="isOwnProfile">
+                    <span class="position-badge">{{ i + 1 }}</span>
+                    <img [src]="favPosterSrc(f)" [alt]="f.titulo"
+                         (dblclick)="removeFromFavorites(f.id)"
+                         [title]="f.titulo + ' — duplo clique para remover'" />
+                  </ng-container>
                 </div>
               </div>
               <ng-template #noFavMoviesModal>

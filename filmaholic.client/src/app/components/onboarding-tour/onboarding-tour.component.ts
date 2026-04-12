@@ -43,6 +43,7 @@ export class OnboardingTourComponent implements AfterViewInit, OnDestroy {
   private cancelled = false;
   /** Contentores com scroll (ex.: .hol-page) — window não dispara scroll aqui. */
   private scrollParents: Element[] = [];
+  private bodyOverflowPrev: string | null = null;
 
   /// <summary>
   /// Listener para eventos de resize e scroll, que atualiza o layout do tour para garantir que o destaque e o
@@ -78,6 +79,9 @@ export class OnboardingTourComponent implements AfterViewInit, OnDestroy {
     if (this.startTimer) clearTimeout(this.startTimer);
     if (this.layoutTimer) clearTimeout(this.layoutTimer);
     this.teardownListeners();
+    if (this.active) {
+      this.unlockPageScroll();
+    }
   }
 
   /// <summary>
@@ -118,6 +122,20 @@ export class OnboardingTourComponent implements AfterViewInit, OnDestroy {
       el.removeEventListener('scroll', this.onResizeOrScroll);
     }
     this.scrollParents = [];
+  }
+
+  private lockPageScroll(): void {
+    if (typeof document === 'undefined') return;
+    if (this.bodyOverflowPrev !== null) return;
+    this.bodyOverflowPrev = document.body.style.overflow || '';
+    document.body.style.overflow = 'hidden';
+  }
+
+  private unlockPageScroll(): void {
+    if (typeof document === 'undefined') return;
+    if (this.bodyOverflowPrev === null) return;
+    document.body.style.overflow = this.bodyOverflowPrev;
+    this.bodyOverflowPrev = null;
   }
 
   /// <summary>
@@ -271,6 +289,7 @@ export class OnboardingTourComponent implements AfterViewInit, OnDestroy {
   dismissAll(): void {
     this.onboarding.markTourDone(this.tourId);
     this.active = false;
+    this.unlockPageScroll();
     this.teardownListeners();
     this.cdr.detectChanges();
   }
@@ -281,6 +300,7 @@ export class OnboardingTourComponent implements AfterViewInit, OnDestroy {
   finish(): void {
     this.onboarding.markTourDone(this.tourId);
     this.active = false;
+    this.unlockPageScroll();
     this.teardownListeners();
     this.cdr.detectChanges();
   }
