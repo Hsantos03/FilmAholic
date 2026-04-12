@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, AfterViewInit, ViewChild, ElementRef } from '@angular/core';
+import { Component, OnInit, OnDestroy, AfterViewInit, ViewChild, ElementRef, NgZone } from '@angular/core';
 import { Router } from '@angular/router';
 import { CinemaService, CinemaMovie, CinemaVenue } from '../../services/cinema.service';
 import { MenuService } from '../../services/menu.service';
@@ -88,7 +88,8 @@ export class CinemaMoviesComponent implements OnInit, OnDestroy, AfterViewInit {
     private cinemaService: CinemaService,
     private http: HttpClient,
     public menuService: MenuService,
-    private authService: AuthService
+    private authService: AuthService,
+    private ngzone: NgZone 
   ) { }
 
   /// <summary>
@@ -344,23 +345,26 @@ export class CinemaMoviesComponent implements OnInit, OnDestroy, AfterViewInit {
   startAutoScroll(carousel: 'nos' | 'cineplace' | 'cinemacity'): void {
     this.stopAutoScroll(carousel);
     const ref = carousel === 'nos' ? this.carouselNosRef : this.carouselCineplaceRef;
-    const interval = setInterval(() => {
-      const el = ref?.nativeElement;
-      if (!el) return;
-      if (carousel === 'nos') {
-        this.currentXNos -= 1;
-        const halfWidth = el.scrollWidth / 2;
-        if (Math.abs(this.currentXNos) >= halfWidth) this.currentXNos = 0;
-        el.style.transform = `translateX(${this.currentXNos}px)`;
-      } else {
-        this.currentXCineplace -= 1;
-        const halfWidth = el.scrollWidth / 2;
-        if (Math.abs(this.currentXCineplace) >= halfWidth) this.currentXCineplace = 0;
-        el.style.transform = `translateX(${this.currentXCineplace}px)`;
-      }
-    }, 16);
-    if (carousel === 'nos') this.intervalNos = interval;
-    else this.intervalCineplace = interval;
+    this.ngzone.runOutsideAngular(() => {
+      const interval = setInterval(() => {
+        const el = ref?.nativeElement;
+        if (!el) return;
+        if (carousel === 'nos') {
+          this.currentXNos -= 1;
+          const halfWidth = el.scrollWidth / 2;
+          if (Math.abs(this.currentXNos) >= halfWidth) this.currentXNos = 0;
+          el.style.transform = `translateX(${this.currentXNos}px)`;
+        } else {
+          this.currentXCineplace -= 1;
+          const halfWidth = el.scrollWidth / 2;
+          if (Math.abs(this.currentXCineplace) >= halfWidth) this.currentXCineplace = 0;
+          el.style.transform = `translateX(${this.currentXCineplace}px)`;
+        }
+      }, 16);
+      if (carousel === 'nos') this.intervalNos = interval;
+      else this.intervalCineplace = interval;
+
+    });  
   }
 
   /// <summary>
