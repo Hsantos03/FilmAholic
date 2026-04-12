@@ -10,6 +10,9 @@ import { forkJoin, of } from 'rxjs';
 import { catchError, finalize, map } from 'rxjs/operators';
 import { NotificacoesService } from '../../services/notificacoes.service';
 
+/// <summary>
+/// Representa a página de comunidades da aplicação.
+/// </summary>
 @Component({
   selector: 'app-comunidades',
   templateUrl: './comunidades.component.html',
@@ -69,6 +72,9 @@ export class ComunidadesComponent implements OnInit {
   private readonly posterFallback = 'https://via.placeholder.com/300x450?text=Sem+poster';
   private currentUserId: string | null = null;
 
+  /// <summary>
+  /// Construtor do componente, injetando os serviços necessários para comunidades, roteamento, menu, HTTP, notificações e autenticação.
+  /// </summary>
   constructor(
     private service: ComunidadesService,
     private router: Router,
@@ -78,25 +84,40 @@ export class ComunidadesComponent implements OnInit {
     private authService: AuthService
   ) { }
 
+  /// <summary>
+  /// Propriedade que indica se o utilizador atual tem privilégios de administrador, usada para mostrar ou ocultar funcionalidades restritas.
+  /// </summary>
   get isAdmin(): boolean {
     return this.authService.isAdministrador();
   }
 
+  /// <summary>
+  /// Alterna a visibilidade do menu lateral.
+  /// </summary>
   toggleMenu(): void {
     this.menuService.toggle();
   }
 
+  /// <summary>
+  /// Limpa as mensagens de sucesso e erro relacionadas a medalhas.
+  /// </summary>
   clearMedalMessages(): void {
     this.medalSuccessMessage = '';
     this.medalErrorMessage = '';
   }
 
+  /// <summary>
+  /// Método de ciclo de vida do Angular que é chamado quando o componente é inicializado. Carrega as comunidades e sugestões de filmes para exibição.
+  /// </summary>
   ngOnInit(): void {
     this.currentUserId = localStorage.getItem('user_id');
     this.loadComunidades();
     this.loadSugestoesFilmes();
   }
 
+  /// <summary>
+  /// Carrega as sugestões de filmes para o utilizador atual.
+  /// </summary>
   private loadSugestoesFilmes(): void {
     if (!localStorage.getItem('user_id')) {
       this.sugestoesFilmes = [];
@@ -108,18 +129,27 @@ export class ComunidadesComponent implements OnInit {
       this.isLoadingSugestoes = false;
     });
   }
-
+  
+  /// <summary>
+  /// Retorna o URL do poster de uma sugestão de filme, ou um fallback se não houver poster.
+  /// </summary>
   posterSugestao(s: SugestaoFilmeComunidade): string {
     const u = (s?.posterUrl ?? '').trim();
     if (!u) return this.posterFallback;
     return u;
   }
-
+  
+  /// <summary>
+  /// Trata erros ao carregar o poster de uma sugestão de filme, substituindo por um fallback.
+  /// </summary>
   onPosterSugestaoError(ev: Event): void {
     const el = ev.target as HTMLImageElement;
     if (el && !el.src.includes('placeholder')) el.src = this.posterFallback;
   }
-
+  
+  /// <summary>
+  /// Carrega todas as comunidades disponíveis.
+  /// </summary>
   loadComunidades(): void {
     this.isLoading = true;
     this.error = '';
@@ -136,7 +166,10 @@ export class ComunidadesComponent implements OnInit {
       }
     });
   }
-
+  
+  /// <summary>
+  /// Separa as comunidades em duas listas: aquelas em que o utilizador atual é membro e as restantes.
+  /// </summary>
   private splitComunidadesPorMembro(): void {
     if (!this.comunidades.length) {
       this.comunidadesMembro = [];
@@ -169,7 +202,10 @@ export class ComunidadesComponent implements OnInit {
       this.comunidadesRestantes = resultado.filter((x) => !x.isMembro).map((x) => x.comunidade);
     });
   }
-
+  
+  /// <summary>
+  /// Abre o modal de criação de comunidade.
+  /// </summary>
   openCreate(): void {
     this.newNome = '';
     this.newDescricao = '';
@@ -184,14 +220,20 @@ export class ComunidadesComponent implements OnInit {
     this.iconError = '';
     this.showCreateModal = true;
   }
-
+  
+  /// <summary>
+  /// Fecha o modal de criação de comunidade.
+  /// </summary>
   closeCreate(): void {
     this.showCreateModal = false;
     this.createError = '';
     this.bannerError = '';
     this.iconError = '';
   }
-
+  
+  /// <summary>
+  /// Trata a seleção de um arquivo de banner para a nova comunidade.
+  /// </summary>
   onBannerSelected(ev: any): void {
     const f: File = ev?.target?.files?.[0];
     if (!f) return;
@@ -210,7 +252,10 @@ export class ComunidadesComponent implements OnInit {
     }
     this.bannerPreview = URL.createObjectURL(this.bannerFile);
   }
-
+  
+  /// <summary>
+  /// Trata a seleção de um arquivo de ícone para a nova comunidade.
+  /// </summary>
   onIconSelected(ev: any): void {
     const f: File = ev?.target?.files?.[0];
     if (!f) return;
@@ -229,7 +274,10 @@ export class ComunidadesComponent implements OnInit {
     }
     this.iconPreview = URL.createObjectURL(this.iconFile);
   }
-
+  
+  /// <summary>
+  /// Cria uma nova comunidade com os dados fornecidos.
+  /// </summary>
   createCommunity(): void {
     this.createError = '';
     if (!this.newNome || !this.newNome.trim()) {
@@ -287,22 +335,34 @@ export class ComunidadesComponent implements OnInit {
       }
     });
   }
-
+  
+  /// <summary>
+  /// Navega para a página de uma comunidade específica.
+  /// </summary>
   goToCommunity(c: ComunidadeDto): void {
     if (!c || !c.id) return;
     if (c.isCurrentUserBanned) return;
     this.router.navigate(['/comunidades', c.id]);
   }
-
+  
+  /// <summary>
+  /// Navega para o dashboard de desafios.
+  /// </summary>
   goToDashboardDesafios(): void {
     this.router.navigate(['/dashboard'], { queryParams: { openDesafios: '1' } });
   }
-
+  
+  /// <summary>
+  /// Retorna a primeira letra de um nome, em maiúscula.
+  /// </summary>
   initialLetra(nome: string | undefined): string {
     const t = (nome || '?').trim();
     return t.length ? t.charAt(0).toUpperCase() : '?';
   }
-
+  
+  /// <summary>
+  /// Permite apenas a entrada de números em um campo de texto.
+  /// </summary>
   onlyNumbers(event: KeyboardEvent): void {
     const allowedKeys = ['Backspace', 'Tab', 'ArrowLeft', 'ArrowRight', 'Delete', 'Enter'];
     if (!allowedKeys.includes(event.key) && isNaN(Number(event.key)) && event.key !== ' ') {

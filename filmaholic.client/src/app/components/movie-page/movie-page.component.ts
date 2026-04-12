@@ -12,6 +12,10 @@ import { MovieRatingService, MovieRatingSummaryDTO } from '../../services/movie-
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { OnboardingStep } from '../../services/onboarding.service';
 import { environment } from '../../../environments/environment';
+
+/// <summary>
+/// Representa a página de detalhes de um filme na aplicação.
+/// </summary>
 @Component({
   selector: 'app-movie-page',
   templateUrl: './movie-page.component.html',
@@ -25,10 +29,10 @@ export class MoviePageComponent implements OnInit, OnDestroy {
   filme: Filme | null = null;
   overview: string | null = null;
 
-  /**
-   * Base para a letra do avatar ao escrever comentário: primeiro o nome (`user_nome` do login),
-   * depois o username — evita o fallback antigo "User" que mostrava sempre **U**.
-   */
+  /// <summary>
+  /// Obtém a fonte para a letra do avatar nos comentários, preferindo o nome completo do utilizador (`user_nome`) e caindo
+  /// para o username(`userName`) se o nome não estiver disponível. Se ambos estiverem ausentes, retorna uma string vazia.
+  /// </summary>
   get currentUserInitialSource(): string {
     const login = (localStorage.getItem('userName') || '').trim();
     if (login) return login;
@@ -37,7 +41,10 @@ export class MoviePageComponent implements OnInit, OnDestroy {
     return '';
   }
 
-  /** Nome para alt/acessibilidade no teu avatar de comentário. */
+  /// <summary>
+  /// Obtém o nome de exibição do utilizador, preferindo o nome completo (`user_nome`) e caindo
+  /// para o username (`userName`) se o nome não estiver disponível. Se ambos estiverem ausentes, retorna "Utilizador".
+  /// </summary>
   get currentUserDisplayName(): string {
     const s = this.currentUserInitialSource;
     return s || 'Utilizador';
@@ -107,6 +114,9 @@ export class MoviePageComponent implements OnInit, OnDestroy {
 
   private routeSub!: Subscription;
 
+  /// <summary>
+  /// Passos do tour de onboarding para a página de detalhes do filme, com seletores, títulos e descrições para guiar o utilizador pelos principais elementos da interface.
+  /// </summary>
   get movieDicasSteps(): OnboardingStep[] {
     const steps: OnboardingStep[] = [
       {
@@ -167,6 +177,9 @@ export class MoviePageComponent implements OnInit, OnDestroy {
     return steps;
   }
 
+  /// <summary>
+  /// Construtor do componente, injetando os serviços necessários para localização, roteamento, acesso a filmes, gestão de listas do utilizador, favoritos, comentários, avaliações e perfil.
+  /// </summary>
   constructor(
     private location: Location,
     private route: ActivatedRoute,
@@ -180,6 +193,10 @@ export class MoviePageComponent implements OnInit, OnDestroy {
     private profileService: ProfileService
   ) { }
 
+  /// <summary>
+  /// Inicializa o componente, carregando a foto de perfil do utilizador e configurando a assinatura para mudanças nos parâmetros da rota (ID do filme).
+  /// Dependendo dos dados disponíveis, carrega as informações do filme, trailer, ratings, sinopse, comentários, recomendações e elenco.
+  /// </summary>
   ngOnInit(): void {
     this.loadMeProfilePhotoFromServer();
 
@@ -222,12 +239,18 @@ export class MoviePageComponent implements OnInit, OnDestroy {
     });
   }
 
+  /// <summary>
+  /// Método de ciclo de vida do Angular que é chamado quando o componente é destruído. Cancela a assinatura para mudanças nos parâmetros da rota para evitar memory leaks.
+  /// </summary>
   ngOnDestroy(): void {
     if (this.routeSub) {
       this.routeSub.unsubscribe();
     }
   }
 
+  /// <summary>
+  /// Reinicia o estado do componente, limpando todas as propriedades relacionadas ao filme, comentários, avaliações e trailer.
+  /// </summary>
   private resetState(): void {
     this.filme = null;
     this.overview = null;
@@ -260,18 +283,25 @@ export class MoviePageComponent implements OnInit, OnDestroy {
     this.posterLoadFailed = false;
   }
 
+  /// <summary>
+  /// Indica se o utilizador pode comentar no filme.
+  /// </summary>
   get canComment(): boolean {
     return !!localStorage.getItem('user_id') || !!localStorage.getItem('token');
   }
 
-  /** Inicial no avatar quando não há foto (ex.: Florian Wirtz → F). */
+  /// <summary>
+  /// Retorna a inicial do avatar do utilizador com base no nome fornecido.
+  /// </summary>
   commentAvatarInitial(userName: string | null | undefined): string {
     const t = (userName || '').trim();
     if (!t) return '?';
     return t.charAt(0).toUpperCase();
   }
 
-  /** Sincroniza foto de perfil com a base de dados para o avatar ao escrever comentário. */
+  /// <summary>
+  /// Carrega a foto de perfil do utilizador a partir do servidor.
+  /// </summary>
   private loadMeProfilePhotoFromServer(): void {
     const userId = localStorage.getItem('user_id');
     if (!userId) {
@@ -290,9 +320,9 @@ export class MoviePageComponent implements OnInit, OnDestroy {
     });
   }
 
-
-
-
+  /// <summary>
+  /// Abre o trailer do filme em um modal.
+  /// </summary>
   openTrailer(): void {
     if (!this.trailerUrl) return;
     const embedUrl = this.trailerUrl.replace('watch?v=', 'embed/') + '?autoplay=1';
@@ -300,21 +330,24 @@ export class MoviePageComponent implements OnInit, OnDestroy {
     this.showTrailer = true;
   }
 
+  /// <summary>
+  /// Fecha o trailer do filme.
+  /// </summary>
   closeTrailer(): void {
     this.showTrailer = false;
     this.safeTrailerUrl = null;
   }
 
-
-
-
-
-
-
+  /// <summary>
+  /// Indica se o utilizador pode avaliar o filme.
+  /// </summary>
   get canRateMovie(): boolean {
     return this.canComment;
   }
 
+  /// <summary>
+  /// Lida com o carregamento de um filme de cinema, buscando os dados diretamente do TMDB em português. Se a busca falhar, cria um objeto de filme fallback com as informações mínimas.
+  /// </summary>
   private handleCinemaMovie(id: number): void {
     // For cinema movies, fetch Portuguese TMDB data directly
     this.isLoading = true;
@@ -356,6 +389,9 @@ export class MoviePageComponent implements OnInit, OnDestroy {
     });
   }
 
+  /// <summary>
+  /// Analisa uma string de duração no formato "Xh Ymin" e converte para minutos totais.
+  /// </summary>
   parseDuration(duration: string): number {
     // Parse duration like "2h 30min" to minutes
     if (!duration) return 0;
@@ -369,6 +405,9 @@ export class MoviePageComponent implements OnInit, OnDestroy {
     return (hours * 60) + minutes;
   }
 
+  /// <summary>
+  /// Carrega os dados de um filme com base no seu ID.
+  /// </summary>
   private loadFilm(id: number): void {
     this.isLoading = true;
     this.error = '';
@@ -409,6 +448,9 @@ export class MoviePageComponent implements OnInit, OnDestroy {
     });
   }
 
+  /// <summary>
+  /// Carrega o trailer de um filme com base no seu ID.
+  /// </summary>
   private loadTrailer(id: number): void {
     this.trailerDicaReady = false;
     this.filmesService.getTrailer(id).pipe(
@@ -419,6 +461,9 @@ export class MoviePageComponent implements OnInit, OnDestroy {
     });
   }
 
+  /// <summary>
+  /// Carrega as classificações de um filme com base no seu ID.
+  /// </summary>
   private loadRatings(filmeId: number): void {
     // 1. If we already have ratings in the 'filme' object, use them as initial state
     if (this.filme && (this.filme.imdbRating || this.filme.metascore || this.filme.rottenTomatoes)) {
@@ -457,6 +502,9 @@ export class MoviePageComponent implements OnInit, OnDestroy {
     });
   }
 
+  /// <summary>
+  /// Carrega a visão geral de um filme a partir do TMDb.
+  /// </summary>
   private loadOverviewFromTmdb(f: Filme): void {
     const title = (f.titulo || '').trim();
     if (!title) return;
@@ -487,6 +535,9 @@ export class MoviePageComponent implements OnInit, OnDestroy {
     });
   }
 
+  /// <summary>
+  /// Carrega a avaliação de um filme com base no seu ID.
+  /// </summary>
   loadMovieRating(movieId: number): void {
     this.isLoadingMovieRating = true;
     this.ratingError = '';
@@ -507,18 +558,31 @@ export class MoviePageComponent implements OnInit, OnDestroy {
     });
   }
 
+  /// <summary>
+  /// Retorna a pontuação a ser exibida para o utilizador, priorizando a pontuação de hover (quando o utilizador está a interagir com as estrelas)
+  /// e cai para a pontuação do utilizador(quando disponível).Se nenhuma pontuação estiver disponível, retorna 0.
+  /// </summary>
   get displayScore(): number {
     return this.hoverScore ?? this.myScore ?? 0;
   }
 
+  /// <summary>
+  /// Determina se a estrela em um determinado índice deve ser exibida como cheia com base na pontuação a ser exibida.
+  /// </summary>
   isStarFull(starIndex: number): boolean {
     return this.displayScore >= 2 * starIndex;
   }
 
+  /// <summary>
+  /// Determina se a estrela em um determinado índice deve ser exibida como meia cheia com base na pontuação a ser exibida.
+  /// </summary>
   isStarHalf(starIndex: number): boolean {
     return this.displayScore === (2 * starIndex - 1);
   }
 
+  /// <summary>
+  /// Calcula a pontuação com base no índice da estrela e na posição do mouse dentro da estrela (metade esquerda ou direita).
+  /// </summary>
   private calcScoreFromEvent(starIndex: number, ev: MouseEvent): number {
     const target = ev.currentTarget as HTMLElement;
     const rect = target.getBoundingClientRect();
@@ -527,15 +591,24 @@ export class MoviePageComponent implements OnInit, OnDestroy {
     return (starIndex - 1) * 2 + (isLeftHalf ? 1 : 2);
   }
 
+  /// <summary>
+  /// Lida com o evento de hover sobre uma estrela de avaliação, atualizando a pontuação de hover com base na posição do mouse.
+  /// </summary>
   onMovieStarHover(starIndex: number, ev: MouseEvent): void {
     if (!this.canRateMovie) return;
     this.hoverScore = this.calcScoreFromEvent(starIndex, ev);
   }
 
+  /// <summary>
+  /// Limpa a pontuação de hover sobre as estrelas de avaliação.
+  /// </summary>
   clearMovieStarHover(): void {
     this.hoverScore = null;
   }
 
+  /// <summary>
+  /// Lida com o evento de clique em uma estrela de avaliação, definindo a pontuação do utilizador para o filme com base na posição do mouse e no índice da estrela.
+  /// </summary>
   setMovieRating(starIndex: number, ev: MouseEvent): void {
     if (!this.filme) return;
 
@@ -564,6 +637,9 @@ export class MoviePageComponent implements OnInit, OnDestroy {
     });
   }
 
+  /// <summary>
+  /// Limpa a avaliação do utilizador para o filme atual.
+  /// </summary>
   clearMyMovieRating(): void {
     if (!this.filme) return;
     if (!this.canRateMovie) return;
@@ -584,6 +660,9 @@ export class MoviePageComponent implements OnInit, OnDestroy {
   }
 
   // COMMENTS
+  /// <summary>
+  /// Carrega os comentários de um filme com base no ID do filme, na página atual e no tamanho da página.
+  /// </summary>
   loadComments(movieId: number): void {
     this.commentsService.getByMovie(movieId, this.currentPage, this.pageSize).subscribe({
       next: res => {
@@ -598,6 +677,9 @@ export class MoviePageComponent implements OnInit, OnDestroy {
     });
   }
 
+  /// <summary>
+  /// Lida com a mudança de página nos comentários, atualizando a página atual e carregando os comentários correspondentes.
+  /// </summary>
   onPageChange(page: number | string): void {
     const pageNum = typeof page === 'string' ? parseInt(page) : page;
     if (isNaN(pageNum) || pageNum < 1 || pageNum > this.totalPages) return;
@@ -613,10 +695,16 @@ export class MoviePageComponent implements OnInit, OnDestroy {
     }
   }
 
+  /// <summary>
+  /// Calcula o número total de páginas de comentários com base no total de comentários e no tamanho da página.
+  /// </summary>
   get totalPages(): number {
     return Math.ceil(this.totalComments / this.pageSize);
   }
-
+  
+  /// <summary>
+  /// Gera uma lista de páginas para navegação, incluindo elipses quando necessário.
+  /// </summary>
   get pages(): (number | string)[] {
     const total = this.totalPages;
     const current = this.currentPage;
@@ -652,30 +740,45 @@ export class MoviePageComponent implements OnInit, OnDestroy {
     return pages;
   }
 
+  /// <summary>
+  /// Inicia a edição de um comentário.
+  /// </summary>
   startEdit(c: CommentDTO): void {
     this.editingCommentId = c.id;
     this.editText = c.texto;
     this.editRating = c.rating || 0;
     this.commentError = '';
   }
-
+  
+  /// <summary>
+  /// Cancela a edição de um comentário.
+  /// </summary>
   cancelEdit(): void {
     this.editingCommentId = null;
     this.editText = '';
     this.editRating = 0;
   }
-
+  
+  /// <summary>
+  /// Abre a confirmação de exclusão de um comentário.
+  /// </summary>
   openCommentDeleteConfirm(c: CommentDTO): void {
     if (!this.filme || !c.canEdit || this.isDeletingComment) return;
     this.commentError = '';
     this.commentToDelete = c;
   }
-
+  
+  /// <summary>
+  /// Fecha a confirmação de exclusão de um comentário.
+  /// </summary>
   closeCommentDeleteConfirm(): void {
     if (this.isDeletingComment) return;
     this.commentToDelete = null;
   }
-
+  
+  /// <summary>
+  /// Confirma a exclusão de um comentário.
+  /// </summary>
   confirmDeleteComment(): void {
     const c = this.commentToDelete;
     if (!this.filme || !c || !c.canEdit) return;
@@ -693,7 +796,10 @@ export class MoviePageComponent implements OnInit, OnDestroy {
       }
     });
   }
-
+  
+  /// <summary>
+  /// Vota em um comentário.
+  /// </summary>
   voteComment(c: CommentDTO, value: 1 | -1): void {
     if (!this.canComment) {
       this.commentError = 'Tens de ter sessão iniciada para votar.';
@@ -715,6 +821,9 @@ export class MoviePageComponent implements OnInit, OnDestroy {
     });
   }
 
+  /// <summary>
+  /// Envia um comentário.
+  /// </summary>
   sendComment(): void {
     if (this.isSendingComment) return;
     this.commentError = '';
@@ -748,7 +857,10 @@ export class MoviePageComponent implements OnInit, OnDestroy {
       complete: () => (this.isSendingComment = false)
     });
   }
-
+  
+  /// <summary>
+  /// Guarda a edição de um comentário.
+  /// </summary>
   saveEdit(): void {
     if (this.editingCommentId == null) return;
 
@@ -785,6 +897,9 @@ export class MoviePageComponent implements OnInit, OnDestroy {
   }
 
   // RECOMMENDATIONS
+  /// <summary>
+  /// Carrega as recomendações de filmes.
+  /// </summary>
   loadRecommendations(movieId: number): void {
     this.isLoadingRecommendations = true;
     this.filmesService.getRecommendations(movieId, 10).subscribe({
@@ -799,12 +914,18 @@ export class MoviePageComponent implements OnInit, OnDestroy {
       }
     });
   }
-
+  
+  /// <summary>
+  /// Retorna o URL do poster de uma recomendação.
+  /// </summary>
   recommendationPoster(f: Filme): string {
     const u = (f?.posterUrl || '').trim();
     return u || MoviePageComponent.posterFallback;
   }
-
+  
+  /// <summary>
+  /// Navega para a página de detalhes de uma recomendação.
+  /// </summary>
   goToRecommendation(r: Filme): void {
     if (r.id && r.id > 0) {
       this.router.navigate(['/movie-detail', r.id]);
@@ -813,6 +934,9 @@ export class MoviePageComponent implements OnInit, OnDestroy {
 
 
   // ===== FAVORITOS =====
+  /// <summary>
+  /// Sincroniza o estado de favorito do filme.
+  /// </summary>
   syncFavoriteState(): void {
     if (!this.filme) return;
 
@@ -829,7 +953,10 @@ export class MoviePageComponent implements OnInit, OnDestroy {
   }
 
   private readonly MAX_FAVORITES = 50;
-
+  
+  /// <summary>
+  /// Alterna o estado de favorito do filme.
+  /// </summary>
   toggleFavorite(): void {
     if (!this.filme) return;
 
@@ -867,13 +994,19 @@ export class MoviePageComponent implements OnInit, OnDestroy {
 
 
   // Total Hours / Lists
+  /// <summary>
+  /// Carrega o total de horas de filmes assistidos pelo utilizador.
+  /// </summary>
   loadTotalHours(): void {
     this.userMoviesService.getTotalHours().subscribe({
       next: (hours: number) => this.totalHours = hours,
       error: (err: any) => console.error(err)
     });
   }
-
+  
+  /// <summary>
+  /// Sincroniza o estado das listas de filmes do utilizador.
+  /// </summary>
   syncListState(): void {
     if (!this.filme) return;
     const id = this.filme.id;
@@ -890,7 +1023,10 @@ export class MoviePageComponent implements OnInit, OnDestroy {
       error: () => (this.inWatched = false)
     });
   }
-
+  
+  /// <summary>
+  /// Adiciona o filme à lista "Quero Ver".
+  /// </summary>
   addQueroVer(): void {
     if (!this.filme) return;
     if (this.inWatchLater) {
@@ -906,7 +1042,10 @@ export class MoviePageComponent implements OnInit, OnDestroy {
       error: (err: any) => console.warn('addMovie failed', err)
     });
   }
-
+  
+  /// <summary>
+  /// Adiciona o filme à lista "Já Vi".
+  /// </summary>
   addJaVi(): void {
     if (!this.filme) return;
     if (this.inWatched) {
@@ -922,7 +1061,10 @@ export class MoviePageComponent implements OnInit, OnDestroy {
       error: (err: any) => console.warn('addMovie failed', err)
     });
   }
-
+  
+  /// <summary>
+  /// Remove o filme das listas do utilizador.
+  /// </summary>
   remove(): void {
     if (!this.filme) return;
     this.userMoviesService.removeMovie(this.filme.id).subscribe({
@@ -935,7 +1077,9 @@ export class MoviePageComponent implements OnInit, OnDestroy {
     });
   }
 
-  /** Mostra aviso quando não há URL de capa, é só o placeholder local, ou a imagem falhou a carregar. */
+  /// <summary>
+  /// Mostra aviso quando não há URL de capa, é só o placeholder local, ou a imagem falhou a carregar.
+  /// </summary>
   get showNoPosterNotice(): boolean {
     if (!this.filme) {
       return false;
@@ -949,7 +1093,10 @@ export class MoviePageComponent implements OnInit, OnDestroy {
     }
     return t === MoviePageComponent.posterFallback;
   }
-
+  
+  /// <summary>
+  /// Obtém a URL do poster do filme.
+  /// </summary>
   posterOf(): string {
     if (this.posterLoadFailed) {
       return MoviePageComponent.posterFallback;
@@ -963,14 +1110,20 @@ export class MoviePageComponent implements OnInit, OnDestroy {
     }
     return raw;
   }
-
+  
+  /// <summary>
+  /// Manipula o erro de carregamento do poster.
+  /// </summary>
   onPosterError(): void {
     if (this.posterLoadFailed) {
       return;
     }
     this.posterLoadFailed = true;
   }
-
+  
+  /// <summary>
+  /// Navega de volta para a página anterior ou para o dashboard.
+  /// </summary>
   goBack(): void {
     if (window.history.length > 1) {
       this.location.back();
@@ -978,7 +1131,10 @@ export class MoviePageComponent implements OnInit, OnDestroy {
       this.router.navigate(['/dashboard']);
     }
   }
-
+  
+  /// <summary>
+  /// Carrega o elenco do filme.
+  /// </summary>
   private loadCast(id: number): void {
     this.isLoadingCast = true;
     this.filmesService.getCast(id).subscribe({
@@ -987,7 +1143,10 @@ export class MoviePageComponent implements OnInit, OnDestroy {
       complete: () => { this.isLoadingCast = false; }
     });
   }
-
+  
+  /// <summary>
+  /// Abre a página do ator.
+  /// </summary>
   openActor(a: CastMemberDto): void {
     const personId = a?.id;
     if (!personId) return;

@@ -10,6 +10,7 @@ import { NotificacoesService } from '../../services/notificacoes.service';
 import { AuthService } from '../../services/auth.service';
 import { OnboardingStep } from '../../services/onboarding.service';
 
+
 @Component({
   selector: 'app-comunidade-detalhe',
   templateUrl: './comunidade-detalhe.component.html',

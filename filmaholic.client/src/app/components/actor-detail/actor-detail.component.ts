@@ -6,6 +6,9 @@ import { AtoresService, ActorDetails, ActorMovie } from '../../services/atores.s
 import { FilmesService } from '../../services/filmes.service';
 import { OnboardingStep } from '../../services/onboarding.service';
 
+/// <summary>
+/// Representa os detalhes de um ator na aplicação.
+/// </summary>
 @Component({
   selector: 'app-actor-detail',
   templateUrl: './actor-detail.component.html',
@@ -37,6 +40,9 @@ export class ActorDetailComponent implements OnInit, OnDestroy {
 
   private sub?: Subscription;
 
+  /// <summary>
+  /// Construtor do componente, injetando os serviços necessários para navegação, acesso a dados de atores e filmes.
+  /// </summary>
   constructor(
     private location: Location,
     private route: ActivatedRoute,
@@ -45,6 +51,9 @@ export class ActorDetailComponent implements OnInit, OnDestroy {
     private filmesService: FilmesService
   ) {}
 
+  /// <summary>
+  /// Inicializa o componente, carregando os detalhes do ator com base no ID fornecido na rota.
+  /// </summary>
   ngOnInit(): void {
     this.sub = this.route.paramMap.subscribe(params => {
       const idParam = params.get('id');
@@ -57,10 +66,16 @@ export class ActorDetailComponent implements OnInit, OnDestroy {
     });
   }
 
+  /// <summary>
+  /// Limpa os recursos quando o componente é destruído.
+  /// </summary>
   ngOnDestroy(): void {
     this.sub?.unsubscribe();
   }
 
+  /// <summary>
+  /// Carrega os detalhes de um ator específico com base no ID fornecido.
+  /// </summary>
   private loadActor(personId: number): void {
     this.isLoading = true;
     this.error = '';
@@ -89,7 +104,10 @@ export class ActorDetailComponent implements OnInit, OnDestroy {
       }
     });
   }
-
+  
+  /// <summary>
+  /// Navega de volta para a página anterior ou para o dashboard se não houver histórico.
+  /// </summary>
   goBack(): void {
     if (window.history.length > 1) {
       this.location.back();
@@ -97,7 +115,10 @@ export class ActorDetailComponent implements OnInit, OnDestroy {
       this.router.navigate(['/dashboard']);
     }
   }
-
+  
+  /// <summary>
+  /// Exibe o departamento de um ator, traduzindo para português e indicando se o ator está falecido.
+  /// </summary>
   displayDepartamento(value: string | null | undefined, dataFalecimento?: string | null): string {
     const map: Record<string, string> = {
       Acting: 'Atuação',
@@ -118,14 +139,20 @@ export class ActorDetailComponent implements OnInit, OnDestroy {
     if (dataFalecimento?.trim()) return dep === '—' ? 'Falecido' : `${dep} (Falecido)`;
     return dep;
   }
-
+  
+  /// <summary>
+  /// Formata a data de falecimento de um ator.
+  /// </summary>
   displayDataFalecimento(value: string | null | undefined): string {
     if (!value?.trim()) return '—';
     const match = value.match(/^(\d{4})-(\d{2})-(\d{2})/);
     if (match) return `${match[3]}/${match[2]}/${match[1]}`;
     return value;
   }
-
+  
+  /// <summary>
+  /// Formata a data de nascimento de um ator.
+  /// </summary>
   displayDataNascimento(value: string | null | undefined): string {
     if (!value?.trim()) return '—';
     const match = value.match(/^(\d{4})-(\d{2})-(\d{2})/);
@@ -133,6 +160,9 @@ export class ActorDetailComponent implements OnInit, OnDestroy {
     return value;
   }
 
+  /// <summary>
+  /// Exibe o local de nascimento de um ator, traduzindo para português.
+  /// </summary>
   displayLocalNascimento(value: string | null | undefined): string {
     if (!value?.trim()) return '—';
     const map: Record<string, string> = {
@@ -184,7 +214,10 @@ export class ActorDetailComponent implements OnInit, OnDestroy {
     }
     return out;
   }
-
+  
+  /// <summary>
+  /// Abre os detalhes de um filme específico.
+  /// </summary>
   openMovie(m: ActorMovie): void {
     const tmdbId = m?.id;
     if (!tmdbId) return;
@@ -208,6 +241,9 @@ export class ActorDetailComponent implements OnInit, OnDestroy {
     });
   }
 
+  /// <summary>
+  /// Retorna a URL da foto do ator ou uma imagem de placeholder se não estiver disponível.
+  /// </summary>
   get actorPhoto(): string {
     return this.actor?.fotoUrl || 'https://via.placeholder.com/220x220?text=Actor';
   }

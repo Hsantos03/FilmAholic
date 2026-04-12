@@ -5,20 +5,23 @@ import { AuthService } from '../../services/auth.service';
 import { NotificacoesService, PreferenciasNotificacaoDto } from '../../services/notificacoes.service';
 import { OnboardingStep } from '../../services/onboarding.service';
 
-
+/// <summary>
+/// Componente responsável por gerenciar as configurações de notificações do utilizador.
+/// </summary>
 @Component({
   selector: 'app-notificacoes-config',
   templateUrl: './notificacoes-config.component.html',
   styleUrls: ['./notificacoes-config.component.css']
 })
-
-
 export class NotificacoesConfigComponent implements OnInit {
   isLoading = true;
   isSaving = false;
   error = '';
   success = '';
 
+  /// <summary>
+  /// Objeto que representa as preferências de notificação do utilizador, com valores padrão para cada tipo de notificação e frequência.
+  /// </summary>
   prefs: PreferenciasNotificacaoDto = {
     novaEstreiaAtiva: true,
     novaEstreiaFrequencia: 'Diaria',
@@ -28,6 +31,9 @@ export class NotificacoesConfigComponent implements OnInit {
     filmeDisponivelAtiva: true
   };
 
+  /// <summary>
+  /// Listas de opções de frequência para as notificações de nova estreia e resumo de estatísticas, usadas para preencher os dropdowns no template.
+  /// </summary>
   readonly frequencias: Array<PreferenciasNotificacaoDto['novaEstreiaFrequencia']> = [
     'Imediata',
     'Diaria',
@@ -36,6 +42,9 @@ export class NotificacoesConfigComponent implements OnInit {
 
   readonly frequenciasResumo: Array<PreferenciasNotificacaoDto['resumoEstatisticasFrequencia']> = ['Diaria', 'Semanal'];
 
+  /// <summary>
+  /// Passos do tour de onboarding para a configuração de notificações.
+  /// </summary>
   readonly notificacoesConfigOnboardingSteps: OnboardingStep[] = [
     {
       selector: '[data-tour="notif-menu"]',
@@ -54,6 +63,9 @@ export class NotificacoesConfigComponent implements OnInit {
     }
   ];
 
+  /// <summary>
+  /// Construtor do componente, injetando os serviços necessários para notificações, roteamento, menu e autenticação.
+  /// </summary>
   constructor(
     private notificacoesService: NotificacoesService,
     private router: Router,
@@ -61,26 +73,44 @@ export class NotificacoesConfigComponent implements OnInit {
     private authService: AuthService
   ) {}
 
+  /// <summary>
+  /// Propriedade que indica se o utilizador tem privilégios de administrador, usada para condicionalmente mostrar opções de menu ou funcionalidades avançadas.
+  /// </summary>
   get isAdmin(): boolean {
     return this.authService.isAdministrador();
   }
 
+  /// <summary>
+  /// Navega para o dashboard de desafios do utilizador.
+  /// </summary>
   goToDashboardDesafios(): void {
     this.router.navigate(['/dashboard'], { queryParams: { openDesafios: '1' } });
   }
 
+  /// <summary>
+  /// Método de ciclo de vida do Angular que é chamado quando o componente é inicializado. Carrega as preferências de notificação do utilizador para exibição e edição.
+  /// </summary>
   ngOnInit(): void {
     this.loadPrefs();
   }
 
+  /// <summary>
+  /// Alterna a visibilidade do menu lateral.
+  /// </summary>
   toggleMenu(): void {
     this.menuService.toggle();
   }
 
+  /// <summary>
+  /// Navega de volta para a página de perfil do utilizador.
+  /// </summary>
   voltarPerfil(): void {
     this.router.navigate(['/profile']);
   }
 
+  /// <summary>
+  /// Carrega as preferências de notificação do utilizador para exibição e edição.
+  /// </summary>
   loadPrefs(): void {
     this.isLoading = true;
     this.error = '';
@@ -105,6 +135,9 @@ export class NotificacoesConfigComponent implements OnInit {
     });
   }
 
+  /// <summary>
+  /// Guarda as preferências de notificação do utilizador.
+  /// </summary>
   guardar(): void {
     this.isSaving = true;
     this.error = '';

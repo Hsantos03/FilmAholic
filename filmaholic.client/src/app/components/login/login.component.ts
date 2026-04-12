@@ -4,6 +4,9 @@ import { SessionTerminationService } from '../../services/session-termination.se
 import { ProfileService } from '../../services/profile.service';
 import { Router, ActivatedRoute } from '@angular/router';
 
+/// <summary>
+/// Representa a página de login da aplicação.
+/// </summary>
 @Component({
   selector: 'app-login',
   templateUrl: './login.component.html',
@@ -25,6 +28,9 @@ export class LoginComponent implements OnInit {
   /** Rota interna para onde redirecionar após login (ex.: `/profile/{id}`). */
   private pendingReturnUrl: string | null = null;
 
+  /// <summary>
+  /// Construtor do componente, injetando os serviços necessários para autenticação, perfil, terminação de sessão e roteamento.
+  /// </summary>
   constructor(
     private authService: AuthService,
     private profileService: ProfileService,
@@ -33,6 +39,9 @@ export class LoginComponent implements OnInit {
     private route: ActivatedRoute
   ) { }
 
+  /// <summary>
+  /// Inicializa o componente, verificando parâmetros de URL para mensagens de sucesso/erro e redirecionamento após login.
+  /// </summary>
   ngOnInit() {
     const ruSnap = this.route.snapshot.queryParamMap.get('returnUrl');
     if (ruSnap && ruSnap.startsWith('/') && !ruSnap.startsWith('//')) {
@@ -111,6 +120,9 @@ export class LoginComponent implements OnInit {
     });
   }
 
+  /// <summary>
+  /// Representa a ação de login na aplicação.
+  /// </summary>
   onLogin() {
     this.isLoading = true;
     this.errorMessage = '';
@@ -163,6 +175,9 @@ export class LoginComponent implements OnInit {
     });
   }
 
+  /// <summary>
+  /// Reenvia o email de verificação para o utilizador.
+  /// </summary>
   reenviarEmail() {
     if (!this.emailParaVerificar) return;
     
@@ -182,11 +197,16 @@ export class LoginComponent implements OnInit {
     });
   }
 
-  // Métodos para login social
+  /// <summary>
+  /// Inicia o processo de login usando a conta do Google.
+  /// </summary>
   loginWithGoogle() {
     this.authService.googleLogin();
   }
-
+  
+  /// <summary>
+  /// Inicia o processo de login usando a conta do Facebook.
+  /// </summary>
   loginWithFacebook() {
     this.authService.facebookLogin();
   }

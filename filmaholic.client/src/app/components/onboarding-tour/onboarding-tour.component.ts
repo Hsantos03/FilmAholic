@@ -9,6 +9,9 @@ import {
 } from '@angular/core';
 import { OnboardingService, OnboardingStep } from '../../services/onboarding.service';
 
+/// <summary>
+/// Componente responsável por exibir o tour de onboarding, guiando o utilizador através de passos interativos.
+/// </summary>
 @Component({
   selector: 'app-dicas, app-onboarding-tour',
   templateUrl: './onboarding-tour.component.html',
@@ -40,22 +43,36 @@ export class OnboardingTourComponent implements AfterViewInit, OnDestroy {
   private cancelled = false;
   /** Contentores com scroll (ex.: .hol-page) — window não dispara scroll aqui. */
   private scrollParents: Element[] = [];
+
+  /// <summary>
+  /// Listener para eventos de resize e scroll, que atualiza o layout do tour para garantir que o destaque e o
+  ///popover estejam posicionados corretamente em relação ao elemento alvo, mesmo quando a janela é redimensionada ou rolada.
+  /// </summary>
   private readonly onResizeOrScroll = () => {
     if (this.active) {
       this.updateLayout();
     }
   };
 
+  /// <summary>
+  /// Componente responsável por exibir o tour de onboarding, guiando o utilizador através de passos interativos.
+  /// </summary>
   constructor(
     private readonly onboarding: OnboardingService,
     private readonly cdr: ChangeDetectorRef,
     private readonly hostRef: ElementRef<HTMLElement>
   ) {}
 
+  /// <summary>
+  /// Método de ciclo de vida do Angular que é chamado após a inicialização da view do componente.
+  /// </summary>
   ngAfterViewInit(): void {
     this.scheduleStart();
   }
 
+  /// <summary>
+  /// Método de ciclo de vida do Angular que é chamado antes da destruição do componente.
+  /// </summary>
   ngOnDestroy(): void {
     this.cancelled = true;
     if (this.startTimer) clearTimeout(this.startTimer);
@@ -63,6 +80,9 @@ export class OnboardingTourComponent implements AfterViewInit, OnDestroy {
     this.teardownListeners();
   }
 
+  /// <summary>
+  /// Agenda o início do tour de onboarding após um atraso especificado.
+  /// </summary>
   private scheduleStart(): void {
     if (this.cancelled || !this.tourId || !this.steps?.length) return;
     if (this.onboarding.isTourDone(this.tourId)) return;
@@ -75,6 +95,9 @@ export class OnboardingTourComponent implements AfterViewInit, OnDestroy {
     }, delay);
   }
 
+  /// <summary>
+  /// Tenta iniciar o tour de onboarding, verificando se todas as condições necessárias são atendidas.
+  /// </summary>
   private tryStart(): void {
     if (this.cancelled) return;
     if (!this.tourId || !this.steps?.length || this.onboarding.isTourDone(this.tourId)) return;
@@ -97,7 +120,9 @@ export class OnboardingTourComponent implements AfterViewInit, OnDestroy {
     this.scrollParents = [];
   }
 
-  /** Liga scroll em antepassados que fazem overflow (leaderboard dentro do HOL, etc.). */
+  /// <summary>
+  /// Liga scroll em antepassados que fazem overflow (leaderboard dentro do HOL, etc.).
+  /// </summary>
   private attachScrollParents(): void {
     let el: HTMLElement | null = this.hostRef.nativeElement.parentElement;
     const seen = new Set<Element>();
@@ -115,6 +140,9 @@ export class OnboardingTourComponent implements AfterViewInit, OnDestroy {
     }
   }
 
+  /// <summary>
+  /// Apresenta um passo específico do tour de onboarding, garantindo que o elemento alvo esteja visível e atualizado.
+  /// </summary>
   private presentStep(index: number, retryDepth: number): void {
     if (!this.active || this.cancelled) return;
 
@@ -153,6 +181,9 @@ export class OnboardingTourComponent implements AfterViewInit, OnDestroy {
     this.cdr.detectChanges();
   }
 
+  /// <summary>
+  /// Atualiza o layout do tour de onboarding, posicionando o destaque e o popover corretamente.
+  /// </summary>
   private updateLayout(): void {
     const step = this.steps[this.currentIndex];
     if (!step) return;
@@ -216,6 +247,9 @@ export class OnboardingTourComponent implements AfterViewInit, OnDestroy {
     this.popoverLeft = `${left}px`;
   }
 
+  /// <summary>
+  /// Avança para o próximo passo do tour de onboarding.
+  /// </summary>
   next(): void {
     if (this.currentIndex >= this.steps.length - 1) {
       this.finish();
@@ -223,18 +257,27 @@ export class OnboardingTourComponent implements AfterViewInit, OnDestroy {
       this.presentStep(this.currentIndex + 1, 0);
     }
   }
-
+  
+  /// <summary>
+  /// Pula para o próximo passo do tour de onboarding.
+  /// </summary>
   skipStep(): void {
     this.presentStep(this.currentIndex + 1, 0);
   }
-
+  
+  /// <summary>
+  /// Dismisses all steps of the onboarding tour.
+  /// </summary>
   dismissAll(): void {
     this.onboarding.markTourDone(this.tourId);
     this.active = false;
     this.teardownListeners();
     this.cdr.detectChanges();
   }
-
+  
+  /// <summary>
+  /// Finaliza o tour de onboarding.
+  /// </summary>
   finish(): void {
     this.onboarding.markTourDone(this.tourId);
     this.active = false;
@@ -242,17 +285,26 @@ export class OnboardingTourComponent implements AfterViewInit, OnDestroy {
     this.cdr.detectChanges();
   }
 
+  /// <summary>
+  /// Listener para o evento de pressionar a tecla Escape, que permite ao utilizador fechar o tour de onboarding rapidamente.
+  /// </summary>
   @HostListener('document:keydown.escape')
   onEscape(): void {
     if (this.active) {
       this.dismissAll();
     }
   }
-
+  
+  /// <summary>
+  /// Verifica se o passo atual é o último do tour de onboarding.
+  /// </summary>
   isLastStep(): boolean {
     return this.currentIndex >= this.steps.length - 1;
   }
-
+  
+  /// <summary>
+  /// Retorna o rótulo do passo atual do tour de onboarding.
+  /// </summary>
   stepLabel(): string {
     return `Dica ${this.currentIndex + 1} de ${this.steps.length}`;
   }

@@ -2,6 +2,9 @@ import { Component, OnDestroy } from '@angular/core';
 import { AuthService } from '../../services/auth.service';
 import { Router } from '@angular/router';
 
+/// <summary>
+/// Representa a página de recuperação de senha da aplicação.
+/// </summary>
 @Component({
   selector: 'app-forgot-password',
   templateUrl: './forgot-password.component.html',
@@ -14,12 +17,21 @@ export class ForgotPasswordComponent implements OnDestroy {
   successMessage = '';
   private redirectTimer?: ReturnType<typeof setTimeout>;
 
+  /// <summary>
+  /// Representa a página de recuperação de senha da aplicação.
+  /// </summary>
   constructor(private authService: AuthService, private router: Router) { }
 
+  /// <summary>
+  /// Limpa o temporizador de redirecionamento ao destruir o componente.
+  /// </summary>
   ngOnDestroy(): void {
     if (this.redirectTimer !== undefined) clearTimeout(this.redirectTimer);
   }
 
+  /// <summary>
+  /// Envia um email de recuperação de senha para o utilizador.
+  /// </summary>
   onSendEmail() {
     const addr = (this.email ?? '').trim();
     if (!addr) {

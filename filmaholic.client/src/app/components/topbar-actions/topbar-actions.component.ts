@@ -18,6 +18,10 @@ import {
   NotificacaoPlataformaFeedDto,
   NotificacaoPlataformaItemDto
 } from '../../services/notificacoes.service';
+
+/// <summary>
+/// Representa uma notificação unificada na aplicação, combinando diferentes tipos de notificações em um único formato.
+/// </summary>
 type NotificacaoUnificada = {
   id: number;
   tipo: 'comunidade' | 'medalha' | 'resumo' | 'jogo' | 'filme' | 'plataforma';
@@ -29,11 +33,16 @@ type NotificacaoUnificada = {
   lidaEm?: Date | null;
 };
 
+
+/// <summary>
+/// Componente responsável pelas ações da barra superior, incluindo notificações e estreias.
+/// </summary>
 @Component({
   selector: 'app-topbar-actions',
   templateUrl: './topbar-actions.component.html',
   styleUrls: ['./topbar-actions.component.css']
 })
+
 export class TopbarActionsComponent implements OnInit, OnDestroy {
   @ViewChild('notificationsContainer', { static: false }) notificationsContainerRef?: ElementRef<HTMLElement>;
 
@@ -81,6 +90,9 @@ export class TopbarActionsComponent implements OnInit, OnDestroy {
 
   readonly API_URL = environment.apiBaseUrl ? environment.apiBaseUrl : '';
 
+  /// <summary>
+    /// Construtor do componente, injetando os serviços necessários para filmes, notificações, roteamento e detecção de mudanças.
+  /// </summary>
   constructor(
     private filmesService: FilmesService,
     private notificacoesService: NotificacoesService,
@@ -88,6 +100,10 @@ export class TopbarActionsComponent implements OnInit, OnDestroy {
     private cdr: ChangeDetectorRef
   ) { }
 
+
+  /// <summary>
+  /// Inicializa o componente, carregando dados iniciais e configurando assinaturas.
+  /// </summary>
   ngOnInit(): void {
     this.loadUpcomingFromTmdb();
     this.loadComunidadeUnreadCount();
@@ -97,16 +113,26 @@ export class TopbarActionsComponent implements OnInit, OnDestroy {
     this.loadFilmeDisponivelUnreadCount();
     this.loadReminderJogoUnreadCount();
 
-    // Restaura a atualização automática do Sino
+    
+    /// <summary>
+    /// Configura a assinatura para atualização automática do Sino de notificações.
+    /// </summary>
     this.badgeRefreshSub = this.notificacoesService.notificationBadgeRefresh$.subscribe(() => {
       this.refreshNotificationUiAfterExternalAction();
     });
   }
 
+  /// <summary>
+  /// Limpa os recursos utilizados pelo componente ao ser destruído.
+  /// </summary>
   ngOnDestroy(): void {
     this.badgeRefreshSub?.unsubscribe();
   }
 
+
+  /// <summary>
+  /// Atualiza a interface de notificações após ações externas, garantindo que os contadores e listas estejam sincronizados com o estado do servidor.
+  /// </summary>
   private refreshNotificationUiAfterExternalAction(): void {
     this.loadComunidadeUnreadCount();
     this.loadMedalhaUnreadCount();
@@ -129,12 +155,20 @@ export class TopbarActionsComponent implements OnInit, OnDestroy {
     this.cdr.markForCheck();
   }
 
+
+  /// <summary>
+  /// Manipula cliques no documento para fechar o painel de notificações quando o clique ocorre fora do contêiner de notificações.
+  /// </summary>
   @HostListener('document:click', ['$event'])
   onDocumentClick(e: MouseEvent): void {
     const el = this.notificationsContainerRef?.nativeElement;
     if (el && !el.contains(e.target as Node)) this.isNotificationsOpen = false;
   }
 
+
+  /// <summary>
+  /// Alterna a visibilidade do painel de notificações.
+  /// </summary>
   toggleNotifications(e: MouseEvent): void {
     e.stopPropagation();
     this.isNotificationsOpen = !this.isNotificationsOpen;
@@ -153,6 +187,9 @@ export class TopbarActionsComponent implements OnInit, OnDestroy {
     }
   }
 
+  /// <summary>
+  /// Alterna a aba ativa de notificações.
+  /// </summary>
   setActiveNotifTab(tab: 'estreias' | 'notificacoes', e: MouseEvent): void {
     e.stopPropagation();
     this.activeNotifTab = tab;
@@ -165,6 +202,9 @@ export class TopbarActionsComponent implements OnInit, OnDestroy {
     }
   }
 
+  /// <summary>
+  /// Ordena uma lista de itens pela data de criação em ordem decrescente.
+  /// </summary>
   private sortByDateDesc<T extends { criadaEm?: string }>(list: T[]): T[] {
     return (list || []).sort((a, b) =>
       new Date(b.criadaEm || 0).getTime() - new Date(a.criadaEm || 0).getTime()
@@ -172,6 +212,9 @@ export class TopbarActionsComponent implements OnInit, OnDestroy {
   }
 
   // ── Plataforma ──
+  /// <summary>
+  /// Carrega a contagem de notificações não lidas da plataforma.
+  /// </summary>
   private loadPlataformaUnreadCount(): void {
     this.notificacoesService.getNotificacoesPlataformaUnreadCount().subscribe({
       next: (count) => {
@@ -181,6 +224,9 @@ export class TopbarActionsComponent implements OnInit, OnDestroy {
     });
   }
 
+  /// <summary>
+  /// Carrega o feed de notificações da plataforma.
+  /// </summary>
   private loadPlataformaFeed(): void {
     this.notificacoesService.getNotificacoesPlataformaFeed({ unreadLimit: 12, readLimit: 50 }).subscribe({
       next: (dto) => {
@@ -193,6 +239,10 @@ export class TopbarActionsComponent implements OnInit, OnDestroy {
     });
   }
 
+
+  /// <summary>
+  /// Marca uma notificação da plataforma como lida.
+  /// </summary>
   marcarPlataformaLida(e: MouseEvent, item: NotificacaoPlataformaItemDto): void {
     e.preventDefault();
     e.stopPropagation();
@@ -212,6 +262,9 @@ export class TopbarActionsComponent implements OnInit, OnDestroy {
   }
 
   // ── Community notifications ──
+  /// <summary>
+  /// Carrega a contagem de notificações não lidas da comunidade.
+  /// </summary>
   private loadComunidadeUnreadCount(): void {
     this.notificacoesService.getNotificacoesComunidadeUnreadCount().subscribe({
       next: (count) => {
@@ -221,6 +274,9 @@ export class TopbarActionsComponent implements OnInit, OnDestroy {
     });
   }
 
+  /// <summary>
+  /// Carrega o feed de notificações da comunidade.
+  /// </summary>
   private loadComunidadeFeed(): void {
     this.notificacoesService.getNotificacoesComunidadeFeed({ unreadLimit: 50, readLimit: 50 }).subscribe({
       next: (dto) => {
@@ -237,6 +293,9 @@ export class TopbarActionsComponent implements OnInit, OnDestroy {
     });
   }
 
+  /// <summary>
+  /// Marca uma notificação da comunidade como lida e atualiza a interface de acordo.
+  /// </summary>
   marcarComunidadeNotifLida(e: MouseEvent, item: NotificacaoComunidadeItemDto): void {
     e.preventDefault();
     e.stopPropagation();
@@ -256,6 +315,9 @@ export class TopbarActionsComponent implements OnInit, OnDestroy {
     });
   }
 
+  /// <summary>
+  /// Marca todas as notificações da comunidade como lidas.
+  /// </summary>
   marcarTodasComunidadeLidas(e: MouseEvent): void {
     e.stopPropagation();
     this.notificacoesService.marcarTodasNotificacoesComunidadeComoLidas().subscribe({
@@ -272,6 +334,9 @@ export class TopbarActionsComponent implements OnInit, OnDestroy {
     });
   }
 
+  /// <summary>
+  /// Abre a comunidade a partir de uma notificação.
+  /// </summary>
   openComunidadeFromNotif(item: NotificacaoComunidadeItemDto): void {
     this.isNotificationsOpen = false;
     const t = this.comunidadeNotifTipo(item.tipo);
@@ -286,10 +351,16 @@ export class TopbarActionsComponent implements OnInit, OnDestroy {
     this.router.navigate(['/comunidades', item.comunidadeId]);
   }
 
+  /// <summary>
+  /// Determina o tipo de notificação da comunidade.
+  /// </summary>
   comunidadeNotifTipo(tipo: string | undefined | null): string {
     return (tipo ?? 'post').trim().toLowerCase();
   }
 
+  /// <summary>
+  /// Obtém o corpo da notificação de kick ou ban.
+  /// </summary>
   comunidadeKickBanCorpo(n: NotificacaoComunidadeItemDto): string | null {
     const t = this.comunidadeNotifTipo(n.tipo);
     if (t !== 'kick' && t !== 'banido') return null;
@@ -297,6 +368,9 @@ export class TopbarActionsComponent implements OnInit, OnDestroy {
     return s && s.length > 0 ? s : null;
   }
 
+  /// <summary>
+  /// Obtém a mensagem extra de uma notificação de comunidade eliminada.
+  /// </summary>
   comunidadeEliminadaMensagemExtra(n: NotificacaoComunidadeItemDto): string | null {
     if (this.comunidadeNotifTipo(n.tipo) !== 'comunidade_eliminada') return null;
     try {
@@ -308,6 +382,9 @@ export class TopbarActionsComponent implements OnInit, OnDestroy {
     }
   }
 
+  /// <summary>
+  /// Obtém a data de leitura de uma notificação.
+  /// </summary>
   private static parseLidaEm(iso?: string | null): Date | null {
     if (iso == null || String(iso).trim() === '') return null;
     const d = new Date(iso);
@@ -315,14 +392,23 @@ export class TopbarActionsComponent implements OnInit, OnDestroy {
   }
 
   // ── UNIFIED NOTIFICATIONS GETTER ──
+  /// <summary>
+  /// Obtém as notificações ordenadas.
+  /// </summary>
   get notificacoesOrdenadas(): NotificacaoUnificada[] {
     const mapa = new Map<string, NotificacaoUnificada>();
 
+    /// <summary>
+    /// Adiciona uma notificação ao mapa se ainda não estiver presente.
+    /// </summary>
     const add = (notif: NotificacaoUnificada, key: string) => {
       if (!mapa.has(key)) mapa.set(key, notif);
     };
 
     // Plataforma
+    /// <summary>
+    /// Obtém as notificações da plataforma.
+    /// </summary>
     (this.plataformaFeed.unread ?? []).forEach(n => add({ id: n.id, tipo: 'plataforma', texto: n.titulo, data: new Date(n.criadaEm), raw: n, lida: false }, `plat-${n.id}`));
     (this.plataformaFeed.read ?? []).forEach(n => add({
       id: n.id, tipo: 'plataforma', texto: n.titulo, data: new Date(n.criadaEm), raw: n, lida: true,
@@ -330,6 +416,9 @@ export class TopbarActionsComponent implements OnInit, OnDestroy {
     }, `plat-read-${n.id}`));
 
     // Comunidades
+    /// <summary>
+    /// Obtém as notificações das comunidade.
+    /// </summary>
     (this.comunidadeFeed.unread ?? []).forEach(n => add({ id: n.id, tipo: 'comunidade', texto: `Comunidades: ${n.comunidadeNome}`, data: new Date(n.criadaEm), raw: n, lida: false }, `comunidade-${n.id}`));
     (this.comunidadeFeed.read ?? []).forEach(n => add({
       id: n.id, tipo: 'comunidade', texto: `Comunidades: ${n.comunidadeNome}`, data: new Date(n.criadaEm), raw: n, lida: true,
@@ -337,6 +426,9 @@ export class TopbarActionsComponent implements OnInit, OnDestroy {
     }, `comunidade-read-${n.id}`));
 
     // Medalhas
+    /// <summary>
+    /// Obtém as notificações das medalhas.
+    /// </summary>
     (this.medalhaFeed.unread ?? []).forEach(n => add({ id: n.id, tipo: 'medalha', texto: `Desbloqueaste ${n.medalhaNome}`, data: new Date(n.criadaEm), raw: n, lida: false }, `medalha-${n.id}`));
     (this.medalhaFeed.read ?? []).forEach(n => add({
       id: n.id, tipo: 'medalha', texto: `Desbloqueaste ${n.medalhaNome}`, data: new Date(n.criadaEm), raw: n, lida: true,
@@ -344,6 +436,9 @@ export class TopbarActionsComponent implements OnInit, OnDestroy {
     }, `medalha-read-${n.id}`));
 
     // Jogo
+    /// <summary>
+    /// Obtém as notificações dos jogos.
+    /// </summary>
     (this.reminderJogo ?? []).forEach(n => {
       const lida = !!n.lidaEm;
       add({
@@ -353,6 +448,9 @@ export class TopbarActionsComponent implements OnInit, OnDestroy {
     });
 
     // Filme
+    /// <summary>
+    /// Obtém as notificações dos filmes.
+    /// </summary>
     (this.filmeDisponivel ?? []).forEach(n => {
       const lida = !!n.lidaEm;
       add({
@@ -362,6 +460,9 @@ export class TopbarActionsComponent implements OnInit, OnDestroy {
     });
 
     // Resumo
+    /// <summary>
+    /// Obtém as notificações dos resumos.
+    /// </summary>
     (this.resumoFeed.unread ?? []).forEach(n => add({ id: n.id, tipo: 'resumo', texto: 'Resumo semanal', data: new Date(n.criadaEm), raw: n, lida: false }, `resumo-${n.id}`));
     (this.resumoFeed.read ?? []).forEach(n => add({
       id: n.id, tipo: 'resumo', texto: 'Resumo semanal', data: new Date(n.criadaEm), raw: n, lida: true,
@@ -371,12 +472,18 @@ export class TopbarActionsComponent implements OnInit, OnDestroy {
     return Array.from(mapa.values()).sort((a, b) => b.data.getTime() - a.data.getTime());
   }
 
+  /// <summary>
+  /// Obtém as notificações não lidas, ordenadas por data de criação (mais recente primeiro).
+  /// </summary>
   get notificacoesNaoLidas(): NotificacaoUnificada[] {
     return this.notificacoesOrdenadas
       .filter((n) => !n.lida)
       .sort((a, b) => b.data.getTime() - a.data.getTime());
   }
 
+  /// <summary>
+  /// Obtém as notificações lidas, ordenadas por data de leitura (mais recente primeiro).
+  /// </summary>
   get notificacoesLidas(): NotificacaoUnificada[] {
     return this.notificacoesOrdenadas
       .filter((n) => !!n.lida)
@@ -387,72 +494,114 @@ export class TopbarActionsComponent implements OnInit, OnDestroy {
       });
   }
 
+  /// <summary>
+  /// Obtém as notificações não lidas paginadas.
+  /// </summary>
   get notificacoesNaoLidasPaged(): NotificacaoUnificada[] {
     const all = this.notificacoesNaoLidas;
     const start = this.notifPage * this.notifPageSize;
     return all.slice(start, start + this.notifPageSize);
   }
 
+  /// <summary>
+  /// Obtém as notificações lidas paginadas.
+  /// </summary>
   get notificacoesLidasPaged(): NotificacaoUnificada[] {
     const all = this.notificacoesLidas;
     const start = this.readNotifPage * this.notifPageSize;
     return all.slice(start, start + this.notifPageSize);
   }
 
+  /// <summary>
+  /// Obtém a visibilidade do pager de notificações não lidas.
+  /// </summary>
   get notifUnreadPagerVisible(): boolean {
     return this.notificacoesNaoLidas.length > this.notifPageSize;
   }
 
+  /// <summary>
+  /// Obtém a visibilidade do pager de notificações lidas.
+  /// </summary>
   get notifReadPagerVisible(): boolean {
     return this.notificacoesLidas.length > this.notifPageSize;
   }
 
+  /// <summary>
+  /// Obtém o rótulo da página de notificações não lidas.
+  /// </summary>
   get notifUnreadPageLabel(): string {
     const total = this.notificacoesNaoLidas.length;
     if (total === 0) return '';
     return `${this.notifPage + 1} / ${Math.max(1, Math.ceil(total / this.notifPageSize))}`;
   }
 
+  /// <summary>
+  /// Obtém o rótulo da página de notificações lidas.
+  /// </summary>
   get notifReadPageLabel(): string {
     const total = this.notificacoesLidas.length;
     if (total === 0) return '';
     return `${this.readNotifPage + 1} / ${Math.max(1, Math.ceil(total / this.notifPageSize))}`;
   }
 
+  /// <summary>
+  /// Obtém a última página de notificações não lidas.
+  /// </summary>
   get notifUnreadLastPage(): number {
     return Math.max(0, Math.ceil(this.notificacoesNaoLidas.length / this.notifPageSize) - 1);
   }
 
+  /// <summary>
+  /// Obtém a última página de notificações lidas.
+  /// </summary>
   get notifReadLastPage(): number {
     return Math.max(0, Math.ceil(this.notificacoesLidas.length / this.notifPageSize) - 1);
   }
 
+  /// <summary>
+  /// Vai para a página anterior de notificações não lidas.
+  /// </summary>
   prevNotifUnreadPage(e: MouseEvent): void {
     e.stopPropagation();
     this.notifPage = Math.max(0, this.notifPage - 1);
   }
 
+  /// <summary>
+  /// Vai para a próxima página de notificações não lidas.
+  /// </summary>
   nextNotifUnreadPage(e: MouseEvent): void {
     e.stopPropagation();
     this.notifPage = Math.min(this.notifUnreadLastPage, this.notifPage + 1);
   }
 
+  /// <summary>
+  /// Vai para a página anterior de notificações lidas.
+  /// </summary>
   prevNotifReadPage(e: MouseEvent): void {
     e.stopPropagation();
     this.readNotifPage = Math.max(0, this.readNotifPage - 1);
   }
 
+  /// <summary>
+  /// Vai para a próxima página de notificações lidas.
+  /// </summary>
   nextNotifReadPage(e: MouseEvent): void {
     e.stopPropagation();
     this.readNotifPage = Math.min(this.notifReadLastPage, this.readNotifPage + 1);
   }
 
+  /// <summary>
+  /// Garante que as páginas atuais de notificações estejam dentro dos limites válidos após atualizações.
+  /// </summary>
   private clampNotifPage(): void {
     if (this.notifPage > this.notifUnreadLastPage) this.notifPage = this.notifUnreadLastPage;
     if (this.readNotifPage > this.notifReadLastPage) this.readNotifPage = this.notifReadLastPage;
   }
 
   // ── Medal notifications ──
+  /// <summary>
+  /// Carrega a contagem de medalhas não lidas.
+  /// </summary>
   private loadMedalhaUnreadCount(): void {
     this.notificacoesService.getNotificacoesMedalhaUnreadCount().subscribe({
       next: (count) => {
@@ -462,6 +611,9 @@ export class TopbarActionsComponent implements OnInit, OnDestroy {
     });
   }
 
+  /// <summary>
+  /// Carrega o feed de notificações de medalhas.
+  /// </summary>
   private loadMedalhaFeed(): void {
     this.notificacoesService.getNotificacoesMedalhaFeed({ unreadLimit: 50, readLimit: 50 }).subscribe({
       next: (dto) => {
@@ -480,6 +632,9 @@ export class TopbarActionsComponent implements OnInit, OnDestroy {
     });
   }
 
+  /// <summary>
+  /// Marca uma notificação de medalha como lida.
+  /// </summary>
   marcarMedalhaComoLida(item: NotificacaoMedalhaItemDto): void {
     this.notificacoesService.marcarNotificacaoMedalhaComoLida(item.id).subscribe({
       next: () => {
@@ -497,6 +652,9 @@ export class TopbarActionsComponent implements OnInit, OnDestroy {
     });
   }
 
+  /// <summary>
+  /// Marca todas as notificações de medalhas como lidas.
+  /// </summary>
   marcarTodasMedalhasComoLidas(): void {
     this.notificacoesService.marcarTodasNotificacoesMedalhaComoLidas().subscribe({
       next: () => {
@@ -513,6 +671,9 @@ export class TopbarActionsComponent implements OnInit, OnDestroy {
   }
 
   // ── Resumo / Jogo / Filmes ──
+  /// <summary>
+  /// Carrega o feed de resumo de estatísticas.
+  /// </summary>
   private loadResumoFeed(): void {
     this.notificacoesService.getResumoEstatisticasFeed({ unreadLimit: 50, readLimit: 50 }).subscribe({
       next: (dto) => {
@@ -526,6 +687,9 @@ export class TopbarActionsComponent implements OnInit, OnDestroy {
     });
   }
 
+  /// <summary>
+  /// Carrega o feed de lembretes de jogos.
+  /// </summary>
   private loadReminderJogo(): void {
     this.notificacoesService.getReminderJogoFeed().subscribe({
       next: (data) => {
@@ -536,6 +700,9 @@ export class TopbarActionsComponent implements OnInit, OnDestroy {
     });
   }
 
+  /// <summary>
+  /// Carrega o feed de filmes disponíveis.
+  /// </summary>
   private loadFilmeDisponivel(): void {
     this.notificacoesService.getFilmeDisponivelFeed().subscribe({
       next: (data) => {
@@ -546,6 +713,9 @@ export class TopbarActionsComponent implements OnInit, OnDestroy {
     });
   }
 
+  /// <summary>
+  /// Carrega o contador de notificações não lidas do resumo de estatísticas.
+  /// </summary>
   private loadResumoUnreadCount(): void {
     this.notificacoesService.getResumoEstatisticasUnreadCount().subscribe({
       next: (count) => {
@@ -555,6 +725,9 @@ export class TopbarActionsComponent implements OnInit, OnDestroy {
     });
   }
 
+  /// <summary>
+  /// Carrega o contador de notificações não lidas de filmes disponíveis.
+  /// </summary>
   private loadFilmeDisponivelUnreadCount(): void {
     this.notificacoesService.getFilmeDisponivelUnreadCount().subscribe({
       next: (count) => {
@@ -564,6 +737,9 @@ export class TopbarActionsComponent implements OnInit, OnDestroy {
     });
   }
 
+  /// <summary>
+  /// Carrega o contador de notificações não lidas de lembretes de jogos.
+  /// </summary>
   private loadReminderJogoUnreadCount(): void {
     this.notificacoesService.getReminderJogoUnreadCount().subscribe({
       next: (count) => {
@@ -573,6 +749,9 @@ export class TopbarActionsComponent implements OnInit, OnDestroy {
     });
   }
 
+  /// <summary>
+  /// Marca um filme disponível como lido.
+  /// </summary>
   marcarFilmeDisponivelLida(e: MouseEvent, item: FilmeDisponivelNotifDto): void {
     e.preventDefault();
     e.stopPropagation();
@@ -587,10 +766,9 @@ export class TopbarActionsComponent implements OnInit, OnDestroy {
     });
   }
 
-  /**
-   * Marca reminder como lido no servidor e só depois atualiza UI (bolinha/contagens).
-   * Evita corrida com refresh e garante que o PUT concluiu antes de navegar para o jogo.
-   */
+  /// <summary>
+  /// Marca um lembrete de jogo como lido internamente.
+  /// </summary>
   private marcarReminderLidoInterno(id: number, then?: () => void): void {
     this.notificacoesService.marcarReminderJogoComoLida(id).subscribe({
       next: () => {
@@ -609,12 +787,18 @@ export class TopbarActionsComponent implements OnInit, OnDestroy {
     });
   }
 
+  /// <summary>
+  /// Marca um lembrete de jogo como lido.
+  /// </summary>
   marcarReminderLido(e: MouseEvent, id: number): void {
     e.preventDefault();
     e.stopPropagation();
     this.marcarReminderLidoInterno(id);
   }
 
+  /// <summary>
+  /// Marca um lembrete de jogo como lido e navega para o jogo.
+  /// </summary>
   marcarReminderLidoEJogar(e: MouseEvent, id: number): void {
     e.preventDefault();
     e.stopPropagation();
@@ -624,6 +808,9 @@ export class TopbarActionsComponent implements OnInit, OnDestroy {
     });
   }
 
+  /// <summary>
+  /// Marca um resumo de estatísticas como lido.
+  /// </summary>
   marcarResumoLida(e: MouseEvent, item: ResumoEstatisticasFeedItemDto): void {
     e.preventDefault();
     e.stopPropagation();
@@ -643,6 +830,9 @@ export class TopbarActionsComponent implements OnInit, OnDestroy {
   }
 
   // ── Unified notification handlers ──
+  /// <summary>
+  /// Manipula cliques em notificações unificadas, navegando para a página relevante com base no tipo da notificação.
+  /// </summary>
   onNotifClick(e: MouseEvent, n: NotificacaoUnificada): void {
     e.preventDefault();
     e.stopPropagation();
@@ -662,6 +852,9 @@ export class TopbarActionsComponent implements OnInit, OnDestroy {
     }
   }
 
+  /// <summary>
+  /// Marca uma notificação como lida com base no tipo.
+  /// </summary>
   marcarNotifComoLida(e: MouseEvent, n: NotificacaoUnificada): void {
     e.preventDefault();
     e.stopPropagation();
@@ -676,6 +869,9 @@ export class TopbarActionsComponent implements OnInit, OnDestroy {
     }
   }
 
+  /// <summary>
+  /// Marca todas as notificações como lidas.
+  /// </summary>
   marcarTodasNotificacoesLidas(e: MouseEvent): void {
     e.stopPropagation();
     this.notificacoesService.marcarTodasNotificacoesLidasGlobal().subscribe({
@@ -740,46 +936,113 @@ export class TopbarActionsComponent implements OnInit, OnDestroy {
   }
 
   // ── Funções de Estreias (Upcoming) ──
+  /// <summary>
+  /// Verifica se há filmes de estreias próximas carregados para exibição.
+  /// </summary>
   get hasUpcomingList(): boolean { return (this.upcomingTmdb?.length ?? 0) > 0; }
+
+  /// <summary>
+  /// Determina se o filtro de gênero para estreias próximas deve ser exibido, baseado na disponibilidade da sessão personalizada de estreias.
+  /// </summary>
   get showEstreiasGenreFilter(): boolean { return this.proximasEstreiasSessaoAtiva; }
 
+  /// <summary>
+  /// Verifica se um filme de estreias próximas foi lido.
+  /// </summary>
   private isUpcomingRead(m: Filme): boolean {
     const t = Number(m.tmdbId);
     return !!m.tmdbId && !isNaN(t) && this.readTmdbIds.has(t);
   }
 
+  /// <summary>
+  /// Obtém a lista de filmes de estreias próximas que ainda não foram lidos, ordenados por data de lançamento ascendente.
+  /// </summary>
   get upcomingUnreadAll(): Filme[] { return this.filmesService.sortFilmesByReleaseAsc((this.upcomingTmdb || []).filter((m) => m.tmdbId && !this.isUpcomingRead(m))); }
+
+  /// <summary>
+    /// Obtém a lista de filmes de estreias próximas que já foram lidos, ordenados por data de lançamento ascendente.
+  /// </summary>
   get upcomingReadAll(): Filme[] { return this.filmesService.sortFilmesByReleaseAsc((this.upcomingTmdb || []).filter((m) => m.tmdbId && this.isUpcomingRead(m))); }
 
+  /// <summary>
+  /// Obtém a página atual de filmes de estreias próximas não lidos para exibição.
+  /// </summary>
   get upcomingUnreadPaged(): Filme[] { return this.upcomingUnreadAll.slice(this.upcomingUnreadPage * this.upcomingPageSize, (this.upcomingUnreadPage + 1) * this.upcomingPageSize); }
+
+  /// <summary>
+  /// Obtém a lista de filmes de estreias próximas que já foram lidos, ordenados por data de lançamento ascendente.
+  /// </summary>
   get upcomingReadPaged(): Filme[] { return this.upcomingReadAll.slice(this.upcomingReadPage * this.upcomingPageSize, (this.upcomingReadPage + 1) * this.upcomingPageSize); }
 
+  /// <summary>
+  /// Determina se o pager para filmes de estreias próximas não lidos deve ser exibido, baseado na contagem total de itens em comparação com o tamanho da página.
+  /// </summary>
   get upcomingUnreadPagerVisible(): boolean { return this.upcomingUnreadAll.length > this.upcomingPageSize; }
+
+  /// <summary>
+  /// Determina se o pager para filmes de estreias próximas já lidos deve ser exibido, baseado na contagem total de itens em comparação com o tamanho da página.
+  /// </summary>
   get upcomingReadPagerVisible(): boolean { return this.upcomingReadAll.length > this.upcomingPageSize; }
 
+  /// <summary>
+  /// Obtém o rótulo da página atual para filmes de estreias próximas não lidos, no formato "PáginaAtual / TotalDePáginas".
+  /// Retorna uma string vazia se não houver itens.
+  /// </summary>
   get upcomingUnreadPageLabel(): string {
     const total = this.upcomingUnreadAll.length;
     return total === 0 ? '' : `${this.upcomingUnreadPage + 1} / ${Math.max(1, Math.ceil(total / this.upcomingPageSize))}`;
   }
 
+  /// <summary>
+  /// Obtém o rótulo da página atual para filmes de estreias próximas já lidos, no formato "PáginaAtual / TotalDePáginas".
+  /// Retorna uma string vazia se não houver itens.
+  /// </summary>
   get upcomingReadPageLabel(): string {
     const total = this.upcomingReadAll.length;
     return total === 0 ? '' : `${this.upcomingReadPage + 1} / ${Math.max(1, Math.ceil(total / this.upcomingPageSize))}`;
   }
 
+  /// <summary>
+  /// Obtém o índice da última página para filmes de estreias próximas não lidos.
+  /// </summary>
   get upcomingUnreadLastPage(): number { return Math.max(0, Math.ceil(this.upcomingUnreadAll.length / this.upcomingPageSize) - 1); }
+
+  /// <summary>
+  /// Obtém o índice da última página para filmes de estreias próximas já lidos.
+  /// </summary>
   get upcomingReadLastPage(): number { return Math.max(0, Math.ceil(this.upcomingReadAll.length / this.upcomingPageSize) - 1); }
 
+  /// <summary>
+  /// Obtém o índice da página anterior para filmes de estreias próximas não lidos.
+  /// </summary>
   prevUnreadPage(e: MouseEvent): void { e.stopPropagation(); this.upcomingUnreadPage = Math.max(0, this.upcomingUnreadPage - 1); }
+
+  /// <summary>
+  /// Obtém o índice da página seguinte para filmes de estreias próximas não lidos.
+  /// </summary>
   nextUnreadPage(e: MouseEvent): void { e.stopPropagation(); this.upcomingUnreadPage = Math.min(this.upcomingUnreadLastPage, this.upcomingUnreadPage + 1); }
+
+  /// <summary>
+  /// Obtém o índice da página anterior para filmes de estreias próximas já lidos.
+  /// </summary>
   prevReadPage(e: MouseEvent): void { e.stopPropagation(); this.upcomingReadPage = Math.max(0, this.upcomingReadPage - 1); }
+
+  /// <summary>
+  /// Obtém o índice da página seguinte para filmes de estreias próximas já lidos.
+  /// </summary>
   nextReadPage(e: MouseEvent): void { e.stopPropagation(); this.upcomingReadPage = Math.min(this.upcomingReadLastPage, this.upcomingReadPage + 1); }
 
+  /// <summary>
+  /// Ajusta os índices das páginas de estreias próximas para garantir que não excedam os limites.
+  /// </summary>
   private clampUpcomingPages(): void {
     if (this.upcomingUnreadPage > this.upcomingUnreadLastPage) this.upcomingUnreadPage = this.upcomingUnreadLastPage;
     if (this.upcomingReadPage > this.upcomingReadLastPage) this.upcomingReadPage = this.upcomingReadLastPage;
   }
 
+  /// <summary>
+  /// Sincroniza os IDs de filmes lidos do TMDB com o servidor.
+  /// </summary>
   private syncReadTmdbFromServer(): void {
     const ids = (this.upcomingTmdb || []).map((m) => Number(m.tmdbId)).filter((n) => n > 0 && !isNaN(n));
     if (!ids.length) {
@@ -796,6 +1059,9 @@ export class TopbarActionsComponent implements OnInit, OnDestroy {
     });
   }
 
+  /// <summary>
+  /// Carrega os filmes de estreias próximas do TMDB.
+  /// </summary>
   private loadUpcomingFromTmdb(): void {
     const onNext = (list: Filme[] | null) => {
       this.upcomingTmdb = list || [];
@@ -820,6 +1086,9 @@ export class TopbarActionsComponent implements OnInit, OnDestroy {
       .subscribe({ next: onNext, error: onErr });
   }
 
+  /// <summary>
+  /// Define o filtro de gênero para as estreias próximas e recarrega a lista com base na nova configuração.
+  /// </summary>
   setEstreiasGenreFilter(apenasGenerosFavoritos: boolean, e: MouseEvent): void {
     e.stopPropagation();
     if (this.filtrarEstreiasPorGeneros === apenasGenerosFavoritos) return;
@@ -829,6 +1098,9 @@ export class TopbarActionsComponent implements OnInit, OnDestroy {
     this.loadUpcomingFromTmdb();
   }
 
+  /// <summary>
+  /// Carrega os detalhes dos filmes de estreias próximas.
+  /// </summary>
   private loadUpcomingDetails(): void {
     if (this.isLoadingUpcomingDetails) return;
     const missing = (this.upcomingTmdb || []).filter(
@@ -886,6 +1158,10 @@ export class TopbarActionsComponent implements OnInit, OnDestroy {
     });
   }
 
+  /// <summary>
+  /// Gera um rótulo de data de lançamento legível para um filme, usando a data de lançamento se disponível,
+  /// ou o ano com indicação de TBA se apenas o ano estiver presente, ou "TBA" se nenhuma informação de data estiver disponível.
+  /// </summary>
   releaseLabel(f: Filme): string {
     if (!f) return '';
     if (f.releaseDate) {
@@ -896,6 +1172,9 @@ export class TopbarActionsComponent implements OnInit, OnDestroy {
     return 'TBA';
   }
 
+  /// <summary>
+  /// Obtém a URL do poster para um filme, usando a URL do TMDB se disponível e válida, ou uma imagem de fallback caso contrário.
+  /// </summary>
   posterOf(f: Filme): string {
     const u = (f?.posterUrl ?? '').trim();
     if (!u) return this.posterFallback;
@@ -904,11 +1183,17 @@ export class TopbarActionsComponent implements OnInit, OnDestroy {
     return u;
   }
 
+  /// <summary>
+  /// Trata o evento de imagem quebrada, substituindo a imagem por uma imagem de fallback.
+  /// </summary>
   onPosterBroken(ev: Event): void {
     const el = ev.target as HTMLImageElement;
     if (el && !el.src.includes('placeholder')) el.src = this.posterFallback;
   }
 
+  /// <summary>
+  /// Marca uma notificação de filme como lida.
+  /// </summary>
   marcarComoLida(e: MouseEvent, m: Filme): void {
     e.preventDefault();
     e.stopPropagation();
@@ -927,7 +1212,10 @@ export class TopbarActionsComponent implements OnInit, OnDestroy {
         this.cdr.markForCheck();
       });
   }
-
+  
+  /// <summary>
+  /// Abre a página de detalhes de um filme a partir de uma notificação.
+  /// </summary>
   openNotificationMovie(m: Filme): void {
     this.isNotificationsOpen = false;
     const id = m?.id && m.id > 0 ? m.id : Number(m?.tmdbId);

@@ -15,6 +15,9 @@ import { NotificacoesService } from '../../services/notificacoes.service';
 type StatsPeriod = 'all' | '7d' | '30d' | '3m' | '12m';
 type GraphTheme = 'default' | 'dark' | 'force';
 
+/// <summary>
+/// Representa as configurações de exibição dos gráficos no perfil do utilizador.
+/// </summary>
 interface GraphSettings {
   showGenreBar: boolean;
   showGenrePie: boolean;
@@ -25,11 +28,18 @@ interface GraphSettings {
   theme: GraphTheme;
 }
 
+/// <summary>
+/// Componente responsável por exibir o perfil do utilizador, incluindo informações pessoais, estatísticas de filmes vistos, conquistas e favoritos.
+/// </summary>
 @Component({
   selector: 'app-profile',
   templateUrl: './profile.component.html',
   styleUrls: ['./profile.component.css']
 })
+
+  /// <summary>
+  /// Componente de perfil que gere a exibição e interação com os dados do perfil do utilizador, incluindo estatísticas, conquistas, favoritos e personalização de gráficos.
+  /// </summary>
 export class ProfileComponent implements OnInit {
 
   /** Quando definido, estamos a ver o perfil deste utilizador (rota /profile/:userId). */
@@ -151,6 +161,9 @@ export class ProfileComponent implements OnInit {
 
   statsPeriod: StatsPeriod = 'all';
 
+  /// <summary>
+  /// Opções de períodos para filtrar as estatísticas exibidas no perfil, permitindo ao utilizador escolher entre diferentes intervalos de tempo para análise dos seus hábitos de visualização.
+  /// </summary>
   readonly statsPeriodOptions: { value: StatsPeriod; label: string }[] = [
     { value: 'all', label: 'Todos os tempos' },
     { value: '7d', label: 'Últimos 7 dias' },
@@ -159,6 +172,9 @@ export class ProfileComponent implements OnInit {
     { value: '12m', label: 'Últimos 12 meses' }
   ];
 
+  /// <summary>
+  /// Controla a visibilidade do menu de personalização dos gráficos, permitindo ao utilizador escolher quais gráficos exibir e o tema de cores.
+  /// </summary>
   showGraphCustomizeMenu = false;
   graphSettings: GraphSettings = {
     showGenreBar: true,
@@ -170,6 +186,9 @@ export class ProfileComponent implements OnInit {
     theme: 'default'
   };
 
+  /// <summary>
+  /// Configurações padrão para os gráficos, usadas para inicializar o estado e para resetar as preferências do utilizador quando necessário.
+  /// </summary>
   private readonly defaultGraphSettings: GraphSettings = {
     showGenreBar: true,
     showGenrePie: true,
@@ -182,6 +201,9 @@ export class ProfileComponent implements OnInit {
 
   private readonly GRAPH_SETTINGS_KEY = 'filmaholic_graph_settings';
 
+  /// <summary>
+  /// Temas de gráficos disponíveis na aplicação, cada um com cores específicas para o utilizador, cores globais e cores do gráfico.
+  /// </summary>
   private readonly GRAPH_THEMES: Record<GraphTheme, { userColor: string; globalColor: string; chart: [string, string, string] }> = {
     default: {
       userColor: '#ff2f6d',
@@ -202,6 +224,10 @@ export class ProfileComponent implements OnInit {
 
   showStatsPeriodMenu = false;
 
+  /// <summary>
+  /// Construtor do componente, injetando os serviços necessários para realizar chamadas HTTP, navegação, autenticação,
+  /// criação de menus, manipulação de filmes do utilizador, gerir os favoritos, perfil e notificações.
+  /// </summary>
   constructor(
     private http: HttpClient,
     private router: Router,
@@ -216,38 +242,60 @@ export class ProfileComponent implements OnInit {
     private cdr: ChangeDetectorRef
   ) { }
 
+  /// <summary>
+  /// Propriedade que indica se o utilizador atual tem privilégios de administrador, permitindo acesso a funcionalidades adicionais ou restritas no perfil.
+  /// </summary>
   get isAdmin(): boolean {
     return this.authService.isAdministrador();
   }
-
+  
+  /// <summary>
+  /// Obtém o ID do utilizador atual a partir do armazenamento local, permitindo identificar o utilizador logado.
+  /// </summary>
   get ownUserId(): string | null {
     return localStorage.getItem('user_id');
   }
 
-  /** Utilizador cujo perfil está a ser mostrado. */
+  /// <summary>
+  /// Obtém o ID do utilizador cujo perfil está a ser visualizado, permitindo identificar o utilizador alvo do perfil.
+  /// </summary>
   get profileSubjectUserId(): string | null {
     return this.viewedProfileUserId || this.ownUserId;
   }
-
+  
+  /// <summary>
+  /// Indica se o perfil atualmente visualizado pertence ao utilizador logado.
+  /// </summary>
   get isOwnProfile(): boolean {
     if (!this.viewedProfileUserId) return true;
     return this.viewedProfileUserId === this.ownUserId;
   }
 
-  /** Rótulo nas barras de comparação (estatísticas): "Tu" no próprio perfil, nome do utilizador noutros. */
+  /// <summary>
+  /// Rótulo usado para comparação de estatísticas: "Tu" se for o próprio perfil, ou o nome do utilizador caso contrário.
+  /// </summary>
   get statsComparisonUserLabel(): string {
     return this.isOwnProfile ? 'Tu' : this.userName;
   }
 
-  /** Rótulo geral para títulos e legendas: "Tu" ou nome do utilizador. */
+  /// <summary>
+  /// Rótulo geral para títulos e legendas: "Tu" ou nome do utilizador.
+  /// </summary>
   get profileLabel(): string {
     return this.isOwnProfile ? 'Tu' : this.userName;
   }
 
+  /// <summary>
+  /// Cria a query para as chamadas de filmes do utilizador, retornando o ID do utilizador visualizado se for um perfil undefined para o próprio perfil.
+  /// </summary>
   private forUserMoviesQuery(): string | null | undefined {
     return this.isOwnProfile ? undefined : this.viewedProfileUserId ?? undefined;
   }
 
+  /// <summary>
+  /// Método de ciclo de vida do Angular que é chamado quando o componente é inicializado.
+  /// Configura as assinaturas para pesquisa de atores, mudanças nos favoritos e mudanças nos parâmetros da rota para carregar o perfil correto.
+  /// </summary>
   ngOnInit(): void {
     this.loadGraphSettings();
     this.loadCatalogo();
@@ -283,6 +331,9 @@ export class ProfileComponent implements OnInit {
     });
   }
 
+  /// <summary>
+  /// Método chamado quando o alvo do perfil é alterado.
+  /// </summary>
   private onProfileTargetChanged(): void {
     if (this.viewedProfileUserId && !this.ownUserId) {
       this.router.navigate(['/login'], {
@@ -344,38 +395,60 @@ export class ProfileComponent implements OnInit {
       });
   }
 
-
+  /// <summary>
+  /// Alterna a visibilidade do menu.
+  /// </summary>
   toggleMenu(): void {
     this.menuService.toggle();
   }
 
+  /// <summary>
+  /// Navega para o dashboard, abrindo a seção de desafios.
+  /// </summary>
   goToDashboardDesafios(): void {
     this.router.navigate(['/dashboard'], { queryParams: { openDesafios: '1' } });
   }
 
+  /// <summary>
+  /// Navega para as definições de notificações.
+  /// </summary>
   goToNotificacoesSettings(): void {
     this.router.navigate(['/definicoes-notificacoes']);
   }
-
+  
+  /// <summary>
+  /// Navega para a página inicial.
+  /// </summary>
   goToHome(): void {
     this.router.navigate(['/dashboard']);
   }
-
+  
+  /// <summary>
+  /// Efetua logout do utilizador.
+  /// </summary>
   logout(): void {
     this.authService.logout();
   }
 
-
+  /// <summary>
+  /// Calcula o nível de um utilizador com base na sua experiência (XP).
+  /// </summary>
   private xpParaNivel(n: number): number {
     if (n <= 1) return 0;
     return 100 * (n - 1) * n / 2;
   }
-
+  
+  /// <summary>
+  /// Calcula a experiência necessária para o próximo nível.
+  /// </summary>
   xpParaProximoNivel(): number {
     const xpProximo = this.xpParaNivel(this.level + 1);
     return Math.max(0, xpProximo - this.xp);
   }
-
+  
+  /// <summary>
+  /// Calcula a percentagem de progresso para o próximo nível.
+  /// </summary>
   xpProgressPercent(): number {
     const xpAtual = this.xpParaNivel(this.level);
     const xpProximo = this.xpParaNivel(this.level + 1);
@@ -384,7 +457,10 @@ export class ProfileComponent implements OnInit {
     const progresso = this.xp - xpAtual;
     return Math.min(100, Math.max(0, (progresso / intervalo) * 100));
   }
-
+  
+  /// <summary>
+  /// Calcula o nível de um utilizador com base na sua experiência (XP) localmente.
+  /// </summary>
   private calcularNivelLocal(xpTotal: number): number {
     let nivel = 1;
     while (true) {
@@ -394,7 +470,10 @@ export class ProfileComponent implements OnInit {
     }
     return nivel;
   }
-
+  
+  /// <summary>
+  /// Verifica se o utilizador ganhou novas medalhas de nível.
+  /// </summary>
   private checkLevelMedals(): void {
     this.http.post<any>(`${this.apiMedalhas}/check-level`, {}, { withCredentials: true })
       .pipe(finalize(() => this.notificacoesService.refreshNotificationBadges()))
@@ -411,27 +490,41 @@ export class ProfileComponent implements OnInit {
       });
   }
 
-
+    /// <summary>
+  /// Alterna a visibilidade do menu de personalização do gráfico.
+  /// </summary>
   toggleGraphCustomize(): void {
     this.showGraphCustomizeMenu = !this.showGraphCustomizeMenu;
   }
-
+  
+  /// <summary>
+  /// Alterna a visibilidade de um gráfico específico.
+  /// </summary>
   toggleGraphVisibility(key: 'showGenreBar' | 'showGenrePie' | 'showPeriodBar' | 'showPeriodPie' | 'showMonthlyChart' | 'showGenrePercentages'): void {
     this.graphSettings[key] = !this.graphSettings[key];
     this.saveGraphSettings();
   }
 
+  /// <summary>
+  /// Seleciona o tema de cores para os gráficos, atualizando as configurações e salvando a preferência do utilizador.
+  /// </summary>
   selectGraphTheme(theme: GraphTheme): void {
     if (this.graphSettings.theme === theme) return;
     this.graphSettings.theme = theme;
     this.saveGraphSettings();
   }
 
+  /// <summary>
+  /// Reseta as configurações do gráfico para os valores padrão.
+  /// </summary>
   resetGraphSettings(): void {
     this.graphSettings = { ...this.defaultGraphSettings };
     this.saveGraphSettings();
   }
 
+  /// <summary>
+  /// Carrega as configurações do gráfico do armazenamento local.
+  /// </summary>
   private loadGraphSettings(): void {
     try {
       const stored = localStorage.getItem(this.GRAPH_SETTINGS_KEY);
@@ -445,6 +538,9 @@ export class ProfileComponent implements OnInit {
     }
   }
 
+  /// <summary>
+  /// Salva as configurações do gráfico no armazenamento local.
+  /// </summary>
   private saveGraphSettings(): void {
     try {
       localStorage.setItem(this.GRAPH_SETTINGS_KEY, JSON.stringify(this.graphSettings));
@@ -453,28 +549,46 @@ export class ProfileComponent implements OnInit {
     }
   }
 
+  /// <summary>
+  /// Obtém o tema de cores atual para os gráficos com base nas configurações do utilizador, retornando as cores definidas para o tema selecionado ou o tema padrão se o selecionado for inválido.
+  /// </summary>
   private get currentTheme() {
     return this.GRAPH_THEMES[this.graphSettings.theme] ?? this.GRAPH_THEMES['default'];
   }
 
+  /// <summary>
+  /// Obtém a cor de uma barra do gráfico de barras com base no índice.
+  /// </summary>
   getBarChartColor(index: number): string {
     const palette = this.currentTheme.chart;
     return palette[index % 2];
   }
-
+  
+  /// <summary>
+  /// Obtém a cor de uma fatia do gráfico de pizza com base no índice.
+  /// </summary>
   getPieChartColor(index: number): string {
     const palette = this.currentTheme.chart;
     return palette[index % 3];
   }
 
+  /// <summary>
+  /// Obtém a cor da barra do utilizador no gráfico.
+  /// </summary>
   getUserBarColor(): string {
     return this.currentTheme.userColor;
   }
 
+  /// <summary>
+  /// Obtém a cor da barra global no gráfico.
+  /// </summary>
   getGlobalBarColor(): string {
     return this.currentTheme.globalColor;
   }
 
+  /// <summary>
+  /// Obtém a cor de uma barra do gráfico de períodos, aplicando um ajuste de brilho para criar variações visuais entre as barras.
+  /// </summary>
   getPeriodChartColor(index: number): string {
     const palette = this.currentTheme.chart;
     const base = palette[index % palette.length];
@@ -483,18 +597,27 @@ export class ProfileComponent implements OnInit {
     return this.adjustColorBrightness(base, shift);
   }
 
+  /// <summary>
+  /// Obtém o gradiente da barra do utilizador no gráfico.
+  /// </summary>
   getUserBarGradient(): string {
     const color = this.currentTheme.userColor;
     const lighterColor = this.adjustColorBrightness(color, 20);
     return `linear-gradient(135deg, ${color}, ${lighterColor})`;
   }
 
+  /// <summary>
+  /// Obtém o gradiente da barra global no gráfico.
+  /// </summary>
   getGlobalBarGradient(): string {
     const color = this.currentTheme.globalColor;
     const lighterColor = this.adjustColorBrightness(color, 20);
     return `linear-gradient(135deg, ${color}, ${lighterColor})`;
   }
 
+  /// <summary>
+  /// Ajusta o brilho de uma cor hexadecimal.
+  /// </summary>
   private adjustColorBrightness(hex: string, percent: number): string {
     hex = hex.replace('#', '');
     const r = parseInt(hex.substring(0, 2), 16);
@@ -510,13 +633,18 @@ export class ProfileComponent implements OnInit {
     return `#${toHex(adjustedR)}${toHex(adjustedG)}${toHex(adjustedB)}`;
   }
 
-
+  /// <summary>
+  /// Atualiza todas as listas e estatísticas do perfil, recarregando os dados do catálogo, listas de filmes, total de horas assistidas e estatísticas com base no período selecionado.
+  /// </summary>
   refreshAllListsAndStats(): void {
     this.loadLists();
     this.loadTotalHours();
     this.loadStatsWithPeriod();
   }
 
+  /// <summary>
+  /// Obtém os parâmetros de data para filtrar as estatísticas com base no período selecionado, retornando um objeto com as datas de início e fim ou undefined para todos os tempos.
+  /// </summary>
   private getStatsPeriodParams(): { from?: string; to?: string } | undefined {
     if (this.statsPeriod === 'all') return undefined;
 
@@ -547,6 +675,9 @@ export class ProfileComponent implements OnInit {
     return { from: toDate(from), to: toDate(to) };
   }
 
+  /// <summary>
+  /// Carrega as estatísticas do utilizador com base no período selecionado.
+  /// </summary>
   loadStatsWithPeriod(): void {
     const params = this.getStatsPeriodParams();
     this.loadStats(params);
@@ -554,19 +685,31 @@ export class ProfileComponent implements OnInit {
     this.loadStatsCharts(params);
   }
 
+  /// <summary>
+  /// Método chamado quando o período de estatísticas é alterado, recarregando as estatísticas com base no novo período selecionado.
+  /// </summary>
   onStatsPeriodChange(): void {
     this.loadStatsWithPeriod();
   }
 
+  /// <summary>
+  /// Alterna a exibição do menu de período de estatísticas.
+  /// </summary>
   toggleStatsPeriodMenu(): void {
     this.showStatsPeriodMenu = !this.showStatsPeriodMenu;
   }
 
+  /// <summary>
+  /// Obtém o rótulo do período de estatísticas atual.
+  /// </summary>
   getCurrentPeriodLabel(): string {
     const option = this.statsPeriodOptions.find(opt => opt.value === this.statsPeriod);
     return option ? option.label : 'Todos os tempos';
   }
 
+  /// <summary>
+  /// Obtém o título do gráfico de estatísticas com base no período selecionado, retornando um título descritivo que reflete o intervalo de tempo das estatísticas exibidas.
+  /// </summary>
   getChartTitle(): string {
     switch (this.statsPeriod) {
       case '7d':
@@ -583,13 +726,18 @@ export class ProfileComponent implements OnInit {
     }
   }
 
+  /// <summary>
+  /// Seleciona o período de estatísticas a ser exibido.
+  /// </summary>
   selectStatsPeriod(value: StatsPeriod): void {
     this.statsPeriod = value;
     this.showStatsPeriodMenu = false;
     this.onStatsPeriodChange();
   }
 
-
+  /// <summary>
+  /// Carrega o catálogo de filmes disponíveis na aplicação.
+  /// </summary>
   loadCatalogo(): void {
     this.filmesService.getAll().subscribe({
       next: (res) => (this.catalogo = res || []),
@@ -597,6 +745,9 @@ export class ProfileComponent implements OnInit {
     });
   }
 
+  /// <summary>
+  /// Carrega as listas de filmes "Assistir mais tarde" e "Vistos" do utilizador, utilizando a query apropriada para o perfil visualizado e atualizando os arrays correspondentes com os resultados obtidos da API.
+  /// </summary>
   loadLists(): void {
     const q = this.forUserMoviesQuery();
     this.userMoviesService.getList(false, q).subscribe({
@@ -610,6 +761,9 @@ export class ProfileComponent implements OnInit {
     });
   }
 
+  /// <summary>
+  /// Carrega o total de horas assistidas pelo utilizador, utilizando a query apropriada para o perfil visualizado e atualizando a propriedade totalHours com o resultado obtido da API.
+  /// </summary>
   loadTotalHours(): void {
     this.userMoviesService.getTotalHours(this.forUserMoviesQuery()).subscribe({
       next: (h) => (this.totalHours = h ?? 0),
@@ -617,6 +771,9 @@ export class ProfileComponent implements OnInit {
     });
   }
 
+  /// <summary>
+  /// Carrega as estatísticas do utilizador, utilizando a query apropriada para o perfil visualizado e atualizando a propriedade stats com o resultado obtido da API.
+  /// </summary>
   loadStats(params?: { from?: string; to?: string }): void {
     this.userMoviesService.getStats(params, this.forUserMoviesQuery()).subscribe({
       next: (res) => (this.stats = res),
@@ -624,6 +781,9 @@ export class ProfileComponent implements OnInit {
     });
   }
 
+  /// <summary>
+  /// Carrega as estatísticas de comparação do utilizador, utilizando a query apropriada para o perfil visualizado e atualizando a propriedade statsComparison com o resultado obtido da API.
+  /// </summary>
   loadStatsComparison(params?: { from?: string; to?: string }): void {
     this.isLoadingComparison = true;
     this.userMoviesService.getStatsComparison(params, this.forUserMoviesQuery()).subscribe({
@@ -638,6 +798,9 @@ export class ProfileComponent implements OnInit {
     });
   }
 
+  /// <summary>
+  /// Carrega os dados do gráfico de estatísticas do utilizador, utilizando a query apropriada para o perfil visualizado e atualizando a propriedade chartData com o resultado obtido da API.
+  /// </summary>
   loadStatsCharts(params?: { from?: string; to?: string }): void {
     this.isLoadingCharts = true;
     this.userMoviesService.getStatsCharts(params, this.forUserMoviesQuery()).subscribe({
@@ -655,13 +818,18 @@ export class ProfileComponent implements OnInit {
     });
   }
 
-
+  /// <summary>
+  /// Calcula a posição do lollipop no gráfico de intervalo de anos, garantindo um valor mínimo de 4.
+  /// </summary>
   lollipopPosIntervaloAnos(total: number): number {
     const p = this.chartBarWidthIntervaloAnos(total);
     if (total <= 0) return 0;
     return Math.max(p, 4);
   }
 
+  /// <summary>
+  /// Constrói as células do gráfico de waffle para o período de anos, utilizando os dados do gráfico e o total de anos vistos.
+  /// </summary>
   private buildPeriodWaffleCells(): { i: number; label: string }[] {
     const data = this.chartData?.porIntervaloAnos ?? [];
     const total = this.totalIntervaloAnosVistos;
@@ -697,45 +865,72 @@ export class ProfileComponent implements OnInit {
     return cells.slice(0, 100);
   }
 
+  /// <summary>
+  /// Calcula a largura da barra de comparação entre o utilizador e o valor global.
+  /// </summary>
   getComparisonBarWidth(userValue: number, globalValue: number): number {
     const max = Math.max(userValue, globalValue, 1);
     return (userValue / max) * 100;
   }
 
+  /// <summary>
+  /// Calcula a largura da barra global em comparação com o utilizador.
+  /// </summary>
   getGlobalBarWidth(userValue: number, globalValue: number): number {
     const max = Math.max(userValue, globalValue, 1);
     return (globalValue / max) * 100;
   }
 
+  /// <summary>
+  /// Obtém o valor máximo para as barras do gráfico de gêneros, garantindo um valor mínimo de 1 para evitar divisões por zero.
+  /// </summary>
   get chartBarMax(): number {
     if (!this.chartData?.generos?.length) return 1;
     return Math.max(...this.chartData.generos.map(g => g.total), 1);
   }
 
+  /// <summary>
+  /// Calcula a largura da barra do gráfico de gêneros, garantindo um valor mínimo de 1 para evitar divisões por zero.
+  /// </summary>
   chartBarWidth(total: number): number {
     return (total / this.chartBarMax) * 100;
   }
 
+  /// <summary>
+  /// Obtém o valor máximo para as barras do gráfico de duração, garantindo um valor mínimo de 1 para evitar divisões por zero.
+  /// </summary>
   get chartBarMaxDuracao(): number {
     if (!this.chartData?.porDuracao?.length) return 1;
     return Math.max(...this.chartData.porDuracao.map(d => d.total), 1);
   }
 
+  /// <summary>
+  /// Calcula a largura da barra do gráfico de duração, garantindo um valor mínimo de 1 para evitar divisões por zero.
+  /// </summary>
   chartBarWidthDuracao(total: number): number {
     return (total / this.chartBarMaxDuracao) * 100;
   }
 
+  /// <summary>
+  /// Obtém o total de duração dos filmes vistos pelo utilizador.
+  /// </summary>
   get totalDuracaoVistos(): number {
     if (!this.chartData?.porDuracao?.length) return 0;
     return this.chartData.porDuracao.reduce((s, d) => s + (d.total || 0), 0);
   }
 
+  /// <summary>
+  /// Calcula a porcentagem de duração dos filmes vistos pelo utilizador.
+  /// </summary>
   duracaoPercent(total: number): number {
     const all = this.totalDuracaoVistos;
     if (!all) return 0;
     return +(total * 100 / all).toFixed(1);
   }
 
+  /// <summary>
+  /// Obtém o ângulo inicial do segmento de pizza para a duração dos filmes vistos pelo utilizador.
+  /// </summary>
   getPieSegmentStartDuracao(index: number): number {
     if (!this.chartData?.porDuracao?.length) return 0;
     const total = this.totalDuracaoVistos;
@@ -747,6 +942,9 @@ export class ProfileComponent implements OnInit {
     return angle;
   }
 
+  /// <summary>
+  /// Obtém o ângulo final do segmento de pizza para a duração dos filmes vistos pelo utilizador.
+  /// </summary>
   getPieSegmentEndDuracao(index: number): number {
     if (!this.chartData?.porDuracao?.length) return 0;
     const total = this.totalDuracaoVistos;
@@ -758,6 +956,9 @@ export class ProfileComponent implements OnInit {
     return angle;
   }
 
+  /// <summary>
+  /// Obtém o caminho do segmento de pizza para a duração dos filmes vistos pelo utilizador.
+  /// </summary>
   pieSegmentDDuracao(index: number): string {
     const start = this.getPieSegmentStartDuracao(index);
     const end = this.getPieSegmentEndDuracao(index);
@@ -770,26 +971,41 @@ export class ProfileComponent implements OnInit {
     return `M 50 50 L ${x0} ${y0} A ${r} ${r} 0 ${large} 1 ${x1} ${y1} Z`;
   }
 
+  /// <summary>
+  /// Obtém o valor máximo para as barras do gráfico de intervalo de anos, garantindo um valor mínimo de 1 para evitar divisões por zero.
+  /// </summary>
   get chartBarMaxIntervaloAnos(): number {
     if (!this.chartData?.porIntervaloAnos?.length) return 1;
     return Math.max(...this.chartData.porIntervaloAnos.map(d => d.total), 1);
   }
 
+  /// <summary>
+  /// Calcula a largura da barra do gráfico de intervalo de anos, garantindo um valor mínimo de 1 para evitar divisões por zero.
+  /// </summary>
   chartBarWidthIntervaloAnos(total: number): number {
     return (total / this.chartBarMaxIntervaloAnos) * 100;
   }
 
+  /// <summary>
+  /// Obtém o total de filmes vistos pelo utilizador em cada intervalo de anos.
+  /// </summary>
   get totalIntervaloAnosVistos(): number {
     if (!this.chartData?.porIntervaloAnos?.length) return 0;
     return this.chartData.porIntervaloAnos.reduce((s, d) => s + (d.total || 0), 0);
   }
 
+  /// <summary>
+  /// Calcula a porcentagem de filmes vistos pelo utilizador em cada intervalo de anos.
+  /// </summary>
   intervaloAnosPercent(total: number): number {
     const all = this.totalIntervaloAnosVistos;
     if (!all) return 0;
     return +(total * 100 / all).toFixed(1);
   }
 
+  /// <summary>
+  /// Obtém o ângulo inicial do segmento de pizza para o intervalo de anos dos filmes vistos pelo utilizador.
+  /// </summary>
   getPieSegmentStartIntervaloAnos(index: number): number {
     if (!this.chartData?.porIntervaloAnos?.length) return 0;
     const total = this.totalIntervaloAnosVistos;
@@ -800,7 +1016,10 @@ export class ProfileComponent implements OnInit {
     }
     return angle;
   }
-
+  
+  /// <summary>
+  /// Obtém o ângulo final do segmento de pizza para o intervalo de anos dos filmes vistos pelo utilizador.
+  /// </summary>
   getPieSegmentEndIntervaloAnos(index: number): number {
     if (!this.chartData?.porIntervaloAnos?.length) return 0;
     const total = this.totalIntervaloAnosVistos;
@@ -811,7 +1030,10 @@ export class ProfileComponent implements OnInit {
     }
     return angle;
   }
-
+  
+  /// <summary>
+  /// Obtém o caminho do segmento de pizza para o intervalo de anos dos filmes vistos pelo utilizador.
+  /// </summary>
   pieSegmentDIntervaloAnos(index: number): string {
     const start = this.getPieSegmentStartIntervaloAnos(index);
     const end = this.getPieSegmentEndIntervaloAnos(index);
@@ -823,7 +1045,10 @@ export class ProfileComponent implements OnInit {
     const large = (end - start) > 180 ? 1 : 0;
     return `M 50 50 L ${x0} ${y0} A ${r} ${r} 0 ${large} 1 ${x1} ${y1} Z`;
   }
-
+  
+  /// <summary>
+  /// Obtém o ângulo inicial do segmento de pizza para os géneros dos filmes vistos pelo utilizador.
+  /// </summary>
   getPieSegmentStart(index: number): number {
     if (!this.chartData?.generos?.length) return 0;
     const total = this.chartData.generos.reduce((s, g) => s + g.total, 0);
@@ -835,6 +1060,9 @@ export class ProfileComponent implements OnInit {
     return angle;
   }
 
+  /// <summary>
+  /// Obtém o ângulo final do segmento de pizza para os géneros dos filmes vistos pelo utilizador.
+  /// </summary>
   getPieSegmentEnd(index: number): number {
     if (!this.chartData?.generos?.length) return 0;
     const total = this.chartData.generos.reduce((s, g) => s + g.total, 0);
@@ -845,7 +1073,10 @@ export class ProfileComponent implements OnInit {
     }
     return angle;
   }
-
+  
+  /// <summary>
+  /// Obtém o caminho do segmento de pizza para os géneros dos filmes vistos pelo utilizador.
+  /// </summary>
   pieSegmentD(index: number): string {
     const start = this.getPieSegmentStart(index);
     const end = this.getPieSegmentEnd(index);
@@ -859,11 +1090,17 @@ export class ProfileComponent implements OnInit {
   }
 
   readonly chartColors = ['#ff2f6d', '#6366f1', '#22c55e', '#eab308', '#ec4899', '#14b8a6', '#f97316', '#8b5cf6'];
-
+  
+  /// <summary>
+  /// Obtém a cor do gráfico com base no índice.
+  /// </summary>
   chartColor(i: number): string {
     return this.chartColors[i % this.chartColors.length];
   }
-
+  
+  /// <summary>
+  /// Obtém o valor máximo do gráfico de linhas.
+  /// </summary>
   get lineChartMax(): number {
     if (!this.chartData?.porMes?.length) return 1;
     const userValues = this.chartData.porMes.map(m => m.total);
@@ -872,28 +1109,43 @@ export class ProfileComponent implements OnInit {
     if (allValues.length === 0) return 1;
     return Math.max(...allValues, 1);
   }
-
+  
+  /// <summary>
+  /// Obtém a altura da barra no gráfico de linhas com base no valor.
+  /// </summary>
   getBarHeight(value: number): number {
     const max = this.lineChartMax;
     if (max === 0 || value === 0) return 0;
     return Math.max((value / max) * 100, 5);
   }
-
+  
+  /// <summary>
+  /// Obtém a média global para um determinado mês.
+  /// </summary>
   getGlobalAverageForMonth(monthData: any): number {
     return monthData.globalAverage || 0;
   }
-
+  
+  /// <summary>
+  /// Obtém o total de géneros vistos pelo utilizador.
+  /// </summary>
   get totalGenerosVistos(): number {
     if (!this.chartData?.generos?.length) return 0;
     return this.chartData.generos.reduce((s, g) => s + (g.total || 0), 0);
   }
 
+  /// <summary>
+  /// Obtém a percentagem de um género específico em relação ao total de géneros vistos pelo utilizador.
+  /// </summary>
   generoPercent(total: number): number {
     const all = this.totalGenerosVistos;
     if (!all) return 0;
     return +(total * 100 / all).toFixed(1);
   }
-
+  
+  /// <summary>
+  /// Obtém as percentagens de todos os géneros em relação ao total de géneros vistos pelo utilizador.
+  /// </summary>
   get genrePercentages(): { genero: string; total: number; percent: number }[] {
     if (!this.chartData?.generos?.length) return [];
     const all = this.totalGenerosVistos;
@@ -908,15 +1160,25 @@ export class ProfileComponent implements OnInit {
       .sort((a, b) => b.percent - a.percent);
   }
 
-
+  /// <summary>
+  /// Adiciona um filme à lista "Quero Ver" do utilizador, verificando se o filme
+  ///já está presente na lista e atualizando a interface do utilizador enquanto a operação de adição é processada.
+  /// </summary>
   addToWatchLater(filmeId: number): void {
     this.addMovieToList(filmeId, false);
   }
 
+  /// <summary>
+  /// Adiciona um filme à lista "Já vi" do utilizador, verificando se o filme
+  /// já está presente na lista e atualizando a interface do utilizador enquanto a operação de adição é processada.
+  /// </summary>
   addToWatched(filmeId: number): void {
     this.addMovieToList(filmeId, true);
   }
 
+  /// <summary>
+  /// Remove um filme das listas do utilizador.
+  /// </summary>
   removeFromLists(filmeId: number): void {
     const filme = this.catalogo.find(f => f.id === filmeId);
     if (!filme) return;
@@ -938,6 +1200,10 @@ export class ProfileComponent implements OnInit {
     });
   }
 
+  /// <summary>
+  /// Adiciona um filme à lista do utilizador, verificando se o filme
+  /// já está presente na lista e atualizando a interface do utilizador enquanto a operação de adição é processada.
+  /// </summary>
   private addMovieToList(filmeId: number, jaViu: boolean): void {
     const filmFromSeed = this.catalogo.find(f => f.id === filmeId);
 
@@ -988,13 +1254,19 @@ export class ProfileComponent implements OnInit {
     });
   }
 
+  /// <summary>
+  /// Verifica se um filme está na lista "Quero Ver" do utilizador.
+  /// </summary>
   inWatchLater(filmeId: number): boolean {
     const filme = this.catalogo.find(f => f.id === filmeId);
     if (!filme) return false;
     return this.watchLater?.some(x => x?.filme?.titulo === filme.titulo ||
       x?.filme?.Titulo === filme.titulo);
   }
-
+  
+  /// <summary>
+  /// Verifica se um filme está na lista "Já vi" do utilizador.
+  /// </summary>
   inWatched(filmeId: number): boolean {
     const filme = this.catalogo.find(f => f.id === filmeId);
     if (!filme) return false;
@@ -1002,7 +1274,9 @@ export class ProfileComponent implements OnInit {
       x?.filme?.Titulo === filme.titulo);
   }
 
-
+  /// <summary>
+  /// Carrega os filmes e atores favoritos do utilizador.
+  /// </summary>
   loadFavorites(): void {
     const targetId = this.profileSubjectUserId;
     if (!targetId) {
@@ -1058,6 +1332,10 @@ export class ProfileComponent implements OnInit {
     });
   }
 
+  /// <summary>
+  /// Garante que todos os filmes favoritos do utilizador estão presentes no catálogo de filmes carregado na aplicação,
+  ///de maneira a ir buscar os detalhes dos filmes ausentes e adicionando-os ao catálogo conforme necessário.
+  /// </summary>
   private ensureCatalogoHasFavorites(): void {
     const missing = [
       ...new Set(this.favoritosFilmes.filter(id => !this.catalogo.some(f => f.id === id)))
@@ -1083,18 +1361,30 @@ export class ProfileComponent implements OnInit {
     });
   }
 
+  /// <summary>
+  /// Abre a página para visualizar todos os filmes favoritos do utilizador.
+  /// </summary>
   openVerTodosFavoritos(): void {
     this.showAllFavoritesModal = true;
   }
 
+  /// <summary>
+  /// Fecha a página de visualização de todos os filmes favoritos do utilizador.
+  /// </summary>
   closeVerTodosFavoritos(): void {
     this.showAllFavoritesModal = false;
   }
 
+  /// <summary>
+  /// Verifica se um filme específico está presente na lista de filmes favoritos do utilizador.
+  /// </summary>
   isFilmeFavorito(filmeId: number): boolean {
     return this.favoritosFilmes.includes(filmeId);
   }
 
+  /// <summary>
+  /// Alterna o estado de favorito de um filme específico na lista de filmes favoritos do utilizador.
+  /// </summary>
   toggleFavoriteFilme(filmeId: number): void {
     const idx = this.favoritosFilmes.indexOf(filmeId);
     if (idx >= 0) {
@@ -1106,6 +1396,9 @@ export class ProfileComponent implements OnInit {
     this.saveFavorites();
   }
 
+  /// <summary>
+  /// Remove um filme específico da lista de filmes favoritos do utilizador.
+  /// </summary>
   removeFromFavorites(filmeId: number): void {
     if (!this.isOwnProfile) return;
     const idx = this.favoritosFilmes.indexOf(filmeId);
@@ -1115,6 +1408,9 @@ export class ProfileComponent implements OnInit {
     }
   }
 
+  /// <summary>
+  /// Adiciona um ator à lista de favoritos do utilizador.
+  /// </summary>
   addAtorFavorito(): void {
     this.actorErrorMessage = '';
 
@@ -1144,6 +1440,10 @@ export class ProfileComponent implements OnInit {
     this.saveFavorites();
   }
 
+  /// <summary>
+  /// Processa a pesquisa de atores com base no termo de pesquisa fornecido, atualizando a lista de
+  ///sugestões de atores e controlando a exibição das sugestões conforme o comprimento do termo de pesquisa.
+  /// </summary>
   onActorSearch(term: string): void {
     this.actorSearchTerms.next(term);
     if (term.length < 2) {
@@ -1152,6 +1452,10 @@ export class ProfileComponent implements OnInit {
     }
   }
 
+  /// <summary>
+  /// Seleciona um ator específico da lista de sugestões, armazenando os dados do ator em cache,
+  //atualizando o campo de entrada com o nome do ator selecionado e adicionando o ator à lista de favoritos do utilizador.
+  /// </summary>
   selectActor(actor: ActorDto): void {
     this.isSelectingActor = true;
     this.lastSelectedActor = actor;
@@ -1165,6 +1469,9 @@ export class ProfileComponent implements OnInit {
     }, 100);
   }
 
+  /// <summary>
+  /// Oculta as sugestões de atores com um pequeno atraso para permitir que a seleção do ator seja processada corretamente,
+  /// </summary>
   hideSuggestionsWithDelay(): void {
     if (this.isSelectingActor) return;
     setTimeout(() => {
@@ -1174,6 +1481,9 @@ export class ProfileComponent implements OnInit {
     }, 300);
   }
 
+  /// <summary>
+  /// Armazena os dados de um ator específico em cache local, associando o nome do ator aos seus dados completos.
+  /// </summary>
   private cacheActorData(actor: ActorDto): void {
     try {
       const cache = this.getActorCache();
@@ -1184,6 +1494,9 @@ export class ProfileComponent implements OnInit {
     }
   }
 
+  /// <summary>
+  /// Obtém o cache de atores armazenado localmente.
+  /// </summary>
   private getActorCache(): { [key: string]: ActorDto } {
     try {
       const cached = localStorage.getItem(this.ACTOR_CACHE_KEY);
@@ -1193,17 +1506,26 @@ export class ProfileComponent implements OnInit {
     }
   }
 
+  /// <summary>
+  /// Obtém os dados de um ator específico do cache local com base no nome do ator, retornando os dados do ator ou null se não encontrado.
+  /// </summary>
   private getCachedActor(nome: string): ActorDto | null {
     const cache = this.getActorCache();
     return cache[nome] || null;
   }
 
+  /// <summary>
+  /// Remove um ator específico da lista de favoritos do utilizador.
+  /// </summary>
   removeAtorFavorito(actor: ActorDto): void {
     if (!this.isOwnProfile) return;
     this.favoritosAtores = this.favoritosAtores.filter(a => a.nome !== actor.nome);
     this.saveFavorites();
   }
 
+  /// <summary>
+  /// Salva as listas de filmes e atores favoritos do utilizador, enviando os dados para o serviço de favoritos e atualizando o estado de salvamento.
+  /// </summary>
   private saveFavorites(): void {
     if (!this.isOwnProfile) return;
 
@@ -1221,40 +1543,59 @@ export class ProfileComponent implements OnInit {
     });
   }
 
-  /** URL do cartaz para grelha de favoritos (API pode devolver posterUrl ou PosterUrl). */
+  /// <summary>
+  /// Obtém a URL do cartaz de um filme, retornando um URL padrão se não estiver disponível.
+  /// </summary>
   favPosterSrc(f: Filme): string {
     const anyF = f as Filme & { PosterUrl?: string };
     return (f.posterUrl || anyF.PosterUrl || '').trim() || 'https://via.placeholder.com/200x300';
   }
 
+  /// <summary>
+  /// Obtém os detalhes dos filmes favoritos do utilizador.
+  /// </summary>
   get favoritosFilmesDetalhes(): Filme[] {
     return this.favoritosFilmes
       .map(id => this.catalogo.find(f => f.id === id))
       .filter((x): x is Filme => !!x);
   }
 
+  /// <summary>
+  /// Obtém os detalhes dos filmes favoritos do utilizador, limitando aos top 10.
+  /// </summary>
   get favoritosFilmesDetalhesTop10(): Filme[] {
     return this.favoritosFilmes
       .slice(0, this.TOP_10)
       .map(id => this.catalogo.find(f => f.id === id))
       .filter((x): x is Filme => !!x);
   }
-
+  
+  /// <summary>
+  /// Obtém os detalhes dos atores favoritos do utilizador, limitando aos top 10.
+  /// </summary>
   get favoritosAtoresTop10(): ActorDto[] {
     return this.favoritosAtores.slice(0, this.TOP_10);
   }
 
-
+  /// <summary>
+  /// Abre a interface de edição do perfil do utilizador, preenchendo os campos de edição com os valores atuais do nome de utilizador e biografia.
+  /// </summary>
   openEdit(): void {
     this.editUserName = this.userName;
     this.editBio = this.bio;
     this.isEditing = true;
   }
 
+  /// <summary>
+  /// Fecha a interface de edição do perfil do utilizador.
+  /// </summary>
   closeEdit(): void {
     this.isEditing = false;
   }
 
+  /// <summary>
+  /// Salva as alterações do perfil do utilizador.
+  /// </summary>
   saveChanges(): void {
     this.userName = this.editUserName;
     this.bio = this.editBio;
@@ -1291,17 +1632,26 @@ export class ProfileComponent implements OnInit {
       });
   }
 
+  /// <summary>
+  /// Abre a interface de edição da capa do utilizador, preenchendo o campo de edição com o valor atual da capa.
+  /// </summary>
   openEditCapa(): void {
     this.editCapaUrl = this.capaUrl;
     this.capaError = '';
     this.isEditingCapa = true;
   }
 
+  /// <summary>
+  /// Fecha a interface de edição da capa do utilizador.
+  /// </summary>
   closeEditCapa(): void {
     this.isEditingCapa = false;
     this.capaError = '';
   }
 
+  /// <summary>
+  /// Salva as alterações da capa do utilizador.
+  /// </summary>
   saveCapa(): void {
     this.capaUrl = this.editCapaUrl;
     this.isEditingCapa = false;
@@ -1321,17 +1671,26 @@ export class ProfileComponent implements OnInit {
       });
   }
 
+  /// <summary>
+  /// Abre a interface de edição do avatar do utilizador, preenchendo o campo de edição com o valor atual do avatar.
+  /// </summary>
   openEditAvatar(): void {
     this.editFotoPerfilUrl = this.fotoPerfilUrl;
     this.avatarError = '';
     this.isEditingAvatar = true;
   }
 
+  /// <summary>
+  /// Fecha a interface de edição do avatar do utilizador.
+  /// </summary>
   closeEditAvatar(): void {
     this.isEditingAvatar = false;
     this.avatarError = '';
   }
 
+  /// <summary>
+  /// Salva as alterações do avatar do utilizador.
+  /// </summary>
   saveAvatar(): void {
     this.fotoPerfilUrl = this.editFotoPerfilUrl;
     if (this.fotoPerfilUrl != null) localStorage.setItem('fotoPerfilUrl', this.fotoPerfilUrl);
@@ -1352,6 +1711,9 @@ export class ProfileComponent implements OnInit {
       });
   }
 
+  /// <summary>
+  /// Manipula a seleção de um arquivo de avatar pelo utilizador.
+  /// </summary>
   onAvatarFileSelected(event: any): void {
     const file = event.target.files[0];
     if (!file) return;
@@ -1370,6 +1732,9 @@ export class ProfileComponent implements OnInit {
     reader.readAsDataURL(file);
   }
 
+  /// <summary>
+  /// Remove a capa do utilizador.
+  /// </summary>
   removeCapa(): void {
     this.capaUrl = null;
     this.editCapaUrl = null;
@@ -1390,6 +1755,9 @@ export class ProfileComponent implements OnInit {
       });
   }
 
+  /// <summary>
+  /// Remove o avatar do utilizador.
+  /// </summary>
   removeAvatar(): void {
     this.fotoPerfilUrl = null;
     this.editFotoPerfilUrl = null;
@@ -1411,6 +1779,9 @@ export class ProfileComponent implements OnInit {
       });
   }
 
+  /// <summary>
+  /// Manipula a seleção de um arquivo de capa pelo utilizador.
+  /// </summary>
   onCapaFileSelected(event: any): void {
     const file = event.target.files[0];
     if (!file) return;
@@ -1430,24 +1801,39 @@ export class ProfileComponent implements OnInit {
   }
 
 
+  /// <summary>
+  /// Mostra a seção de visão geral do utilizador.
+  /// </summary>
   showOverview(): void {
     this.activeSection = 'overview';
   }
 
+  /// <summary>
+  /// Mostra a seção de estatísticas do utilizador.
+  /// </summary>
   showStatistics(): void {
     this.activeSection = 'statistics';
   }
 
+  /// <summary>
+  /// Mostra a seção de conquistas do utilizador.
+  /// </summary>
   showConquistas(): void {
     this.activeSection = 'conquistas';
     this.loadConquistas();
   }
 
+  /// <summary>
+  /// Mostra a seção de gêneros do utilizador.
+  /// </summary>
   showGeneros(): void {
     this.activeSection = 'generos';
     this.carregarGeneros();
   }
 
+  /// <summary>
+  /// Carrega os gêneros disponíveis e os gêneros favoritos do utilizador, atualizando o estado de carregamento e lidando com erros caso ocorram durante o processo de carregamento.
+  /// </summary>
   carregarGeneros(): void {
     this.isLoadingGeneros = true;
     this.generosError = '';
@@ -1479,6 +1865,9 @@ export class ProfileComponent implements OnInit {
     });
   }
 
+  /// <summary>
+  /// Alterna a seleção de um gênero como favorito do utilizador.
+  /// </summary>
   toggleGeneroFavorito(generoId: number): void {
     const index = this.generosFavoritos.indexOf(generoId);
     if (index > -1) {
@@ -1488,14 +1877,23 @@ export class ProfileComponent implements OnInit {
     }
   }
 
+  /// <summary>
+  /// Verifica se um gênero é favorito do utilizador.
+  /// </summary>
   isGeneroFavorito(generoId: number): boolean {
     return this.generosFavoritos.includes(generoId);
   }
 
+  /// <summary>
+  /// Verifica se todos os gêneros estão selecionados como favoritos do utilizador.
+  /// </summary>
   get todosGenerosSelecionados(): boolean {
     return this.generosDisponiveis.length > 0 && this.generosFavoritos.length === this.generosDisponiveis.length;
   }
 
+  /// <summary>
+  /// Alterna a seleção de todos os gêneros como favoritos do utilizador.
+  /// </summary>
   selecionarTodosGeneros(): void {
     if (this.todosGenerosSelecionados) {
       this.generosFavoritos = [];
@@ -1504,6 +1902,9 @@ export class ProfileComponent implements OnInit {
     }
   }
 
+  /// <summary>
+  /// Salva os gêneros favoritos do utilizador.
+  /// </summary>
   salvarGenerosFavoritos(): void {
     if (!this.isOwnProfile) return;
     this.isSavingGeneros = true;
@@ -1528,16 +1929,24 @@ export class ProfileComponent implements OnInit {
     });
   }
 
-
+  /// <summary>
+  /// Abre a confirmação de exclusão de conta.
+  /// </summary>
   openDeleteConfirm(): void {
     this.deleteInput = '';
     this.isDeleting = true;
   }
 
+  /// <summary>
+  /// Fecha a confirmação de exclusão de conta.
+  /// </summary>
   closeDeleteConfirm(): void {
     this.isDeleting = false;
   }
 
+  /// <summary>
+  /// Confirma a exclusão da conta do utilizador.
+  /// </summary>
   confirmDelete(): void {
     if ((this.deleteInput || '').trim().toLowerCase() !== this.deleteRequiredText) return;
 
@@ -1557,21 +1966,33 @@ export class ProfileComponent implements OnInit {
       });
   }
 
+  /// <summary>
+  /// Manipula a ação "Click" numa medalha, de maneira a abrir o seletor de medalhas para o slot selecionado, caso o perfil seja do próprio utilizador.
+  /// </summary>
   onMedalSlotClick(index: number): void {
     if (!this.isOwnProfile) return;
     this.openMedalSelector(index);
   }
 
+  /// <summary>
+  /// Abre o seletor de medalhas para o slot selecionado.
+  /// </summary>
   openMedalSelector(index: number): void {
     this.selectedSlotIndex = index;
     this.showMedalSelectorModal = true;
   }
 
+  /// <summary>
+  /// Fecha o seletor de medalhas.
+  /// </summary>
   closeMedalSelector(): void {
     this.showMedalSelectorModal = false;
     this.selectedSlotIndex = null;
   }
 
+  /// <summary>
+  /// Verifica se uma medalha está selecionada para o slot atual.
+  /// </summary>
   isMedalSelectedForSlot(medal: any): boolean {
     if (this.selectedSlotIndex === null) return false;
     const slotMedal = this.showcasedMedals[this.selectedSlotIndex];
@@ -1588,6 +2009,10 @@ export class ProfileComponent implements OnInit {
     return Number(slotId) === Number(listMedalId);
   }
 
+  /// <summary>
+  /// Seleciona uma medalha para o slot atual, garantindo que a medalha selecionada não
+  ///esteja presente em outro slot e atualizando a exposição de medalhas do utilizador na API.
+  /// </summary>
   selectMedalForSlot(medal: any): void {
     if (this.selectedSlotIndex === null) return;
 
@@ -1622,6 +2047,9 @@ export class ProfileComponent implements OnInit {
     this.closeMedalSelector();
   }
 
+  /// <summary>
+  /// Salva a tag de uma medalha para o slot especificado.
+  /// </summary>
   saveMedalTag(index: number): void {
     const medal = this.showcasedMedals[index];
     if (!medal) return;
@@ -1631,6 +2059,9 @@ export class ProfileComponent implements OnInit {
     });
   }
 
+  /// <summary>
+  /// Remove a medalha do slot especificado, atualizando a exposição de medalhas do utilizador na API.
+  /// </summary>
   removeMedalFromSlot(index: number): void {
     if (index >= 0 && index < this.showcasedMedals.length) {
       this.showcasedMedals[index] = null;
@@ -1642,6 +2073,9 @@ export class ProfileComponent implements OnInit {
     this.closeMedalSelector();
   }
 
+  /// <summary>
+  /// Carrega as medalhas em exposição do utilizador.
+  /// </summary>
   loadShowcasedMedals(): void {
     const uid = this.profileSubjectUserId;
     if (!uid) {
@@ -1670,6 +2104,9 @@ export class ProfileComponent implements OnInit {
     }
   }
 
+  /// <summary>
+  /// Carrega a tag do utilizador.
+  /// </summary>
   loadUserTag(): void {
     this.profileService.obterUserTag().subscribe({
       next: (res) => {
@@ -1689,16 +2126,25 @@ export class ProfileComponent implements OnInit {
   // Tag Modal Dropdown
   showTagMenu = false;
 
+  /// <summary>
+  /// Alterna a visibilidade do menu de tags.
+  /// </summary>
   toggleTagMenu(): void {
     this.showTagMenu = !this.showTagMenu;
   }
 
+  /// <summary>
+  /// Seleciona uma tag no modal de tags.
+  /// </summary>
   selectTagModal(tag: string | null): void {
     this.tagModalSelectedTag = tag;
     this.showTagMenu = false;
   }
 
   // Tag Modal Methods
+  /// <summary>
+  /// Abre o modal de tags.
+  /// </summary>
   openTagModal(): void {
     this.tagModalSelectedTag = this.userTag;
     this.tagModalPrimaryColor = this.userTagPrimaryColor || '#FF4081';
@@ -1706,17 +2152,26 @@ export class ProfileComponent implements OnInit {
     this.showTagModal = true;
     this.showTagMenu = false;
   }
-
+  
+  /// <summary>
+  /// Fecha o modal de tags.
+  /// </summary>
   closeTagModal(): void {
     this.showTagModal = false;
     this.showTagMenu = false;
   }
-
+  
+  /// <summary>
+  /// Restaura as cores da tag para os valores padrão.
+  /// </summary>
   resetTagColorsToDefault(): void {
     this.tagModalPrimaryColor = '#FF4081';
     this.tagModalSecondaryColor = '#FFFFFF';
   }
-
+  
+  /// <summary>
+  /// Salva as alterações feitas no modal de tags.
+  /// </summary>
   saveTagModal(): void {
     this.userTag = this.tagModalSelectedTag;
     this.userTagPrimaryColor = this.tagModalPrimaryColor;
@@ -1731,19 +2186,28 @@ export class ProfileComponent implements OnInit {
       }
     });
   }
-
+  
+  /// <summary>
+  /// Abre o modal de listas.
+  /// </summary>
   openListModal(type: 'watchLater' | 'watched'): void {
     this.currentListType = type;
     this.showListModal = true;
     if (type === 'watchLater') this.watchLaterFilter = 'all';
     if (type === 'watched') this.watchedFilter = 'all';
   }
-
+  
+  /// <summary>
+  /// Fecha o modal de listas.
+  /// </summary>
   closeListModal(): void {
     this.showListModal = false;
     this.currentListType = null;
   }
-
+  
+  /// <summary>
+  /// Obtém a lista atual filtrada.
+  /// </summary>
   get filteredCurrentList(): any[] {
     const list = this.currentList || [];
 
@@ -1793,6 +2257,9 @@ export class ProfileComponent implements OnInit {
     return list;
   }
 
+  /// <summary>
+  /// Obtém a lista atual com base no tipo de lista selecionado (watchLater ou watched).
+  /// </summary>
   get currentList(): any[] {
     if (this.currentListType === 'watchLater') {
       return this.watchLater;
@@ -1802,6 +2269,9 @@ export class ProfileComponent implements OnInit {
     return [];
   }
 
+  /// <summary>
+  /// Obtém o título da lista atual com base no tipo de lista selecionado (watchLater ou watched).
+  /// </summary>
   get currentListTitle(): string {
     if (this.currentListType === 'watchLater') {
       return 'Quero ver';
@@ -1811,7 +2281,9 @@ export class ProfileComponent implements OnInit {
     return '';
   }
 
-
+  /// <summary>
+  /// Manipula o início do arrasto de um filme favorito, armazenando o índice do filme arrastado e configurando os dados de transferência para permitir a operação de arrastar e soltar.
+  /// </summary>
   onDragStart(event: DragEvent, index: number): void {
     this.draggedIndex = index;
     if (event.dataTransfer) {
@@ -1820,6 +2292,9 @@ export class ProfileComponent implements OnInit {
     }
   }
 
+  /// <summary>
+  /// Manipula o evento de arrastar sobre um filme favorito, prevenindo o comportamento padrão, configurando o efeito de drop e armazenando o índice do filme atualmente sendo arrastado sobre.
+  /// </summary>
   onDragOver(event: DragEvent): void {
     event.preventDefault();
     event.stopPropagation();
@@ -1831,6 +2306,9 @@ export class ProfileComponent implements OnInit {
     this.dragOverIndex = index;
   }
 
+  /// <summary>
+  /// Manipula o evento de soltar um filme favorito, atualizando a ordem dos filmes favoritos e salvando as alterações.
+  /// </summary>
   onDrop(event: DragEvent, dropIndex: number): void {
     event.preventDefault();
     event.stopPropagation();
@@ -1849,6 +2327,9 @@ export class ProfileComponent implements OnInit {
     this.dragOverIndex = null;
   }
 
+  /// <summary>
+  /// Manipula o fim do arrasto de um filme favorito, restaurando a opacidade e a transformação dos elementos afetados.
+  /// </summary>
   onDragEnd(): void {
     document.querySelectorAll('.fav-poster').forEach(el => {
       const htmlEl = el as HTMLElement;
@@ -1859,7 +2340,9 @@ export class ProfileComponent implements OnInit {
     this.dragOverIndex = null;
   }
 
-
+  /// <summary>
+  /// Manipula o início do arrasto de um ator favorito, armazenando o índice do ator arrastado e configurando os dados de transferência para permitir a operação de arrastar e soltar.
+  /// </summary>
   onActorDragStart(event: DragEvent, index: number): void {
     this.draggedActorIndex = index;
     if (event.dataTransfer) {
@@ -1868,6 +2351,9 @@ export class ProfileComponent implements OnInit {
     }
   }
 
+  /// <summary>
+  /// Manipula o evento de arrastar sobre um ator favorito, prevenindo o comportamento padrão, configurando o efeito de drop e armazenando o índice do ator atualmente sendo arrastado sobre.
+  /// </summary>
   onActorDragOver(event: DragEvent): void {
     event.preventDefault();
     event.stopPropagation();
@@ -1879,6 +2365,9 @@ export class ProfileComponent implements OnInit {
     this.dragOverActorIndex = index;
   }
 
+  /// <summary>
+  /// Manipula o evento de soltar um ator favorito, atualizando a ordem dos atores favoritos e salvando as alterações.
+  /// </summary>
   onActorDrop(event: DragEvent, dropIndex: number): void {
     event.preventDefault();
     event.stopPropagation();
@@ -1897,6 +2386,9 @@ export class ProfileComponent implements OnInit {
     this.dragOverActorIndex = null;
   }
 
+  /// <summary>
+  /// Manipula o fim do arrasto de um ator favorito, restaurando a opacidade e a transformação dos elementos afetados.
+  /// </summary>
   onActorDragEnd(): void {
     document.querySelectorAll('.fav-actor-card').forEach(el => {
       const htmlEl = el as HTMLElement;
@@ -1908,6 +2400,9 @@ export class ProfileComponent implements OnInit {
   }
 
 
+  /// <summary>
+  /// Carrega as conquistas de um utilizador, incluindo medalhas conquistadas e medalhas em destaque.
+  /// </summary>
   loadConquistas(): void {
     const uid = this.profileSubjectUserId;
     if (!uid) {
@@ -1956,6 +2451,9 @@ export class ProfileComponent implements OnInit {
     }
   }
 
+  /// <summary>
+  /// Obtém o limiar de conquistas necessário para obter uma medalha específica, com base no nome da medalha.
+  /// </summary>
   getMedalThreshold(medalName: string): number {
     const thresholds: { [key: string]: number } = {
       'Amador dos Desafios': 7,
@@ -1977,6 +2475,9 @@ export class ProfileComponent implements OnInit {
     return thresholds[medalName] || 1;
   }
 
+  /// <summary>
+  /// Calcula a percentagem de progresso de uma medalha com base no número atual de conquistas e no limiar necessário.
+  /// </summary>
   getMedalProgressPercentage(current: number, threshold: number): number {
     return Math.min((current / threshold) * 100, 100);
   }

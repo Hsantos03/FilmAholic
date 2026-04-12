@@ -2,6 +2,9 @@ import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
 
+/// <summary>
+/// Componente responsável por permitir que o utilizador redefina a sua password.
+/// </summary>
 @Component({
   selector: 'app-reset-password',
   templateUrl: './reset-password.component.html',
@@ -17,18 +20,30 @@ export class ResetPasswordComponent implements OnInit, OnDestroy {
 
   private readonly minPasswordLength = 6;
 
+  /// <summary>
+  /// Construtor do componente, injetando os serviços necessários para roteamento e autenticação.
+  /// </summary>
   constructor(private route: ActivatedRoute, private authService: AuthService, private router: Router) { }
 
+  /// <summary>
+  /// Inicializa o componente, capturando os dados da URL (enviados pelo link do email) e configurando o estado inicial.
+  /// </summary>
   ngOnInit() {
     // Captura os dados da URL (enviados pelo link do email)
     this.model.email = this.route.snapshot.queryParamMap.get('email') || '';
     this.model.token = this.route.snapshot.queryParamMap.get('token') || '';
   }
 
+  /// <summary>
+  /// Método de ciclo de vida do Angular que é chamado quando o componente é destruído.
+  /// </summary>
   ngOnDestroy(): void {
     if (this.redirectTimer !== undefined) clearTimeout(this.redirectTimer);
   }
 
+  /// <summary>
+  /// Método responsável por redefinir a password do utilizador.
+  /// </summary>
   onResetPassword() {
     this.errorMessage = '';
     this.successMessage = '';
@@ -76,6 +91,9 @@ export class ResetPasswordComponent implements OnInit, OnDestroy {
     });
   }
 
+  /// <summary>
+  /// Formata a mensagem de erro retornada pelo serviço de autenticação durante a redefinição de password.
+  /// </summary>
   private formatResetError(err: unknown): string {
     const body = (err as { error?: { message?: string; errors?: { description?: string; Description?: string }[] } })?.error;
     const identityErrors = body?.errors;

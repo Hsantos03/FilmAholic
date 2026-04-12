@@ -3,6 +3,9 @@ import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { FilmesService } from '../../services/filmes.service';
 
+/// <summary>
+/// Representa a página inicial da aplicação.
+/// </summary>
 @Component({
   selector: 'app-home-page',
   standalone: true,
@@ -16,15 +19,24 @@ export class HomePageComponent implements OnInit {
   carouselMovies: any[] = [];
   isLoading = true;
 
+  /// <summary>
+  /// Representa a página inicial da aplicação.
+  /// </summary>
   constructor(
     private router: Router,
     private filmesService: FilmesService
   ) {}
 
+  /// <summary>
+  /// Inicializa o componente, carregando os filmes em destaque.
+  /// </summary>
   ngOnInit() {
     this.loadFeaturedMovies();
   }
 
+  /// <summary>
+  /// Carrega os filmes em destaque na página inicial.
+  /// </summary>
   loadFeaturedMovies() {
     this.isLoading = true;
     // Buscar 10 filmes mais populares da comunidade (mínimo 500 classificações)
@@ -56,14 +68,23 @@ export class HomePageComponent implements OnInit {
     });
   }
 
+  /// <summary>
+  /// Navega para a página de registo.
+  /// </summary>
   navigateToRegister() {
     this.router.navigate(['/register']);
   }
 
+  /// <summary>
+  /// Navega para a página de login.
+  /// </summary>
   navigateToLogin() {
     this.router.navigate(['/login']);
   }
 
+  /// <summary>
+  /// Sincroniza os filmes do carrossel com os filmes em destaque.
+  /// </summary>
   private syncCarouselMovies(): void {
     const m = this.featuredMovies;
     this.carouselMovies = m.length ? [...m, ...m] : [];
