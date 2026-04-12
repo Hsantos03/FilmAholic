@@ -339,18 +339,12 @@
 
                [class.slide-right]="featuredSlideDir === 'right'">
 
-            <a class="poster-card hero top10-poster-card" *ngFor="let f of featuredVisible; let i = index" [routerLink]="['/movie-detail', f.id]">
-
+            <a class="poster-card hero top10-poster-card" *ngFor="let f of featuredVisible; let i = index" [routerLink]="['/movie-detail', f.id || f.tmdbId]">
               <img [src]="posterOf(f)" [alt]="f.titulo" />
-
               <div class="top10-card-meta">
-
                 <span class="top10-card-rank">{{ featuredIndex + i + 1 }}</span>
-
                 <span class="top10-card-title">{{ f.titulo }}</span>
-
               </div>
-
             </a>
 
           </div>
@@ -399,7 +393,7 @@
 
                [class.slide-right]="top10SlideDir === 'right'">
 
-            <a class="poster-card small top10-poster-card" *ngFor="let f of top10Visible; let i = index" [routerLink]="['/movie-detail', f.id]">
+            <a class="poster-card small top10-poster-card" *ngFor="let f of top10Visible; let i = index" [routerLink]="['/movie-detail', f.id || f.tmdbId]">
 
               <img [src]="posterOf(f)" [alt]="f.titulo" />
 
@@ -683,7 +677,7 @@
 
           <div class="nextup-card" *ngIf="nextToWatch">
 
-            <a [routerLink]="['/movie-detail', nextToWatch.id]">
+            <a [routerLink]="['/movie-detail', nextToWatch.id || nextToWatch.tmdbId]">
 
               <img class="nextup-poster" [src]="posterOf(nextToWatch)" [alt]="nextToWatch.titulo" />
 

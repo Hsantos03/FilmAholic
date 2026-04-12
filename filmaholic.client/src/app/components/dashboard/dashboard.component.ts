@@ -974,36 +974,30 @@ export class DashboardComponent implements OnInit, OnDestroy {
     this.isLoadingMovies = true;
     this.errorMovies = '';
 
-    // Carregar filmes gerais para o Top 10 e Pesquisa
-    this.filmesService.getAll().subscribe({
-      next: (res) => {
-        this.movies = res || [];
-        this.top10 = this.movies.slice(0, 10);
-        this.top10Index = 0;
+    import('rxjs').then(({ forkJoin, of }) => {
+      forkJoin({
+        all: this.filmesService.getAll(),
+        popular: this.filmesService.getPopularesComunidade(50, 200)
+      }).subscribe({
+        next: (res: any) => {
+          this.movies = res.all || [];
+          this.top10 = this.movies.slice(0, 10);
+          this.top10Index = 0;
 
-        // Carregar 50 filmes populares específicos para a secção "Em Destaque"
-        this.filmesService.getPopularesComunidade(50, 200).subscribe({
-          next: (popRes) => {
-            const pool = popRes && popRes.length > 0 ? popRes : this.movies.slice(0, 50);
-            this.featured = this.shuffleArray([...pool]);
-            this.featuredIndex = 0;
-            this.isLoadingMovies = false;
-          },
-          error: () => {
-            // Fallback para a lista geral se a API falhar
-            this.featured = this.shuffleArray([...this.movies.slice(0, 50)]);
-            this.featuredIndex = 0;
-            this.isLoadingMovies = false;
-          }
-        });
-      },
-      error: () => {
-        this.errorMovies = 'Não foi possível carregar os filmes.';
-        this.movies = [];
-        this.featured = [];
-        this.top10 = [];
-        this.isLoadingMovies = false;
-      }
+          const pool = res.popular && res.popular.length > 0 ? res.popular : this.movies.slice(0, 50);
+          this.featured = this.shuffleArray([...pool]);
+          this.featuredIndex = 0;
+          this.isLoadingMovies = false;
+        },
+        error: (err) => {
+          console.error('Erro ao carregar dashboard:', err);
+          this.errorMovies = 'Não foi possível carregar os filmes.';
+          this.movies = [];
+          this.featured = [];
+          this.top10 = [];
+          this.isLoadingMovies = false;
+        }
+      });
     });
   }
 
@@ -1437,14 +1431,11 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
 
   /// <summary>
-  /// Navega para o detalhe de um filme com base no ID fornecido.
+  /// Navega para o detalhe de um filme com base no ID fornecido (local ou TMDB).
   /// </summary>
-  public goToMovieDetail(id: number | undefined): void {
-
+  public goToMovieDetail(id: number | string | undefined): void {
     if (!id) return;
-
     this.router.navigate(['/movie-detail', id]);
-
   }
 
   /// <summary>

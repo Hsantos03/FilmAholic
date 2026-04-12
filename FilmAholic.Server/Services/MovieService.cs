@@ -875,20 +875,30 @@ public class MovieService : IMovieService
 
     /// <summary>
     /// Hidrata resultados TMDB (lista) para <see cref="Filme"/> com detalhes pt-PT + OMDb quando possível.
+    /// Utiliza paralelismo para acelerar o processo.
     /// </summary>
     private async Task<List<Filme>> HydrateTmdbResultsToFilmesAsync(IReadOnlyList<TmdbMovieDto> results, int count, string sourceLabel)
     {
         var moviesToProcess = results.Where(m => !m.Adult).Take(count).ToList();
-        var movies = new List<Filme>();
+        
+        // Pré-carregar IDs existentes para evitar múltiplas queries pequenas
+        var tmdbIds = moviesToProcess.Select(m => m.Id.ToString()).ToList();
+        var existingMovies = await _context.Set<Filme>()
+            .Where(f => tmdbIds.Contains(f.TmdbId))
+            .AsNoTracking()
+            .ToListAsync();
 
-        foreach (var tmdbMovie in moviesToProcess)
+        var tasks = moviesToProcess.Select(async tmdbMovie =>
         {
             try
             {
+                Filme? movieToAdd = null;
+                var existing = existingMovies.FirstOrDefault(e => e.TmdbId == tmdbMovie.Id.ToString());
+
                 var fullDetails = await GetMovieDetailsFromTmdbAsync(tmdbMovie.Id);
                 if (fullDetails == null)
                 {
-                    movies.Add(new Filme
+                    movieToAdd = new Filme
                     {
                         TmdbId = tmdbMovie.Id.ToString(),
                         Titulo = tmdbMovie.Title,
@@ -898,23 +908,33 @@ public class MovieService : IMovieService
                         TmdbGenreIds = tmdbMovie.GenreIds is { Count: > 0 }
                             ? tmdbMovie.GenreIds.Distinct().ToList()
                             : new List<int>()
-                    });
-                    continue;
+                    };
+                }
+                else
+                {
+                    OmdbMovieDto? omdbMovie = null;
+                    if (!string.IsNullOrEmpty(fullDetails.ImdbId))
+                        omdbMovie = await GetMovieDetailsFromOmdbAsync(fullDetails.ImdbId);
+
+                    movieToAdd = MapToFilme(tmdbMovie, fullDetails, omdbMovie);
                 }
 
-                OmdbMovieDto? omdbMovie = null;
-                if (!string.IsNullOrEmpty(fullDetails.ImdbId))
-                    omdbMovie = await GetMovieDetailsFromOmdbAsync(fullDetails.ImdbId);
+                if (movieToAdd != null && existing != null)
+                {
+                    movieToAdd.Id = existing.Id;
+                }
 
-                movies.Add(MapToFilme(tmdbMovie, fullDetails, omdbMovie));
+                return movieToAdd;
             }
             catch (Exception ex)
             {
                 _logger.LogWarning(ex, "Error processing movie {TmdbId} from {Source}", tmdbMovie.Id, sourceLabel);
+                return null;
             }
-        }
+        });
 
-        return movies;
+        var resultsList = await Task.WhenAll(tasks);
+        return resultsList.Where(m => m != null).Cast<Filme>().ToList();
     }
 
     /// <summary>
