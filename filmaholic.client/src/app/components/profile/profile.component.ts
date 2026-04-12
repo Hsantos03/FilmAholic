@@ -120,8 +120,22 @@ export class ProfileComponent implements OnInit {
 
   isSavingMovie = false;
 
-  watchLaterFilter: 'all' | 'newest' | 'oldest' | '7days' | '30days' = 'all';
-  watchedFilter: 'all' | 'newest' | 'oldest' | '7days' | '30days' = 'all';
+  watchLaterFilter:
+    | 'all'
+    | 'newest'
+    | 'oldest'
+    | '7days'
+    | '30days'
+    | 'yearNewest'
+    | 'yearOldest' = 'all';
+  watchedFilter:
+    | 'all'
+    | 'newest'
+    | 'oldest'
+    | '7days'
+    | '30days'
+    | 'yearNewest'
+    | 'yearOldest' = 'all';
 
   activeSection: 'overview' | 'statistics' | 'conquistas' | 'generos' = 'overview';
 
@@ -2306,6 +2320,22 @@ export class ProfileComponent implements OnInit {
       return isNaN(d.getTime()) ? null : d;
     };
 
+    const parseFilmeYear = (m: any): number => {
+      const f = m?.filme ?? m?.Filme;
+      const y = Number(f?.ano ?? f?.Ano);
+      return Number.isFinite(y) && y > 0 ? y : 0;
+    };
+
+    const sortByYear = (desc: boolean) =>
+      [...list].sort((a, b) => {
+        const ya = parseFilmeYear(a);
+        const yb = parseFilmeYear(b);
+        if (ya === 0 && yb === 0) return 0;
+        if (ya === 0) return 1;
+        if (yb === 0) return -1;
+        return desc ? yb - ya : ya - yb;
+      });
+
     const applyFilter = (filter: string) => {
       switch (filter) {
         case 'newest':
@@ -2320,6 +2350,10 @@ export class ProfileComponent implements OnInit {
             const db = parseDate(b)?.getTime() ?? 0;
             return da - db;
           });
+        case 'yearNewest':
+          return sortByYear(true);
+        case 'yearOldest':
+          return sortByYear(false);
         case '7days': {
           const cutoff = Date.now() - 7 * 24 * 60 * 60 * 1000;
           return list.filter(m => (parseDate(m)?.getTime() ?? 0) >= cutoff)

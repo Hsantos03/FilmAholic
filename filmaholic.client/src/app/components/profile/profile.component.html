@@ -992,7 +992,7 @@
           <button class="conquistas-tab" 
                   [class.active]="conquistasTab === 'minhas'"
                   (click)="conquistasTab = 'minhas'">
-            🏅 Minhas Medalhas
+            {{ isOwnProfile ? '🏅 Minhas Medalhas' : '🏅 Medalhas' }}
           </button>
           <button class="conquistas-tab" 
                   *ngIf="isOwnProfile"
@@ -1246,9 +1246,11 @@
     <div class="filter-row" *ngIf="currentListType === 'watchLater'">
       <label for="wlFilter">Filtrar:</label>
       <select id="wlFilter" class="list-filter-select" [(ngModel)]="watchLaterFilter">
-        <option value="all">Todos (mais recentes primeiro)</option>
-        <option value="newest">Mais recentes primeiro</option>
-        <option value="oldest">Mais antigos primeiro</option>
+        <option value="all">Todos (data de adição, mais recente)</option>
+        <option value="newest">Adicionado: mais recente primeiro</option>
+        <option value="oldest">Adicionado: mais antigo primeiro</option>
+        <option value="yearNewest">Ano do filme: mais recente primeiro</option>
+        <option value="yearOldest">Ano do filme: mais antigo primeiro</option>
         <option value="7days">Adicionados nos últimos 7 dias</option>
         <option value="30days">Adicionados nos últimos 30 dias</option>
       </select>
@@ -1257,9 +1259,11 @@
     <div class="filter-row" *ngIf="currentListType === 'watched'">
       <label for="watFilter">Filtrar:</label>
       <select id="watFilter" class="list-filter-select" [(ngModel)]="watchedFilter">
-        <option value="all">Todos (mais recentes primeiro)</option>
-        <option value="newest">Mais recentes primeiro</option>
-        <option value="oldest">Mais antigos primeiro</option>
+        <option value="all">Todos (data de adição, mais recente)</option>
+        <option value="newest">Adicionado: mais recente primeiro</option>
+        <option value="oldest">Adicionado: mais antigo primeiro</option>
+        <option value="yearNewest">Ano do filme: mais recente primeiro</option>
+        <option value="yearOldest">Ano do filme: mais antigo primeiro</option>
         <option value="7days">Adicionados nos últimos 7 dias</option>
         <option value="30days">Adicionados nos últimos 30 dias</option>
       </select>
@@ -1363,7 +1367,7 @@
       <p>Ainda não conquistaste nenhuma medalha.</p>
     </div>
 
-    <div class="modal-actions">
+    <div class="modal-actions" *ngIf="selectedSlotIndex !== null && showcasedMedals[selectedSlotIndex]">
       <button type="button" class="cancel-btn" style="background: #dc3545; color: white; font-weight: 600;" (click)="removeMedalFromSlot(selectedSlotIndex!)">Remover Medalha</button>
     </div>
   </div>

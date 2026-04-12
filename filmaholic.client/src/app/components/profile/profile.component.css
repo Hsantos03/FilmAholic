@@ -254,6 +254,8 @@
   margin-top: 28px;
   padding-top: 22px;
   border-top: 1px solid rgba(255,255,255,0.1);
+  position: relative;
+  isolation: isolate;
 }
   .xp-level h3 {
     margin: 0 0 16px;
@@ -2541,6 +2543,8 @@
   margin-top: 12px;
   padding-top: 12px;
   border-top: 1px solid rgba(255, 255, 255, 0.1);
+  position: relative;
+  z-index: 0;
 }
 .medals-showcase h4 {
   margin: 0 0 16px;
@@ -2552,12 +2556,15 @@
   display: flex;
   justify-content: center;
   gap: 12px;
+  position: relative;
+  z-index: 0;
 }
 .medal-slot {
   display: flex;
   align-items: center;
   justify-content: center;
   position: relative;
+  z-index: 0;
   width: 70px;
   height: 70px;
   border-radius: 50%;
@@ -2587,8 +2594,8 @@
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  /* pointer-events: none impedia o tooltip nativo (title) ao passar o rato */
-  pointer-events: auto;
+  /* Sem isto, a área extra da imagem (fora do círculo) rouba cliques à secção Tag por baixo. O title/tooltip fica no .medal-slot. */
+  pointer-events: none;
 }
 .medal-slot .medal-placeholder {
   font-size: 24px;
@@ -2715,6 +2722,8 @@
   margin-top: 20px;
   padding-top: 16px;
   border-top: 1px solid var(--border-dark);
+  position: relative;
+  z-index: 2;
 }
 .user-tag-section h4 {
   margin: 0 0 12px 0;
@@ -2837,6 +2846,8 @@
   justify-content: center;
   transition: all 0.2s ease;
   padding: 0;
+  position: relative;
+  z-index: 3;
 }
 .tag-edit-btn:hover {
   background: var(--accent-pink, #FF4081);
