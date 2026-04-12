@@ -824,10 +824,15 @@
 
 .recommendations-section {
   margin-top: 30px;
+  margin-left: auto;
+  margin-right: auto;
+  max-width: 1200px;
+  width: 100%;
   padding: 22px;
   background: rgba(255, 255, 255, 0.04);
   border-radius: 16px;
   border: 1px solid rgba(255, 255, 255, 0.08);
+  box-sizing: border-box;
 }
 
 .recommendations-section .section-head {
@@ -882,22 +887,15 @@
 
 .recommendations-grid {
   display: flex;
-  gap: 16px;
-  overflow-x: auto;
+  flex-wrap: wrap;
+  gap: 14px;
   padding: 10px 0 12px;
-}
-
-.recommendations-grid::-webkit-scrollbar {
-  height: 6px;
-}
-
-.recommendations-grid::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.18);
-  border-radius: 10px;
+  width: 100%;
 }
 
 .rec-card {
-  flex: 0 0 auto;
+  flex: 1 1 0;
+  min-width: 88px;
   border-radius: 14px;
   overflow: hidden;
   box-shadow: 0 14px 35px rgba(0, 0, 0, 0.45);
@@ -911,8 +909,9 @@
 }
 
 .rec-poster {
-  width: 160px;
-  height: 240px;
+  width: 100%;
+  aspect-ratio: 2 / 3;
+  height: auto;
   object-fit: cover;
   display: block;
 }
@@ -938,11 +937,6 @@
 
   .ratings-grid {
     grid-template-columns: 1fr;
-  }
-
-  .rec-poster {
-    width: 140px;
-    height: 210px;
   }
 
   .recommendations-section {
