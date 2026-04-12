@@ -17,12 +17,12 @@
         <p *ngIf="showNoPosterNotice" class="poster-no-cover-notice" role="status">Este filme não possui capa.</p>
         <button *ngIf="trailerUrl" type="button" class="trailer-btn" data-tour="movie-trailer" (click)="openTrailer()">▶ Ver Trailer</button>
       </aside>
-      <div class="trailer-modal" *ngIf="showTrailer" (click)="closeTrailer()">
+      <div class="trailer-modal" *ngIf="showTrailer" (click)="closeTrailer()" role="dialog" aria-modal="true" aria-label="Trailer">
         <div class="trailer-modal-wrapper" (click)="$event.stopPropagation()">
-          <button class="trailer-close" (click)="closeTrailer()">✕</button>
           <div class="trailer-modal-inner">
             <iframe [src]="safeTrailerUrl" frameborder="0" allowfullscreen allow="autoplay; encrypted-media"></iframe>
           </div>
+          <button type="button" class="trailer-close" (click)="closeTrailer()" aria-label="Fechar trailer">✕</button>
         </div>
       </div>
       <section class="info-col centered">

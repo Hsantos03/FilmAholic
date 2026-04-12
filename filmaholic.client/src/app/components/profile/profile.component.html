@@ -134,8 +134,16 @@
         <div class="medals-showcase">
           <h4>Medalhas em Exposição</h4>
           <div class="medals-row">
-            <div class="medal-slot" *ngFor="let slot of [0, 1, 2]; let i = index" (click)="onMedalSlotClick(i)" [class.empty]="!showcasedMedals[i]">
-              <img *ngIf="showcasedMedals[i]?.iconeUrl" [src]="API_URL + showcasedMedals[i].iconeUrl" [alt]="showcasedMedals[i]?.nome" class="medal-img">
+            <div class="medal-slot"
+                 *ngFor="let slot of [0, 1, 2]; let i = index"
+                 (click)="onMedalSlotClick(i)"
+                 [class.empty]="!showcasedMedals[i]"
+                 [attr.title]="showcaseMedalTitle(i)">
+              <img *ngIf="showcasedMedals[i]?.iconeUrl"
+                   [src]="API_URL + showcasedMedals[i].iconeUrl"
+                   [alt]="showcaseMedalNome(i)"
+                   [attr.title]="showcaseMedalTitle(i)"
+                   class="medal-img">
               <div *ngIf="!showcasedMedals[i]" class="medal-placeholder">+</div>
             </div>
           </div>
@@ -204,9 +212,19 @@
 
         <div class="list-box-right">
           <div class="mini-posters">
-            <img *ngFor="let movie of watchLater | slice:0:5"
-                 [src]="movie.filme?.posterUrl || 'https://via.placeholder.com/120x180'"
+            <ng-container *ngFor="let movie of watchLater | slice:0:5">
+              <a *ngIf="listEntryFilmeId(movie) as wlId"
+                 class="mini-poster-link"
+                 [routerLink]="['/movie-detail', wlId]"
+                 (click)="$event.stopPropagation()"
+                 [attr.title]="(movie.filme?.titulo || movie.filme?.Titulo || '') + ' — ver detalhes'">
+                <img [src]="movie.filme?.posterUrl || movie.filme?.PosterUrl || 'https://via.placeholder.com/120x180'"
+                     alt="Cartaz do filme" />
+              </a>
+              <img *ngIf="!listEntryFilmeId(movie)"
+                   [src]="movie.filme?.posterUrl || movie.filme?.PosterUrl || 'https://via.placeholder.com/120x180'"
                    alt="Cartaz do filme" />
+            </ng-container>
           </div>
 
             <button class="pill-btn" title="Ver mais tarde">
@@ -224,9 +242,19 @@
 
         <div class="list-box-right">
           <div class="mini-posters">
-            <img *ngFor="let movie of watched | slice:0:5"
-                 [src]="movie.filme?.posterUrl || 'https://via.placeholder.com/120x180'"
+            <ng-container *ngFor="let movie of watched | slice:0:5">
+              <a *ngIf="listEntryFilmeId(movie) as watId"
+                 class="mini-poster-link"
+                 [routerLink]="['/movie-detail', watId]"
+                 (click)="$event.stopPropagation()"
+                 [attr.title]="(movie.filme?.titulo || movie.filme?.Titulo || '') + ' — ver detalhes'">
+                <img [src]="movie.filme?.posterUrl || movie.filme?.PosterUrl || 'https://via.placeholder.com/120x180'"
+                     alt="Cartaz do filme" />
+              </a>
+              <img *ngIf="!listEntryFilmeId(movie)"
+                   [src]="movie.filme?.posterUrl || movie.filme?.PosterUrl || 'https://via.placeholder.com/120x180'"
                    alt="Cartaz do filme" />
+            </ng-container>
           </div>
 
             <button class="pill-btn gray" title="Vistos">
@@ -349,6 +377,7 @@
             <div class="fav-actors-grid" *ngIf="favoritosAtoresTop10.length > 0; else noFavActors">
               <div class="actor-tile"
                      *ngFor="let a of favoritosAtoresTop10; let i = index"
+                     [class.actor-tile--visitor]="!isOwnProfile && !!a.id"
                      [draggable]="isOwnProfile"
                      [attr.data-index]="i"
                      (dragstart)="isOwnProfile && onActorDragStart($event, i)"
@@ -357,13 +386,34 @@
                      (dragend)="isOwnProfile && onActorDragEnd()"
                      [class.dragging-actor]="draggedActorIndex === i"
                      [class.drag-over-actor]="dragOverActorIndex === i"
-                     [attr.title]="isOwnProfile ? 'Arrasta para reordenar' : a.nome">
-                <span class="position-badge">{{ i + 1 }}</span>
-                <div class="actor-photo">
-                  <img *ngIf="a.fotoUrl" [src]="a.fotoUrl" [alt]="a.nome" (dblclick)="isOwnProfile && removeAtorFavorito(a)" [title]="isOwnProfile ? 'Duplo clique para remover' : a.nome" />
-                  <div *ngIf="!a.fotoUrl" class="initial" (dblclick)="isOwnProfile && removeAtorFavorito(a)" [title]="isOwnProfile ? 'Duplo clique para remover' : a.nome">{{ a.nome[0] }}</div>
-                </div>
-                <div class="actor-name-label">{{ a.nome }}</div>
+                     [attr.title]="isOwnProfile ? 'Arrasta para reordenar' : null">
+                <a *ngIf="!isOwnProfile && a.id"
+                   class="actor-tile-link"
+                   [routerLink]="['/actor', a.id]"
+                   [attr.title]="a.nome">
+                  <span class="position-badge">{{ i + 1 }}</span>
+                  <div class="actor-photo">
+                    <img *ngIf="a.fotoUrl" [src]="a.fotoUrl" [alt]="a.nome" />
+                    <div *ngIf="!a.fotoUrl" class="initial">{{ a.nome[0] }}</div>
+                  </div>
+                  <div class="actor-name-label">{{ a.nome }}</div>
+                </a>
+                <ng-container *ngIf="!isOwnProfile && !a.id">
+                  <span class="position-badge">{{ i + 1 }}</span>
+                  <div class="actor-photo">
+                    <img *ngIf="a.fotoUrl" [src]="a.fotoUrl" [alt]="a.nome" />
+                    <div *ngIf="!a.fotoUrl" class="initial">{{ a.nome[0] }}</div>
+                  </div>
+                  <div class="actor-name-label">{{ a.nome }}</div>
+                </ng-container>
+                <ng-container *ngIf="isOwnProfile">
+                  <span class="position-badge">{{ i + 1 }}</span>
+                  <div class="actor-photo">
+                    <img *ngIf="a.fotoUrl" [src]="a.fotoUrl" [alt]="a.nome" (dblclick)="removeAtorFavorito(a)" [title]="a.nome + ' — duplo clique para remover'" />
+                    <div *ngIf="!a.fotoUrl" class="initial" (dblclick)="removeAtorFavorito(a)" [title]="a.nome + ' — duplo clique para remover'">{{ a.nome[0] }}</div>
+                  </div>
+                  <div class="actor-name-label">{{ a.nome }}</div>
+                </ng-container>
               </div>
             </div>
 
@@ -462,6 +512,7 @@
               <div class="fav-actors-grid" *ngIf="favoritosAtores.length > 0; else noFavActorsModal">
                 <div class="actor-tile"
                      *ngFor="let a of favoritosAtores; let i = index"
+                     [class.actor-tile--visitor]="!isOwnProfile && !!a.id"
                      [draggable]="isOwnProfile"
                      [attr.data-index]="i"
                      (dragstart)="isOwnProfile && onActorDragStart($event, i)"
@@ -470,13 +521,35 @@
                      (dragend)="isOwnProfile && onActorDragEnd()"
                      [class.dragging-actor]="draggedActorIndex === i"
                      [class.drag-over-actor]="dragOverActorIndex === i"
-                     [attr.title]="isOwnProfile ? 'Arrasta para reordenar' : a.nome">
-                  <span class="position-badge">{{ i + 1 }}</span>
-                  <div class="actor-photo">
-                    <img *ngIf="a.fotoUrl" [src]="a.fotoUrl" [alt]="a.nome" (dblclick)="isOwnProfile && removeAtorFavorito(a)" [title]="isOwnProfile ? 'Duplo clique para remover' : a.nome" />
-                    <div *ngIf="!a.fotoUrl" class="initial" (dblclick)="isOwnProfile && removeAtorFavorito(a)" [title]="isOwnProfile ? 'Duplo clique para remover' : a.nome">{{ a.nome[0] }}</div>
-                  </div>
-                  <div class="actor-name-label">{{ a.nome }}</div>
+                     [attr.title]="isOwnProfile ? 'Arrasta para reordenar' : null">
+                  <a *ngIf="!isOwnProfile && a.id"
+                     class="actor-tile-link"
+                     [routerLink]="['/actor', a.id]"
+                     [attr.title]="a.nome"
+                     (click)="closeVerTodosFavoritos()">
+                    <span class="position-badge">{{ i + 1 }}</span>
+                    <div class="actor-photo">
+                      <img *ngIf="a.fotoUrl" [src]="a.fotoUrl" [alt]="a.nome" />
+                      <div *ngIf="!a.fotoUrl" class="initial">{{ a.nome[0] }}</div>
+                    </div>
+                    <div class="actor-name-label">{{ a.nome }}</div>
+                  </a>
+                  <ng-container *ngIf="!isOwnProfile && !a.id">
+                    <span class="position-badge">{{ i + 1 }}</span>
+                    <div class="actor-photo">
+                      <img *ngIf="a.fotoUrl" [src]="a.fotoUrl" [alt]="a.nome" />
+                      <div *ngIf="!a.fotoUrl" class="initial">{{ a.nome[0] }}</div>
+                    </div>
+                    <div class="actor-name-label">{{ a.nome }}</div>
+                  </ng-container>
+                  <ng-container *ngIf="isOwnProfile">
+                    <span class="position-badge">{{ i + 1 }}</span>
+                    <div class="actor-photo">
+                      <img *ngIf="a.fotoUrl" [src]="a.fotoUrl" [alt]="a.nome" (dblclick)="removeAtorFavorito(a)" [title]="a.nome + ' — duplo clique para remover'" />
+                      <div *ngIf="!a.fotoUrl" class="initial" (dblclick)="removeAtorFavorito(a)" [title]="a.nome + ' — duplo clique para remover'">{{ a.nome[0] }}</div>
+                    </div>
+                    <div class="actor-name-label">{{ a.nome }}</div>
+                  </ng-container>
                 </div>
               </div>
 
@@ -940,10 +1013,12 @@
           <div class="medalhas-lista" *ngIf="medalhasConquistadas.length > 0">
             <div class="medalha-card-row conquistada" *ngFor="let um of medalhasConquistadas">
               
-              <div class="medalha-icone-lado">
-                <img *ngIf="um.medalha?.iconeUrl" 
-                     [src]="API_URL + um.medalha.iconeUrl" 
-                     [alt]="um.medalha?.nome">
+              <div class="medalha-icone-lado"
+                   [attr.title]="(um.medalha?.nome || 'Medalha') + (um.medalha?.descricao ? ' — ' + um.medalha.descricao : '')">
+                <img *ngIf="um.medalha?.iconeUrl"
+                     [src]="API_URL + um.medalha.iconeUrl"
+                     [alt]="um.medalha?.nome"
+                     [attr.title]="(um.medalha?.nome || 'Medalha') + (um.medalha?.descricao ? ' — ' + um.medalha.descricao : '')">
                 <span *ngIf="!um.medalha?.iconeUrl">🏅</span>
               </div>
 
@@ -968,8 +1043,8 @@
   <div class="medalhas-lista"> 
     <div class="medalha-card-row" *ngFor="let m of todasMedalhas" [class.conquistada]="m.conquistada">
   
-  <div class="medalha-icone-lado">
-    <img [src]="API_URL + m.iconeUrl" [alt]="m.nome">
+  <div class="medalha-icone-lado" [attr.title]="m.nome + (m.descricao ? ' — ' + m.descricao : '')">
+    <img [src]="API_URL + m.iconeUrl" [alt]="m.nome" [attr.title]="m.nome + (m.descricao ? ' — ' + m.descricao : '')">
   </div>
 
   <div class="medalha-info-centro">
@@ -1192,19 +1267,39 @@
 
     <div class="expanded-posters-grid" *ngIf="filteredCurrentList.length > 0">
       <div class="expanded-poster-card" *ngFor="let movie of filteredCurrentList">
-        <img [src]="movie.filme?.posterUrl || movie.filme?.PosterUrl || 'https://via.placeholder.com/200x300'"
-             [alt]="movie.filme?.titulo || movie.filme?.Titulo || 'Cartaz do filme'"
-             class="expanded-poster" />
-        <div class="poster-info">
-          <div class="poster-title">{{ movie.filme?.titulo || movie.filme?.Titulo || 'Desconhecido' }}</div>
-          <div class="poster-meta">
-            <span *ngIf="movie.filme?.genero || movie.filme?.Genero">{{ movie.filme?.genero || movie.filme?.Genero }}</span>
-            <span *ngIf="movie.filme?.duracao || movie.filme?.Duracao"> &middot; {{ (movie.filme?.duracao ?? movie.filme?.Duracao) | formatDuration }}</span>
+        <a *ngIf="listEntryFilmeId(movie) as listMid"
+           class="expanded-poster-link"
+           [routerLink]="['/movie-detail', listMid]"
+           (click)="closeListModal()">
+          <img [src]="movie.filme?.posterUrl || movie.filme?.PosterUrl || 'https://via.placeholder.com/200x300'"
+               [alt]="movie.filme?.titulo || movie.filme?.Titulo || 'Cartaz do filme'"
+               class="expanded-poster" />
+          <div class="poster-info">
+            <div class="poster-title">{{ movie.filme?.titulo || movie.filme?.Titulo || 'Desconhecido' }}</div>
+            <div class="poster-meta">
+              <span *ngIf="movie.filme?.genero || movie.filme?.Genero">{{ movie.filme?.genero || movie.filme?.Genero }}</span>
+              <span *ngIf="movie.filme?.duracao || movie.filme?.Duracao"> &middot; {{ (movie.filme?.duracao ?? movie.filme?.Duracao) | formatDuration }}</span>
+            </div>
+            <div class="poster-date" *ngIf="(movie.data || movie.Data)">
+              Adicionado: {{ (movie.data || movie.Data) | date:'dd/MM/yyyy, HH:mm':'':'pt-PT' }}
+            </div>
           </div>
-          <div class="poster-date" *ngIf="(movie.data || movie.Data)">
-            Adicionado: {{ (movie.data || movie.Data) | date:'dd/MM/yyyy, HH:mm':'':'pt-PT' }}
+        </a>
+        <ng-container *ngIf="!listEntryFilmeId(movie)">
+          <img [src]="movie.filme?.posterUrl || movie.filme?.PosterUrl || 'https://via.placeholder.com/200x300'"
+               [alt]="movie.filme?.titulo || movie.filme?.Titulo || 'Cartaz do filme'"
+               class="expanded-poster" />
+          <div class="poster-info">
+            <div class="poster-title">{{ movie.filme?.titulo || movie.filme?.Titulo || 'Desconhecido' }}</div>
+            <div class="poster-meta">
+              <span *ngIf="movie.filme?.genero || movie.filme?.Genero">{{ movie.filme?.genero || movie.filme?.Genero }}</span>
+              <span *ngIf="movie.filme?.duracao || movie.filme?.Duracao"> &middot; {{ (movie.filme?.duracao ?? movie.filme?.Duracao) | formatDuration }}</span>
+            </div>
+            <div class="poster-date" *ngIf="(movie.data || movie.Data)">
+              Adicionado: {{ (movie.data || movie.Data) | date:'dd/MM/yyyy, HH:mm':'':'pt-PT' }}
+            </div>
           </div>
-        </div>
+        </ng-container>
       </div>
     </div>
 

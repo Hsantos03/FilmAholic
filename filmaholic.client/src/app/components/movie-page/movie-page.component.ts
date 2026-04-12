@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, HostListener, OnInit, OnDestroy } from '@angular/core';
 import { Location } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Subscription, of } from 'rxjs';
@@ -336,6 +336,13 @@ export class MoviePageComponent implements OnInit, OnDestroy {
   closeTrailer(): void {
     this.showTrailer = false;
     this.safeTrailerUrl = null;
+  }
+
+  @HostListener('document:keydown', ['$event'])
+  onDocumentKeydown(event: KeyboardEvent): void {
+    if (!this.showTrailer || event.key !== 'Escape') return;
+    event.preventDefault();
+    this.closeTrailer();
   }
 
   /// <summary>

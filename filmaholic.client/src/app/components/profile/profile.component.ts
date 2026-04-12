@@ -2023,6 +2023,32 @@ export class ProfileComponent implements OnInit {
   }
 
   /// <summary>
+  /// Nome da medalha num slot de exposição (API plana ou objeto aninhado de medalha conquistada).
+  /// </summary>
+  showcaseMedalNome(slotIndex: number): string {
+    const m = this.showcasedMedals?.[slotIndex];
+    if (!m) return '';
+    const nome = String(m.nome ?? m.medalha?.nome ?? '').trim();
+    return nome || 'Medalha';
+  }
+
+  /// <summary>
+  /// Texto para tooltip (title) nas medalhas em exposição — perfil próprio e visitantes.
+  /// </summary>
+  showcaseMedalTitle(slotIndex: number): string | null {
+    const m = this.showcasedMedals?.[slotIndex];
+    if (!m) {
+      return this.isOwnProfile ? 'Clica para escolher uma medalha' : null;
+    }
+    const nome = this.showcaseMedalNome(slotIndex);
+    const desc = String(m.descricao ?? m.medalha?.descricao ?? '').trim();
+    if (desc) {
+      return `${nome} — ${desc}`;
+    }
+    return nome;
+  }
+
+  /// <summary>
   /// Abre o seletor de medalhas para o slot selecionado.
   /// </summary>
   openMedalSelector(index: number): void {
@@ -2235,6 +2261,20 @@ export class ProfileComponent implements OnInit {
     });
   }
   
+  /// <summary>
+  /// Id do filme num registo de lista (UserMovie), tolerando camelCase/PascalCase.
+  /// </summary>
+  listEntryFilmeId(movie: any): number | null {
+    if (!movie) return null;
+    const direct = Number(movie.filmeId ?? movie.FilmeId);
+    if (!Number.isNaN(direct) && direct > 0) return direct;
+    const nested = Number(
+      movie.filme?.id ?? movie.filme?.Id ?? movie.Filme?.id ?? movie.Filme?.Id
+    );
+    if (!Number.isNaN(nested) && nested > 0) return nested;
+    return null;
+  }
+
   /// <summary>
   /// Abre o modal de listas.
   /// </summary>

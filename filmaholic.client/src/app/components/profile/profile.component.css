@@ -366,6 +366,16 @@
   gap: 10px;
   align-items: center;
 }
+.mini-poster-link {
+  display: block;
+  line-height: 0;
+  border-radius: 10px;
+  overflow: hidden;
+}
+.mini-poster-link:focus-visible {
+  outline: 2px solid var(--accent-pink);
+  outline-offset: 2px;
+}
   .mini-posters img {
     width: 44px;
     height: 64px;
@@ -651,6 +661,13 @@
   gap: 24px;
   margin-top: 24px;
 }
+.expanded-poster-link {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  color: inherit;
+  text-decoration: none;
+}
 .expanded-poster-card {
   display: flex;
   flex-direction: column;
@@ -895,6 +912,24 @@
   transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
   display: flex;
   flex-direction: column;
+}
+.actor-tile--visitor {
+  cursor: pointer;
+}
+.actor-tile--visitor:active {
+  cursor: pointer;
+}
+.actor-tile-link {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+  height: 100%;
+  color: inherit;
+  text-decoration: none;
+  border-radius: 12px;
+  overflow: visible;
 }
 .actor-tile:hover {
   transform: translateY(-4px);
@@ -2552,7 +2587,8 @@
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  pointer-events: none;
+  /* pointer-events: none impedia o tooltip nativo (title) ao passar o rato */
+  pointer-events: auto;
 }
 .medal-slot .medal-placeholder {
   font-size: 24px;
@@ -2601,24 +2637,28 @@
 }
 .medals-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 12px;
   margin-bottom: 20px;
+  align-items: start;
 }
 .medal-option {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: flex-start;
-  width: 140px;
-  height: 240px;
-  padding: 8px;
+  width: 100%;
+  min-width: 0;
+  min-height: 160px;
+  height: auto;
+  padding: 12px 8px 14px;
   border-radius: 12px;
   cursor: pointer;
   transition: all 0.2s ease;
   border: 2px solid transparent;
   background: rgba(255, 255, 255, 0.05);
-  overflow: visible;
+  overflow: hidden;
+  box-sizing: border-box;
 }
 .medal-option:hover {
   background: rgba(255, 255, 255, 0.1);
@@ -2629,28 +2669,37 @@
   border-color: var(--color-primary);
 }
 .medal-option-img {
-  width: 200px;
-  height: 200px;
+  width: 100%;
+  max-width: 112px;
+  height: auto;
+  max-height: 112px;
   object-fit: contain;
-  margin-bottom: 4px;
+  margin-bottom: 8px;
+  flex-shrink: 0;
 }
 .medal-option-placeholder {
-  width: 60px;
-  height: 60px;
+  width: 56px;
+  height: 56px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 32px;
+  font-size: 28px;
   margin-bottom: 8px;
+  flex-shrink: 0;
 }
 .medal-option-name {
   font-size: 13px;
   font-weight: 600;
   text-align: center;
   color: var(--text-primary);
-  line-height: 1.2;
+  line-height: 1.25;
   max-width: 100%;
-  margin-top: 4px;
+  width: 100%;
+  min-width: 0;
+  padding: 0 2px;
+  word-break: break-word;
+  overflow-wrap: anywhere;
+  flex-shrink: 0;
 }
 .no-medals {
   text-align: center;
