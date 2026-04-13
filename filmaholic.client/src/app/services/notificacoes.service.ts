@@ -71,7 +71,7 @@ export interface NotificacaoComunidadeItemDto {
   comunidadeId?: number | null;
   comunidadeNome: string;
   postId?: number | null;
-  tipo: 'post' | 'pedido_entrada' | 'pedido_aprovado' | 'pedido_rejeitado' | 'kick' | 'banido' | 'comunidade_eliminada';
+  tipo: 'post' | 'pedido_entrada' | 'pedido_aprovado' | 'pedido_rejeitado' | 'post_denunciado' | 'kick' | 'banido' | 'comunidade_eliminada';
   corpo?: string | null;
   criadaEm: string;
   lidaEm?: string | null;

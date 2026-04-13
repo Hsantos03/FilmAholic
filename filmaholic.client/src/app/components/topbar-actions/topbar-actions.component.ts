@@ -348,6 +348,12 @@ export class TopbarActionsComponent implements OnInit, OnDestroy {
       this.router.navigate(['/comunidades', item.comunidadeId], { queryParams: { tab: 'membros' } });
       return;
     }
+    if (t === 'post_denunciado' && item.postId != null) {
+      this.router.navigate(['/comunidades', item.comunidadeId], {
+        queryParams: { tab: 'posts', highlightPost: item.postId }
+      });
+      return;
+    }
     this.router.navigate(['/comunidades', item.comunidadeId]);
   }
 

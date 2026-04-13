@@ -213,6 +213,7 @@
                         <ng-container *ngSwitchCase="'pedido_entrada'">Novo pedido para entrar na comunidade <strong>{{ n.raw.comunidadeNome }}</strong></ng-container>
                         <ng-container *ngSwitchCase="'pedido_aprovado'">O teu pedido para a comunidade <strong>{{ n.raw.comunidadeNome }}</strong> foi aprovado ✅</ng-container>
                         <ng-container *ngSwitchCase="'pedido_rejeitado'">O teu pedido para a comunidade <strong>{{ n.raw.comunidadeNome }}</strong> foi rejeitado ❌</ng-container>
+                        <ng-container *ngSwitchCase="'post_denunciado'">Nova denúncia sobre uma publicação em <strong>{{ n.raw.comunidadeNome }}</strong></ng-container>
                         <ng-container *ngSwitchCase="'kick'">Foste expulso da comunidade <strong>{{ n.raw.comunidadeNome }}</strong></ng-container>
                         <ng-container *ngSwitchCase="'banido'">Foste banido da comunidade <strong>{{ n.raw.comunidadeNome }}</strong></ng-container>
                         <ng-container *ngSwitchCase="'comunidade_eliminada'">A comunidade <strong>{{ n.raw.comunidadeNome }}</strong> foi eliminada.</ng-container>

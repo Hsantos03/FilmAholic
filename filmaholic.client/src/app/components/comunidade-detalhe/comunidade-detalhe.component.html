@@ -63,6 +63,22 @@
   <main class="comunidade-detalhe-wrap">
     <button type="button" class="back-link" data-tour="comunidade-voltar" (click)="goBack()">← Comunidades</button>
 
+    <div *ngIf="reportFeedbackMessage"
+         class="report-feedback-banner"
+         [class.report-feedback-banner--info]="reportFeedbackTone === 'info'"
+         role="status"
+         aria-live="polite">
+      <span class="report-feedback-banner__icon" aria-hidden="true">
+        <svg *ngIf="reportFeedbackTone === 'success'" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
+        <svg *ngIf="reportFeedbackTone === 'info'" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
+      </span>
+      <p class="report-feedback-banner__text">{{ reportFeedbackMessage }}</p>
+      <button type="button"
+              class="report-feedback-banner__close"
+              (click)="dismissReportFeedback()"
+              aria-label="Fechar mensagem">×</button>
+    </div>
+
   <div *ngIf="isLoading" class="state">A carregar comunidade…</div>
 
   <div *ngIf="!isLoading && accessDeniedBan" class="ban-access-denied">
@@ -333,7 +349,7 @@
 
       <div *ngIf="posts.length === 0" class="empty">Ainda não há publicações nesta comunidade.</div>
 
-      <article class="post-card" *ngFor="let p of sortedPosts">
+      <article class="post-card" *ngFor="let p of sortedPosts" [attr.id]="p.id != null ? 'comunidade-post-' + p.id : null">
         <div class="post-header">
           <div *ngIf="p.autorId" class="post-author-info">
             <div class="post-avatar" [attr.title]="p.autorNome || ''">
@@ -390,10 +406,10 @@
             <button *ngIf="p.autorId !== currentUserId && !isCurrentCastigado"
                     type="button"
                     class="post-action-btn report-btn"
+                    [class.report-btn--done]="p.jaReportou"
                     (click)="openReportModal(p)"
-                    title="Denunciar publicação"
-                    [disabled]="p.jaReportou"
-                    aria-label="Denunciar publicação">
+                    [attr.title]="p.jaReportou ? 'Já denunciaste — clica para ver a mensagem' : 'Denunciar publicação'"
+                    [attr.aria-label]="p.jaReportou ? 'Denúncia já enviada — mostrar informação' : 'Denunciar publicação'">
               <img class="post-action-ico" src="assets/395841.png" alt="" aria-hidden="true" />
             </button>
 

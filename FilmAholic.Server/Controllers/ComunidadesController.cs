@@ -1908,7 +1908,9 @@ namespace FilmAholic.Server.Controllers
 
             var membroReport = await _context.ComunidadeMembros.AsNoTracking()
                 .FirstOrDefaultAsync(m => m.ComunidadeId == id && m.UtilizadorId == userId);
-            if (membroReport == null || membroReport.Status != "Ativo") return Forbid();
+            if (membroReport == null || membroReport.Status != "Ativo")
+                return StatusCode(StatusCodes.Status403Forbidden,
+                    new { message = "Só membros ativos desta comunidade podem denunciar publicações. Junta-te à comunidade primeiro." });
             if (MembroCastigadoAtivo(membroReport, DateTime.UtcNow))
                 return BadRequest(new { message = "Estás castigado e não podes denunciar publicações." });
 
@@ -1917,6 +1919,36 @@ namespace FilmAholic.Server.Controllers
                 PostId = postId,
                 UtilizadorId = userId
             });
+
+            try
+            {
+                var adminIds = await _context.ComunidadeMembros
+                    .AsNoTracking()
+                    .Where(m => m.ComunidadeId == id && m.Role == "Admin" && m.Status == "Ativo" && m.UtilizadorId != userId)
+                    .Select(m => m.UtilizadorId)
+                    .Distinct()
+                    .ToListAsync();
+
+                if (adminIds.Count > 0)
+                {
+                    var agoraDenuncia = DateTime.UtcNow;
+                    foreach (var adminId in adminIds)
+                    {
+                        _context.NotificacoesComunidade.Add(new NotificacaoComunidade
+                        {
+                            UtilizadorId = adminId,
+                            ComunidadeId = id,
+                            PostId = postId,
+                            Tipo = "post_denunciado",
+                            CriadaEm = agoraDenuncia
+                        });
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Falha ao criar notificações de denúncia para admins da comunidade {Id}", id);
+            }
 
             await _context.SaveChangesAsync();
             return Ok(new { message = "Publicação denunciada com sucesso." });

@@ -123,6 +123,11 @@ export class ComunidadeDetalheComponent implements OnInit, OnDestroy {
   postToReport: PostDto | null = null;
   isReporting = false;
 
+  /** Mensagem de feedback após denúncia ou se já tinha denunciado. */
+  reportFeedbackMessage: string | null = null;
+  reportFeedbackTone: 'success' | 'info' = 'success';
+  private reportFeedbackDismissTimer: ReturnType<typeof setTimeout> | null = null;
+
   // ── Spoiler Properties ──
   newTemSpoiler = false;
   editTemSpoiler = false;
@@ -177,6 +182,9 @@ export class ComunidadeDetalheComponent implements OnInit, OnDestroy {
     if (tab === 'membros' || tab === 'posts' || tab === 'ranking') {
       this.activeTab = tab;
     }
+    if (this.route.snapshot.queryParamMap.get('highlightPost')) {
+      this.activeTab = 'posts';
+    }
     this.isLoading = true;
     this.sub = this.route.paramMap.subscribe(params => {
       const id = params.get('id');
@@ -191,6 +199,52 @@ export class ComunidadeDetalheComponent implements OnInit, OnDestroy {
     if (this.timerInterval) {
       clearInterval(this.timerInterval);
     }
+    this.clearReportFeedbackTimer();
+  }
+
+  private clearReportFeedbackTimer(): void {
+    if (this.reportFeedbackDismissTimer) {
+      clearTimeout(this.reportFeedbackDismissTimer);
+      this.reportFeedbackDismissTimer = null;
+    }
+  }
+
+  private showReportSuccessFeedback(): void {
+    this.clearReportFeedbackTimer();
+    this.reportFeedbackTone = 'success';
+    this.reportFeedbackMessage =
+      'Denúncia enviada com sucesso. Obrigado por ajudares a manter a comunidade segura — a moderação vai analisar.';
+    this.reportFeedbackDismissTimer = setTimeout(() => {
+      this.reportFeedbackMessage = null;
+      this.reportFeedbackDismissTimer = null;
+    }, 7000);
+  }
+
+  private showAlreadyReportedFeedback(): void {
+    this.clearReportFeedbackTimer();
+    this.reportFeedbackTone = 'info';
+    this.reportFeedbackMessage =
+      'Já denunciaste esta publicação. A tua denúncia está registada — a moderação tratará do caso em breve.';
+    this.reportFeedbackDismissTimer = setTimeout(() => {
+      this.reportFeedbackMessage = null;
+      this.reportFeedbackDismissTimer = null;
+    }, 7000);
+  }
+
+  /** Mensagem informativa no banner (ex.: não é membro, castigado). */
+  private showReportInfoBanner(message: string): void {
+    this.clearReportFeedbackTimer();
+    this.reportFeedbackTone = 'info';
+    this.reportFeedbackMessage = message;
+    this.reportFeedbackDismissTimer = setTimeout(() => {
+      this.reportFeedbackMessage = null;
+      this.reportFeedbackDismissTimer = null;
+    }, 7000);
+  }
+
+  dismissReportFeedback(): void {
+    this.clearReportFeedbackTimer();
+    this.reportFeedbackMessage = null;
   }
 
   private load(id: number): void {
@@ -260,8 +314,24 @@ export class ComunidadeDetalheComponent implements OnInit, OnDestroy {
       next: (res) => {
         this.posts = res.posts || [];
         this.postsTotalCount = res.totalCount || 0;
+        const hp = this.route.snapshot.queryParamMap.get('highlightPost');
+        if (hp) {
+          const pid = parseInt(hp, 10);
+          if (!isNaN(pid)) {
+            setTimeout(() => this.tryScrollToHighlightedPost(pid), 0);
+          }
+        }
       }
     });
+  }
+
+  private tryScrollToHighlightedPost(postId: number): void {
+    const el = document.getElementById(`comunidade-post-${postId}`);
+    if (!el) return;
+    el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    const q = { ...this.route.snapshot.queryParams } as Record<string, string | undefined>;
+    delete q['highlightPost'];
+    this.router.navigate([], { relativeTo: this.route, queryParams: q, replaceUrl: true });
   }
 
   onSortChange(): void {
@@ -880,6 +950,10 @@ export class ComunidadeDetalheComponent implements OnInit, OnDestroy {
 
   openReportModal(post: PostDto): void {
     if (this.isCurrentCastigado) return;
+    if (post.jaReportou) {
+      this.showAlreadyReportedFeedback();
+      return;
+    }
     this.postToReport = post;
     this.showReportModal = true;
   }
@@ -901,10 +975,52 @@ export class ComunidadeDetalheComponent implements OnInit, OnDestroy {
           this.postToReport.jaReportou = true;
         }
         this.closeReportModal();
+        this.showReportSuccessFeedback();
       },
-      error: (err) => {
-        const errorMsg = err?.error?.message || 'Erro ao denunciar.';
-        alert(errorMsg);
+      error: (err: HttpErrorResponse) => {
+        const raw = err.error;
+        const errorMsg =
+          typeof raw === 'object' && raw !== null && 'message' in raw
+            ? String((raw as { message?: unknown }).message ?? '').trim()
+            : '';
+
+        if (err.status === 403) {
+          this.isReporting = false;
+          this.closeReportModal();
+          this.showReportInfoBanner(
+            errorMsg ||
+              'Só podes denunciar publicações se fores membro ativo desta comunidade. Junta-te à comunidade primeiro.'
+          );
+          return;
+        }
+
+        if (/já\s+denunciaste|denunciaste\s+esta/i.test(errorMsg)) {
+          if (this.postToReport) {
+            this.postToReport.jaReportou = true;
+          }
+          this.isReporting = false;
+          this.closeReportModal();
+          this.showAlreadyReportedFeedback();
+          return;
+        }
+
+        if (/castigado/i.test(errorMsg)) {
+          this.isReporting = false;
+          this.closeReportModal();
+          this.showReportInfoBanner(
+            errorMsg || 'Estás castigado e não podes denunciar publicações neste período.'
+          );
+          return;
+        }
+
+        if (errorMsg) {
+          this.isReporting = false;
+          this.closeReportModal();
+          this.showReportInfoBanner(errorMsg);
+          return;
+        }
+
+        alert('Erro ao denunciar.');
         this.isReporting = false;
       }
     });

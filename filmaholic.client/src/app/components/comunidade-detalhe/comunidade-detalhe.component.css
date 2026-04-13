@@ -186,6 +186,97 @@
     color: #fff;
   }
 
+.report-feedback-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin: 0 0 18px;
+  padding: 14px 16px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, rgba(34, 197, 94, 0.18), rgba(16, 185, 129, 0.12));
+  border: 1px solid rgba(74, 222, 128, 0.45);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+  animation: reportBannerIn 0.35s ease;
+}
+
+.report-feedback-banner--info {
+  background: linear-gradient(135deg, rgba(251, 191, 36, 0.16), rgba(245, 158, 11, 0.1));
+  border-color: rgba(251, 191, 36, 0.5);
+}
+
+@keyframes reportBannerIn {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.report-feedback-banner__icon {
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: rgba(74, 222, 128, 0.25);
+  color: #86efac;
+}
+
+.report-feedback-banner--info .report-feedback-banner__icon {
+  background: rgba(251, 191, 36, 0.22);
+  color: #fde68a;
+}
+
+.report-feedback-banner__text {
+  margin: 0;
+  flex: 1;
+  min-width: 0;
+  font-size: 14px;
+  line-height: 1.45;
+  font-weight: 600;
+  color: rgba(236, 253, 245, 0.96);
+}
+
+.report-feedback-banner--info .report-feedback-banner__text {
+  color: rgba(254, 252, 232, 0.96);
+}
+
+.report-feedback-banner__close {
+  flex-shrink: 0;
+  margin: -4px -6px -4px 0;
+  padding: 6px 10px;
+  border: none;
+  background: transparent;
+  color: rgba(236, 253, 245, 0.75);
+  font-size: 22px;
+  line-height: 1;
+  cursor: pointer;
+  border-radius: 8px;
+  transition: color 0.15s ease, background 0.15s ease;
+}
+
+.report-feedback-banner--info .report-feedback-banner__close {
+  color: rgba(254, 252, 232, 0.75);
+}
+
+.report-feedback-banner__close:hover {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.report-btn--done {
+  opacity: 0.88;
+  outline: 1px solid rgba(251, 191, 36, 0.35);
+  outline-offset: 0;
+  border-radius: 8px;
+}
+
 .state {
   margin-bottom: 12px;
   color: #ccc;
@@ -838,6 +929,7 @@ a.comment-author-link:hover {
   line-height: 1.4;
   overflow-wrap: break-word;
   word-break: break-word;
+  white-space: pre-line;
 }
 
 .no-comments {
@@ -1294,7 +1386,8 @@ a.comment-author-link:hover {
   line-height: 1.5;
   word-break: break-all;
   overflow-wrap: anywhere;
-  white-space: normal;
+  /* Respeita Enter do autor (quebras \n); colapsa espaços extra entre palavras */
+  white-space: pre-line;
 }
 
 .post-imagem {
