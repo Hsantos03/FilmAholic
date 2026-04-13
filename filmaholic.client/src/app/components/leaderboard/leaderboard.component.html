@@ -54,7 +54,8 @@
           <span *ngIf="!activeBoard[1].fotoPerfilUrl">{{ avatarLetter(activeBoard[1].userName) }}</span>
         </div>
         <div class="podium-medal">{{ rankIcon(2) }}</div>
-        <div class="podium-name">{{ displayName(activeBoard[1].userName) }}</div>
+        <a *ngIf="activeBoard[1].utilizadorId" class="podium-name podium-profile-link" [routerLink]="['/profile', activeBoard[1].utilizadorId]">{{ displayName(activeBoard[1].userName) }}</a>
+        <span *ngIf="!activeBoard[1].utilizadorId" class="podium-name">{{ displayName(activeBoard[1].userName) }}</span>
         <div class="podium-score">{{ activeBoard[1].bestScore }}</div>
         <div class="podium-block podium-block-2"></div>
       </div>
@@ -69,7 +70,8 @@
           <span *ngIf="!activeBoard[0].fotoPerfilUrl">{{ avatarLetter(activeBoard[0].userName) }}</span>
         </div>
         <div class="podium-medal">{{ rankIcon(1) }}</div>
-        <div class="podium-name">{{ displayName(activeBoard[0].userName) }}</div>
+        <a *ngIf="activeBoard[0].utilizadorId" class="podium-name podium-profile-link" [routerLink]="['/profile', activeBoard[0].utilizadorId]">{{ displayName(activeBoard[0].userName) }}</a>
+        <span *ngIf="!activeBoard[0].utilizadorId" class="podium-name">{{ displayName(activeBoard[0].userName) }}</span>
         <div class="podium-score">{{ activeBoard[0].bestScore }}</div>
         <div class="podium-block podium-block-1"></div>
       </div>
@@ -83,7 +85,8 @@
           <span *ngIf="!activeBoard[2].fotoPerfilUrl">{{ avatarLetter(activeBoard[2].userName) }}</span>
         </div>
         <div class="podium-medal">{{ rankIcon(3) }}</div>
-        <div class="podium-name">{{ displayName(activeBoard[2].userName) }}</div>
+        <a *ngIf="activeBoard[2].utilizadorId" class="podium-name podium-profile-link" [routerLink]="['/profile', activeBoard[2].utilizadorId]">{{ displayName(activeBoard[2].userName) }}</a>
+        <span *ngIf="!activeBoard[2].utilizadorId" class="podium-name">{{ displayName(activeBoard[2].userName) }}</span>
         <div class="podium-score">{{ activeBoard[2].bestScore }}</div>
         <div class="podium-block podium-block-3"></div>
       </div>
@@ -136,7 +139,11 @@
               <span *ngIf="!entry.fotoPerfilUrl">{{ avatarLetter(entry.userName) }}</span>
             </div>
             <div class="player-details">
-              <span class="player-name">
+              <a *ngIf="entry.utilizadorId" class="player-name player-profile-link" [routerLink]="['/profile', entry.utilizadorId]">
+                {{ displayName(entry.userName) }}
+                <span class="you-tag" *ngIf="isCurrentUser(entry)">Tu</span>
+              </a>
+              <span *ngIf="!entry.utilizadorId" class="player-name">
                 {{ displayName(entry.userName) }}
                 <span class="you-tag" *ngIf="isCurrentUser(entry)">Tu</span>
               </span>

@@ -543,6 +543,24 @@
   white-space: nowrap;
 }
 
+a.podium-profile-link {
+  color: inherit;
+  text-decoration: none;
+  cursor: pointer;
+  transition: color 0.2s;
+}
+
+a.podium-profile-link:hover {
+  color: #fde68a;
+  text-decoration: underline;
+}
+
+a.podium-profile-link:focus-visible {
+  outline: 2px solid #fbbf24;
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
 .podium-score {
   font-family: 'Bebas Neue', sans-serif;
   font-size: 26px;
@@ -792,6 +810,24 @@
   display: flex;
   align-items: center;
   gap: 6px;
+}
+
+a.player-profile-link {
+  color: inherit;
+  text-decoration: none;
+  cursor: pointer;
+  transition: color 0.2s;
+}
+
+a.player-profile-link:hover {
+  color: #fde68a;
+  text-decoration: underline;
+}
+
+a.player-profile-link:focus-visible {
+  outline: 2px solid #fbbf24;
+  outline-offset: 2px;
+  border-radius: 4px;
 }
 
 .you-tag {
