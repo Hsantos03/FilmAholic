@@ -1,7 +1,7 @@
 import { Component, OnInit, OnDestroy, ElementRef, ViewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { FilmesService, TmdbSearchResponse, TmdbMovieResult } from '../../services/filmes.service';
-import { AtoresService, ActorSearchResult, ActorMovie } from '../../services/atores.service';
+import { AtoresService, ActorSearchResult } from '../../services/atores.service';
 import { MenuService } from '../../services/menu.service';
 import { AuthService } from '../../services/auth.service';
 import { DesafiosService } from '../../services/desafios.service';
@@ -64,9 +64,6 @@ export class SearchResultsComponent implements OnInit, OnDestroy {
   query: string = '';
   results: SearchResultItem[] = [];
   actorResults: ActorSearchResult[] = [];
-  selectedActor: ActorSearchResult | null = null;
-  actorMovies: ActorMovie[] = [];
-  loadingActorMovies = false;
   isLoading = false;
   error = '';
 
@@ -126,8 +123,6 @@ export class SearchResultsComponent implements OnInit, OnDestroy {
       const q = params.get('q') || '';
       this.query = q.trim();
       this.searchTerm = this.query;
-      this.selectedActor = null;
-      this.actorMovies = [];
       this.actorResults = [];
 
       if (this.query) {
@@ -553,6 +548,22 @@ export class SearchResultsComponent implements OnInit, OnDestroy {
   }
 
   /// <summary>
+  /// Iniciais para o avatar quando o ator não tem foto no TMDB (uma letra ou duas em nome composto).
+  /// </summary>
+  actorAvatarInitials(nome: string): string {
+    const parts = (nome || '').trim().split(/\s+/).filter(Boolean);
+    if (parts.length === 0) return '?';
+    if (parts.length === 1) {
+      const w = parts[0];
+      return w.length ? w[0].toUpperCase() : '?';
+    }
+    const first = parts[0][0];
+    const last = parts[parts.length - 1][0];
+    if (first && last) return (first + last).toUpperCase();
+    return (first || last || '?').toUpperCase();
+  }
+
+  /// <summary>
   /// Carrega os resultados de atores com base na consulta fornecida.
   /// </summary>
   private loadActorResults(query: string): void {
@@ -564,56 +575,6 @@ export class SearchResultsComponent implements OnInit, OnDestroy {
       },
       error: () => {
         this.actorResults = [];
-      }
-    });
-  }
-
-  /// <summary>
-  /// Seleciona um ator e carrega os filmes associados.
-  /// </summary>
-  selectActor(actor: ActorSearchResult): void {
-    this.selectedActor = actor;
-    this.actorMovies = [];
-    this.loadingActorMovies = true;
-    this.atoresService.getMoviesByActor(actor.id).subscribe({
-      next: (movies) => {
-        this.actorMovies = movies || [];
-        this.loadingActorMovies = false;
-      },
-      error: () => {
-        this.actorMovies = [];
-        this.loadingActorMovies = false;
-      }
-    });
-  }
-
-  /// <summary>
-  /// Limpa a seleção de ator e os filmes associados.
-  /// </summary>
-  clearActorSelection(): void {
-    this.selectedActor = null;
-    this.actorMovies = [];
-  }
-
-  /// <summary>
-  /// Abre o detalhe de um filme associado a um ator.
-  /// </summary>
-  openActorMovie(movie: ActorMovie): void {
-    if (!movie?.id) return;
-    this.isLoading = true;
-    this.error = '';
-    this.filmesService.addMovieFromTmdb(movie.id).subscribe({
-      next: (m: any) => {
-        this.isLoading = false;
-        if (m?.id != null) {
-          this.router.navigate(['/movie-detail', m.id]);
-        } else {
-          this.error = 'Não foi possível abrir o filme.';
-        }
-      },
-      error: () => {
-        this.error = 'Erro ao abrir o filme. Por favor tente novamente.';
-        this.isLoading = false;
       }
     });
   }

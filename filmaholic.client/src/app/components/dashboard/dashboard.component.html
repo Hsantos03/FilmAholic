@@ -51,9 +51,9 @@
 
                (keyup.enter)="doSearch()"
 
-               placeholder="Pesquisar filmes..."
+               placeholder="Pesquisar filmes ou atores..."
 
-               aria-label="Pesquisar" />
+               aria-label="Pesquisar filmes ou atores" />
 
         <button class="pill-icon right" type="button" aria-label="Pesquisar" (click)="doSearch()">
 
@@ -69,7 +69,7 @@
 
 
 
-      <div class="search-menu" *ngIf="showSearchMenu" role="listbox" aria-label="Sugestões de filmes">
+      <div class="search-menu" *ngIf="showSearchMenu" role="listbox" aria-label="Sugestões de filmes e atores">
 
         <!-- Histórico de pesquisa -->
 
@@ -151,9 +151,35 @@
 
            role="option">
 
-          <img class="search-thumb" [src]="posterOf(m)" [alt]="m.titulo" />
+          <img *ngIf="!isActorSearchPlaceholder(m)"
 
-          <div class="search-title">{{ m.titulo }}</div>
+               class="search-thumb"
+
+               [class.search-thumb--actor]="m.kind === 'actor'"
+
+               [src]="posterOf(m)"
+
+               [alt]="m.titulo" />
+
+          <div *ngIf="isActorSearchPlaceholder(m)"
+
+               class="search-thumb search-thumb--actor search-thumb--actor-fallback"
+
+               role="img"
+
+               [attr.aria-label]="'Sem retrato: ' + m.titulo">
+
+            <span class="search-thumb-initials">{{ actorAvatarInitials(m.titulo) }}</span>
+
+          </div>
+
+          <div class="search-item-main">
+
+            <div class="search-title">{{ m.titulo }}</div>
+
+            <span *ngIf="m.kind === 'actor'" class="search-kind-tag">Ator</span>
+
+          </div>
 
         </a>
 

@@ -242,10 +242,26 @@ export class ActorDetailComponent implements OnInit, OnDestroy {
   }
 
   /// <summary>
-  /// Retorna a URL da foto do ator ou uma imagem de placeholder se não estiver disponível.
+  /// Indica se o ator tem URL de foto utilizável.
   /// </summary>
-  get actorPhoto(): string {
-    return this.actor?.fotoUrl || 'https://via.placeholder.com/220x220?text=Actor';
+  actorHasPhoto(a: ActorDetails): boolean {
+    return !!(a?.fotoUrl || '').trim();
+  }
+
+  /// <summary>
+  /// Iniciais para avatar quando não há foto (alinhado com pesquisa e perfil).
+  /// </summary>
+  actorAvatarInitials(nome: string): string {
+    const parts = (nome || '').trim().split(/\s+/).filter(Boolean);
+    if (parts.length === 0) return '?';
+    if (parts.length === 1) {
+      const w = parts[0];
+      return w.length ? w[0].toUpperCase() : '?';
+    }
+    const first = parts[0][0];
+    const last = parts[parts.length - 1][0];
+    if (first && last) return (first + last).toUpperCase();
+    return (first || last || '?').toUpperCase();
   }
 }
 

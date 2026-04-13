@@ -47,6 +47,41 @@
   box-shadow: 0 10px 30px rgba(0,0,0,0.75);
 }
 
+.actor-photo--fallback {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+  object-fit: unset;
+  box-sizing: border-box;
+  background: linear-gradient(155deg, rgba(237, 97, 145, 0.5) 0%, rgba(120, 60, 120, 0.4) 45%, rgba(251, 191, 36, 0.28) 100%);
+  box-shadow:
+    0 10px 30px rgba(0, 0, 0, 0.75),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.14);
+}
+
+.actor-photo--fallback::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: radial-gradient(circle at 30% 25%, rgba(255, 255, 255, 0.22), transparent 55%);
+  pointer-events: none;
+}
+
+.actor-photo-initials {
+  position: relative;
+  z-index: 1;
+  font-size: clamp(3rem, 10vw, 4.25rem);
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: 0.03em;
+  color: rgba(255, 255, 255, 0.96);
+  text-shadow: 0 3px 18px rgba(0, 0, 0, 0.5);
+  user-select: none;
+}
+
 .actor-meta {
   position: relative;
   z-index: 1;

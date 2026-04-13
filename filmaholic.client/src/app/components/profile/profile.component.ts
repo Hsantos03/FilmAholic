@@ -104,7 +104,7 @@ export class ProfileComponent implements OnInit {
   editBio = '';
   editFotoPerfilUrl: string | null = null;
   editCapaUrl: string | null = null;
-
+  
   isEditingCapa = false;
   isEditingAvatar = false;
   avatarError = '';
@@ -1198,7 +1198,7 @@ export class ProfileComponent implements OnInit {
   removeFromLists(filmeId: number): void {
     const filme = this.catalogo.find(f => f.id === filmeId);
     if (!filme) return;
-
+    
     const userMovie = [...this.watchLater, ...this.watched].find(
       x => x?.filme?.titulo === filme.titulo || x?.filme?.Titulo === filme.titulo
     );
@@ -1276,18 +1276,18 @@ export class ProfileComponent implements OnInit {
   inWatchLater(filmeId: number): boolean {
     const filme = this.catalogo.find(f => f.id === filmeId);
     if (!filme) return false;
-    return this.watchLater?.some(x => x?.filme?.titulo === filme.titulo ||
-      x?.filme?.Titulo === filme.titulo);
+    return this.watchLater?.some(x => x?.filme?.titulo === filme.titulo || 
+                                      x?.filme?.Titulo === filme.titulo);
   }
-  
+
   /// <summary>
   /// Verifica se um filme está na lista "Já vi" do utilizador.
   /// </summary>
   inWatched(filmeId: number): boolean {
     const filme = this.catalogo.find(f => f.id === filmeId);
     if (!filme) return false;
-    return this.watched?.some(x => x?.filme?.titulo === filme.titulo ||
-      x?.filme?.Titulo === filme.titulo);
+    return this.watched?.some(x => x?.filme?.titulo === filme.titulo || 
+                                   x?.filme?.Titulo === filme.titulo);
   }
 
   /// <summary>
@@ -1512,6 +1512,22 @@ export class ProfileComponent implements OnInit {
       this.showSuggestions = false;
       this.actorSuggestions = [];
     }
+  }
+
+  /// <summary>
+  /// Iniciais para avatar quando o ator não tem foto (barra de pesquisa e grelha de favoritos).
+  /// </summary>
+  actorAvatarInitials(nome: string): string {
+    const parts = (nome || '').trim().split(/\s+/).filter(Boolean);
+    if (parts.length === 0) return '?';
+    if (parts.length === 1) {
+      const w = parts[0];
+      return w.length ? w[0].toUpperCase() : '?';
+    }
+    const first = parts[0][0];
+    const last = parts[parts.length - 1][0];
+    if (first && last) return (first + last).toUpperCase();
+    return (first || last || '?').toUpperCase();
   }
 
   /// <summary>
@@ -2298,7 +2314,7 @@ export class ProfileComponent implements OnInit {
     if (type === 'watchLater') this.watchLaterFilter = 'all';
     if (type === 'watched') this.watchedFilter = 'all';
   }
-  
+
   /// <summary>
   /// Fecha o modal de listas.
   /// </summary>
@@ -2306,7 +2322,7 @@ export class ProfileComponent implements OnInit {
     this.showListModal = false;
     this.currentListType = null;
   }
-  
+
   /// <summary>
   /// Obtém a lista atual filtrada.
   /// </summary>
@@ -2357,12 +2373,12 @@ export class ProfileComponent implements OnInit {
         case '7days': {
           const cutoff = Date.now() - 7 * 24 * 60 * 60 * 1000;
           return list.filter(m => (parseDate(m)?.getTime() ?? 0) >= cutoff)
-            .sort((a, b) => (parseDate(b)?.getTime() ?? 0) - (parseDate(a)?.getTime() ?? 0));
+                     .sort((a, b) => (parseDate(b)?.getTime() ?? 0) - (parseDate(a)?.getTime() ?? 0));
         }
         case '30days': {
           const cutoff = Date.now() - 30 * 24 * 60 * 60 * 1000;
           return list.filter(m => (parseDate(m)?.getTime() ?? 0) >= cutoff)
-            .sort((a, b) => (parseDate(b)?.getTime() ?? 0) - (parseDate(a)?.getTime() ?? 0));
+                     .sort((a, b) => (parseDate(b)?.getTime() ?? 0) - (parseDate(a)?.getTime() ?? 0));
         }
         case 'all':
         default:

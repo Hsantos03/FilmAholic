@@ -75,8 +75,8 @@
       <input type="text"
              [(ngModel)]="searchTerm"
              (keyup.enter)="doSearch()"
-             placeholder="Pesquisar filmes..."
-             aria-label="Pesquisar" />
+             placeholder="Pesquisar filmes ou atores..."
+             aria-label="Pesquisar filmes ou atores" />
 
       <button class="pill-icon right" type="button" aria-label="Pesquisar" (click)="doSearch()">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
@@ -159,35 +159,19 @@
     <section class="search-section" *ngIf="actorResults.length > 0">
       <h3 class="section-title">Atores</h3>
       <div class="actors-row">
-        <button type="button"
-                class="actor-card"
-                *ngFor="let a of actorResults"
-                (click)="selectActor(a)"
-                [class.selected]="selectedActor?.id === a.id">
+        <a class="actor-card"
+           *ngFor="let a of actorResults"
+           [routerLink]="['/actor', a.id]"
+           [attr.title]="'Ver perfil de ' + a.nome">
           <img *ngIf="a.fotoUrl" class="actor-thumb" [src]="a.fotoUrl" [alt]="a.nome" />
-          <div *ngIf="!a.fotoUrl" class="actor-no-photo">{{ a.nome }}</div>
-          <span class="actor-name">{{ a.nome }}</span>
-        </button>
-      </div>
-      <div *ngIf="selectedActor" class="actor-movies-block">
-        <div class="actor-movies-header">
-          <h4>Filmes de {{ selectedActor.nome }}</h4>
-          <button type="button" class="link-btn" (click)="clearActorSelection()">Ver menos</button>
-        </div>
-        <div *ngIf="loadingActorMovies" class="state">A carregar filmes&hellip;</div>
-        <div class="results-grid" *ngIf="!loadingActorMovies && actorMovies.length">
-          <div class="result-card"
-               *ngFor="let m of actorMovies"
-               (click)="openActorMovie(m)">
-            <img *ngIf="m.posterUrl" class="result-thumb" [src]="m.posterUrl" [alt]="m.titulo" />
-            <div *ngIf="!m.posterUrl" class="result-no-poster">{{ m.titulo }}</div>
-            <div class="result-overlay">
-              <div class="result-title">{{ m.titulo }}</div>
-              <div *ngIf="m.personagem" class="result-subtitle">{{ m.personagem }}</div>
-            </div>
+          <div *ngIf="!a.fotoUrl"
+               class="actor-no-photo"
+               role="img"
+               [attr.aria-label]="'Sem retrato: ' + a.nome">
+            <span class="actor-no-photo-initials">{{ actorAvatarInitials(a.nome) }}</span>
           </div>
-        </div>
-        <div *ngIf="!loadingActorMovies && actorMovies.length === 0" class="state">Nenhum filme encontrado.</div>
+          <span class="actor-name">{{ a.nome }}</span>
+        </a>
       </div>
     </section>
 

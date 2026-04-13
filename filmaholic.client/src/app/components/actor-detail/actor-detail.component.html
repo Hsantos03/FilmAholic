@@ -13,7 +13,16 @@
   <section *ngIf="actor as a" class="actor-page">
     <div class="actor-hero" data-tour="actor-hero">
       <div class="actor-photo-wrap">
-        <img class="actor-photo" [src]="actorPhoto" [alt]="a.nome" />
+        <img *ngIf="actorHasPhoto(a)"
+             class="actor-photo"
+             [src]="a.fotoUrl!"
+             [alt]="a.nome" />
+        <div *ngIf="!actorHasPhoto(a)"
+             class="actor-photo actor-photo--fallback"
+             role="img"
+             [attr.aria-label]="'Sem retrato: ' + a.nome">
+          <span class="actor-photo-initials">{{ actorAvatarInitials(a.nome) }}</span>
+        </div>
       </div>
 
       <div class="actor-meta">

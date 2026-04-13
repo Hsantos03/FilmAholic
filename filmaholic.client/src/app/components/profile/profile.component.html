@@ -355,7 +355,7 @@
                      [style.background-image]="actor.fotoUrl ? 'url(' + actor.fotoUrl + ')' : 'none'"
                      [class.has-photo]="actor.fotoUrl"
                      [class.no-photo]="!actor.fotoUrl">
-                  <span class="avatar-initial" *ngIf="!actor.fotoUrl">{{ actor.nome.charAt(0).toUpperCase() }}</span>
+                  <span class="avatar-initial" *ngIf="!actor.fotoUrl">{{ actorAvatarInitials(actor.nome) }}</span>
                 </div>
                 <div class="suggestion-info">
                   <span class="suggestion-name">{{ actor.nome }}</span>
@@ -394,7 +394,7 @@
                   <span class="position-badge">{{ i + 1 }}</span>
                   <div class="actor-photo">
                     <img *ngIf="a.fotoUrl" [src]="a.fotoUrl" [alt]="a.nome" />
-                    <div *ngIf="!a.fotoUrl" class="initial">{{ a.nome[0] }}</div>
+                    <div *ngIf="!a.fotoUrl" class="initial">{{ actorAvatarInitials(a.nome) }}</div>
                   </div>
                   <div class="actor-name-label">{{ a.nome }}</div>
                 </a>
@@ -402,7 +402,7 @@
                   <span class="position-badge">{{ i + 1 }}</span>
                   <div class="actor-photo">
                     <img *ngIf="a.fotoUrl" [src]="a.fotoUrl" [alt]="a.nome" />
-                    <div *ngIf="!a.fotoUrl" class="initial">{{ a.nome[0] }}</div>
+                    <div *ngIf="!a.fotoUrl" class="initial">{{ actorAvatarInitials(a.nome) }}</div>
                   </div>
                   <div class="actor-name-label">{{ a.nome }}</div>
                 </ng-container>
@@ -410,7 +410,7 @@
                   <span class="position-badge">{{ i + 1 }}</span>
                   <div class="actor-photo">
                     <img *ngIf="a.fotoUrl" [src]="a.fotoUrl" [alt]="a.nome" (dblclick)="removeAtorFavorito(a)" [title]="a.nome + ' — duplo clique para remover'" />
-                    <div *ngIf="!a.fotoUrl" class="initial" (dblclick)="removeAtorFavorito(a)" [title]="a.nome + ' — duplo clique para remover'">{{ a.nome[0] }}</div>
+                    <div *ngIf="!a.fotoUrl" class="initial" (dblclick)="removeAtorFavorito(a)" [title]="a.nome + ' — duplo clique para remover'">{{ actorAvatarInitials(a.nome) }}</div>
                   </div>
                   <div class="actor-name-label">{{ a.nome }}</div>
                 </ng-container>
@@ -490,7 +490,7 @@
                          [style.background-image]="actor.fotoUrl ? 'url(' + actor.fotoUrl + ')' : 'none'"
                          [class.has-photo]="actor.fotoUrl"
                          [class.no-photo]="!actor.fotoUrl">
-                      <span class="avatar-initial" *ngIf="!actor.fotoUrl">{{ actor.nome.charAt(0).toUpperCase() }}</span>
+                      <span class="avatar-initial" *ngIf="!actor.fotoUrl">{{ actorAvatarInitials(actor.nome) }}</span>
                     </div>
                     <div class="suggestion-info">
                       <span class="suggestion-name">{{ actor.nome }}</span>
@@ -530,7 +530,7 @@
                     <span class="position-badge">{{ i + 1 }}</span>
                     <div class="actor-photo">
                       <img *ngIf="a.fotoUrl" [src]="a.fotoUrl" [alt]="a.nome" />
-                      <div *ngIf="!a.fotoUrl" class="initial">{{ a.nome[0] }}</div>
+                      <div *ngIf="!a.fotoUrl" class="initial">{{ actorAvatarInitials(a.nome) }}</div>
                     </div>
                     <div class="actor-name-label">{{ a.nome }}</div>
                   </a>
@@ -538,7 +538,7 @@
                     <span class="position-badge">{{ i + 1 }}</span>
                     <div class="actor-photo">
                       <img *ngIf="a.fotoUrl" [src]="a.fotoUrl" [alt]="a.nome" />
-                      <div *ngIf="!a.fotoUrl" class="initial">{{ a.nome[0] }}</div>
+                      <div *ngIf="!a.fotoUrl" class="initial">{{ actorAvatarInitials(a.nome) }}</div>
                     </div>
                     <div class="actor-name-label">{{ a.nome }}</div>
                   </ng-container>
@@ -546,7 +546,7 @@
                     <span class="position-badge">{{ i + 1 }}</span>
                     <div class="actor-photo">
                       <img *ngIf="a.fotoUrl" [src]="a.fotoUrl" [alt]="a.nome" (dblclick)="removeAtorFavorito(a)" [title]="a.nome + ' — duplo clique para remover'" />
-                      <div *ngIf="!a.fotoUrl" class="initial" (dblclick)="removeAtorFavorito(a)" [title]="a.nome + ' — duplo clique para remover'">{{ a.nome[0] }}</div>
+                      <div *ngIf="!a.fotoUrl" class="initial" (dblclick)="removeAtorFavorito(a)" [title]="a.nome + ' — duplo clique para remover'">{{ actorAvatarInitials(a.nome) }}</div>
                     </div>
                     <div class="actor-name-label">{{ a.nome }}</div>
                   </ng-container>

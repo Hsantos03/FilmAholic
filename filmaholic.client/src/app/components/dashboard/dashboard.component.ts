@@ -4,15 +4,15 @@ import { Router, ActivatedRoute } from '@angular/router';
 
 import { take } from 'rxjs/operators';
 
-import { Subject, Subscription } from 'rxjs';
+import { forkJoin, of, Subject, Subscription } from 'rxjs';
 
-import { debounceTime, filter, switchMap } from 'rxjs/operators';
+import { catchError, debounceTime, filter, switchMap } from 'rxjs/operators';
 
 import { DesafiosService } from '../../services/desafios.service';
 
-import { Filme, FilmesService, RecomendacaoDto } from '../../services/filmes.service';
+import { Filme, FilmesService, RecomendacaoDto, TmdbSearchResponse } from '../../services/filmes.service';
 
-import { AtoresService, PopularActor } from '../../services/atores.service';
+import { ActorSearchResult, AtoresService, PopularActor } from '../../services/atores.service';
 
 import { ProfileService } from '../../services/profile.service';
 
@@ -43,6 +43,9 @@ export interface SearchResultItem {
   titulo: string;
 
   posterUrl: string;
+
+  /** Quando `actor`, `tmdbId` é o ID da pessoa no TMDB. */
+  kind?: 'movie' | 'actor';
 
 }
 
@@ -99,9 +102,9 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
       selector: '[data-tour="dashboard-search"]',
 
-      title: 'Pesquisar filmes',
+      title: 'Pesquisar filmes e atores',
 
-      body: 'Escreve um título para encontrar filmes. Com sugestões activas, também vês ideias alinhadas com os teus géneros.'
+      body: 'Escreve um título ou um nome de ator. Com sugestões activas, também vês ideias alinhadas com os teus géneros.'
 
     },
 
@@ -374,23 +377,32 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
 
 
+    const emptyMovies: TmdbSearchResponse = { page: 1, results: [], total_pages: 0, total_results: 0 };
+
     this.searchSub = this.searchTerm$.pipe(
 
       debounceTime(400),
 
       filter(q => q.length >= 2),
 
-      switchMap(q => this.filmesService.searchMovies(q, 1))
+      switchMap(q =>
+        forkJoin({
+          movies: this.filmesService.searchMovies(q, 1).pipe(catchError(() => of(emptyMovies))),
+          actors: this.atoresService.searchActors(q).pipe(catchError(() => of([] as ActorSearchResult[])))
+        })
+      )
 
     ).subscribe({
 
-      next: (res) => {
+      next: ({ movies, actors }) => {
 
         this.searchResultsLoading = false;
 
-        const list = res?.results || [];
+        const list = movies?.results || [];
 
-        this.searchResults = list.map(r => ({
+        const movieItems: SearchResultItem[] = list.slice(0, 5).map(r => ({
+
+          kind: 'movie',
 
           tmdbId: r.id,
 
@@ -399,6 +411,20 @@ export class DashboardComponent implements OnInit, OnDestroy {
           posterUrl: r.poster_path ? `https://image.tmdb.org/t/p/w300${r.poster_path}` : 'https://via.placeholder.com/300x450?text=Poster'
 
         }));
+
+        const actorItems: SearchResultItem[] = (actors || []).slice(0, 5).map(a => ({
+
+          kind: 'actor',
+
+          tmdbId: a.id,
+
+          titulo: a.nome,
+
+          posterUrl: a.fotoUrl || ''
+
+        }));
+
+        this.searchResults = [...movieItems, ...actorItems];
 
       },
 
@@ -1328,6 +1354,14 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
     this.closeSearchMenu();
 
+    if (item.kind === 'actor' && item.tmdbId != null) {
+
+      this.router.navigate(['/actor', item.tmdbId]);
+
+      return;
+
+    }
+
     if (item.id != null && item.id > 0) {
 
       this.router.navigate(['/movie-detail', item.id]);
@@ -1797,6 +1831,29 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
   private readonly posterFallback = 'https://via.placeholder.com/300x450?text=Sem+poster';
 
+
+  /// <summary>
+  /// Indica se o item da pesquisa é um ator sem foto (mostra avatar com iniciais em vez de imagem).
+  /// </summary>
+  isActorSearchPlaceholder(item: SearchResultItem): boolean {
+    return item?.kind === 'actor' && !(item.posterUrl || '').trim();
+  }
+
+  /// <summary>
+  /// Iniciais para avatar quando não há foto (igual à página de pesquisa / perfil).
+  /// </summary>
+  actorAvatarInitials(nome: string): string {
+    const parts = (nome || '').trim().split(/\s+/).filter(Boolean);
+    if (parts.length === 0) return '?';
+    if (parts.length === 1) {
+      const w = parts[0];
+      return w.length ? w[0].toUpperCase() : '?';
+    }
+    const first = parts[0][0];
+    const last = parts[parts.length - 1][0];
+    if (first && last) return (first + last).toUpperCase();
+    return (first || last || '?').toUpperCase();
+  }
 
   /// <summary>
   /// Obtém a URL do poster de um filme ou item de resultado de pesquisa, retornando uma imagem de placeholder caso a URL não esteja disponível ou seja inválida.
