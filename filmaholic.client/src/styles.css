@@ -167,8 +167,12 @@ app-root > *:not(router-outlet) {
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 2000;
+  z-index: 2800;
   animation: fadeIn 0.2s ease-out;
+  padding: max(16px, env(safe-area-inset-top, 0px)) 16px max(16px, env(safe-area-inset-bottom, 0px));
+  box-sizing: border-box;
+  overflow-y: auto;
+  overscroll-behavior: contain;
 }
 
 /* Modal partilhado (perfil edição, etc.) - reutilizar .modal-overlay e .modal-box */
@@ -180,8 +184,12 @@ app-root > *:not(router-outlet) {
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 2000;
+  z-index: 2800;
   animation: fadeIn 0.2s ease-out;
+  padding: max(16px, env(safe-area-inset-top, 0px)) 16px max(16px, env(safe-area-inset-bottom, 0px));
+  box-sizing: border-box;
+  overflow-y: auto;
+  overscroll-behavior: contain;
 }
 
 .modal-box {
@@ -194,6 +202,12 @@ app-root > *:not(router-outlet) {
   padding: 40px;
   position: relative;
   animation: slideUp 0.3s ease-out;
+  max-height: calc(100vh - 48px);
+  max-height: min(90vh, calc(100dvh - 48px));
+  overflow-x: hidden;
+  overflow-y: auto;
+  flex-shrink: 0;
+  -webkit-overflow-scrolling: touch;
 }
 
 .modal-box h3 {
