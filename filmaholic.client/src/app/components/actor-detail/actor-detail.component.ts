@@ -1,10 +1,11 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, ElementRef, HostListener, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Location } from '@angular/common';
-import { Subscription } from 'rxjs';
+import { Subject, Subscription, forkJoin, of } from 'rxjs';
 import { AtoresService, ActorDetails, ActorMovie } from '../../services/atores.service';
-import { FilmesService } from '../../services/filmes.service';
+import { Filme, FilmesService, TmdbSearchResponse } from '../../services/filmes.service';
 import { OnboardingStep } from '../../services/onboarding.service';
+import { catchError, debounceTime, filter, switchMap } from 'rxjs/operators';
 
 @Component({
   selector: 'app-actor-detail',
@@ -12,6 +13,12 @@ import { OnboardingStep } from '../../services/onboarding.service';
   styleUrls: ['./actor-detail.component.css', '../dashboard/dashboard.component.css']
 })
 export class ActorDetailComponent implements OnInit, OnDestroy {
+  @ViewChild('searchContainer', { static: false }) searchContainerRef?: ElementRef;
+  private readonly searchPosterFallback = 'https://via.placeholder.com/300x450?text=Sem+poster';
+  private readonly HISTORY_KEY_PREFIX = 'search_history';
+  private readonly MAX_HISTORY_ITEMS = 10;
+  private readonly searchTerm$ = new Subject<string>();
+
   readonly actorOnboardingSteps: OnboardingStep[] = [
     {
       selector: '[data-tour="actor-back"]',
@@ -34,8 +41,22 @@ export class ActorDetailComponent implements OnInit, OnDestroy {
   movies: ActorMovie[] = [];
   isLoading = false;
   error = '';
+  searchTerm = '';
+  searchResultsLoading = false;
+  showSearchMenu = false;
+  isHistoryMode = false;
+  searchHistory: string[] = [];
+  searchCatalog: Filme[] = [];
+  searchResults: Array<{
+    id?: number;
+    tmdbId?: number;
+    titulo: string;
+    posterUrl: string;
+    kind?: 'movie' | 'actor';
+  }> = [];
 
   private sub?: Subscription;
+  private searchSub?: Subscription;
 
   constructor(
     private location: Location,
@@ -46,6 +67,10 @@ export class ActorDetailComponent implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit(): void {
+    this.loadSearchHistory();
+    this.loadSearchCatalog();
+    this.setupSearchStream();
+
     this.sub = this.route.paramMap.subscribe(params => {
       const idParam = params.get('id');
       const id = idParam ? Number(idParam) : NaN;
@@ -59,6 +84,197 @@ export class ActorDetailComponent implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.sub?.unsubscribe();
+    this.searchSub?.unsubscribe();
+  }
+
+  private setupSearchStream(): void {
+    const emptyMovies: TmdbSearchResponse = { page: 1, results: [], total_pages: 0, total_results: 0 };
+    this.searchSub = this.searchTerm$.pipe(
+      debounceTime(400),
+      filter(q => q.length >= 2),
+      switchMap(q =>
+        forkJoin({
+          movies: this.filmesService.searchMovies(q, 1).pipe(catchError(() => of(emptyMovies))),
+          actors: this.atoresService.searchActors(q).pipe(catchError(() => of([])))
+        })
+      )
+    ).subscribe({
+      next: ({ movies, actors }) => {
+        this.searchResultsLoading = false;
+        const movieItems = (movies?.results || []).slice(0, 5).map(r => ({
+          kind: 'movie' as const,
+          tmdbId: r.id,
+          titulo: r.title || r.original_title || 'Sem título',
+          posterUrl: r.poster_path ? `https://image.tmdb.org/t/p/w300${r.poster_path}` : this.searchPosterFallback
+        }));
+        const actorItems = (actors || []).slice(0, 5).map((a: any) => ({
+          kind: 'actor' as const,
+          tmdbId: a.id,
+          titulo: a.nome,
+          posterUrl: a.fotoUrl || ''
+        }));
+        this.searchResults = [...movieItems, ...actorItems];
+      },
+      error: () => {
+        this.searchResultsLoading = false;
+        this.searchResults = [];
+      }
+    });
+  }
+
+  private loadSearchCatalog(): void {
+    this.filmesService.getAll().pipe(catchError(() => of([] as Filme[]))).subscribe(list => {
+      this.searchCatalog = list || [];
+    });
+  }
+
+  public onSearchChange(term: string): void {
+    this.searchTerm = term ?? '';
+    const q = this.searchTerm.trim();
+    const qLower = q.toLowerCase();
+
+    if (q.length === 0) {
+      this.isHistoryMode = false;
+      this.searchResults = [];
+      this.searchResultsLoading = false;
+      this.showSearchMenu = false;
+      return;
+    }
+
+    this.isHistoryMode = false;
+    this.showSearchMenu = true;
+    this.searchResults = this.searchCatalog
+      .filter(m => (m?.titulo || '').toLowerCase().includes(qLower))
+      .slice(0, 5)
+      .map(m => ({ id: m.id, titulo: m.titulo, posterUrl: m.posterUrl || '', kind: 'movie' as const }));
+
+    if (q.length >= 2) {
+      this.searchResultsLoading = true;
+      this.searchTerm$.next(q);
+    } else {
+      this.searchResultsLoading = false;
+    }
+  }
+
+  public onSearchFocus(): void {
+    const qlen = this.searchTerm.trim().length;
+    if (qlen > 0) {
+      this.isHistoryMode = false;
+      this.showSearchMenu = true;
+      return;
+    }
+    this.loadSearchHistory();
+    this.isHistoryMode = this.searchHistory.length > 0;
+    this.showSearchMenu = this.isHistoryMode;
+  }
+
+  public doSearch(): void {
+    const q = this.searchTerm.trim();
+    if (!q) return;
+    this.addToSearchHistory(q);
+    this.router.navigate(['/search'], { queryParams: { q } });
+  }
+
+  public openSearchResult(item: { id?: number; tmdbId?: number; kind?: 'movie' | 'actor'; titulo: string }): void {
+    if (!item) return;
+    this.showSearchMenu = false;
+    if (item.kind === 'actor' && item.tmdbId != null) {
+      this.router.navigate(['/actor', item.tmdbId]);
+      return;
+    }
+    if (item.id != null && item.id > 0) {
+      this.router.navigate(['/movie-detail', item.id]);
+      return;
+    }
+    if (item.tmdbId == null) return;
+    this.searchResultsLoading = true;
+    this.filmesService.addMovieFromTmdb(item.tmdbId).subscribe({
+      next: (movie: any) => {
+        this.searchResultsLoading = false;
+        if (movie?.id != null) this.router.navigate(['/movie-detail', movie.id]);
+      },
+      error: () => this.searchResultsLoading = false
+    });
+  }
+
+  @HostListener('document:click', ['$event'])
+  onDocumentClick(event: MouseEvent): void {
+    const target = event.target as Node | null;
+    const container = this.searchContainerRef?.nativeElement as HTMLElement | undefined;
+    if (container && !container.contains(target)) {
+      this.showSearchMenu = false;
+    }
+  }
+
+  private historyStorageKey(): string {
+    const id = localStorage.getItem('user_id');
+    return id ? `${this.HISTORY_KEY_PREFIX}:${id}` : `${this.HISTORY_KEY_PREFIX}:_anon`;
+  }
+
+  private loadSearchHistory(): void {
+    try {
+      const stored = localStorage.getItem(this.historyStorageKey());
+      const parsed = stored ? JSON.parse(stored) as unknown : [];
+      this.searchHistory = Array.isArray(parsed) ? parsed.filter((x): x is string => typeof x === 'string') : [];
+    } catch {
+      this.searchHistory = [];
+    }
+  }
+
+  private saveSearchHistory(): void {
+    try {
+      localStorage.setItem(this.historyStorageKey(), JSON.stringify(this.searchHistory));
+    } catch {
+      // ignore storage errors
+    }
+  }
+
+  private addToSearchHistory(term: string): void {
+    const trimmed = term.trim();
+    if (!trimmed) return;
+    this.searchHistory = this.searchHistory.filter(item => item.toLowerCase() !== trimmed.toLowerCase());
+    this.searchHistory.unshift(trimmed);
+    if (this.searchHistory.length > this.MAX_HISTORY_ITEMS) {
+      this.searchHistory = this.searchHistory.slice(0, this.MAX_HISTORY_ITEMS);
+    }
+    this.saveSearchHistory();
+  }
+
+  public selectFromHistory(term: string): void {
+    this.searchTerm = term;
+    this.showSearchMenu = false;
+    this.addToSearchHistory(term);
+    this.router.navigate(['/search'], { queryParams: { q: term } });
+  }
+
+  public removeFromHistory(term: string, event: MouseEvent): void {
+    event.stopPropagation();
+    this.searchHistory = this.searchHistory.filter(item => item !== term);
+    this.saveSearchHistory();
+    if (this.searchHistory.length === 0) {
+      this.isHistoryMode = false;
+      this.showSearchMenu = false;
+    }
+  }
+
+  public clearSearchHistory(event: MouseEvent): void {
+    event.stopPropagation();
+    this.searchHistory = [];
+    this.saveSearchHistory();
+    this.isHistoryMode = false;
+    this.showSearchMenu = false;
+  }
+
+  isActorSearchPlaceholder(item: { kind?: 'movie' | 'actor'; posterUrl: string }): boolean {
+    return item?.kind === 'actor' && !(item.posterUrl || '').trim();
+  }
+
+  posterOfSearch(item: { posterUrl: string }): string {
+    const u = (item?.posterUrl ?? '').trim();
+    if (!u) return this.searchPosterFallback;
+    const tmdbBase = 'https://image.tmdb.org/t/p/w500';
+    if (u.length <= tmdbBase.length) return this.searchPosterFallback;
+    return u;
   }
 
   private loadActor(personId: number): void {
