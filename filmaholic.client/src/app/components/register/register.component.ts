@@ -2,11 +2,18 @@ import { Component } from '@angular/core';
 import { AuthService } from '../../services/auth.service';
 import { Router } from '@angular/router';
 
+/// <summary>
+/// Componente responsável pelo registo de novos utilizadores, incluindo validação de campos, feedback de erros e integração com autenticação social.
+/// </summary>
 @Component({
   selector: 'app-register',
   templateUrl: './register.component.html',
   styleUrls: ['./register.component.css']
 })
+
+  /// <summary>
+  /// Componente de registo que gere o processo de criação de conta, validação de dados e interação com o serviço de autenticação para registrar novos utilizadores.
+  /// </summary>
 export class RegisterComponent {
   // Objeto com os campos que definimos na base de dados
   user = {
@@ -24,7 +31,9 @@ export class RegisterComponent {
   isLoading = false;
   todayISO = new Date().toISOString().split('T')[0];
 
-  // ValidaÃ§Ã£o de password em tempo real
+  /// <summary>
+  /// Representa os requisitos de uma password válida na aplicação.
+  /// </summary>
   passwordRequirements = {
     minLength: false,
     hasUppercase: false,
@@ -39,17 +48,28 @@ export class RegisterComponent {
   errorMessage = '';
   successMessage = '';
 
+  /// <summary>
+  /// Construtor do componente, injetando os serviços necessários para autenticação e roteamento.
+  /// </summary>
   constructor(private authService: AuthService, private router: Router) { }
 
+  /// <summary>
+  /// Alterna a visibilidade da password e da confirmação de password, permitindo ao utilizador ver ou ocultar os caracteres digitados.
+  /// </summary>
   toggleShowPassword(): void {
     this.showPassword = !this.showPassword;
   }
 
+  /// <summary>
+  /// Alterna a visibilidade da confirmação de password, permitindo ao utilizador ver ou ocultar os caracteres digitados.
+  /// </summary>
   toggleShowConfirmPassword(): void {
     this.showConfirmPassword = !this.showConfirmPassword;
   }
 
-  // Verificar requisitos da password em tempo real
+  /// <summary>
+  /// Verifica se a password atende aos requisitos definidos na aplicação.
+  /// </summary>
   checkPasswordRequirements(): void {
     const pwd = this.user.password || '';
     this.passwordRequirements = {
@@ -68,7 +88,9 @@ export class RegisterComponent {
     }
   }
 
-  // Verificar se as passwords coincidem
+  /// <summary>
+  /// Verifica se a password e a confirmação de password coincidem.
+  /// </summary>
   checkPasswordMatch(): void {
     if (this.user.confirmPassword) {
       this.showPasswordMismatch = this.user.password !== this.user.confirmPassword;
@@ -77,11 +99,16 @@ export class RegisterComponent {
     }
   }
 
-  // Verificar se a password Ã© vÃ¡lida
+  /// <summary>
+  /// Verifica se a password atende a todos os requisitos definidos na aplicação.
+  /// </summary>
   get isPasswordValid(): boolean {
     return Object.values(this.passwordRequirements).every(req => req === true);
   }
-
+  
+  /// <summary>
+  /// Método responsável por registrar um novo utilizador.
+  /// </summary>
   onRegister() {
     this.errorMessage = '';
     this.successMessage = '';
@@ -202,6 +229,9 @@ export class RegisterComponent {
     });
   }
 
+  /// <summary>
+  /// Reenvia o email de verificação para o utilizador registado.
+  /// </summary>
   reenviarEmail() {
     if (!this.registeredEmail) return;
     
@@ -221,11 +251,16 @@ export class RegisterComponent {
     });
   }
 
-  // MÃƒÂ©todos para registo/login social
+  /// <summary>
+  /// Inicia o processo de registo utilizando a autenticação social do Google.
+  /// </summary>
   registarComGoogle() {
     this.authService.googleLogin();
   }
 
+  /// <summary>
+  /// Inicia o processo de registo utilizando a autenticação social do Facebook.
+  /// </summary>
   registarComFacebook() {
     this.authService.facebookLogin();
   }

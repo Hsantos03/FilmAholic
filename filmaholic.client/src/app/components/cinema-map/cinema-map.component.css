@@ -17,7 +17,9 @@
 
 /* Hero Badge */
 .hero-badge {
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   color: #3b82f6;
   border-color: rgba(59, 130, 246, 0.3);
   background: rgba(59, 130, 246, 0.05);
@@ -28,6 +30,14 @@
   letter-spacing: 1px;
   margin-bottom: 16px;
   border: 1px solid rgba(59, 130, 246, 0.3);
+}
+
+.map-pin-ico--hero {
+  width: 14px;
+  height: 14px;
+  object-fit: contain;
+  flex-shrink: 0;
+  display: block;
 }
 
 /* Hero Subtitle */
@@ -42,7 +52,7 @@
 .cinema-map-page {
   /* Atualizamos a paleta para o tema 3D (Ciano e Vermelho/Rosa) */
   --hero-accent: #00ffff;
-  --orb1-color: #ff0055; /* Vermelho 3D */
+  --orb1-color: #ff3366; /* Vermelho 3D */
   --orb2-color: #00ffff; /* Ciano 3D */
   position: relative;
   height: 100vh;
@@ -51,9 +61,11 @@
   background: #0a0a0f;
 }
 
-.cinema-map-topbar .brand:hover {
-  color: var(--orb1-color);
-  text-shadow: 0 0 10px rgba(255, 0, 85, 0.5);
+/* Hover da marca: styles.css (.cinema-map-topbar .brand) */
+
+.cinema-map-page > .cinema-map-topbar {
+  width: calc(100% + 48px);
+  max-width: none;
 }
 
 /* ─── MAPA ─── */
@@ -263,8 +275,17 @@
 }
 
 .cinema-icon {
-  font-size: 22px;
   flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.map-clapper-ico--card {
+  width: 24px;
+  height: 24px;
+  object-fit: contain;
+  display: block;
 }
 
 .cinema-info {
@@ -322,6 +343,14 @@
     padding: 24px 16px 48px;
   }
 
+  .cinema-map-page > .cinema-map-topbar {
+    margin-left: -16px;
+    margin-right: -16px;
+    padding-left: 16px;
+    padding-right: 16px;
+    width: calc(100% + 32px);
+  }
+
   .map-container {
     height: 300px;
   }
@@ -346,11 +375,24 @@
 
 /* ─── EXTRAS (FAVORITOS E LEGENDAS) ─── */
 .fav-hint {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 6px;
   font-size: 12px;
   color: rgba(255,255,255,0.3);
   text-align: center;
   margin: -8px 0 12px;
   font-style: italic;
+}
+
+.map-hint-ico {
+  width: 14px;
+  height: 14px;
+  object-fit: contain;
+  flex-shrink: 0;
+  display: block;
 }
 
 /* Manter o dourado para os favoritos para fazer contraste com o tema 3D */
@@ -371,7 +413,6 @@
   background: rgba(255,255,255,0.04);
   border: 1px solid rgba(255,255,255,0.08);
   color: rgba(255,255,255,0.35);
-  font-size: 18px;
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -379,6 +420,20 @@
   flex-shrink: 0;
   transition: all 0.2s;
   padding: 0;
+}
+
+.fav-star-ico {
+  width: 20px;
+  height: 20px;
+  object-fit: contain;
+  display: block;
+  opacity: 0.38;
+  transition: opacity 0.2s, transform 0.2s, filter 0.2s;
+}
+
+.fav-star-ico--active {
+  opacity: 1;
+  filter: drop-shadow(0 0 4px rgba(251, 191, 36, 0.5));
 }
 
   .fav-btn:hover:not(:disabled) {
@@ -460,7 +515,6 @@
   flex-shrink: 0;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   text-decoration: none;
-  font-size: 18px;
 }
 
   .website-btn:hover {
@@ -470,13 +524,19 @@
     box-shadow: 0 4px 16px rgba(0,255,255,0.2);
   }
 
-  .website-btn img {
-    width: 20px;
-    height: 20px;
-    filter: invert(1) opacity(0.7);
-    transition: filter 0.3s;
+  .website-clapper-ico {
+    width: 22px;
+    height: 22px;
+    object-fit: contain;
+    display: block;
+    transition: filter 0.3s, transform 0.3s;
   }
 
-  .website-btn:hover img {
-    filter: invert(1) opacity(1) drop-shadow(0 0 4px rgba(255,255,255,0.5));
+  .website-btn:hover .website-clapper-ico {
+    filter: drop-shadow(0 0 6px rgba(255,255,255,0.35));
   }
+
+/* Colorir o pin do utilizador com hue-rotate mantendo o formato original */
+::ng-deep .user-location-marker-filter {
+  filter: hue-rotate(140deg) saturate(1.8);
+}

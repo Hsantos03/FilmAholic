@@ -3,6 +3,9 @@ using System.Text.Json.Serialization;
 
 namespace FilmAholic.Server.Models
 {
+    /// <summary>
+    /// Representa a relação entre um utilizador e um desafio.
+    /// </summary>
     public class UserDesafio
     {
         public int Id { get; set; }
@@ -21,7 +24,7 @@ namespace FilmAholic.Server.Models
         public int QuantidadeProgresso { get; set; } = 0;
 
         // When the progress was last updated
-        public DateTime DataAtualizacao { get; set; } = DateTime.Now;
+        public DateTime DataAtualizacao { get; set; } = DateTime.UtcNow;
 
         // Quiz response properties
         public bool Respondido { get; set; } = false;

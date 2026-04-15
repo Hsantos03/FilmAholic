@@ -76,16 +76,16 @@ namespace FilmAholic.Tests.UnitTests
             return JsonSerializer.Deserialize<JsonElement>(json, _jsonOpts);
         }
 
-        // ─── Fórmula XP: multiplicador 1.0 (score 1–4) ────
+        // ─── Fórmula XP: sistema de streak (score 1–4) ────
 
-        /// FR47 – Scores 1–4 usam multiplicador 1.0.
+        /// FR47 – Scores 1–4 usam sistema de streak (5, 7, 9, 11 XP).
         [Theory]
-        [InlineData(1, 10)]
-        [InlineData(2, 20)]
-        [InlineData(4, 40)]
-        public async Task XPFormula_ScoreBelow5_MultiplierOne(int score, int expectedXp)
+        [InlineData(1, 5)]    // 5 XP
+        [InlineData(2, 12)]   // 5+7 = 12 XP
+        [InlineData(4, 32)]   // 5+7+9+11 = 32 XP
+        public async Task XPFormula_ScoreBelow5_StreakSystem(int score, int expectedXp)
         {
-            var userId = $"mult1-{score}";
+            var userId = $"streak-{score}";
             await CreateUserAsync(userId);
             AuthenticateAs(userId);
 
@@ -97,16 +97,17 @@ namespace FilmAholic.Tests.UnitTests
             Assert.Equal(expectedXp, data.GetProperty("xpGanho").GetInt32());
         }
 
-        // ─── Fórmula XP: multiplicador 1.5 (score 5–9) ─────
+        // ─── Fórmula XP: sistema de streak com bónus (score 5–9) ─────
 
-        /// FR47 – Scores 5–9 usam multiplicador 1.5 (resultado pode ser capped a 100).
+        /// FR47 – Scores 5–9 usam sistema de streak + bónus de 10 XP.
         [Theory]
-        [InlineData(5, 75)]   // 5*10*1.5 = 75
-        [InlineData(7, 100)]   // 7*10*1.5 = 105 → cap = 100
-        [InlineData(9, 100)]   // 9*10*1.5 = 135 → cap = 100
-        public async Task XPFormula_ScoreFiveToNine_MultiplierOnePointFive(int score, int expectedXp)
+        [InlineData(5, 55)]   // 5+7+9+11+13 = 45 + bónus 10 = 55 XP
+        [InlineData(7, 87)]   // 5+7+9+11+13+15+17 = 77 + bónus 10 = 87 XP
+        [InlineData(8, 106)]  // 5+7+9+11+13+15+17+19 = 96 + bónus 10 = 106 XP
+        [InlineData(9, 127)]  // 5+7+9+11+13+15+17+19+21 = 117 + bónus 10 = 127 XP
+        public async Task XPFormula_ScoreFiveToNine_StreakWithBonus(int score, int expectedXp)
         {
-            var userId = $"mult15-{score}";
+            var userId = $"streak-bonus-{score}";
             await CreateUserAsync(userId);
             AuthenticateAs(userId);
 
@@ -118,15 +119,17 @@ namespace FilmAholic.Tests.UnitTests
             Assert.Equal(expectedXp, data.GetProperty("xpGanho").GetInt32());
         }
 
-        // ─── Fórmula XP: multiplicador 2.0 (score ≥ 10) ─────
+        // ─── Fórmula XP: sistema de streak com bónus maior (score ≥ 10) ─────
 
-        /// FR47 – Scores ≥ 10 usam multiplicador 2.0 mas sempre capped a 100 XP diários.
+        /// FR47 – Scores ≥ 10 usam sistema de streak + bónus de 25 XP.
+        /// Score 10: 5+7+9+11+13+15+17+19+21+23 = 140 + 25 = 165 XP
+        /// Score 15: soma 5+7+...+33 = 285 + 50 bónus épico = 335 XP
         [Theory]
-        [InlineData(10, 100)]
-        [InlineData(20, 100)]
-        public async Task XPFormula_ScoreTenOrMore_MultiplierTwo_CappedAt100(int score, int expectedXp)
+        [InlineData(10, 165)]  // 140 + 25 bónus
+        [InlineData(15, 335)]  // Soma 5..33 (15 termos) = 285 + 50 bónus épico
+        public async Task XPFormula_ScoreTenOrMore_StreakWithBigBonus(int score, int expectedXp)
         {
-            var userId = $"mult2-{score}";
+            var userId = $"streak-big-{score}";
             await CreateUserAsync(userId);
             AuthenticateAs(userId);
 
@@ -141,7 +144,7 @@ namespace FilmAholic.Tests.UnitTests
         // ─── XP Diário Restante ─────
 
         /// FR49 – xpDiarioRestante reflecte correctamente o espaço diário disponível.
-        /// 60 XP já gastos → restam 40 → score 3 (30 XP) → restam 10.
+        /// 60 XP já gastos → restam 940 → score 3 (21 XP: 5+7+9) → restam 919.
         [Fact]
         public async Task SaveResult_XPDiarioRestante_ReflectsCorrectly()
         {
@@ -154,21 +157,21 @@ namespace FilmAholic.Tests.UnitTests
 
             var ok = Assert.IsType<OkObjectResult>(result);
             var data = ToJson(ok.Value);
-            Assert.Equal(30, data.GetProperty("xpGanho").GetInt32());
-            Assert.Equal(10, data.GetProperty("xpDiarioRestante").GetInt32());
+            Assert.Equal(21, data.GetProperty("xpGanho").GetInt32());  // 5+7+9 = 21
+            Assert.Equal(919, data.GetProperty("xpDiarioRestante").GetInt32()); // 1000 - 60 - 21 = 919
         }
 
         // ─── Cálculo de Nível ─────
 
-        /// FR49 – Fórmula: xpNecessario = 100 * nivel * (nivel + 1) / 2.
-        /// Limiar Nv.2 = 100 XP; Nv.3 = 300 XP.
-        /// Simula o utilizador a ganhar 10 XP (Score = 1) para atingir o limite de xp.
+        /// FR49 – Fórmula: xpParaProximo = 25 * nivel * (nivel + 3)
+        /// Nível 1: < 100 XP, Nível 2: 100-249 XP, Nível 3: >= 250 XP
+        /// Simula o utilizador a ganhar 5 XP (Score = 1, streak base) para atingir o limite de xp.
         [Theory]
-        [InlineData(0, 1)]     // 0 + 10 = 10 XP -> Nível 1
-        [InlineData(89, 1)]    // 89 + 10 = 99 XP -> Nível 1
-        [InlineData(90, 2)]    // 90 + 10 = 100 XP -> Nível 2
-        [InlineData(289, 2)]   // 289 + 10 = 299 XP -> Nível 2
-        [InlineData(290, 3)]   // 290 + 10 = 300 XP -> Nível 3
+        [InlineData(0, 1)]     // 0 + 5 = 5 XP -> Nível 1
+        [InlineData(94, 1)]    // 94 + 5 = 99 XP -> Nível 1
+        [InlineData(95, 2)]    // 95 + 5 = 100 XP -> Nível 2
+        [InlineData(244, 2)]   // 244 + 5 = 249 XP -> Nível 2 (limite máximo nível 2)
+        [InlineData(245, 3)]   // 245 + 5 = 250 XP -> Nível 3 (threshold nível 3)
         public async Task NivelCalculation_XPThresholds_CorrectLevel(int startingXp, int expectedNivel)
         {
             var userId = $"nivel-calc-{startingXp}";

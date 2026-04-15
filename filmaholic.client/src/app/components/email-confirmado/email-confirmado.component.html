@@ -1,49 +1,73 @@
-<div class="page-wrapper">
-  <div class="confirm-card">
-    <div class="header">
-      <h1 *ngIf="isLoading">A confirmar...</h1>
-      <h1 *ngIf="!isLoading && success">✅ Email Confirmado!</h1>
-      <h1 *ngIf="!isLoading && !success">❌ Erro ao Confirmar</h1>
-    </div>
-
-    <div *ngIf="isLoading" style="text-align: center; padding: 40px;">
-      <p style="color: #6c757d;">A confirmar o seu email, por favor aguarde...</p>
-    </div>
-
-    <div *ngIf="!isLoading && success" style="text-align: center; padding: 20px;">
-      <p style="color: #155724; font-size: 18px; margin-bottom: 20px;">
-        O seu email foi confirmado com sucesso!
-      </p>
-      <p style="color: #6c757d; margin-bottom: 30px;">
-        A redirecionar para a página de login em instantes...
-      </p>
-      <button 
-        (click)="irParaLogin()"
-        style="padding: 12px 30px; background-color: #007bff; color: white; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; font-size: 16px;">
-        Ir para Login
-      </button>
-    </div>
-
-    <div *ngIf="!isLoading && !success" style="text-align: center; padding: 20px;">
-      <p style="color: #721c24; font-size: 18px; margin-bottom: 20px;">
-        {{ error || 'Ocorreu um erro ao confirmar o seu email.' }}
-      </p>
-      <p style="color: #6c757d; margin-bottom: 30px;">
-        O token pode estar expirado ou inválido. Por favor, tente registar-se novamente ou contacte o suporte.
-      </p>
-      <div style="display: flex; gap: 15px; justify-content: center;">
-        <button 
-          (click)="irParaLogin()"
-          style="padding: 12px 30px; background-color: #6c757d; color: white; border: none; border-radius: 10px; font-weight: bold; cursor: pointer;">
-          Login
-        </button>
-        <button 
-          (click)="irParaRegisto()"
-          style="padding: 12px 30px; background-color: #007bff; color: white; border: none; border-radius: 10px; font-weight: bold; cursor: pointer;">
-          Registo
-        </button>
+<div class="auth-page-wrapper email-confirm-page">
+  <div class="confirm-card email-confirm-card">
+    <!-- Loading -->
+    <ng-container *ngIf="isLoading">
+      <div class="email-confirm-state email-confirm-state--loading">
+        <div class="loading-ring" aria-hidden="true"></div>
+        <h1 class="email-confirm-title">A confirmar o teu email…</h1>
+        <p class="email-confirm-sub">Aguarda um momento enquanto validamos o link.</p>
       </div>
-    </div>
+    </ng-container>
+
+    <!-- Sucesso -->
+    <ng-container *ngIf="!isLoading && success">
+      <div class="email-confirm-icon email-confirm-icon--ok" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+          <polyline points="22 4 12 14.01 9 11.01" />
+        </svg>
+      </div>
+      <div class="header email-confirm-header">
+        <h1>Email confirmado</h1>
+        <p class="email-confirm-tagline">A tua conta FilmAholic está pronta para começar.</p>
+      </div>
+      <div class="email-confirm-body">
+        <p class="email-confirm-lead">
+          O teu email foi verificado com sucesso. Já podes iniciar sessão e explorar filmes, listas e a comunidade.
+        </p>
+        <div class="email-confirm-redirect" *ngIf="redirectSeconds !== null">
+          <p class="email-confirm-redirect__text">
+            A abrir o login em <strong>{{ redirectSeconds }}</strong> {{ redirectSeconds === 1 ? 'segundo' : 'segundos' }}…
+          </p>
+          <div class="email-confirm-progress" role="progressbar" [attr.aria-valuenow]="redirectProgressPercent" aria-valuemin="0" aria-valuemax="100" aria-label="Progresso até ao redirecionamento">
+            <div class="email-confirm-progress__bar" [style.width.%]="redirectProgressPercent"></div>
+          </div>
+        </div>
+        <button type="button" class="btn-primary-global email-confirm-cta" (click)="irParaLogin()">
+          Ir para login
+        </button>
+        <div class="email-confirm-footer-links">
+          <a routerLink="/home">Página inicial</a>
+        </div>
+      </div>
+    </ng-container>
+
+    <!-- Erro -->
+    <ng-container *ngIf="!isLoading && !success">
+      <div class="email-confirm-icon email-confirm-icon--err" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10" />
+          <line x1="15" y1="9" x2="9" y2="15" />
+          <line x1="9" y1="9" x2="15" y2="15" />
+        </svg>
+      </div>
+      <div class="header email-confirm-header">
+        <h1>Não foi possível confirmar</h1>
+        <p class="email-confirm-tagline">O link pode ter expirado ou já ter sido usado.</p>
+      </div>
+      <div class="email-confirm-body">
+        <p class="email-confirm-error-msg">{{ error || 'Ocorreu um erro ao confirmar o teu email.' }}</p>
+        <p class="email-confirm-hint">
+          Pedes um novo email de confirmação no registo ou tenta criar conta de novo. Se o problema continuar, contacta o suporte.
+        </p>
+        <div class="email-confirm-actions-row">
+          <button type="button" class="email-confirm-btn email-confirm-btn--secondary" (click)="irParaLogin()">Login</button>
+          <button type="button" class="btn-primary-global email-confirm-btn email-confirm-btn--primary" (click)="irParaRegisto()">Registo</button>
+        </div>
+        <div class="email-confirm-footer-links">
+          <a routerLink="/home">Página inicial</a>
+        </div>
+      </div>
+    </ng-container>
   </div>
 </div>
-

@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using FilmAholic.Server.Controllers;
+using FilmAholic.Server.Models;
 using Microsoft.Extensions.Configuration;
 using System.Net.Http;
 using Moq;
@@ -51,16 +52,39 @@ namespace FilmAholic.Tests.ErrorHandlingTests
             var mockConfigVazia = new Mock<IConfiguration>();
             mockConfigVazia.Setup(c => c["ExternalApis:TmdbApiKey"]).Returns((string?)null);
             
-            var controllerSemConfig = new CinemaController(mockConfigVazia.Object, new TestHttpClientFactory(), CreateTestContext());
+            var context = CreateTestContext();
+            
+            // Adicionar dados mock à cache para evitar espera de 30s
+            context.CinemaMovieCache.Add(new CinemaMovieCache
+            {
+                Id = 1,
+                MovieId = "test-1",
+                Titulo = "Filme Teste",
+                Poster = "https://test.com/poster.jpg",
+                Genero = "Ação",
+                Duracao = "2h 30min",
+                Classificacao = "M/12",
+                Link = "https://cinema.test/filme",
+                Cinema = "Cinema Teste",
+                DataCache = DateTime.UtcNow
+            });
+            await context.SaveChangesAsync();
+            
+            var controllerSemConfig = new CinemaController(mockConfigVazia.Object, new TestHttpClientFactory(), context);
             
             // Act
             var result = await controllerSemConfig.GetFilmesEmCartaz();
             
             // Assert
             var okResult = Assert.IsType<OkObjectResult>(result);
-            var moviesList = okResult.Value as System.Collections.IList;
+            Assert.NotNull(okResult.Value);
+            
+            // O controller retorna IEnumerable (de LINQ Select), não IList
+            var moviesEnum = okResult.Value as System.Collections.IEnumerable;
+            Assert.NotNull(moviesEnum);
+            
             var movies = new List<object>();
-            foreach (var item in moviesList)
+            foreach (var item in moviesEnum)
             {
                 movies.Add(item);
             }
@@ -68,7 +92,7 @@ namespace FilmAholic.Tests.ErrorHandlingTests
         }
 
         [Fact]
-        public async Task GetFilmesEmCartaz_HttpClientFactoryNulo_DeveLancarExcecao()
+        public void GetFilmesEmCartaz_HttpClientFactoryNulo_DeveLancarExcecao()
         {
             // Arrange
             Assert.Throws<ArgumentNullException>(() => 
@@ -76,7 +100,7 @@ namespace FilmAholic.Tests.ErrorHandlingTests
         }
 
         [Fact]
-        public async Task GetFilmesEmCartaz_ConfiguracaoNula_DeveLancarExcecao()
+        public void GetFilmesEmCartaz_ConfiguracaoNula_DeveLancarExcecao()
         {
             // Arrange 
             

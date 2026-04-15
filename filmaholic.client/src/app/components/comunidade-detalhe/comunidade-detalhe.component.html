@@ -31,17 +31,23 @@
         <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" /></svg>
         <span>Perfil</span>
       </a>
+      <a *ngIf="isPlatformAdmin" class="sidebar-item" routerLink="/admin" routerLinkActive="active" (click)="toggleMenu()">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 10.99h7c-.53 4.12-3.28 7.79-7 8.94V12H5V6.3l7-3.11v8.8z" />
+        </svg>
+        <span>Administração</span>
+      </a>
       <a class="sidebar-item" routerLink="/cinema-movies" routerLinkActive="active" (click)="toggleMenu()">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M18 4l2 4h-3l-2-4h-2l2 4h-3l-2-4H8l2 4H7L5 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V4h-4z" /></svg>
         <span>Filmes em Cartaz</span>
       </a>
       <a class="sidebar-item" routerLink="/higher-or-lower" routerLinkActive="active" (click)="toggleMenu()">
-        <span style="font-size:20px">🎮</span>
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M21 6H3c-1.1 0-2 .9-2 2v8c0 1.1.9 2 2 2h18c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm-10 7H8v3H6v-3H3v-2h3V8h2v3h3v2zm4.5 2c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm4-3c-.83 0-1.5-.67-1.5-1.5S18.67 9 19.5 9s1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"/></svg>
         <span>Higher or Lower</span>
       </a>
       <button type="button" class="sidebar-item" (click)="goToDashboardDesafios(); toggleMenu()">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2L14.09 8.26L21 9.27L16.5 13.14L17.82 20L12 16.77L6.18 20L7.5 13.14L3 9.27L9.91 8.26L12 2Z" /></svg>
-        <span>Desafios Semanais</span>
+        <span>Desafios Diários</span>
       </button>
       <a class="sidebar-item" routerLink="/cinemas-proximos" routerLinkActive="active" (click)="toggleMenu()">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z" /></svg>
@@ -57,15 +63,33 @@
   <main class="comunidade-detalhe-wrap">
     <button type="button" class="back-link" data-tour="comunidade-voltar" (click)="goBack()">← Comunidades</button>
 
+    <div *ngIf="reportFeedbackMessage"
+         class="report-feedback-banner"
+         [class.report-feedback-banner--info]="reportFeedbackTone === 'info'"
+         role="status"
+         aria-live="polite">
+      <span class="report-feedback-banner__icon" aria-hidden="true">
+        <svg *ngIf="reportFeedbackTone === 'success'" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
+        <svg *ngIf="reportFeedbackTone === 'info'" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
+      </span>
+      <p class="report-feedback-banner__text">{{ reportFeedbackMessage }}</p>
+      <button type="button"
+              class="report-feedback-banner__close"
+              (click)="dismissReportFeedback()"
+              aria-label="Fechar mensagem">×</button>
+    </div>
+
   <div *ngIf="isLoading" class="state">A carregar comunidade…</div>
 
   <div *ngIf="!isLoading && accessDeniedBan" class="ban-access-denied">
     <div class="ban-access-denied__card">
-      <div class="ban-access-denied__icon" aria-hidden="true">⛔</div>
+      <div class="ban-access-denied__icon" aria-hidden="true">
+        <img src="assets/membro-banir.png" alt="" class="ban-access-denied__icon-img" />
+      </div>
       <h2 class="ban-access-denied__title">Não tens acesso a esta comunidade</h2>
       <p *ngIf="banComunidadeNome" class="ban-access-denied__nome"><strong>{{ banComunidadeNome }}</strong></p>
       <p class="ban-access-denied__msg">{{ banAccessMessage }}</p>
-      <p *ngIf="banAccessAteUtc" class="ban-access-denied__ate">Banimento até: <strong>{{ banAccessAteUtc | date:'dd/MM/yyyy, HH:mm' }}</strong> (hora local)</p>
+      <p *ngIf="banAccessAteUtc" class="ban-access-denied__ate">Banimento até: <strong>{{ banAccessAteUtc | date:'dd/MM/yyyy, HH:mm':'':'pt-PT' }}</strong> (hora local)</p>
       <p *ngIf="!banAccessAteUtc" class="ban-access-denied__ate ban-access-denied__ate--perm">Este banimento é <strong>permanente</strong> (sem data de fim).</p>
       <button type="button" class="primary-btn ban-access-denied__btn" routerLink="/comunidades">Voltar às comunidades</button>
     </div>
@@ -74,23 +98,24 @@
   <div *ngIf="!isLoading && !accessDeniedBan && error" class="state error">{{ error }}</div>
 
   <div *ngIf="comunidade && !accessDeniedBan" class="comunidade-card">
-    <div class="banner" *ngIf="comunidade.bannerUrl" [style.background-image]="'url(' + comunidade.bannerUrl + ')'"></div>
-      <div class="banner banner--empty" *ngIf="!comunidade.bannerUrl" aria-hidden="true"></div>
+    <div class="banner" *ngIf="capaUrl()" [style.background-image]="'url(' + capaUrl() + ')'"></div>
+      <div class="banner banner--empty" *ngIf="!capaUrl()" aria-hidden="true"></div>
 
     <div class="content">
         <div class="comunidade-heading">
           <div class="comunidade-badge"
-               [class.has-photo]="!!comunidade.iconUrl"
-               [style.background-image]="comunidade.iconUrl ? 'url(' + comunidade.iconUrl + ')' : 'none'"
+               [class.has-photo]="!!iconeUrl()"
+               [style.background-image]="iconeUrl() ? 'url(' + iconeUrl() + ')' : 'none'"
                aria-hidden="true">
-            <span *ngIf="!comunidade.iconUrl">{{ initialLetra(comunidade.nome) }}</span>
+            <span *ngIf="!iconeUrl()">{{ initialLetra(comunidade.nome) }}</span>
           </div>
           <div class="comunidade-heading-text">
       <h1>{{ comunidade.nome }}</h1>
       <div class="meta">
+        <span *ngIf="isAdmin" class="admin-pill">Admin</span>
         <span> · {{ comunidade.isPrivada ? 'Privada' : 'Pública' }}</span>
-        <span *ngIf="comunidade.dataCriacao"> · Criada {{ comunidade.dataCriacao | date:'shortDate' }}</span>
-            </div>
+        <span *ngIf="comunidade.dataCriacao"> · Criada {{ comunidade.dataCriacao | date:'dd/MM/yyyy':'':'pt-PT' }}</span>
+      </div>
           </div>
       </div>
 
@@ -137,7 +162,10 @@
       <div class="tabs-left">
         <button class="tab-btn" [class.active]="activeTab === 'posts'" (click)="activeTab = 'posts'">Publicações</button>
         <button class="tab-btn" [class.active]="activeTab === 'membros'" (click)="activeTab = 'membros'">Membros</button>
-        <button class="tab-btn" [class.active]="activeTab === 'ranking'" (click)="activeTab = 'ranking'; carregarRanking()">🏆 Ranking</button>
+        <button class="tab-btn" [class.active]="activeTab === 'ranking'" (click)="activeTab = 'ranking'; carregarRanking()">
+          <img class="rank-ui-ico rank-ui-ico--tab" src="assets/comunidade-ranking-trophy.png" alt="" aria-hidden="true" />
+          Ranking
+        </button>
       </div>
       <div class="membros-counter" *ngIf="activeTab === 'membros'">
         {{ comunidade.membrosCount ?? 0 }}<ng-container *ngIf="comunidade.limiteMembros">/{{ comunidade.limiteMembros }}</ng-container>
@@ -151,10 +179,12 @@
       <!-- Toggle de métrica -->
       <div class="ranking-metrica-toggle">
         <button class="metrica-btn" [class.active]="rankingMetrica === 'filmes'" (click)="mudarMetrica('filmes')">
-          🎬 Filmes vistos
+          <img class="rank-ui-ico rank-ui-ico--metric" src="assets/comunidade-ranking-clapper.png" alt="" aria-hidden="true" />
+          Filmes vistos
         </button>
         <button class="metrica-btn" [class.active]="rankingMetrica === 'tempo'" (click)="mudarMetrica('tempo')">
-          ⏱️ Tempo assistido
+          <img class="rank-ui-ico rank-ui-ico--metric" src="assets/comunidade-ranking-clock.png" alt="" aria-hidden="true" />
+          Tempo assistido
         </button>
       </div>
 
@@ -176,22 +206,38 @@
              [class.top3]="membro.posicao === 3">
           <!-- Posição -->
           <div class="ranking-pos">
-            <span *ngIf="membro.posicao === 1">🥇</span>
+            <img *ngIf="membro.posicao === 1"
+                 class="rank-ui-ico rank-ui-ico--pos1"
+                 src="assets/comunidade-ranking-trophy.png"
+                 alt=""
+                 aria-hidden="true" />
             <span *ngIf="membro.posicao === 2">🥈</span>
             <span *ngIf="membro.posicao === 3">🥉</span>
             <span *ngIf="membro.posicao > 3">#{{ membro.posicao }}</span>
           </div>
 
           <!-- Nome -->
-          <div class="ranking-nome">
-            {{ membro.userName }}
-            <span *ngIf="membro.isCurrentUser" class="tu-badge">Tu</span>
+          <div class="ranking-nome-cell">
+            <div class="ranking-avatar">
+              <img *ngIf="membro.fotoPerfilUrl?.trim()" class="ranking-avatar-img" [src]="membro.fotoPerfilUrl" [alt]="membro.userName || ''" />
+              <span *ngIf="!membro.fotoPerfilUrl?.trim()">{{ getUserInitial(membro.userName) }}</span>
+            </div>
+            <div class="ranking-nome">
+              {{ membro.userName }}
+              <span *ngIf="membro.isCurrentUser" class="tu-badge">Tu</span>
+            </div>
           </div>
 
           <!-- Stats -->
           <div class="ranking-stats">
-            <span *ngIf="rankingMetrica === 'filmes'" class="stat-filmes">🎬 {{ membro.filmesVistos }} filmes</span>
-            <span *ngIf="rankingMetrica === 'tempo'" class="stat-tempo">⏱️ {{ membro.minutosAssistidos | number:'1.0-0' }} min</span>
+            <span *ngIf="rankingMetrica === 'filmes'" class="stat-filmes">
+              <img class="rank-ui-ico rank-ui-ico--stat" src="assets/comunidade-ranking-clapper.png" alt="" aria-hidden="true" />
+              {{ membro.filmesVistos }} filmes
+            </span>
+            <span *ngIf="rankingMetrica === 'tempo'" class="stat-tempo">
+              <img class="rank-ui-ico rank-ui-ico--stat" src="assets/comunidade-ranking-clock.png" alt="" aria-hidden="true" />
+              {{ membro.minutosAssistidos | formatDuration:'min':false:false:true }}
+            </span>
           </div>
         </div>
 
@@ -213,7 +259,7 @@
         </div>
         <div class="sort-control">
           <label>Ordenar:</label>
-          <select [(ngModel)]="sortOrder" class="custom-select">
+          <select [(ngModel)]="sortOrder" (change)="onSortChange()" class="custom-select">
             <option value="desc">Mais recentes</option>
             <option value="asc">Mais antigas</option>
             <option value="likes">Mais likes</option>
@@ -224,13 +270,21 @@
       </div>
 
       <div *ngIf="showPostForm" class="post-form">
-        <input type="text" placeholder="Título" [(ngModel)]="newTitulo" />
-        <textarea rows="4" placeholder="Escreve algo…" [(ngModel)]="newConteudo"></textarea>
+        <input type="text" placeholder="Título" [(ngModel)]="newTitulo" maxlength="30" />
+        <div *ngIf="newTitulo && newTitulo.length >= 30" class="length-warning">
+          <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"></path><path d="M12 9v4"></path><path d="M12 17h.01"></path></svg>
+          <span>Número de caracteres excedido (máximo 30).</span>
+        </div>
+        <textarea rows="4" placeholder="Escreve algo…" [(ngModel)]="newConteudo" maxlength="500"></textarea>
+        <div *ngIf="newConteudo && newConteudo.length >= 500" class="length-warning">
+          <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"></path><path d="M12 9v4"></path><path d="M12 17h.01"></path></svg>
+          <span>Número de caracteres excedido (máximo 500).</span>
+        </div>
 
         <!-- Movie Attachment Section -->
         <div class="movie-attachment-section">
           <div *ngIf="filmeSelecionado" class="selected-movie-tag">
-            <img [src]="filmeSelecionado.poster_path ? 'https://image.tmdb.org/t/p/w92' + filmeSelecionado.poster_path : 'assets/no-poster.png'" class="smt-poster">
+            <img [src]="filmeSelecionado.poster_path ? 'https://image.tmdb.org/t/p/w92' + filmeSelecionado.poster_path : 'assets/cinema-clapper.png'" class="smt-poster">
             <div class="selected-movie-info">
               <span class="smt-label">FILME ANEXADO</span>
               <span class="smt-title">{{ filmeSelecionado.title }}</span>
@@ -246,14 +300,16 @@
                      placeholder="Pesquisar filme para anexar..."
                      [(ngModel)]="pesquisaFilme"
                      (input)="procurarFilmeParaAnexar()"
-                     class="movie-search-input"
-                     style="padding-left: 38px;">
-              <span class="search-icon" style="position:absolute; left:12px; top:50%; transform:translateY(-50%); font-size:16px; pointer-events:none;">🍿</span>
+                     class="movie-search-input">
+              <img class="search-icon movie-search-popcorn"
+                   src="assets/comunidade-post-popcorn.png"
+                   alt=""
+                   aria-hidden="true" />
             </div>
 
             <ul *ngIf="resultadosFilmes.length > 0" class="movie-search-results">
               <li *ngFor="let filme of resultadosFilmes" (click)="selecionarFilme(filme)">
-                <img [src]="filme.poster_path ? 'https://image.tmdb.org/t/p/w92' + filme.poster_path : 'assets/no-poster.png'">
+                <img [src]="filme.poster_path ? 'https://image.tmdb.org/t/p/w92' + filme.poster_path : 'assets/cinema-clapper.png'">
                 <div class="res-info">
                   <span class="res-title">{{ filme.title }}</span>
                   <span class="res-year">{{ filme.release_date | date:'yyyy' }}</span>
@@ -283,29 +339,87 @@
             <span class="slider"></span>
           </label>
         </div>
-        <button type="button" class="save-btn" (click)="submitPost()" [disabled]="isPosting">
+        <button type="button" class="save-btn" (click)="submitPost()" [disabled]="isPosting || !newTitulo.trim() || !newConteudo.trim() || newTitulo.length > 30 || newConteudo.length > 500">
           {{ isPosting ? 'A publicar…' : 'Publicar' }}
         </button>
       </div>
 
+      <!-- Anchor for pagination scroll -->
+      <div id="posts-start-anchor"></div>
+
       <div *ngIf="posts.length === 0" class="empty">Ainda não há publicações nesta comunidade.</div>
 
-      <article class="post-card" *ngFor="let p of sortedPosts">
+      <article class="post-card" *ngFor="let p of sortedPosts" [attr.id]="p.id != null ? 'comunidade-post-' + p.id : null">
         <div class="post-header">
-          <div class="post-author-info">
-            <span class="post-autor">{{ p.autorNome }}</span>
-            <span class="post-data"> • {{ p.dataCriacao | date:'short' }}</span>
+          <div *ngIf="p.autorId" class="post-author-info">
+            <div class="post-avatar" [attr.title]="p.autorNome || ''">
+              <img *ngIf="p.autorFotoPerfilUrl?.trim()"
+                   class="post-avatar-img"
+                   [src]="p.autorFotoPerfilUrl"
+                   [alt]="p.autorNome || ''" />
+              <span *ngIf="!p.autorFotoPerfilUrl?.trim()">{{ getUserInitial(p.autorNome) }}</span>
+            </div>
+            <div class="post-autor-wrapper">
+              <a class="post-autor post-author-profile-link" [routerLink]="['/profile', p.autorId]" [attr.title]="'Ver perfil de ' + (p.autorNome || '')">
+                {{ p.autorNome }}
+              </a>
+              <span class="post-tag-separator" *ngIf="p.autorUserTag">|</span>
+              <span *ngIf="p.autorUserTag" class="post-autor-tag tooltip-trigger post-autor-tag-with-icon" [style.--tag-primary-color]="p.autorUserTagPrimaryColor || '#FF4081'" [style.--tag-secondary-color]="p.autorUserTagSecondaryColor || '#FFFFFF'">
+                <img *ngIf="p.autorUserTagIconUrl" [src]="API_URL + p.autorUserTagIconUrl" [alt]="p.autorUserTag" class="post-autor-tag-icon">
+                <span *ngIf="!p.autorUserTagIconUrl" class="post-autor-tag-fallback">🏅</span>
+                <span class="tag-gradient-text">{{ p.autorUserTag }}</span>
+                <span class="tooltip">
+                  <span class="tooltip-label">Como desbloquear</span>
+                  <span class="tooltip-desc">{{ p.autorUserTagDescription || 'Medalha especial desbloqueada!' }}</span>
+                </span>
+              </span>
+            </div>
+          </div>
+          <div *ngIf="!p.autorId" class="post-author-info">
+            <div class="post-avatar" [attr.title]="p.autorNome || ''">
+              <img *ngIf="p.autorFotoPerfilUrl?.trim()"
+                   class="post-avatar-img"
+                   [src]="p.autorFotoPerfilUrl"
+                   [alt]="p.autorNome || ''" />
+              <span *ngIf="!p.autorFotoPerfilUrl?.trim()">{{ getUserInitial(p.autorNome) }}</span>
+            </div>
+            <div class="post-autor-wrapper">
+              <span class="post-autor">{{ p.autorNome }}</span>
+              <span class="post-tag-separator" *ngIf="p.autorUserTag">|</span>
+              <span *ngIf="p.autorUserTag" class="post-autor-tag tooltip-trigger post-autor-tag-with-icon" [style.--tag-primary-color]="p.autorUserTagPrimaryColor || '#FF4081'" [style.--tag-secondary-color]="p.autorUserTagSecondaryColor || '#FFFFFF'">
+                <img *ngIf="p.autorUserTagIconUrl" [src]="API_URL + p.autorUserTagIconUrl" [alt]="p.autorUserTag" class="post-autor-tag-icon">
+                <span *ngIf="!p.autorUserTagIconUrl" class="post-autor-tag-fallback">🏅</span>
+                <span class="tag-gradient-text">{{ p.autorUserTag }}</span>
+                <span class="tooltip">
+                  <span class="tooltip-label">Como desbloquear</span>
+                  <span class="tooltip-desc">{{ p.autorUserTagDescription || 'Medalha especial desbloqueada!' }}</span>
+                </span>
+              </span>
+            </div>
           </div>
           <div class="post-owner-actions">
             <span *ngIf="isAdmin && (p.reportsCount || 0) > 0" class="admin-report-badge" title="Denúncias recebidas">
-              🚩 {{ p.reportsCount }}
+              <img class="admin-report-badge-ico" src="assets/395841.png" alt="" width="14" height="14" aria-hidden="true" />
+              {{ p.reportsCount }}
             </span>
 
-            <button *ngIf="p.autorId !== currentUserId && !isCurrentCastigado" class="post-action-btn report-btn" (click)="openReportModal(p)" title="Denunciar publicação" [disabled]="p.jaReportou">🚩</button>
+            <button *ngIf="p.autorId !== currentUserId && !isCurrentCastigado"
+                    type="button"
+                    class="post-action-btn report-btn"
+                    [class.report-btn--done]="p.jaReportou"
+                    (click)="openReportModal(p)"
+                    [attr.title]="p.jaReportou ? 'Já denunciaste — clica para ver a mensagem' : 'Denunciar publicação'"
+                    [attr.aria-label]="p.jaReportou ? 'Denúncia já enviada — mostrar informação' : 'Denunciar publicação'">
+              <img class="post-action-ico" src="assets/395841.png" alt="" aria-hidden="true" />
+            </button>
 
-            <button *ngIf="p.autorId === currentUserId && !isCurrentCastigado" class="post-action-btn edit-btn" (click)="openEditPost(p)" title="Editar">✏️</button>
+            <button *ngIf="p.autorId === currentUserId && !isCurrentCastigado" class="post-action-btn edit-btn" (click)="openEditPost(p)" title="Editar" type="button">
+              <img class="post-action-ico" src="assets/comunidade-spoiler-pencil.png" alt="" aria-hidden="true" />
+            </button>
 
-            <button *ngIf="(p.autorId === currentUserId || isAdmin) && !isCurrentCastigado" class="post-action-btn delete-btn" (click)="openDeletePostModal(p)" title="Apagar">🗑️</button>
+            <button *ngIf="(p.autorId === currentUserId || isAdmin) && !isCurrentCastigado" class="post-action-btn delete-btn" (click)="openDeletePostModal(p)" title="Apagar" type="button">
+              <img class="post-action-ico" src="assets/comunidade-spoiler-trash.png" alt="" aria-hidden="true" />
+            </button>
           </div>
         </div>
 
@@ -323,8 +437,9 @@
               </div>
 
               <div class="spoiler-overlay" *ngIf="p.temSpoiler && !revealedSpoilers.has(p.id!)">
-                <button class="reveal-btn" (click)="revelarSpoiler(p.id)">
-                  👀 Revelar Spoiler
+                <button type="button" class="reveal-btn" (click)="revelarSpoiler(p.id)">
+                  <img class="reveal-spoiler-ico" src="assets/comunidade-spoiler-eyes.png" alt="" aria-hidden="true" />
+                  Revelar Spoiler
                 </button>
               </div>
             </div>
@@ -339,18 +454,24 @@
           </a>
         </div>
 
+        <div class="post-meta-footer">
+          <span class="post-data">{{ p.dataCriacao | date:'dd/MM/yyyy, HH:mm':'':'pt-PT' }}</span>
+        </div>
+
         <div class="post-footer">
           <div class="vote-group" [class.vote-group--disabled]="isCurrentCastigado" [attr.title]="isCurrentCastigado ? 'Castigo ativo: não podes votar.' : null">
             <button type="button" class="vote-btn" [class.active-like]="p.userVote === 1" [disabled]="isCurrentCastigado" (click)="votar(p, true)">
-              👍 <span>{{ p.likesCount || 0 }}</span>
+              <img class="vote-btn-icon" src="assets/rec-feedback-like.png" alt="" width="16" height="16" aria-hidden="true" />
+              <span>{{ p.likesCount || 0 }}</span>
             </button>
             <button type="button" class="vote-btn" [class.active-dislike]="p.userVote === -1" [disabled]="isCurrentCastigado" (click)="votar(p, false)">
-              👎 <span>{{ p.dislikesCount || 0 }}</span>
+              <img class="vote-btn-icon" src="assets/rec-feedback-dislike.png" alt="" width="16" height="16" aria-hidden="true" />
+              <span>{{ p.dislikesCount || 0 }}</span>
             </button>
           </div>
 
           <button class="view-comments-link" (click)="toggleComentarios(p)">
-            {{ p.showComentarios ? 'Ocultar comentários' : 'Ver ' + (p.comentariosCount || 0) + ' comentários' }}
+            {{ p.showComentarios ? 'Ocultar comentários' : 'Ver ' + getPostCommentDisplayCount(p) + ' comentários' }}
             <span class="chevron" [class.open]="p.showComentarios">
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M6 9l6 6 6-6" />
@@ -373,14 +494,46 @@
                      [alt]="c.autorNome || ''" />
                 <span *ngIf="!c.autorFotoPerfilUrl?.trim()">{{ getUserInitial(c.autorNome) }}</span>
               </div>
+
               <div class="comment-body">
                 <div class="comment-header">
-                  <span class="comment-author">{{ c.autorNome }}</span>
-                  <span class="comment-date">• {{ c.dataCriacao | date:'short' }}</span>
+                  <a *ngIf="c.autorId" class="comment-author comment-author-link" [routerLink]="['/profile', c.autorId]">{{ c.autorNome }}</a>
+                  <span *ngIf="!c.autorId" class="comment-author">{{ c.autorNome }}</span>
+                  <span class="comment-tag-separator" *ngIf="c.autorUserTag">|</span>
+                  <span *ngIf="c.autorUserTag" class="comment-autor-tag tooltip-trigger comment-autor-tag-with-icon" [style.--tag-primary-color]="c.autorUserTagPrimaryColor || '#FF4081'" [style.--tag-secondary-color]="c.autorUserTagSecondaryColor || '#FFFFFF'">
+                    <img *ngIf="c.autorUserTagIconUrl" [src]="API_URL + c.autorUserTagIconUrl" [alt]="c.autorUserTag" class="comment-autor-tag-icon">
+                    <span *ngIf="!c.autorUserTagIconUrl" class="comment-autor-tag-fallback">🏅</span>
+                    <span class="tag-gradient-text">{{ c.autorUserTag }}</span>
+                    <span class="tooltip">
+                      <span class="tooltip-label">Como desbloquear</span>
+                      <span class="tooltip-desc">{{ c.autorUserTagDescription || 'Medalha especial desbloqueada!' }}</span>
+                    </span>
+                  </span>
                 </div>
                 <p class="comment-content">{{ c.conteudo }}</p>
+                <div class="comment-meta-footer">
+                  <span class="comment-date">{{ c.dataCriacao | date:'dd/MM/yyyy, HH:mm':'':'pt-PT' }}</span>
+                </div>
               </div>
             </div>
+          </div>
+
+          <!-- Pagination for Comments -->
+          <div class="comments-pagination" *ngIf="getTotalCommentsPages(p) > 1">
+            <button class="comp-page-btn" [disabled]="p.comentariosCurrentPage === 1" (click)="onCommentsPageChange(p, (p.comentariosCurrentPage || 1) - 1)">
+              ‹
+            </button>
+            
+            <ng-container *ngFor="let cp of getCommentsPages(p)">
+              <button *ngIf="cp !== '...'" class="comp-page-btn" [class.active]="cp === p.comentariosCurrentPage" (click)="onCommentsPageChange(p, cp)">
+                {{ cp }}
+              </button>
+              <span *ngIf="cp === '...'" class="comp-ellipsis">...</span>
+            </ng-container>
+
+            <button class="comp-page-btn" [disabled]="p.comentariosCurrentPage === getTotalCommentsPages(p)" (click)="onCommentsPageChange(p, (p.comentariosCurrentPage || 1) + 1)">
+              ›
+            </button>
           </div>
 
           <div class="new-comment-box" *ngIf="isMembro && !isCurrentCastigado">
@@ -388,16 +541,43 @@
               <input type="text"
                      placeholder="Escreve um comentário..."
                      [(ngModel)]="p.newComentarioTexto"
+                     maxlength="500"
                      (keyup.enter)="submitComentario(p)">
               <button class="send-comment-btn"
                       (click)="submitComentario(p)"
-                      [disabled]="p.isSubmittingComentario || !p.newComentarioTexto">
+                      [disabled]="p.isSubmittingComentario || !p.newComentarioTexto || (p.newComentarioTexto && p.newComentarioTexto.length > 500)">
                 Enviar
               </button>
+            </div>
+            <div *ngIf="p.newComentarioTexto && p.newComentarioTexto.length >= 500" class="length-warning" style="margin-left: 14px; margin-top: 6px;">
+              <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"></path><path d="M12 9v4"></path><path d="M12 17h.01"></path></svg>
+              <span>Número de caracteres excedido (máximo 500).</span>
             </div>
           </div>
         </div>
       </article>
+
+      <!-- Pagination for Posts -->
+      <div class="pagination-container" *ngIf="totalPostsPages > 1">
+        <button class="page-btn" [disabled]="postsCurrentPage === 1" (click)="onPostsPageChange(postsCurrentPage - 1)">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="15 18 9 12 15 6"></polyline>
+          </svg>
+        </button>
+
+        <ng-container *ngFor="let pf of getPostsPages()">
+          <button *ngIf="pf !== '...'" class="page-btn" [class.active]="pf === postsCurrentPage" (click)="onPostsPageChange(pf)">
+            {{ pf }}
+          </button>
+          <span *ngIf="pf === '...'" class="page-ellipsis">...</span>
+        </ng-container>
+
+        <button class="page-btn" [disabled]="postsCurrentPage === totalPostsPages" (click)="onPostsPageChange(postsCurrentPage + 1)">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="9 18 15 12 9 6"></polyline>
+          </svg>
+        </button>
+      </div>
     </div>
 
     <!-- Tab Membros -->
@@ -408,7 +588,7 @@
         <div *ngFor="let pedido of pedidosPendentes" class="pending-request-row">
           <div class="pending-request-user">
             <strong>{{ pedido.userName }}</strong>
-            <span>Pedido em {{ pedido.dataPedido | date:'short' }}</span>
+            <span>Pedido em {{ pedido.dataPedido | date:'dd/MM/yyyy, HH:mm':'':'pt-PT' }}</span>
           </div>
           <div class="pending-request-actions">
             <button type="button" class="pending-approve-btn" (click)="aprovarPedido(pedido)" [disabled]="isProcessingPedido">Aprovar</button>
@@ -420,26 +600,42 @@
       <div *ngIf="membros.length === 0" class="empty">Nenhum membro encontrado.</div>
       <div class="membros-list">
         <div class="membro-item" *ngFor="let m of membros">
-          <div class="membro-avatar">{{ getUserInitial(m.userName) }}</div>
+          <div class="membro-avatar" [attr.title]="'Avatar de ' + (m.userName || '')">
+            <img *ngIf="m.fotoPerfilUrl?.trim()" class="membro-avatar-img" [src]="m.fotoPerfilUrl" [alt]="m.userName || ''" />
+            <span *ngIf="!m.fotoPerfilUrl?.trim()">{{ getUserInitial(m.userName) }}</span>
+          </div>
           <div class="membro-info">
-            <span class="membro-nome">{{ m.userName }}</span>
+            <div class="membro-nome-wrapper">
+              <a *ngIf="m.utilizadorId" class="membro-nome membro-nome-link" [routerLink]="['/profile', m.utilizadorId]">{{ m.userName }}</a>
+              <span *ngIf="!m.utilizadorId" class="membro-nome">{{ m.userName }}</span>
+              <span class="membro-tag-separator" *ngIf="m.userTag">|</span>
+              <span *ngIf="m.userTag" class="membro-tag tooltip-trigger membro-tag-with-icon" [style.--tag-primary-color]="m.userTagPrimaryColor || '#FF4081'" [style.--tag-secondary-color]="m.userTagSecondaryColor || '#FFFFFF'">
+                <img *ngIf="m.userTagIconUrl" [src]="API_URL + m.userTagIconUrl" [alt]="m.userTag" class="membro-tag-icon">
+                <span *ngIf="!m.userTagIconUrl" class="membro-tag-fallback">🏅</span>
+                <span class="tag-gradient-text">{{ m.userTag }}</span>
+                <span class="tooltip">
+                  <span class="tooltip-label">Como desbloquear</span>
+                  <span class="tooltip-desc">{{ m.userTagDescription || 'Medalha especial desbloqueada!' }}</span>
+                </span>
+              </span>
+            </div>
             <span class="membro-role" [class.admin]="m.role === 'Admin'">{{ m.role }}</span>
             <span class="membro-castigo-remaining"
                   *ngIf="m.utilizadorId && membrosCastigoCountdown[m.utilizadorId]">
               Castigado · tempo restante: <strong>{{ membrosCastigoCountdown[m.utilizadorId] }}</strong>
             </span>
           </div>
-          <span class="membro-data">Entrou {{ m.dataEntrada | date:'shortDate' }}</span>
+          <span class="membro-data">Entrou {{ m.dataEntrada | date:'dd/MM/yyyy':'':'pt-PT' }}</span>
 
           <div class="membro-actions" *ngIf="isAdmin && m.utilizadorId !== currentUserId">
-            <button class="kick-btn punish-btn" (click)="openCastigoModal(m)" title="Castigar membro">
-              ⏱️
+            <button class="kick-btn punish-btn" (click)="openCastigoModal(m)" title="Castigar membro" type="button" aria-label="Castigar membro">
+              <img class="membro-action-icon" src="assets/membro-castigo.png" alt="" width="22" height="22" aria-hidden="true" />
             </button>
-            <button class="kick-btn" (click)="openKickModal(m)" title="Expulsar membro">
-              ✕
+            <button class="kick-btn" (click)="openKickModal(m)" title="Expulsar membro" type="button" aria-label="Expulsar membro">
+              <img class="membro-action-icon" src="assets/membro-expulsar.png" alt="" width="22" height="22" aria-hidden="true" />
             </button>
-            <button class="kick-btn ban-btn" (click)="openBanModal(m)" title="Banir membro">
-              ⛔
+            <button class="kick-btn ban-btn" (click)="openBanModal(m)" title="Banir membro" type="button" aria-label="Banir membro">
+              <img class="membro-action-icon" src="assets/membro-banir.png" alt="" width="22" height="22" aria-hidden="true" />
             </button>
           </div>
 
@@ -450,15 +646,30 @@
         <h3>Membros banidos</h3>
         <div class="membros-list">
           <div class="membro-item membro-item--banido" *ngFor="let b of banidos">
-            <div class="membro-avatar">{{ getUserInitial(b.userName) }}</div>
+            <div class="membro-avatar" [attr.title]="'Avatar de ' + (b.userName || '')">
+              <img *ngIf="b.fotoPerfilUrl?.trim()" class="membro-avatar-img" [src]="b.fotoPerfilUrl" [alt]="b.userName || ''" />
+              <span *ngIf="!b.fotoPerfilUrl?.trim()">{{ getUserInitial(b.userName) }}</span>
+            </div>
             <div class="membro-info">
-              <span class="membro-nome">{{ b.userName }}</span>
+              <div class="membro-nome-wrapper">
+                <span class="membro-nome">{{ b.userName }}</span>
+                <span class="membro-tag-separator" *ngIf="b.userTag">|</span>
+                <span *ngIf="b.userTag" class="membro-tag tooltip-trigger membro-tag-with-icon" [style.--tag-primary-color]="b.userTagPrimaryColor || '#FF4081'" [style.--tag-secondary-color]="b.userTagSecondaryColor || '#FFFFFF'">
+                  <img *ngIf="b.userTagIconUrl" [src]="API_URL + b.userTagIconUrl" [alt]="b.userTag" class="membro-tag-icon">
+                  <span *ngIf="!b.userTagIconUrl" class="membro-tag-fallback">🏅</span>
+                  <span class="tag-gradient-text">{{ b.userTag }}</span>
+                  <span class="tooltip">
+                    <span class="tooltip-label">Como desbloquear</span>
+                    <span class="tooltip-desc">{{ b.userTagDescription || 'Medalha especial desbloqueada!' }}</span>
+                  </span>
+                </span>
+              </div>
               <span class="membro-role">BANIDO</span>
               <span class="membro-ban-meta" *ngIf="!b.banidoAte">Ban: <strong>permanente</strong></span>
-              <span class="membro-ban-meta" *ngIf="b.banidoAte">Ban até: <strong>{{ b.banidoAte | date:'short' }}</strong></span>
+              <span class="membro-ban-meta" *ngIf="b.banidoAte">Ban até: <strong>{{ b.banidoAte | date:'dd/MM/yyyy, HH:mm':'':'pt-PT' }}</strong></span>
               <span class="membro-ban-motivo" *ngIf="b.motivoBan">{{ b.motivoBan }}</span>
             </div>
-            <span class="membro-data">Desde {{ b.dataEntrada | date:'shortDate' }}</span>
+            <span class="membro-data">Desde {{ b.dataEntrada | date:'dd/MM/yyyy':'':'pt-PT' }}</span>
           </div>
         </div>
       </div>
@@ -481,13 +692,29 @@
     <h3>✏️ Editar comunidade</h3>
 
     <label for="editNome">Nome</label>
-    <input id="editNome" type="text" [(ngModel)]="editNome" />
+    <input id="editNome" type="text" [(ngModel)]="editNome" maxlength="30" />
+    <div *ngIf="editNome && editNome.length >= 30" class="length-warning">
+      <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"></path><path d="M12 9v4"></path><path d="M12 17h.01"></path></svg>
+      <span>Número de caracteres excedido (máximo 30).</span>
+    </div>
 
     <label for="editDescricao">Descrição</label>
-    <textarea id="editDescricao" rows="4" [(ngModel)]="editDescricao"></textarea>
+    <textarea id="editDescricao" rows="4" [(ngModel)]="editDescricao" maxlength="150"></textarea>
+    <div *ngIf="editDescricao && editDescricao.length >= 150" class="length-warning">
+      <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"></path><path d="M12 9v4"></path><path d="M12 17h.01"></path></svg>
+      <span>Número de caracteres excedido (máximo 150).</span>
+    </div>
 
     <label for="editLimiteMembros">Limite de membros (opcional)</label>
-    <input id="editLimiteMembros" type="number" min="1" [(ngModel)]="editLimiteMembros" />
+    <input id="editLimiteMembros" type="number" min="1" max="500" [(ngModel)]="editLimiteMembros" (keydown)="onlyNumbers($event)" inputmode="numeric" pattern="[0-9]*" />
+    <div *ngIf="editLimiteMembros !== null && editLimiteMembros < 0" class="length-warning">
+      <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"></path><path d="M12 9v4"></path><path d="M12 17h.01"></path></svg>
+      <span>O limite de membros não pode ser um número negativo.</span>
+    </div>
+    <div *ngIf="editLimiteMembros && editLimiteMembros > 500" class="length-warning">
+      <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"></path><path d="M12 9v4"></path><path d="M12 17h.01"></path></svg>
+      <span>O limite de membros não pode exceder 500.</span>
+    </div>
 
     <div class="spoiler-toggle-container" style="margin-top: 12px;">
       <div class="spoiler-toggle-info">
@@ -505,13 +732,18 @@
       Alterar capa (banner)
       <input type="file" accept="image/*" (change)="onEditBannerSelected($event)" style="display:none" />
     </label>
+    <div class="error-container" *ngIf="bannerError" style="display: flex; align-items: center; gap: 8px; margin-top: -10px; margin-bottom: 10px;">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="#ff4d4d"><path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/></svg>
+      <div class="form-error" style="margin: 0;">{{ bannerError }}</div>
+    </div>
     <div *ngIf="editBannerPreview" class="imagem-preview">
       <img [src]="editBannerPreview" alt="Nova capa" />
       <button type="button" class="remove-img-btn" (click)="editBannerFile = null; editBannerPreview = null">✕ Remover</button>
     </div>
-    <div *ngIf="!editBannerPreview && comunidade?.bannerUrl" class="current-img-hint">
+    <div *ngIf="!editBannerPreview && capaUrl() && !editRemoveBanner" class="current-img-hint">
       <span>Capa atual:</span>
-      <img [src]="comunidade!.bannerUrl!" alt="Capa atual" class="thumb" />
+      <img [src]="capaUrl()!" alt="Capa atual" class="thumb" />
+      <button type="button" class="remove-current-img-btn" (click)="removeCurrentBanner()">✕ Remover</button>
     </div>
 
     <label class="imagem-label">
@@ -519,20 +751,25 @@
       Alterar foto de perfil (ícone)
       <input type="file" accept="image/*" (change)="onEditIconSelected($event)" style="display:none" />
     </label>
+    <div class="error-container" *ngIf="iconError" style="display: flex; align-items: center; gap: 8px; margin-top: -10px; margin-bottom: 10px;">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="#ff4d4d"><path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/></svg>
+      <div class="form-error" style="margin: 0;">{{ iconError }}</div>
+    </div>
     <div *ngIf="editIconPreview" class="imagem-preview">
       <img [src]="editIconPreview" alt="Novo ícone" />
       <button type="button" class="remove-img-btn" (click)="editIconFile = null; editIconPreview = null">✕ Remover</button>
     </div>
-    <div *ngIf="!editIconPreview && comunidade?.iconUrl" class="current-img-hint">
+    <div *ngIf="!editIconPreview && iconeUrl() && !editRemoveIcon" class="current-img-hint">
       <span>Ícone atual:</span>
-      <img [src]="comunidade!.iconUrl!" alt="Ícone atual" class="thumb" />
+      <img [src]="iconeUrl()!" alt="Ícone atual" class="thumb" />
+      <button type="button" class="remove-current-img-btn" (click)="removeCurrentIcon()">✕ Remover</button>
     </div>
 
     <div *ngIf="editError" class="form-error">{{ editError }}</div>
 
     <div class="modal-actions">
       <button type="button" class="cancel-btn" (click)="closeEditModal()" [disabled]="isSavingEdit">Cancelar</button>
-      <button type="button" class="save-btn" (click)="saveEdit()" [disabled]="isSavingEdit">
+      <button type="button" class="save-btn" (click)="saveEdit()" [disabled]="isSavingEdit || (editNome && editNome.length > 30) || (editDescricao && editDescricao.length > 150) || (editLimiteMembros !== null && (editLimiteMembros > 500 || editLimiteMembros < 0))">
         {{ isSavingEdit ? 'A guardar…' : 'Guardar alterações' }}
       </button>
     </div>
@@ -578,10 +815,18 @@
     <h3>✏️ Editar publicação</h3>
 
     <label>Título</label>
-    <input type="text" [(ngModel)]="editPostTitulo" />
+    <input type="text" [(ngModel)]="editPostTitulo" maxlength="30" />
+    <div *ngIf="editPostTitulo && editPostTitulo.length >= 30" class="length-warning">
+      <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"></path><path d="M12 9v4"></path><path d="M12 17h.01"></path></svg>
+      <span>Número de caracteres excedido (máximo 30).</span>
+    </div>
 
     <label>Conteúdo</label>
-    <textarea rows="4" [(ngModel)]="editPostConteudo"></textarea>
+    <textarea rows="4" [(ngModel)]="editPostConteudo" maxlength="500"></textarea>
+    <div *ngIf="editPostConteudo && editPostConteudo.length >= 500" class="length-warning">
+      <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"></path><path d="M12 9v4"></path><path d="M12 17h.01"></path></svg>
+      <span>Número de caracteres excedido (máximo 500).</span>
+    </div>
     <div class="spoiler-toggle-container" style="margin-top: 16px;">
       <div class="spoiler-toggle-info">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="#ef4444"><path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z" /></svg>
@@ -595,7 +840,7 @@
 
     <div class="modal-actions">
       <button type="button" class="cancel-btn" (click)="closeEditPost()" [disabled]="isSavingPostEdit">Cancelar</button>
-      <button type="button" class="save-btn" (click)="saveEditPost()" [disabled]="isSavingPostEdit">
+      <button type="button" class="save-btn" (click)="saveEditPost()" [disabled]="isSavingPostEdit || (editPostTitulo && editPostTitulo.length > 30) || (editPostConteudo && editPostConteudo.length > 500)">
         {{ isSavingPostEdit ? 'A guardar…' : 'Guardar' }}
       </button>
     </div>
@@ -627,7 +872,7 @@
   <div class="modal-box modal-box--danger" (click)="$event.stopPropagation()">
     <button class="modal-close" (click)="closeReportModal()">&times;</button>
     <div class="delete-modal-icon">
-      <span style="font-size: 32px;">🚩</span>
+      <img class="castigo-modal-icon-img" src="assets/395841.png" alt="" width="44" height="44" aria-hidden="true" />
     </div>
     <h3>Denunciar publicação</h3>
     <p class="delete-modal-msg">Tem a certeza que deseja denunciar esta publicação por conteúdo inadequado?</p>
@@ -645,7 +890,7 @@
   <div class="modal-box modal-box--danger" (click)="$event.stopPropagation()">
     <button class="modal-close" (click)="closeCastigoModal()">&times;</button>
     <div class="delete-modal-icon">
-      <span style="font-size: 32px;">⏱️</span>
+      <img class="castigo-modal-icon-img" src="assets/membro-castigo.png" alt="" width="44" height="44" aria-hidden="true" />
     </div>
     <h3>Castigar membro</h3>
     <p class="delete-modal-msg">Escolhe quanto tempo o membro <strong>{{ membroToCastigar?.userName }}</strong> ficará impedido de fazer novas publicações.</p>
@@ -674,9 +919,12 @@
     <button class="modal-close" type="button" (click)="closeKickModal()">&times;</button>
 
     <div class="delete-modal-icon">
-      <svg width="40" height="40" viewBox="0 0 24 24" fill="currentColor">
-        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm5 11H7v-2h10v2z" />
-      </svg>
+      <img class="castigo-modal-icon-img"
+           [src]="kickMode === 'ban' ? 'assets/membro-banir.png' : 'assets/membro-expulsar.png'"
+           alt=""
+           width="44"
+           height="44"
+           aria-hidden="true" />
     </div>
 
     <h3>{{ kickMode === 'ban' ? 'Banir membro?' : 'Expulsar membro?' }}</h3>

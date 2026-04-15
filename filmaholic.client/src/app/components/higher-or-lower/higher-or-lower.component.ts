@@ -3,6 +3,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { FilmesService, Filme, RatingsDto, ActorDto } from '../../services/filmes.service';
 import { GameService, GameHistoryEntry, SaveResultResponse, GameStats } from '../../services/game.service';
 import { MenuService } from '../../services/menu.service';
+import { AuthService } from '../../services/auth.service';
 import { firstValueFrom } from 'rxjs';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../environments/environment';
@@ -12,12 +13,18 @@ import { finalize } from 'rxjs/operators';
 
 export type GameDifficulty = 'easy' | 'medium' | 'hard';
 
+/// <summary>
+/// Representa as regras de dificuldade para o jogo.
+/// </summary>
 interface FilmDifficultyRules {
   minRatingGap: number;
   maxRatingGap: number | null;
   minVoteCount: number;
 }
 
+/// <summary>
+/// Componente responsável pelo mini-jogo "Higher or Lower", onde os utilizadores comparam ratings de filmes ou popularidade de atores para ganhar pontos e subir no leaderboard.
+/// </summary>
 @Component({
   selector: 'app-higher-or-lower',
   templateUrl: './higher-or-lower.component.html',
@@ -97,6 +104,11 @@ export class HigherOrLowerComponent implements OnInit {
 
   private holUsedFilmPairKeys = new Set<string>();
 
+  /** Por jogo: cada filme no máximo 2 vezes no ecrã (todas as rondas). */
+  private holFilmAppearanceCount = new Map<number, number>();
+  /** Por jogo: cada ator no máximo 2 vezes no ecrã. */
+  private holActorAppearanceCount = new Map<number, number>();
+
   showResults = false;
   resultWinner: 'left' | 'right' | 'either' | null = null;
   chosenSide: 'left' | 'right' | null = null;
@@ -118,8 +130,15 @@ export class HigherOrLowerComponent implements OnInit {
   stats: GameStats | null = null;
 
   // maximum number of entries to keep/display in the history UI / local storage
-  private readonly historyCap = 10;
+  private readonly historyCap = 100;
 
+  // pagination settings
+  currentPage = 1;
+  itemsPerPage = 10;
+
+  /// <summary>
+  /// Construtor do componente, injetando os serviços necessários para navegar entre rotas, acessar dados de filmes e atores, gerenciar o estado do jogo, exibir notificações e verificar permissões de administrador.
+  /// </summary>
   constructor(
     private router: Router,
     private route: ActivatedRoute,
@@ -127,22 +146,43 @@ export class HigherOrLowerComponent implements OnInit {
     private gameService: GameService,
     public menuService: MenuService,
     private http: HttpClient,
-    private notificacoesService: NotificacoesService
+    private notificacoesService: NotificacoesService,
+    private authService: AuthService
   ) { }
 
+  /// <summary>
+  /// Propriedade que indica se o utilizador tem privilégios de administrador, usada para condicionalmente mostrar opções de menu ou funcionalidades avançadas.
+  /// </summary>
+  get isAdmin(): boolean {
+    return this.authService.isAdministrador();
+  }
+
+  /// <summary>
+  /// Alterna a visibilidade do menu lateral.
+  /// </summary>
   toggleMenu(): void {
     this.menuService.toggle();
   }
 
+  /// <summary>
+  /// Limpa as mensagens de sucesso e erro relacionadas com medalhas, preparando o estado para uma nova ronda ou jogo.
+  /// </summary>
   clearMedalMessages(): void {
     this.medalSuccessMessage = '';
     this.medalErrorMessage = '';
   }
 
+  /// <summary>
+  /// Navega para o dashboard de desafios do utilizador.
+  /// </summary>
   goToDashboardDesafios(): void {
     this.router.navigate(['/dashboard'], { queryParams: { openDesafios: '1' } });
   }
 
+  /// <summary>
+  /// Método de ciclo de vida do Angular que é chamado quando o componente é inicializado.
+  ///Carrega os filmes e atores para o jogo, restaura as preferências de categoria e dificuldade da sessão e verifica parâmetros de URL para mostrar o leaderboard.
+  /// </summary>
   ngOnInit(): void {
     this.filmesService.getAll().subscribe({
       next: (f) => this.films = f || [],
@@ -167,19 +207,31 @@ export class HigherOrLowerComponent implements OnInit {
     }
   }
 
+  /// <summary>
+  /// Abre o leaderboard global do jogo, definindo a propriedade showLeaderboard como true para exibir a seção correspondente no template.
+  /// </summary>
   openLeaderboard(): void {
     this.showLeaderboard = true;
   }
-
+  
+  /// <summary>
+  /// Fecha o leaderboard global do jogo, definindo a propriedade showLeaderboard como false para ocultar a seção correspondente no template.
+  /// </summary>
   closeLeaderboard(): void {
     this.showLeaderboard = false;
   }
-
+  
+  /// <summary>
+  /// Define a dificuldade do jogo e armazena a preferência na sessão.
+  /// </summary>
   setDifficulty(d: GameDifficulty): void {
     this.gameDifficulty = d;
     sessionStorage.setItem(this.sessionDifficultyKey, d);
   }
-
+  
+  /// <summary>
+  /// Retorna o rótulo da dificuldade atual do jogo.
+  /// </summary>
   difficultyLabel(): string {
     switch (this.gameDifficulty) {
       case 'easy': return 'Fácil';
@@ -188,6 +240,9 @@ export class HigherOrLowerComponent implements OnInit {
     }
   }
 
+  /// <summary>
+  /// Retorna as regras de dificuldade para o jogo com base na dificuldade selecionada, incluindo a diferença mínima e máxima de ratings entre os filmes comparados e o número mínimo de votos necessários para os filmes.
+  /// </summary>
   private getFilmDifficultyRules(): FilmDifficultyRules {
     switch (this.gameDifficulty) {
       case 'easy':
@@ -199,7 +254,9 @@ export class HigherOrLowerComponent implements OnInit {
     }
   }
 
-  /** Iguais contam como “either” no jogo — aceites em qualquer dificuldade */
+  /// <summary>
+  /// Verifica se a diferença de ratings entre dois filmes atende aos critérios de dificuldade definidos nas regras do jogo.
+  /// </summary>
   private ratingGapMatchesDifficulty(a: number, b: number, rules: FilmDifficultyRules): boolean {
     if (Math.abs(a - b) < 1e-9) return true;
     const d = Math.abs(a - b);
@@ -208,6 +265,9 @@ export class HigherOrLowerComponent implements OnInit {
     return true;
   }
 
+  /// <summary>
+  /// Relaxa as regras de dificuldade para o jogo com base na onda atual, permitindo ajustes progressivos na dificuldade.
+  /// </summary>
   private relaxFilmRules(rules: FilmDifficultyRules, wave: number): FilmDifficultyRules {
     if (wave <= 0) return { ...rules };
     if (wave === 1) {
@@ -216,6 +276,9 @@ export class HigherOrLowerComponent implements OnInit {
     return { minRatingGap: 0.01, maxRatingGap: null, minVoteCount: 0 };
   }
 
+  /// <summary>
+  /// Inicia um novo jogo, configurando a categoria (filmes ou atores) e a dificuldade, e resetando o estado do jogo para começar uma nova sessão.
+  /// </summary>
   startGame(category?: 'films' | 'actors'): void {
     if (category) {
       this.gameCategory = category;
@@ -242,6 +305,8 @@ export class HigherOrLowerComponent implements OnInit {
     this.holRatingsCache.clear();
     this.holActivePool = [];
     this.holUsedFilmPairKeys.clear();
+    this.holFilmAppearanceCount.clear();
+    this.holActorAppearanceCount.clear();
 
     if (this.gameCategory === 'actors') {
       this.startRound();
@@ -255,6 +320,8 @@ export class HigherOrLowerComponent implements OnInit {
           this.holRatingsCache.clear();
           this.holActivePool = [];
           this.holUsedFilmPairKeys.clear();
+          this.holFilmAppearanceCount.clear();
+          this.holActorAppearanceCount.clear();
           this.startRound();
         },
         error: () => {
@@ -266,6 +333,9 @@ export class HigherOrLowerComponent implements OnInit {
     this.startRound();
   }
 
+  /// <summary>
+  /// Inicia uma nova ronda do jogo, selecionando um par de filmes ou atores para comparar, e atualizando o estado do jogo com as informações relevantes para a ronda atual.
+  /// </summary>
   private async startRound(): Promise<void> {
     if (this.gameCategory === 'actors') {
       await this.startRoundActors();
@@ -301,10 +371,14 @@ export class HigherOrLowerComponent implements OnInit {
     this.rightFilm = picked.right;
     this.leftRating = picked.leftRating;
     this.rightRating = picked.rightRating;
+    this.holRegisterFilmsDisplayed(picked.left.id, picked.right.id);
     this.isLoadingPair = false;
   }
 
-  /** Embaralha cópia (Fisher–Yates) para cada jogo usar um subconjunto diferente de até 100 filmes */
+
+  /// <summary>
+  /// Embaralha um array de filmes usando o algoritmo de Fisher-Yates, garantindo uma ordem aleatória a cada jogo para aumentar a variedade dos pares de filmes apresentados.
+  /// </summary>
   private shuffleFilmesForHol<T extends Filme>(arr: T[]): T[] {
     const a = [...arr];
     for (let i = a.length - 1; i > 0; i--) {
@@ -314,7 +388,10 @@ export class HigherOrLowerComponent implements OnInit {
     return a;
   }
 
-  /** Carrega ratings de até 100 filmes com poster (escolhidos aleatoriamente a cada novo jogo) em paralelo */
+
+  /// <summary>
+  /// Pré-carrega os ratings dos filmes para o modo "Higher or Lower", buscando as informações de ratings para um subconjunto de filmes com capa e armazenando-as em cache.
+  /// </summary>
   private async warmHolRatingsCache(): Promise<void> {
     const withCover = (this.films || []).filter(f => this.hasCover(f));
     const candidates = this.shuffleFilmesForHol(withCover).slice(0, 100);
@@ -338,28 +415,85 @@ export class HigherOrLowerComponent implements OnInit {
     }
   }
 
+  /// <summary>
+  /// Gera uma chave única para um par de filmes, independentemente da ordem, para rastrear quais pares já foram usados durante o jogo e evitar repetições.
+  /// </summary>
   private holFilmPairKey(idA: number, idB: number): string {
     const a = Math.min(idA, idB);
     const b = Math.max(idA, idB);
     return `${a}-${b}`;
   }
 
+  /// <summary>
+  /// Verifica se um par de filmes já foi usado durante o jogo, consultando um conjunto de chaves de pares usados para garantir que os jogadores sejam apresentados a pares de filmes variados e não repetidos.
+  /// </summary>
   private holIsFilmPairUsed(leftId: number, rightId: number): boolean {
     return this.holUsedFilmPairKeys.has(this.holFilmPairKey(leftId, rightId));
   }
 
+  /// <summary>
+  /// Registra um par de filmes como usado, adicionando a chave do par ao conjunto de chaves de pares usados, para garantir que o mesmo par não seja apresentado novamente durante o jogo.
+  /// </summary>
   private holRegisterFilmPairUsed(leftId: number, rightId: number): void {
     this.holUsedFilmPairKeys.add(this.holFilmPairKey(leftId, rightId));
   }
 
-  /** Filmes deste jogo (lote embaralhado) ou, em fallback, todos com capa que já têm entrada no cache */
+  /// <summary>
+  /// Obtém o número de vezes que um filme específico apareceu durante o jogo, consultando um mapa de contagem de aparições para garantir que cada filme seja apresentado no máximo um número limitado de vezes.
+  /// </summary>
+  private holGetFilmAppearances(id: number): number {
+    return this.holFilmAppearanceCount.get(id) ?? 0;
+  }
+
+  /// <summary>
+  /// Verifica se um par de filmes pode ser exibido juntos, garantindo que cada filme seja apresentado no máximo um número limitado de vezes durante o jogo.
+  /// </summary>
+  private holFilmAppearancesAllowPair(leftId: number, rightId: number): boolean {
+    return this.holGetFilmAppearances(leftId) < 2 && this.holGetFilmAppearances(rightId) < 2;
+  }
+  
+  /// <summary>
+  /// Registra que um par de filmes foi exibido, incrementando a contagem de aparições de cada filme.
+  /// </summary>
+  private holRegisterFilmsDisplayed(leftId: number, rightId: number): void {
+    this.holFilmAppearanceCount.set(leftId, this.holGetFilmAppearances(leftId) + 1);
+    this.holFilmAppearanceCount.set(rightId, this.holGetFilmAppearances(rightId) + 1);
+  }
+
+  /// <summary>
+  /// Obtém o número de vezes que um ator específico apareceu durante o jogo, consultando um mapa de contagem de aparições para garantir que cada ator seja apresentado no máximo um número limitado de vezes.
+  /// </summary>
+  private holGetActorAppearances(id: number): number {
+    return this.holActorAppearanceCount.get(id) ?? 0;
+  }
+
+  /// <summary>
+  /// Verifica se um par de atores pode ser exibido juntos, garantindo que cada ator seja apresentado no máximo um número limitado de vezes durante o jogo.
+  /// </summary>
+  private holActorAppearancesAllowPair(leftId: number, rightId: number): boolean {
+    return this.holGetActorAppearances(leftId) < 2 && this.holGetActorAppearances(rightId) < 2;
+  }
+  
+  /// <summary>
+  /// Registra que um par de atores foi exibido, incrementando a contagem de aparições de cada ator.
+  /// </summary>
+  private holRegisterActorsDisplayed(leftId: number, rightId: number): void {
+    this.holActorAppearanceCount.set(leftId, this.holGetActorAppearances(leftId) + 1);
+    this.holActorAppearanceCount.set(rightId, this.holGetActorAppearances(rightId) + 1);
+  }
+
+  /// <summary>
+  /// Obtém os candidatos a filmes para o jogo, filtrando apenas aqueles que possuem capa e estão presentes no cache de avaliações.
+  /// </summary>
   private getHolFilmCandidates(): Filme[] {
     const pool = this.holActivePool.filter(f => this.hasCover(f));
     if (pool.length > 0) return pool;
     return (this.films || []).filter(f => this.hasCover(f) && this.holRatingsCache.has(f.id));
   }
 
-  /** Usa apenas cache (já aquecido em startRound) — sem HTTP por tentativa */
+  /// <summary>
+  /// Seleciona um par de filmes para a ronda atual do jogo, seguindo uma série de regras e tentativas para garantir que os filmes sejam adequados à dificuldade selecionada, não tenham sido usados anteriormente e tenham uma variedade suficiente de ratings.
+  /// </summary>
   private selectFilmPairForRoundSync(): { left: Filme; right: Filme; leftRating: number; rightRating: number } | undefined {
     const pick = (excludeUsedPairs: boolean): { left: Filme; right: Filme; leftRating: number; rightRating: number } | undefined => {
       const baseRules = this.getFilmDifficultyRules();
@@ -379,6 +513,10 @@ export class HigherOrLowerComponent implements OnInit {
     return pick(false);
   }
 
+  /// <summary>
+  /// Tenta selecionar um par de filmes aleatoriamente a partir do cache de avaliações, seguindo as regras de dificuldade e evitando pares já usados, para garantir que os filmes apresentados sejam
+  //adequados à dificuldade selecionada e ofereçam uma experiência variada aos jogadores.
+  /// </summary>
   private tryPickRandomFilmPairFromCache(
     rules: FilmDifficultyRules,
     attempts: number,
@@ -389,6 +527,7 @@ export class HigherOrLowerComponent implements OnInit {
       const rightCandidate = this.pickRandomLocalFilmFromCache(12, this.minRatingThreshold, rules.minVoteCount);
       if (!leftCandidate || !rightCandidate) continue;
       if (leftCandidate.movie.id === rightCandidate.movie.id) continue;
+      if (!this.holFilmAppearancesAllowPair(leftCandidate.movie.id, rightCandidate.movie.id)) continue;
       if (!this.ratingGapMatchesDifficulty(leftCandidate.rating, rightCandidate.rating, rules)) continue;
       if (excludeUsedPairs && this.holIsFilmPairUsed(leftCandidate.movie.id, rightCandidate.movie.id)) continue;
       return {
@@ -401,6 +540,9 @@ export class HigherOrLowerComponent implements OnInit {
     return undefined;
   }
 
+  /// <summary>
+  /// Tenta selecionar um par de filmes localmente a partir do cache de avaliações, seguindo as regras de dificuldade e evitando pares já usados.
+  /// </summary>
   private tryPickLocalFilmPairFromCache(
     rules: FilmDifficultyRules,
     maxAttempts: number,
@@ -434,6 +576,7 @@ export class HigherOrLowerComponent implements OnInit {
         if ((leftVc ?? 0) < rules.minVoteCount || (rightVc ?? 0) < rules.minVoteCount) continue;
       }
       if (!this.ratingGapMatchesDifficulty(leftVote, rightVote, rules)) continue;
+      if (!this.holFilmAppearancesAllowPair(leftCandidate.id, rightCandidate.id)) continue;
       if (excludeUsedPairs && this.holIsFilmPairUsed(leftCandidate.id, rightCandidate.id)) continue;
       return {
         left: leftCandidate,
@@ -444,7 +587,10 @@ export class HigherOrLowerComponent implements OnInit {
     }
     return undefined;
   }
-
+  
+  /// <summary>
+  /// Tenta selecionar um par de filmes aleatoriamente a partir do cache de avaliações, seguindo as regras de dificuldade e evitando pares já usados.
+  /// </summary>
   private fallbackRandomFilmPairAnySync(excludeUsedPairs: boolean): { left: Filme; right: Filme; leftRating: number; rightRating: number } | undefined {
     for (let outer = 0; outer < 12; outer++) {
       let leftCandidate = this.pickRandomLocalFilmFromCache(14, this.minRatingThreshold, 0);
@@ -455,6 +601,7 @@ export class HigherOrLowerComponent implements OnInit {
         tries++;
       }
       if (leftCandidate && rightCandidate) {
+        if (!this.holFilmAppearancesAllowPair(leftCandidate.movie.id, rightCandidate.movie.id)) continue;
         if (excludeUsedPairs && this.holIsFilmPairUsed(leftCandidate.movie.id, rightCandidate.movie.id)) continue;
         return {
           left: leftCandidate.movie,
@@ -497,12 +644,34 @@ export class HigherOrLowerComponent implements OnInit {
       const lr = this.holRatingsCache.get(left.id);
       const rr = this.holRatingsCache.get(right.id);
       if (lr == null || rr == null) continue;
+      if (!this.holFilmAppearancesAllowPair(left.id, right.id)) continue;
+      if (excludeUsedPairs && this.holIsFilmPairUsed(left.id, right.id)) continue;
+      return { left, right, leftRating: lr.tmdbVoteAverage ?? 0, rightRating: rr.tmdbVoteAverage ?? 0 };
+    }
+
+    for (let t = 0; t < 28; t++) {
+      let i = Math.floor(Math.random() * candidates.length);
+      let j = Math.floor(Math.random() * candidates.length);
+      let tries3 = 0;
+      while (j === i && tries3 < 10) {
+        j = Math.floor(Math.random() * candidates.length);
+        tries3++;
+      }
+      const left = candidates[i];
+      const right = candidates[j];
+      const lr = this.holRatingsCache.get(left.id);
+      const rr = this.holRatingsCache.get(right.id);
+      if (lr == null || rr == null) continue;
       if (excludeUsedPairs && this.holIsFilmPairUsed(left.id, right.id)) continue;
       return { left, right, leftRating: lr.tmdbVoteAverage ?? 0, rightRating: rr.tmdbVoteAverage ?? 0 };
     }
     return undefined;
   }
-
+  
+  /// <summary>
+  /// Tenta obter dois filmes do cache de avaliações que atendam a um rating mínimo, seguindo as regras de dificuldade e evitando pares já usados, para garantir que os
+  ///filmes apresentados sejam adequados à dificuldade selecionada e ofereçam uma experiência variada aos jogadores.
+  /// </summary>
   private pickRandomLocalFilmFromCache(
     maxAttempts: number,
     minRating: number,
@@ -528,6 +697,9 @@ export class HigherOrLowerComponent implements OnInit {
     return undefined;
   }
 
+  /// <summary>
+  /// Inicia uma nova ronda do jogo no modo "atores", selecionando um par de atores para comparar, e atualizando o estado do jogo com as informações relevantes para a ronda atual.
+  /// </summary>
   private async startRoundActors(): Promise<void> {
     this.notifier = null;
     this.leftActor = undefined;
@@ -566,10 +738,13 @@ export class HigherOrLowerComponent implements OnInit {
     this.rightActor = pick.right;
     this.leftActorPopularity = this.leftActor.popularidade;
     this.rightActorPopularity = this.rightActor.popularidade;
+    this.holRegisterActorsDisplayed(this.leftActor.id, this.rightActor.id);
     this.isLoadingPair = false;
   }
 
-  /** Atores mais populares no topo da lista → Fácil usa o topo, Difícil a cauda. */
+  /// <summary>
+  /// Retorna um subconjunto de atores ordenados por popularidade com base na dificuldade selecionada, para criar um pool de atores adequado à dificuldade do jogo.
+  /// </summary>
   private actorPoolForDifficulty(sorted: ActorDto[]): ActorDto[] {
     const n = sorted.length;
     if (n < 2) return sorted;
@@ -585,10 +760,10 @@ export class HigherOrLowerComponent implements OnInit {
     }
   }
 
-  /**
-   * Fácil: grande diferença de popularidade (mais óbvio).
-   * Difícil: tenta pares com popularidade próxima; se não conseguir, aceita qualquer um do pool.
-   */
+  /// <summary>
+  /// Seleciona um par de atores aleatoriamente a partir do pool fornecido, seguindo regras de diferença de popularidade e evitando pares já usados,
+  // para garantir que os atores apresentados sejam adequados à dificuldade selecionada e ofereçam uma experiência variada aos jogadores.
+  /// </summary>
   private pickActorPairFromPool(
     pool: ActorDto[],
     prevLeftId?: number,
@@ -598,12 +773,13 @@ export class HigherOrLowerComponent implements OnInit {
     const minGapMedium = 4;
     const maxGapHard = 9;
 
-    const tryPick = (predicate: (d: number) => boolean, maxAttempts: number): { i: number; j: number } | null => {
+    const tryPick = (predicate: (d: number) => boolean, maxAttempts: number, requireAppearanceCap: boolean): { i: number; j: number } | null => {
       for (let a = 0; a < maxAttempts; a++) {
         let i = Math.floor(Math.random() * pool.length);
         let j = Math.floor(Math.random() * pool.length);
         if (i === j) continue;
         if (pool[i].id === prevLeftId && pool[j].id === prevRightId) continue;
+        if (requireAppearanceCap && !this.holActorAppearancesAllowPair(pool[i].id, pool[j].id)) continue;
         const d = Math.abs(pool[i].popularidade - pool[j].popularidade);
         if (predicate(d)) return { i, j };
       }
@@ -613,30 +789,50 @@ export class HigherOrLowerComponent implements OnInit {
     let idx: { i: number; j: number } | null = null;
 
     if (this.gameDifficulty === 'easy') {
-      idx = tryPick(d => d >= minGapEasy, 28);
-      if (!idx) idx = tryPick(d => d >= minGapMedium, 22);
+      idx = tryPick(d => d >= minGapEasy, 36, true);
+      if (!idx) idx = tryPick(d => d >= minGapMedium, 28, true);
     } else if (this.gameDifficulty === 'hard') {
-      idx = tryPick(d => d > 0.05 && d <= maxGapHard, 36);
-      if (!idx) idx = tryPick(() => true, 18);
+      idx = tryPick(d => d > 0.05 && d <= maxGapHard, 48, true);
+      if (!idx) idx = tryPick(() => true, 28, true);
     } else {
-      idx = tryPick(d => d >= minGapMedium, 28);
-      if (!idx) idx = tryPick(() => true, 18);
+      idx = tryPick(d => d >= minGapMedium, 36, true);
+      if (!idx) idx = tryPick(() => true, 28, true);
+    }
+
+    if (!idx && pool.length >= 2) {
+      for (let t = 0; t < 100; t++) {
+        const i = Math.floor(Math.random() * pool.length);
+        const j = Math.floor(Math.random() * pool.length);
+        if (i === j) continue;
+        if (pool[i].id === prevLeftId && pool[j].id === prevRightId) continue;
+        if (!this.holActorAppearancesAllowPair(pool[i].id, pool[j].id)) continue;
+        idx = { i, j };
+        break;
+      }
+    }
+
+    /* Último recurso: ignora limite de 2× se o pool ficar esgotado (evita bloquear o jogo). */
+    if (!idx && pool.length >= 2) {
+      for (let t = 0; t < 60; t++) {
+        const i = Math.floor(Math.random() * pool.length);
+        const j = Math.floor(Math.random() * pool.length);
+        if (i === j) continue;
+        if (pool[i].id === prevLeftId && pool[j].id === prevRightId) continue;
+        idx = { i, j };
+        break;
+      }
     }
 
     if (!idx) {
-      let i = 0;
-      let j = 1;
-      if (pool.length >= 2) {
-        i = Math.floor(Math.random() * pool.length);
-        j = (i + 1) % pool.length;
-      }
-      idx = { i, j };
+      idx = { i: 0, j: Math.min(1, pool.length - 1) };
     }
 
     return { left: pool[idx.i], right: pool[idx.j] };
   }
 
-  /** Usa holRatingsCache (só leitura) */
+  /// <summary>
+  /// Tenta obter dois filmes do cache de avaliações que atendam a um rating mínimo, seguindo as regras de dificuldade e evitando pares já usados, para garantir que os
+  /// </summary>
   private getTwoLocalFilmsWithMinRatingFromCache(
     minRating: number = 3,
     maxAttempts: number = 20,
@@ -671,6 +867,7 @@ export class HigherOrLowerComponent implements OnInit {
       if (rightRatings == null) continue;
       const rightVote = rightRatings.tmdbVoteAverage ?? 0;
       if (rightVote <= minRating) continue;
+      if (!this.holFilmAppearancesAllowPair(leftCandidate.id, rightCandidate.id)) continue;
       if (excludeUsedPairs && this.holIsFilmPairUsed(leftCandidate.id, rightCandidate.id)) continue;
 
       return { left: leftCandidate, right: rightCandidate };
@@ -679,6 +876,9 @@ export class HigherOrLowerComponent implements OnInit {
     return undefined;
   }
 
+  /// <summary>
+  /// Reproduz um som de feedback para o jogador, indicando se a escolha foi correta ou incorreta, utilizando a Web Audio API para gerar sons simples de forma programática.
+  /// </summary>
   private playSound(type: 'correct' | 'wrong'): void {
     try {
       if (!this.audioCtx) {
@@ -711,7 +911,10 @@ export class HigherOrLowerComponent implements OnInit {
     } catch {
     }
   }
-
+  
+  /// <summary>
+  /// Verifica se um filme possui uma capa válida.
+  /// </summary>
   private hasCover(f?: Filme): boolean {
     if (!f) return false;
     const p = (f.posterUrl ?? '').trim();
@@ -720,7 +923,10 @@ export class HigherOrLowerComponent implements OnInit {
     if (p.includes('placeholder.com')) return false;
     return true;
   }
-
+  
+  /// <summary>
+  /// Pré-carrega o próximo par de filmes de forma síncrona, retornando os filmes e suas avaliações.
+  /// </summary>
   private preloadNextPairSync(): { left: Filme; right: Filme; leftRating: number; rightRating: number } | undefined {
     try {
       return this.selectFilmPairForRoundSync();
@@ -728,7 +934,10 @@ export class HigherOrLowerComponent implements OnInit {
       return undefined;
     }
   }
-
+  
+  /// <summary>
+  /// Processa a escolha do jogador, verificando se está correta e atualizando o estado do jogo.
+  /// </summary>
   choose(side: 'left' | 'right'): void {
     if (this.isLoadingPair || this.notifier) return;
 
@@ -803,6 +1012,7 @@ export class HigherOrLowerComponent implements OnInit {
           this.rightFilm = np.right;
           this.leftRating = np.leftRating;
           this.rightRating = np.rightRating;
+          this.holRegisterFilmsDisplayed(np.left.id, np.right.id);
           this.nextPair = undefined;
 
           this.notifier = null;
@@ -837,7 +1047,10 @@ export class HigherOrLowerComponent implements OnInit {
       }
     }, 4000);
   }
-
+  
+  /// <summary>
+  /// Persiste o histórico do jogo, salvando localmente ou na API dependendo da disponibilidade do usuário.
+  /// </summary>
   private persistHistory(): void {
     const roundsJson = JSON.stringify(this.rounds || []);
     const userId = localStorage.getItem('user_id');
@@ -857,10 +1070,8 @@ export class HigherOrLowerComponent implements OnInit {
           this.http.post<any>(`${this.apiMedalhas}/check-higher-or-lower`, {}, { withCredentials: true })
             .pipe(finalize(() => this.notificacoesService.refreshNotificationBadges()))
             .subscribe({
-              next: (medalRes) => {
-                if (medalRes.novasMedalhas > 0) {
-                  this.medalSuccessMessage = `Ganhaste a medalha: ${medalRes.medalhas[0].nome}! 🏆`;
-                }
+              next: () => {
+                // Medal popup removed - using notifications instead
               },
               error: (err) => {
                 console.error('Error checking higher-or-lower medals:', err);
@@ -877,7 +1088,10 @@ export class HigherOrLowerComponent implements OnInit {
       this.saveLocalHistory(this.score, roundsJson);
     }
   }
-
+  
+  /// <summary>
+  /// Salva o histórico do jogo localmente, caso a API não esteja disponível.
+  /// </summary>
   private saveLocalHistory(score: number, roundsJson: string): void {
     try {
       const existing = JSON.parse(localStorage.getItem(this.localHistoryKey) || '[]');
@@ -892,11 +1106,15 @@ export class HigherOrLowerComponent implements OnInit {
     } catch {
     }
   }
-
+  
+  /// <summary>
+  /// Abre o histórico de jogos, carregando tanto o histórico local quanto o histórico do servidor, se disponível.
+  /// </summary>
   openHistory(): void {
     this.showHistory = true;
     this.isPlaying = false;
     this.history = [];
+    this.currentPage = 1;
 
     const userId = localStorage.getItem('user_id');
     if (userId) {
@@ -927,6 +1145,9 @@ export class HigherOrLowerComponent implements OnInit {
     }
   }
 
+  /// <summary>
+  /// Adiciona o histórico local ao histórico geral, mesclando com o histórico do servidor se disponível.
+  /// </summary>
   private appendLocalHistory(): void {
     try {
       const local = JSON.parse(localStorage.getItem(this.localHistoryKey) || '[]') || [];
@@ -943,7 +1164,10 @@ export class HigherOrLowerComponent implements OnInit {
     } catch {
     }
   }
-
+  
+  /// <summary>
+  /// Calcula o número de rodadas a partir do JSON das rodadas.
+  /// </summary>
   private computeRoundsCount(roundsJson?: string | null): number {
     if (!roundsJson) return 0;
     try {
@@ -954,7 +1178,10 @@ export class HigherOrLowerComponent implements OnInit {
       return 0;
     }
   }
-
+  
+  /// <summary>
+  /// Calcula a categoria do jogo a partir do JSON das rodadas.
+  /// </summary>
   public computeCategory(roundsJson?: string | null): string {
     if (!roundsJson) return 'Filmes';
     try {
@@ -967,17 +1194,67 @@ export class HigherOrLowerComponent implements OnInit {
     return 'Filmes';
   }
 
-  // Close the end-of-game stats card (returns to main menu)
+  /// <summary>
+  /// Fecha as estatísticas de fim de jogo, retornando ao menu principal.
+  /// </summary>
   closeEndStats(): void {
     this.showEndStats = false;
     this.endStats = null;
     this.isPlaying = false;
   }
 
+  /// <summary>
+  /// Volta para o dashboard, fechando o histórico ou as estatísticas de fim de jogo.
+  /// </summary>
   goBack(): void {
     this.router.navigate(['/dashboard']);
   }
 
+  /// <summary>
+  /// Calcula o número total de páginas para o histórico, com base no número total de entradas e no número de itens por página.
+  /// </summary>
+  get totalPages(): number {
+    return Math.ceil(this.history.length / this.itemsPerPage);
+  }
+  
+  /// <summary>
+  /// Obtém o histórico paginado, com base na página atual e no número de itens por página.
+  /// </summary>
+  get paginatedHistory(): Array<GameHistoryEntry & { roundsCount?: number; category?: string }> {
+    const start = (this.currentPage - 1) * this.itemsPerPage;
+    return this.history.slice(start, start + this.itemsPerPage);
+  }
+  
+  /// <summary>
+  /// Vai para a página especificada do histórico, se estiver dentro do intervalo válido.
+  /// </summary>
+  goToPage(page: number): void {
+    if (page >= 1 && page <= this.totalPages) {
+      this.currentPage = page;
+    }
+  }
+  
+  /// <summary>
+  /// Vai para a próxima página do histórico, se houver.
+  /// </summary>
+  nextPage(): void {
+    if (this.currentPage < this.totalPages) {
+      this.currentPage++;
+    }
+  }
+  
+  /// <summary>
+  /// Vai para a página anterior do histórico, se houver.
+  /// </summary>
+  prevPage(): void {
+    if (this.currentPage > 1) {
+      this.currentPage--;
+    }
+  }
+  
+  /// <summary>
+  /// Obtém o URL do poster de um filme, ou um placeholder se não estiver disponível.
+  /// </summary>
   posterOf(f?: Filme): string {
     return f?.posterUrl || 'https://via.placeholder.com/300x450?text=Poster';
   }

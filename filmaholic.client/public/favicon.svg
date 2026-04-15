@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" role="img" aria-label="FilmAholic Logo">
+  <!-- Base com cantos arredondados vibrante -->
+  <rect width="32" height="32" rx="9" fill="#ff2f6d"/>
+  
+  <!-- Fita de filme (dark base) -->
+  <path d="M6 10 C6 8.89 6.89 8 8 8 H24 C25.11 8 26 8.89 26 10 V22 C26 23.11 25.11 24 24 24 H8 C6.89 24 6 23.11 6 22 V10" fill="#1e1e2e"/>
+  
+  <!-- Furos da fita (topo) -->
+  <rect x="8" y="10" width="2.5" height="2.5" rx="0.5" fill="#fff"/>
+  <rect x="13" y="10" width="2.5" height="2.5" rx="0.5" fill="#fff"/>
+  <rect x="18" y="10" width="2.5" height="2.5" rx="0.5" fill="#fff"/>
+  <rect x="23" y="10" width="2.5" height="2.5" rx="0.5" fill="#fff"/>
+  
+  <!-- Furos da fita (base) -->
+  <rect x="8" y="19.5" width="2.5" height="2.5" rx="0.5" fill="#fff"/>
+  <rect x="13" y="19.5" width="2.5" height="2.5" rx="0.5" fill="#fff"/>
+  <rect x="18" y="19.5" width="2.5" height="2.5" rx="0.5" fill="#fff"/>
+  <rect x="23" y="19.5" width="2.5" height="2.5" rx="0.5" fill="#fff"/>
+  
+  <!-- Detalhe central vibrante -->
+  <rect x="6" y="14.5" width="20" height="3" fill="#ff2f6d" opacity="0.3"/>
+</svg>

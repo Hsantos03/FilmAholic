@@ -1,13 +1,15 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { ComunidadesService, ComunidadeDto, ComunidadePedidoEntradaDto, MembroDto, PostDto, RankingMembroDto } from '../../services/comunidades.service';
+import { ComunidadesService, ComunidadeDto, ComunidadePedidoEntradaDto, MembroDto, PostDto, RankingMembroDto, resolveComunidadeMediaUrl } from '../../services/comunidades.service';
 import { MenuService } from '../../services/menu.service';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Subscription } from 'rxjs';
 import { finalize } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
 import { NotificacoesService } from '../../services/notificacoes.service';
+import { AuthService } from '../../services/auth.service';
 import { OnboardingStep } from '../../services/onboarding.service';
+
 
 @Component({
   selector: 'app-comunidade-detalhe',
@@ -42,6 +44,7 @@ export class ComunidadeDetalheComponent implements OnInit, OnDestroy {
   error = '';
 
   private readonly apiMedalhas = environment.apiBaseUrl ? `${environment.apiBaseUrl}/api/medalhas` : '/api/medalhas';
+  readonly API_URL = environment.apiBaseUrl ? environment.apiBaseUrl : '';
 
   // ── Ranking ───
   activeTab: 'posts' | 'membros' | 'ranking' = 'posts';
@@ -76,8 +79,12 @@ export class ComunidadeDetalheComponent implements OnInit, OnDestroy {
   editBannerPreview: string | null = null;
   editIconFile: File | null = null;
   editIconPreview: string | null = null;
+  editRemoveBanner = false;
+  editRemoveIcon = false;
   isSavingEdit = false;
   editError = '';
+  bannerError = '';
+  iconError = '';
 
   // ── Modal de confirmação de apagar ─────
   showDeleteModal = false;
@@ -116,6 +123,11 @@ export class ComunidadeDetalheComponent implements OnInit, OnDestroy {
   postToReport: PostDto | null = null;
   isReporting = false;
 
+  /** Mensagem de feedback após denúncia ou se já tinha denunciado. */
+  reportFeedbackMessage: string | null = null;
+  reportFeedbackTone: 'success' | 'info' = 'success';
+  private reportFeedbackDismissTimer: ReturnType<typeof setTimeout> | null = null;
+
   // ── Spoiler Properties ──
   newTemSpoiler = false;
   editTemSpoiler = false;
@@ -136,6 +148,14 @@ export class ComunidadeDetalheComponent implements OnInit, OnDestroy {
   pedidosPendentes: ComunidadePedidoEntradaDto[] = [];
   isProcessingPedido = false;
 
+  // Pagination for posts
+  postsCurrentPage = 1;
+  postsPageSize = 6;
+  postsTotalCount = 0;
+
+  // Comment page size
+  commentsPageSize = 5;
+
   private comunidadeId!: number;
   private sub?: Subscription;
 
@@ -145,8 +165,14 @@ export class ComunidadeDetalheComponent implements OnInit, OnDestroy {
     private service: ComunidadesService,
     public menuService: MenuService,
     private http: HttpClient,
-    private notificacoesService: NotificacoesService
+    private notificacoesService: NotificacoesService,
+    private authService: AuthService
   ) { }
+
+  /** Administrador da plataforma (role global), distinto de admin da comunidade. */
+  get isPlatformAdmin(): boolean {
+    return this.authService.isAdministrador();
+  }
 
   toggleMenu(): void { this.menuService.toggle(); }
 
@@ -155,6 +181,9 @@ export class ComunidadeDetalheComponent implements OnInit, OnDestroy {
     const tab = this.route.snapshot.queryParamMap.get('tab');
     if (tab === 'membros' || tab === 'posts' || tab === 'ranking') {
       this.activeTab = tab;
+    }
+    if (this.route.snapshot.queryParamMap.get('highlightPost')) {
+      this.activeTab = 'posts';
     }
     this.isLoading = true;
     this.sub = this.route.paramMap.subscribe(params => {
@@ -170,6 +199,52 @@ export class ComunidadeDetalheComponent implements OnInit, OnDestroy {
     if (this.timerInterval) {
       clearInterval(this.timerInterval);
     }
+    this.clearReportFeedbackTimer();
+  }
+
+  private clearReportFeedbackTimer(): void {
+    if (this.reportFeedbackDismissTimer) {
+      clearTimeout(this.reportFeedbackDismissTimer);
+      this.reportFeedbackDismissTimer = null;
+    }
+  }
+
+  private showReportSuccessFeedback(): void {
+    this.clearReportFeedbackTimer();
+    this.reportFeedbackTone = 'success';
+    this.reportFeedbackMessage =
+      'Denúncia enviada com sucesso. Obrigado por ajudares a manter a comunidade segura — a moderação vai analisar.';
+    this.reportFeedbackDismissTimer = setTimeout(() => {
+      this.reportFeedbackMessage = null;
+      this.reportFeedbackDismissTimer = null;
+    }, 7000);
+  }
+
+  private showAlreadyReportedFeedback(): void {
+    this.clearReportFeedbackTimer();
+    this.reportFeedbackTone = 'info';
+    this.reportFeedbackMessage =
+      'Já denunciaste esta publicação. A tua denúncia está registada — a moderação tratará do caso em breve.';
+    this.reportFeedbackDismissTimer = setTimeout(() => {
+      this.reportFeedbackMessage = null;
+      this.reportFeedbackDismissTimer = null;
+    }, 7000);
+  }
+
+  /** Mensagem informativa no banner (ex.: não é membro, castigado). */
+  private showReportInfoBanner(message: string): void {
+    this.clearReportFeedbackTimer();
+    this.reportFeedbackTone = 'info';
+    this.reportFeedbackMessage = message;
+    this.reportFeedbackDismissTimer = setTimeout(() => {
+      this.reportFeedbackMessage = null;
+      this.reportFeedbackDismissTimer = null;
+    }, 7000);
+  }
+
+  dismissReportFeedback(): void {
+    this.clearReportFeedbackTimer();
+    this.reportFeedbackMessage = null;
   }
 
   private load(id: number): void {
@@ -235,9 +310,72 @@ export class ComunidadeDetalheComponent implements OnInit, OnDestroy {
   }
 
   loadPosts(): void {
-    this.service.getPosts(this.comunidadeId).subscribe({
-      next: (list) => { this.posts = list; }
+    this.service.getPosts(this.comunidadeId, this.postsCurrentPage, this.postsPageSize, this.sortOrder).subscribe({
+      next: (res) => {
+        this.posts = res.posts || [];
+        this.postsTotalCount = res.totalCount || 0;
+        const hp = this.route.snapshot.queryParamMap.get('highlightPost');
+        if (hp) {
+          const pid = parseInt(hp, 10);
+          if (!isNaN(pid)) {
+            setTimeout(() => this.tryScrollToHighlightedPost(pid), 0);
+          }
+        }
+      }
     });
+  }
+
+  private tryScrollToHighlightedPost(postId: number): void {
+    const el = document.getElementById(`comunidade-post-${postId}`);
+    if (!el) return;
+    el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    const q = { ...this.route.snapshot.queryParams } as Record<string, string | undefined>;
+    delete q['highlightPost'];
+    this.router.navigate([], { relativeTo: this.route, queryParams: q, replaceUrl: true });
+  }
+
+  onSortChange(): void {
+    this.postsCurrentPage = 1;
+    this.loadPosts();
+  }
+
+  onPostsPageChange(page: number | string): void {
+    const pageNum = typeof page === 'string' ? parseInt(page) : page;
+    if (isNaN(pageNum) || pageNum < 1 || pageNum > this.totalPostsPages) return;
+
+    this.postsCurrentPage = pageNum;
+    this.loadPosts();
+    // Scroll to the top of posts list
+    const postHeader = document.getElementById('posts-start-anchor');
+    if (postHeader) postHeader.scrollIntoView({ behavior: 'smooth' });
+  }
+
+  get totalPostsPages(): number {
+    return Math.ceil(this.postsTotalCount / this.postsPageSize);
+  }
+
+  getPostsPages(): (number | string)[] {
+    return this.generateVisiblePages(this.postsCurrentPage, this.totalPostsPages);
+  }
+
+  private generateVisiblePages(current: number, total: number): (number | string)[] {
+    const pages: (number | string)[] = [];
+    if (total <= 7) {
+      for (let i = 1; i <= total; i++) pages.push(i);
+      return pages;
+    }
+    pages.push(1);
+    if (current > 3) pages.push('...');
+    const start = Math.max(2, current - 1);
+    const end = Math.min(total - 1, current + 1);
+    for (let i = start; i <= end; i++) {
+        if (!pages.includes(i)) pages.push(i);
+    }
+    if (current < total - 2) {
+      if (!pages.includes('...')) pages.push('...');
+    }
+    if (!pages.includes(total)) pages.push(total);
+    return pages;
   }
 
   juntar(): void {
@@ -316,7 +454,12 @@ export class ComunidadeDetalheComponent implements OnInit, OnDestroy {
         post.reportsCount = 0;
         post.temSpoiler = this.newTemSpoiler;
 
-        this.posts.unshift(post);
+        this.postsCurrentPage = 1; // Voltar à primeira página para ver o novo post
+        this.loadPosts();
+        
+        // Reset local flags only after starting the load
+        this.isPosting = false;
+
         this.newTitulo = '';
         this.newConteudo = '';
         this.imagemFile = null;
@@ -324,7 +467,6 @@ export class ComunidadeDetalheComponent implements OnInit, OnDestroy {
         this.newTemSpoiler = false;
         this.filmeSelecionado = null;
         this.showPostForm = false;
-        this.isPosting = false;
       },
       error: (err) => {
         this.postError = err?.error?.message || 'Erro ao publicar.';
@@ -333,28 +475,9 @@ export class ComunidadeDetalheComponent implements OnInit, OnDestroy {
     });
   }
 
+  // Getter for template consistency (now just returns the actual server-side sorted list)
   get sortedPosts(): PostDto[] {
-    return [...this.posts].sort((a, b) => {
-      switch (this.sortOrder) {
-        case 'desc':
-          return new Date(b.dataCriacao ?? 0).getTime() - new Date(a.dataCriacao ?? 0).getTime();
-
-        case 'asc':
-          return new Date(a.dataCriacao ?? 0).getTime() - new Date(b.dataCriacao ?? 0).getTime();
-
-        case 'likes':
-          return (b.likesCount || 0) - (a.likesCount || 0);
-
-        case 'dislikes':
-          return (b.dislikesCount || 0) - (a.dislikesCount || 0);
-
-        case 'reports':
-          return (b.reportsCount || 0) - (a.reportsCount || 0);
-
-        default:
-          return 0;
-      }
-    });
+    return this.posts;
   }
 
   // ── Editar comunidade ────
@@ -362,34 +485,67 @@ export class ComunidadeDetalheComponent implements OnInit, OnDestroy {
   openEditModal(): void {
     if (!this.comunidade) return;
     this.editNome = this.comunidade.nome;
-    this.editDescricao = this.comunidade.descricao ?? '';
-    this.editLimiteMembros = this.comunidade.limiteMembros ?? null;
+    this.editDescricao = this.comunidade.descricao || '';
+    this.editLimiteMembros = this.comunidade.limiteMembros || null;
     this.editIsPrivada = !!this.comunidade.isPrivada;
     this.editBannerFile = null;
     this.editBannerPreview = null;
     this.editIconFile = null;
     this.editIconPreview = null;
+    this.editRemoveBanner = false;
+    this.editRemoveIcon = false;
     this.editError = '';
+    this.bannerError = '';
+    this.iconError = '';
     this.showEditModal = true;
   }
 
   closeEditModal(): void {
     this.showEditModal = false;
+    this.editError = '';
+    this.bannerError = '';
+    this.iconError = '';
     this.isSavingEdit = false;
   }
 
-  onEditBannerSelected(ev: any): void {
+   onEditBannerSelected(ev: any): void {
     const f: File = ev?.target?.files?.[0];
-    this.editBannerFile = f || null;
+    if (!f) return;
+    this.bannerError = '';
+
+    if (f.size > 1 * 1024 * 1024) {
+      this.bannerError = 'A imagem do banner é muito grande. Por favor, escolha uma imagem menor que 1MB.';
+      ev.target.value = '';
+      return;
+    }
+
+    this.editBannerFile = f;
     if (this.editBannerPreview) { URL.revokeObjectURL(this.editBannerPreview); this.editBannerPreview = null; }
-    if (this.editBannerFile) this.editBannerPreview = URL.createObjectURL(this.editBannerFile);
+    this.editBannerPreview = URL.createObjectURL(this.editBannerFile);
   }
 
   onEditIconSelected(ev: any): void {
     const f: File = ev?.target?.files?.[0];
-    this.editIconFile = f || null;
+    if (!f) return;
+    this.iconError = '';
+
+    if (f.size > 1 * 1024 * 1024) {
+      this.iconError = 'O ícone é muito grande. Por favor, escolha uma imagem menor que 1MB.';
+      ev.target.value = '';
+      return;
+    }
+
+    this.editIconFile = f;
     if (this.editIconPreview) { URL.revokeObjectURL(this.editIconPreview); this.editIconPreview = null; }
-    if (this.editIconFile) this.editIconPreview = URL.createObjectURL(this.editIconFile);
+    this.editIconPreview = URL.createObjectURL(this.editIconFile);
+  }
+
+  removeCurrentBanner(): void {
+    this.editRemoveBanner = true;
+  }
+
+  removeCurrentIcon(): void {
+    this.editRemoveIcon = true;
   }
 
   saveEdit(): void {
@@ -397,6 +553,17 @@ export class ComunidadeDetalheComponent implements OnInit, OnDestroy {
     if (!this.editNome.trim()) {
       this.editError = 'O nome da comunidade é obrigatório.';
       return;
+    }
+
+    if (this.editLimiteMembros !== null) {
+      if (this.editLimiteMembros < 0) {
+        this.editError = 'O limite de membros não pode ser um número negativo.';
+        return;
+      }
+      if (this.editLimiteMembros > 500) {
+        this.editError = 'O limite de membros não pode exceder 500.';
+        return;
+      }
     }
 
     const fd = new FormData();
@@ -408,6 +575,8 @@ export class ComunidadeDetalheComponent implements OnInit, OnDestroy {
     fd.append('isPrivada', String(this.editIsPrivada));
     if (this.editBannerFile) fd.append('banner', this.editBannerFile, this.editBannerFile.name);
     if (this.editIconFile) fd.append('icon', this.editIconFile, this.editIconFile.name);
+    if (this.editRemoveBanner) fd.append('removeBanner', 'true');
+    if (this.editRemoveIcon) fd.append('removeIcon', 'true');
 
     this.isSavingEdit = true;
     this.service.update(this.comunidadeId, fd).subscribe({
@@ -613,6 +782,14 @@ export class ComunidadeDetalheComponent implements OnInit, OnDestroy {
 
   goToDashboardDesafios(): void { this.router.navigate(['/dashboard'], { queryParams: { openDesafios: '1' } }); }
 
+  capaUrl(): string | null {
+    return resolveComunidadeMediaUrl(this.comunidade?.bannerUrl);
+  }
+
+  iconeUrl(): string | null {
+    return resolveComunidadeMediaUrl(this.comunidade?.iconUrl);
+  }
+
   initialLetra(nome: string | undefined): string {
     const t = (nome || '?').trim();
     return t.length ? t.charAt(0).toUpperCase() : '?';
@@ -761,7 +938,7 @@ export class ComunidadeDetalheComponent implements OnInit, OnDestroy {
 
     this.service.deletePost(this.comunidadeId, this.postToDelete.id).subscribe({
       next: () => {
-        this.posts = this.posts.filter(p => p.id !== this.postToDelete!.id);
+        this.loadPosts();
         this.closeDeletePostModal();
       },
       error: () => {
@@ -773,6 +950,10 @@ export class ComunidadeDetalheComponent implements OnInit, OnDestroy {
 
   openReportModal(post: PostDto): void {
     if (this.isCurrentCastigado) return;
+    if (post.jaReportou) {
+      this.showAlreadyReportedFeedback();
+      return;
+    }
     this.postToReport = post;
     this.showReportModal = true;
   }
@@ -794,10 +975,52 @@ export class ComunidadeDetalheComponent implements OnInit, OnDestroy {
           this.postToReport.jaReportou = true;
         }
         this.closeReportModal();
+        this.showReportSuccessFeedback();
       },
-      error: (err) => {
-        const errorMsg = err?.error?.message || 'Erro ao denunciar.';
-        alert(errorMsg);
+      error: (err: HttpErrorResponse) => {
+        const raw = err.error;
+        const errorMsg =
+          typeof raw === 'object' && raw !== null && 'message' in raw
+            ? String((raw as { message?: unknown }).message ?? '').trim()
+            : '';
+
+        if (err.status === 403) {
+          this.isReporting = false;
+          this.closeReportModal();
+          this.showReportInfoBanner(
+            errorMsg ||
+              'Só podes denunciar publicações se fores membro ativo desta comunidade. Junta-te à comunidade primeiro.'
+          );
+          return;
+        }
+
+        if (/já\s+denunciaste|denunciaste\s+esta/i.test(errorMsg)) {
+          if (this.postToReport) {
+            this.postToReport.jaReportou = true;
+          }
+          this.isReporting = false;
+          this.closeReportModal();
+          this.showAlreadyReportedFeedback();
+          return;
+        }
+
+        if (/castigado/i.test(errorMsg)) {
+          this.isReporting = false;
+          this.closeReportModal();
+          this.showReportInfoBanner(
+            errorMsg || 'Estás castigado e não podes denunciar publicações neste período.'
+          );
+          return;
+        }
+
+        if (errorMsg) {
+          this.isReporting = false;
+          this.closeReportModal();
+          this.showReportInfoBanner(errorMsg);
+          return;
+        }
+
+        alert('Erro ao denunciar.');
         this.isReporting = false;
       }
     });
@@ -896,14 +1119,43 @@ export class ComunidadeDetalheComponent implements OnInit, OnDestroy {
     post.showComentarios = !post.showComentarios;
 
     if (post.showComentarios && (!post.comentarios || post.comentarios.length === 0)) {
-      this.service.getComentarios(this.comunidadeId, post.id!).subscribe({
-        next: (comentarios) => {
-          post.comentarios = comentarios;
-          post.comentariosCount = comentarios.length;
-        },
-        error: (err) => console.error('Erro ao carregar comentários', err)
-      });
+        post.comentariosCurrentPage = 1;
+        this.loadPostComments(post);
     }
+  }
+
+  loadPostComments(post: PostDto): void {
+    if (!post.id) return;
+    this.service.getComentarios(this.comunidadeId, post.id, post.comentariosCurrentPage || 1, this.commentsPageSize).subscribe({
+      next: (res) => {
+        post.comentarios = res.comments || [];
+        const total = res.totalCount || 0;
+        post.comentariosTotalCount = total;
+        post.comentariosCount = total;
+      },
+      error: (err) => console.error('Erro ao carregar comentários', err)
+    });
+  }
+
+  onCommentsPageChange(post: PostDto, page: number | string): void {
+    const pageNum = typeof page === 'string' ? parseInt(page) : page;
+    const total = this.getTotalCommentsPages(post);
+    if (isNaN(pageNum) || pageNum < 1 || pageNum > total) return;
+    post.comentariosCurrentPage = pageNum;
+    this.loadPostComments(post);
+  }
+
+  getTotalCommentsPages(post: PostDto): number {
+    return Math.ceil((post.comentariosTotalCount || 0) / this.commentsPageSize);
+  }
+
+  /** Total para o rótulo «Ver N comentários»: sincronizado com a API de comentários, não só com comentariosCount do feed. */
+  getPostCommentDisplayCount(post: PostDto): number {
+    return post.comentariosTotalCount ?? post.comentariosCount ?? 0;
+  }
+
+  getCommentsPages(post: PostDto): (number | string)[] {
+    return this.generateVisiblePages(post.comentariosCurrentPage || 1, this.getTotalCommentsPages(post));
   }
 
   submitComentario(post: PostDto): void {
@@ -913,10 +1165,11 @@ export class ComunidadeDetalheComponent implements OnInit, OnDestroy {
 
     this.service.createComentario(this.comunidadeId, post.id, post.newComentarioTexto.trim()).subscribe({
       next: (novoComentario) => {
-        if (!post.comentarios) post.comentarios = [];
-        post.comentarios.push(novoComentario);
-
-        post.comentariosCount = (post.comentariosCount || 0) + 1;
+        const next = (post.comentariosTotalCount ?? post.comentariosCount ?? 0) + 1;
+        post.comentariosTotalCount = next;
+        post.comentariosCount = next;
+        post.comentariosCurrentPage = 1; // Back to first page to see the comment
+        this.loadPostComments(post);
         post.newComentarioTexto = '';
         post.isSubmittingComentario = false;
       },
@@ -955,5 +1208,12 @@ export class ComunidadeDetalheComponent implements OnInit, OnDestroy {
 
   removerFilmeAnexado(): void {
     this.filmeSelecionado = null;
+  }
+
+  onlyNumbers(event: KeyboardEvent): void {
+    const allowedKeys = ['Backspace', 'Tab', 'ArrowLeft', 'ArrowRight', 'Delete', 'Enter'];
+    if (!allowedKeys.includes(event.key) && isNaN(Number(event.key)) && event.key !== ' ') {
+      event.preventDefault();
+    }
   }
 }

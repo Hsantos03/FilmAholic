@@ -1,5 +1,8 @@
 namespace FilmAholic.Server.DTOs
 {
+    /// <summary>
+    /// Representa as classificações de um filme, incluindo avaliações de diferentes fontes e a pontuação do utilizador.
+    /// </summary>
     public class RatingsDto
     {
         // TMDb

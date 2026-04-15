@@ -3,6 +3,9 @@ using System.Text.Json.Serialization;
 namespace FilmAholic.Server.DTOs;
 
 // DTOs for OMDb API responses
+/// <summary>
+/// Representa um filme obtido da API OMDb, incluindo informações como título, ano, classificação, elenco, enredo e avaliações.
+/// </summary>
 public class OmdbMovieDto
 {
     [JsonPropertyName("Title")]
@@ -72,6 +75,10 @@ public class OmdbMovieDto
     public string? Error { get; set; }
 }
 
+
+/// <summary>
+/// Representa uma avaliação de um filme obtida da API OMDb, incluindo a fonte da avaliação e o valor.
+/// </summary>
 public class OmdbRatingDto
 {
     [JsonPropertyName("Source")]

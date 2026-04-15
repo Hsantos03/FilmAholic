@@ -2,6 +2,9 @@ using FilmAholic.Server.Models;
 
 namespace FilmAholic.Server.Services;
 
+/// <summary>
+/// Obtém estatísticas de visualização de filmes por género.
+/// </summary>
 public static class WatchStatisticsHelper
 {
     public static List<(string genero, int total)> CountByIndividualGenre(IEnumerable<UserMovie> movies)

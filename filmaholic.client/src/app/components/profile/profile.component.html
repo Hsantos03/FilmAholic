@@ -32,17 +32,23 @@
       <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" /></svg>
       <span>Perfil</span>
     </a>
+    <a *ngIf="isAdmin" class="sidebar-item" routerLink="/admin" routerLinkActive="active" (click)="toggleMenu()">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+        <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 10.99h7c-.53 4.12-3.28 7.79-7 8.94V12H5V6.3l7-3.11v8.8z" />
+      </svg>
+      <span>Administração</span>
+    </a>
     <a class="sidebar-item" routerLink="/cinema-movies" (click)="toggleMenu()">
       <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M18 4l2 4h-3l-2-4h-2l2 4h-3l-2-4H8l2 4H7L5 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V4h-4z" /></svg>
       <span>Filmes em Cartaz</span>
     </a>
     <a class="sidebar-item" routerLink="/higher-or-lower" (click)="toggleMenu()">
-      <span style="font-size:20px">🎮</span>
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M21 6H3c-1.1 0-2 .9-2 2v8c0 1.1.9 2 2 2h18c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm-10 7H8v3H6v-3H3v-2h3V8h2v3h3v2zm4.5 2c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm4-3c-.83 0-1.5-.67-1.5-1.5S18.67 9 19.5 9s1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"/></svg>
       <span>Higher or Lower</span>
     </a>
     <button class="sidebar-item" (click)="goToDashboardDesafios(); toggleMenu()">
       <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2L14.09 8.26L21 9.27L16.5 13.14L17.82 20L12 16.77L6.18 20L7.5 13.14L3 9.27L9.91 8.26L12 2Z" /></svg>
-      <span>Desafios Semanais</span>
+      <span>Desafios Diários</span>
     </button>
     <a class="sidebar-item" routerLink="/cinemas-proximos" (click)="toggleMenu()">
       <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z" /></svg>
@@ -55,6 +61,10 @@
   </div>
 </nav>
 
+<!-- PARTÍCULAS DE FUNDO -->
+<div class="bg-orb orb1"></div>
+<div class="bg-orb orb2"></div>
+
 <!-- Header (capa) -->
 <div class="profile-header"
      [style.background-image]="capaUrl ? 'url(' + capaUrl + ')' : 'none'"
@@ -62,10 +72,11 @@
      [style.background-position]="'center'">
 
   <button type="button"
+          *ngIf="isOwnProfile"
           class="edit-btn"
           (click)="openEditCapa()"
           title="Editar capa">
-    <span style="display: inline-block; transform: rotate(-45deg);">✏</span>
+    <span style="display: inline-block; transform: rotate(135deg);">✏</span>
   </button>
 </div>
 
@@ -75,26 +86,28 @@
   <div class="profile-left">
     <div class="avatar">
       <img *ngIf="fotoPerfilUrl" [src]="fotoPerfilUrl" alt="Foto de perfil" />
-      <span *ngIf="!fotoPerfilUrl">👤</span>
+      <img *ngIf="!fotoPerfilUrl" class="avatar-placeholder-img" src="assets/user-placeholder.png" alt="" width="72" height="72" aria-hidden="true" />
 
       <button type="button"
+              *ngIf="isOwnProfile"
               class="avatar-edit-btn"
               (click)="openEditAvatar()"
               title="Editar foto de perfil">
-        <span style="display: inline-block; transform: rotate(-45deg);">✏</span>
+        <span style="display: inline-block; transform: rotate(135deg);">✏</span>
       </button>
     </div>
 
     <aside class="profile-sidebar">
-      <button type="button" class="primary-btn" (click)="openEdit()">Editar conta</button>
+      <button type="button" *ngIf="isOwnProfile" class="primary-btn" (click)="openEdit()">Editar conta</button>
 
       <ul class="menu">
         <li class="menu-item" [class.active]="activeSection === 'overview'" (click)="showOverview()">Preferências</li>
         <li class="menu-item" [class.active]="activeSection === 'statistics'" (click)="showStatistics()">Estatísticas</li>
-        <li class="menu-item" (click)="goToNotificacoesSettings()">Definições de notificações</li>
+        <li class="menu-item" *ngIf="isOwnProfile" (click)="goToNotificacoesSettings()">Definições de notificações</li>
         <li class="menu-item" [class.active]="activeSection === 'conquistas'" (click)="showConquistas()">Conquistas</li>
-        <li class="logout" (click)="logout()">Terminar sessão</li>
-        <li class="logout" (click)="openDeleteConfirm()">Apagar conta</li>
+        <li class="menu-item" [class.active]="activeSection === 'generos'" (click)="showGeneros()">Géneros</li>
+        <li class="logout" *ngIf="isOwnProfile" (click)="logout()">Terminar sessão</li>
+        <li class="logout" *ngIf="isOwnProfile" (click)="openDeleteConfirm()">Apagar conta</li>
       </ul>
 
       <div class="xp-level">
@@ -111,11 +124,45 @@
         </div>
 
         <div class="xp-bar" aria-hidden="true">
-          <div class="xp-fill" [style.width.%]="(xp % 10) * 10"></div>
+          <div class="xp-fill" [style.width.%]="xpProgressPercent()"></div>
         </div>
 
         <div class="xp-text">
           Faltam {{ xpParaProximoNivel() }} XP para o nível {{ level + 1 }}
+        </div>
+
+        <div class="medals-showcase">
+          <h4>Medalhas em Exposição</h4>
+          <div class="medals-row">
+            <div class="medal-slot"
+                 *ngFor="let slot of [0, 1, 2]; let i = index"
+                 (click)="onMedalSlotClick(i)"
+                 [class.empty]="!showcasedMedals[i]"
+                 [attr.title]="showcaseMedalTitle(i)">
+              <img *ngIf="showcasedMedals[i]?.iconeUrl"
+                   [src]="API_URL + showcasedMedals[i].iconeUrl"
+                   [alt]="showcaseMedalNome(i)"
+                   [attr.title]="showcaseMedalTitle(i)"
+                   class="medal-img">
+              <div *ngIf="!showcasedMedals[i]" class="medal-placeholder">+</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- User Tag Display -->
+        <div class="user-tag-section" *ngIf="medalhasConquistadas.length > 0">
+          <div class="user-tag-header">
+            <h4>Tag</h4>
+            <button type="button" *ngIf="isOwnProfile" class="tag-edit-btn" (click)="openTagModal()" title="Editar tag">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path></svg>
+            </button>
+          </div>
+          <div class="tag-display-box" *ngIf="userTag" [style.--tag-primary-color]="userTagPrimaryColor || '#FF4081'" [style.--tag-secondary-color]="userTagSecondaryColor || '#FFFFFF'">
+            <span class="tag-gradient-text">{{ userTag }}</span>
+          </div>
+          <div class="tag-display-empty" *ngIf="!userTag">
+            Sem tag selecionada
+          </div>
         </div>
       </div>
 
@@ -135,7 +182,17 @@
   <!-- RIGHT COLUMN -->
   <section class="profile-main">
 
+    <div class="profile-blocked-banner" *ngIf="contaBloqueada" role="status">
+      <span class="profile-blocked-banner__badge">Conta bloqueada</span>
+      <p class="profile-blocked-banner__text" *ngIf="isOwnProfile">A tua conta está bloqueada. Não podes usar a plataforma até um administrador a desbloquear.</p>
+      <p class="profile-blocked-banner__text" *ngIf="!isOwnProfile">Esta conta está bloqueada.</p>
+    </div>
+
     <ng-container *ngIf="activeSection === 'overview'">
+    <p class="profile-viewing-hint" *ngIf="!isOwnProfile">
+      <a routerLink="/dashboard">← Início</a>
+      <span> · A ver o perfil de outro utilizador</span>
+    </p>
     <div class="profile-info">
       <h2>{{ userName }}</h2>
       <div class="meta-row">
@@ -155,13 +212,23 @@
 
         <div class="list-box-right">
           <div class="mini-posters">
-            <img *ngFor="let movie of watchLater | slice:0:5"
-                 [src]="movie.filme?.posterUrl || 'https://via.placeholder.com/120x180'"
+            <ng-container *ngFor="let movie of watchLater | slice:0:5">
+              <a *ngIf="listEntryFilmeId(movie) as wlId"
+                 class="mini-poster-link"
+                 [routerLink]="['/movie-detail', wlId]"
+                 (click)="$event.stopPropagation()"
+                 [attr.title]="(movie.filme?.titulo || movie.filme?.Titulo || '') + ' — ver detalhes'">
+                <img [src]="movie.filme?.posterUrl || movie.filme?.PosterUrl || 'https://via.placeholder.com/120x180'"
+                     alt="Cartaz do filme" />
+              </a>
+              <img *ngIf="!listEntryFilmeId(movie)"
+                   [src]="movie.filme?.posterUrl || movie.filme?.PosterUrl || 'https://via.placeholder.com/120x180'"
                    alt="Cartaz do filme" />
+            </ng-container>
           </div>
 
             <button class="pill-btn" title="Ver mais tarde">
-            <span class="icon">🚀</span>
+            <img class="icon pill-btn-img" src="assets/rocket-quero-ver.png" alt="" width="24" height="24" aria-hidden="true" />
           </button>
         </div>
       </div>
@@ -175,13 +242,23 @@
 
         <div class="list-box-right">
           <div class="mini-posters">
-            <img *ngFor="let movie of watched | slice:0:5"
-                 [src]="movie.filme?.posterUrl || 'https://via.placeholder.com/120x180'"
+            <ng-container *ngFor="let movie of watched | slice:0:5">
+              <a *ngIf="listEntryFilmeId(movie) as watId"
+                 class="mini-poster-link"
+                 [routerLink]="['/movie-detail', watId]"
+                 (click)="$event.stopPropagation()"
+                 [attr.title]="(movie.filme?.titulo || movie.filme?.Titulo || '') + ' — ver detalhes'">
+                <img [src]="movie.filme?.posterUrl || movie.filme?.PosterUrl || 'https://via.placeholder.com/120x180'"
+                     alt="Cartaz do filme" />
+              </a>
+              <img *ngIf="!listEntryFilmeId(movie)"
+                   [src]="movie.filme?.posterUrl || movie.filme?.PosterUrl || 'https://via.placeholder.com/120x180'"
                    alt="Cartaz do filme" />
+            </ng-container>
           </div>
 
             <button class="pill-btn gray" title="Vistos">
-            <span class="icon">✅</span>
+            <img class="icon pill-btn-img" src="assets/check-ja-vi.png" alt="" width="24" height="24" aria-hidden="true" />
           </button>
         </div>
       </div>
@@ -191,7 +268,8 @@
     <div class="section fav-section">
       <div class="section-title">
           <h3>Favoritos</h3>
-          <span class="subtitle">Top 10 Filmes &amp; Atores</span>
+          <span class="subtitle" *ngIf="isOwnProfile">Top 10 Filmes &amp; Atores</span>
+          <span class="subtitle" *ngIf="!isOwnProfile">Filmes e atores favoritos deste utilizador</span>
       </div>
 
       <div class="fav-header">
@@ -215,27 +293,40 @@
             <div class="fav-posters-grid" *ngIf="favoritosFilmesDetalhesTop10.length > 0; else noFavMovies">
             <div class="fav-poster"
                    *ngFor="let f of favoritosFilmesDetalhesTop10; let i = index"
-                 draggable="true"
+                 [class.fav-poster--visitor]="!isOwnProfile"
+                 [draggable]="isOwnProfile"
                  [attr.data-index]="i"
-                 (dragstart)="onDragStart($event, i)"
-                 (dragover)="onDragOver($event)"
-                 (drop)="onDrop($event, i)"
-                 (dragend)="onDragEnd()"
+                 (dragstart)="isOwnProfile && onDragStart($event, i)"
+                 (dragover)="isOwnProfile && onDragOver($event)"
+                 (drop)="isOwnProfile && onDrop($event, i)"
+                 (dragend)="isOwnProfile && onDragEnd()"
                  [class.dragging]="draggedIndex === i"
                  [class.drag-over]="dragOverIndex === i"
-                   title="Arrasta para reordenar">
-              <span class="position-badge">{{ i + 1 }}</span>
-              <img [src]="f.posterUrl"
-                   [alt]="f.titulo"
-                   (dblclick)="removeFromFavorites(f.id)"
-                     [title]="f.titulo" />
+                 [attr.title]="isOwnProfile ? 'Arrasta para reordenar' : null">
+              <a *ngIf="!isOwnProfile && f.id"
+                 class="fav-poster-link"
+                 [routerLink]="['/movie-detail', f.id]"
+                 [attr.title]="f.titulo">
+                <span class="position-badge">{{ i + 1 }}</span>
+                <img [src]="favPosterSrc(f)" [alt]="f.titulo" />
+              </a>
+              <ng-container *ngIf="isOwnProfile">
+                <span class="position-badge">{{ i + 1 }}</span>
+                <img [src]="favPosterSrc(f)"
+                     [alt]="f.titulo"
+                     (dblclick)="removeFromFavorites(f.id)"
+                     [title]="f.titulo + ' — duplo clique para remover'" />
+              </ng-container>
               </div>
           </div>
 
           <ng-template #noFavMovies>
-            <div class="fav-empty">
+            <div class="fav-empty" *ngIf="isOwnProfile">
                 A tua galáxia de favoritos ainda está vazia.<br />
                 <span class="fav-empty-hint">Usa "★ Favorito" nas páginas dos filmes (até {{ MAX_FAVORITES }}) para montar a tua própria saga.</span>
+            </div>
+            <div class="fav-empty" *ngIf="!isOwnProfile">
+                Este utilizador ainda não tem filmes favoritos no top 10.
             </div>
           </ng-template>
         </div>
@@ -247,7 +338,7 @@
               <span class="fav-mini">{{ favoritosAtoresTop10.length }}/10</span>
           </div>
 
-          <div class="fav-actor-add" style="position: relative;">
+          <div class="fav-actor-add" *ngIf="isOwnProfile" style="position: relative;">
             <input type="text"
                    [(ngModel)]="novoAtor"
                    (input)="onActorSearch(novoAtor)"
@@ -264,7 +355,7 @@
                      [style.background-image]="actor.fotoUrl ? 'url(' + actor.fotoUrl + ')' : 'none'"
                      [class.has-photo]="actor.fotoUrl"
                      [class.no-photo]="!actor.fotoUrl">
-                  <span class="avatar-initial" *ngIf="!actor.fotoUrl">{{ actor.nome.charAt(0).toUpperCase() }}</span>
+                  <span class="avatar-initial" *ngIf="!actor.fotoUrl">{{ actorAvatarInitials(actor.nome) }}</span>
                 </div>
                 <div class="suggestion-info">
                   <span class="suggestion-name">{{ actor.nome }}</span>
@@ -286,29 +377,53 @@
             <div class="fav-actors-grid" *ngIf="favoritosAtoresTop10.length > 0; else noFavActors">
               <div class="actor-tile"
                      *ngFor="let a of favoritosAtoresTop10; let i = index"
-                     draggable="true"
+                     [class.actor-tile--visitor]="!isOwnProfile && !!a.id"
+                     [draggable]="isOwnProfile"
                      [attr.data-index]="i"
-                     (dragstart)="onActorDragStart($event, i)"
-                     (dragover)="onActorDragOver($event)"
-                     (drop)="onActorDrop($event, i)"
-                     (dragend)="onActorDragEnd()"
+                     (dragstart)="isOwnProfile && onActorDragStart($event, i)"
+                     (dragover)="isOwnProfile && onActorDragOver($event)"
+                     (drop)="isOwnProfile && onActorDrop($event, i)"
+                     (dragend)="isOwnProfile && onActorDragEnd()"
                      [class.dragging-actor]="draggedActorIndex === i"
                      [class.drag-over-actor]="dragOverActorIndex === i"
-                     title="Arrasta para reordenar">
-                <span class="position-badge">{{ i + 1 }}</span>
-                <button class="remove-btn" (click)="removeAtorFavorito(a)">&times;</button>
-                <div class="actor-photo">
-                  <img *ngIf="a.fotoUrl" [src]="a.fotoUrl" [alt]="a.nome" />
-                  <div *ngIf="!a.fotoUrl" class="initial">{{ a.nome[0] }}</div>
-                </div>
-                <div class="actor-name-label">{{ a.nome }}</div>
+                     [attr.title]="isOwnProfile ? 'Arrasta para reordenar' : null">
+                <a *ngIf="!isOwnProfile && a.id"
+                   class="actor-tile-link"
+                   [routerLink]="['/actor', a.id]"
+                   [attr.title]="a.nome">
+                  <span class="position-badge">{{ i + 1 }}</span>
+                  <div class="actor-photo">
+                    <img *ngIf="a.fotoUrl" [src]="a.fotoUrl" [alt]="a.nome" />
+                    <div *ngIf="!a.fotoUrl" class="initial">{{ actorAvatarInitials(a.nome) }}</div>
+                  </div>
+                  <div class="actor-name-label">{{ a.nome }}</div>
+                </a>
+                <ng-container *ngIf="!isOwnProfile && !a.id">
+                  <span class="position-badge">{{ i + 1 }}</span>
+                  <div class="actor-photo">
+                    <img *ngIf="a.fotoUrl" [src]="a.fotoUrl" [alt]="a.nome" />
+                    <div *ngIf="!a.fotoUrl" class="initial">{{ actorAvatarInitials(a.nome) }}</div>
+                  </div>
+                  <div class="actor-name-label">{{ a.nome }}</div>
+                </ng-container>
+                <ng-container *ngIf="isOwnProfile">
+                  <span class="position-badge">{{ i + 1 }}</span>
+                  <div class="actor-photo">
+                    <img *ngIf="a.fotoUrl" [src]="a.fotoUrl" [alt]="a.nome" (dblclick)="removeAtorFavorito(a)" [title]="a.nome + ' — duplo clique para remover'" />
+                    <div *ngIf="!a.fotoUrl" class="initial" (dblclick)="removeAtorFavorito(a)" [title]="a.nome + ' — duplo clique para remover'">{{ actorAvatarInitials(a.nome) }}</div>
+                  </div>
+                  <div class="actor-name-label">{{ a.nome }}</div>
+                </ng-container>
               </div>
             </div>
 
           <ng-template #noFavActors>
-            <div class="fav-empty">
+            <div class="fav-empty" *ngIf="isOwnProfile">
                 Ainda não escolheste o teu elenco de sonho.<br />
                 <span class="fav-empty-hint">Adiciona até {{ MAX_FAVORITES }} atores para o casting perfeito.</span>
+            </div>
+            <div class="fav-empty" *ngIf="!isOwnProfile">
+                Este utilizador ainda não tem atores favoritos no top 10.
             </div>
           </ng-template>
         </div>
@@ -321,7 +436,8 @@
         <div class="modal-box modal-favoritos-todos" (click)="$event.stopPropagation()">
           <button class="modal-close" (click)="closeVerTodosFavoritos()">&times;</button>
           <h3>Todos os favoritos</h3>
-          <p class="modal-fav-desc">Ordena, remove ou adiciona. Os primeiros 10 são o teu Top 10.</p>
+          <p class="modal-fav-desc" *ngIf="isOwnProfile">Ordena, remove ou adiciona. Os primeiros 10 são o teu Top 10.</p>
+          <p class="modal-fav-desc" *ngIf="!isOwnProfile">Lista completa de filmes e atores favoritos (só leitura).</p>
 
           <div class="fav-modal-grid">
             <div class="fav-modal-col">
@@ -329,19 +445,30 @@
               <div class="fav-posters-grid" *ngIf="favoritosFilmesDetalhes.length > 0; else noFavMoviesModal">
                 <div class="fav-poster"
                      *ngFor="let f of favoritosFilmesDetalhes; let i = index"
-                     draggable="true"
+                     [class.fav-poster--visitor]="!isOwnProfile"
+                     [draggable]="isOwnProfile"
                      [attr.data-index]="i"
-                     (dragstart)="onDragStart($event, i)"
-                     (dragover)="onDragOver($event)"
-                     (drop)="onDrop($event, i)"
-                     (dragend)="onDragEnd()"
+                     (dragstart)="isOwnProfile && onDragStart($event, i)"
+                     (dragover)="isOwnProfile && onDragOver($event)"
+                     (drop)="isOwnProfile && onDrop($event, i)"
+                     (dragend)="isOwnProfile && onDragEnd()"
                      [class.dragging]="draggedIndex === i"
                      [class.drag-over]="dragOverIndex === i"
-                     title="Arrasta para reordenar">
-                  <span class="position-badge">{{ i + 1 }}</span>
-                  <img [src]="f.posterUrl" [alt]="f.titulo"
-                       (dblclick)="removeFromFavorites(f.id)"
-                       [title]="f.titulo" />
+                     [attr.title]="isOwnProfile ? 'Arrasta para reordenar' : null">
+                  <a *ngIf="!isOwnProfile && f.id"
+                     class="fav-poster-link"
+                     [routerLink]="['/movie-detail', f.id]"
+                     [attr.title]="f.titulo"
+                     (click)="closeVerTodosFavoritos()">
+                    <span class="position-badge">{{ i + 1 }}</span>
+                    <img [src]="favPosterSrc(f)" [alt]="f.titulo" />
+                  </a>
+                  <ng-container *ngIf="isOwnProfile">
+                    <span class="position-badge">{{ i + 1 }}</span>
+                    <img [src]="favPosterSrc(f)" [alt]="f.titulo"
+                         (dblclick)="removeFromFavorites(f.id)"
+                         [title]="f.titulo + ' — duplo clique para remover'" />
+                  </ng-container>
                 </div>
               </div>
               <ng-template #noFavMoviesModal>
@@ -351,7 +478,7 @@
 
             <div class="fav-modal-col">
               <h4>Atores ({{ favoritosAtores.length }})</h4>
-              <div class="fav-actor-add" style="position: relative;">
+              <div class="fav-actor-add" *ngIf="isOwnProfile" style="position: relative;">
                 <input type="text" [(ngModel)]="novoAtor" (input)="onActorSearch(novoAtor)" (blur)="hideSuggestionsWithDelay()" placeholder="Pesquisar ator real..."
                        [disabled]="isSavingFavorites || favoritosAtores.length >= MAX_FAVORITES" autocomplete="off" />
 
@@ -363,7 +490,7 @@
                          [style.background-image]="actor.fotoUrl ? 'url(' + actor.fotoUrl + ')' : 'none'"
                          [class.has-photo]="actor.fotoUrl"
                          [class.no-photo]="!actor.fotoUrl">
-                      <span class="avatar-initial" *ngIf="!actor.fotoUrl">{{ actor.nome.charAt(0).toUpperCase() }}</span>
+                      <span class="avatar-initial" *ngIf="!actor.fotoUrl">{{ actorAvatarInitials(actor.nome) }}</span>
                     </div>
                     <div class="suggestion-info">
                       <span class="suggestion-name">{{ actor.nome }}</span>
@@ -382,25 +509,47 @@
                 </button>
       </div>
 
-              <div class="fav-actors-list" *ngIf="favoritosAtores.length > 0; else noFavActorsModal">
-                <div class="fav-actor-card"
+              <div class="fav-actors-grid" *ngIf="favoritosAtores.length > 0; else noFavActorsModal">
+                <div class="actor-tile"
                      *ngFor="let a of favoritosAtores; let i = index"
-                     draggable="true"
+                     [class.actor-tile--visitor]="!isOwnProfile && !!a.id"
+                     [draggable]="isOwnProfile"
                      [attr.data-index]="i"
-                     (dragstart)="onActorDragStart($event, i)"
-                     (dragover)="onActorDragOver($event)"
-                     (drop)="onActorDrop($event, i)"
-                     (dragend)="onActorDragEnd()"
+                     (dragstart)="isOwnProfile && onActorDragStart($event, i)"
+                     (dragover)="isOwnProfile && onActorDragOver($event)"
+                     (drop)="isOwnProfile && onActorDrop($event, i)"
+                     (dragend)="isOwnProfile && onActorDragEnd()"
                      [class.dragging-actor]="draggedActorIndex === i"
                      [class.drag-over-actor]="dragOverActorIndex === i"
-                     title="Arrasta para reordenar">
-                  <div class="actor-avatar">
-                    <img *ngIf="a.fotoUrl" [src]="a.fotoUrl" [alt]="a.nome" />
-                    <span *ngIf="!a.fotoUrl" class="actor-initial">{{ a.nome.charAt(0).toUpperCase() }}</span>
-                  </div>
-                  <span class="actor-name">{{ a.nome }}</span>
-                  <span class="position-badge">{{ i + 1 }}</span>
-                  <button type="button" class="actor-remove-btn" (click)="removeAtorFavorito(a)" [disabled]="isSavingFavorites" title="Remover">&times;</button>
+                     [attr.title]="isOwnProfile ? 'Arrasta para reordenar' : null">
+                  <a *ngIf="!isOwnProfile && a.id"
+                     class="actor-tile-link"
+                     [routerLink]="['/actor', a.id]"
+                     [attr.title]="a.nome"
+                     (click)="closeVerTodosFavoritos()">
+                    <span class="position-badge">{{ i + 1 }}</span>
+                    <div class="actor-photo">
+                      <img *ngIf="a.fotoUrl" [src]="a.fotoUrl" [alt]="a.nome" />
+                      <div *ngIf="!a.fotoUrl" class="initial">{{ actorAvatarInitials(a.nome) }}</div>
+                    </div>
+                    <div class="actor-name-label">{{ a.nome }}</div>
+                  </a>
+                  <ng-container *ngIf="!isOwnProfile && !a.id">
+                    <span class="position-badge">{{ i + 1 }}</span>
+                    <div class="actor-photo">
+                      <img *ngIf="a.fotoUrl" [src]="a.fotoUrl" [alt]="a.nome" />
+                      <div *ngIf="!a.fotoUrl" class="initial">{{ actorAvatarInitials(a.nome) }}</div>
+                    </div>
+                    <div class="actor-name-label">{{ a.nome }}</div>
+                  </ng-container>
+                  <ng-container *ngIf="isOwnProfile">
+                    <span class="position-badge">{{ i + 1 }}</span>
+                    <div class="actor-photo">
+                      <img *ngIf="a.fotoUrl" [src]="a.fotoUrl" [alt]="a.nome" (dblclick)="removeAtorFavorito(a)" [title]="a.nome + ' — duplo clique para remover'" />
+                      <div *ngIf="!a.fotoUrl" class="initial" (dblclick)="removeAtorFavorito(a)" [title]="a.nome + ' — duplo clique para remover'">{{ actorAvatarInitials(a.nome) }}</div>
+                    </div>
+                    <div class="actor-name-label">{{ a.nome }}</div>
+                  </ng-container>
                 </div>
               </div>
 
@@ -464,13 +613,13 @@
         </section>
 
         <section class="stats-comparison stats-comparison-in-main" *ngIf="statsComparison">
-          <h3>Tu vs Média Global</h3>
+          <h3>{{ profileLabel }} vs Média Global</h3>
 
           <div class="comparison-item">
             <div class="comparison-label">Filmes vistos</div>
             <div class="comparison-bars">
               <div class="bar-row">
-                <span class="bar-label">Tu</span>
+                <span class="bar-label">{{ statsComparisonUserLabel }}</span>
                 <div class="bar-container">
                   <div class="bar user-bar"
                        [style.width.%]="getComparisonBarWidth(statsComparison.user.totalFilmes, statsComparison.global.mediaFilmesPorUtilizador)"
@@ -499,7 +648,7 @@
             <div class="comparison-label">Horas vistas</div>
             <div class="comparison-bars">
               <div class="bar-row">
-                <span class="bar-label">Tu</span>
+                <span class="bar-label">{{ statsComparisonUserLabel }}</span>
                 <div class="bar-container">
                   <div class="bar user-bar"
                        [style.width.%]="getComparisonBarWidth(statsComparison.user.totalHoras, statsComparison.global.mediaHorasPorUtilizador)"
@@ -540,7 +689,7 @@
         <div class="charts-header">
           <h3 class="charts-title">Estatísticas em gráfico</h3>
 
-          <div style="position: relative;">
+          <div style="position: relative;" *ngIf="isOwnProfile">
             <button class="graph-customize-btn"
                     [class.active]="showGraphCustomizeMenu"
                     (click)="toggleGraphCustomize()"
@@ -765,7 +914,7 @@
                     <div class="chart-bar user-bar"
                          [style.height.%]="getBarHeight(m.total)"
                          [style.--saber-color]="getUserBarColor()"
-                         [attr.title]="m.total + ' filmes (Tu)'">
+                         [attr.title]="m.total + ' filmes (' + profileLabel + ')'">
                       <div class="chart-bar-value">{{ m.total }}</div>
                     </div>
 
@@ -783,7 +932,7 @@
               <div class="chart-line-legend">
                 <span class="legend-item user-legend">
                   <i class="legend-dot" [style.background]="getUserBarGradient()"></i>
-                  Tu
+                  {{ profileLabel }}
                 </span>
                 <span class="legend-item global-legend">
                   <i class="legend-dot" [style.background]="getGlobalBarGradient()"></i>
@@ -843,9 +992,10 @@
           <button class="conquistas-tab" 
                   [class.active]="conquistasTab === 'minhas'"
                   (click)="conquistasTab = 'minhas'">
-            🏅 Minhas Medalhas
+            {{ isOwnProfile ? '🏅 Minhas Medalhas' : '🏅 Medalhas' }}
           </button>
           <button class="conquistas-tab" 
+                  *ngIf="isOwnProfile"
                   [class.active]="conquistasTab === 'todas'"
                   (click)="conquistasTab = 'todas'">
             🎯 Todas as Medalhas
@@ -855,17 +1005,20 @@
         <!-- Tab: Minhas Medalhas -->
         <div *ngIf="conquistasTab === 'minhas'">
           <div *ngIf="medalhasConquistadas.length === 0" class="conquistas-empty">
-            <span>Ainda não conquistaste nenhuma medalha.</span>
-            <small>Continua a usar a plataforma para desbloquear conquistas!</small>
+            <span *ngIf="isOwnProfile">Ainda não conquistaste nenhuma medalha.</span>
+            <span *ngIf="!isOwnProfile">Este utilizador ainda não tem medalhas.</span>
+            <small *ngIf="isOwnProfile">Continua a usar a plataforma para desbloquear conquistas!</small>
           </div>
 
           <div class="medalhas-lista" *ngIf="medalhasConquistadas.length > 0">
             <div class="medalha-card-row conquistada" *ngFor="let um of medalhasConquistadas">
               
-              <div class="medalha-icone-lado">
-                <img *ngIf="um.medalha?.iconeUrl" 
-                     [src]="API_URL + um.medalha.iconeUrl" 
-                     [alt]="um.medalha?.nome">
+              <div class="medalha-icone-lado"
+                   [attr.title]="(um.medalha?.nome || 'Medalha') + (um.medalha?.descricao ? ' — ' + um.medalha.descricao : '')">
+                <img *ngIf="um.medalha?.iconeUrl"
+                     [src]="API_URL + um.medalha.iconeUrl"
+                     [alt]="um.medalha?.nome"
+                     [attr.title]="(um.medalha?.nome || 'Medalha') + (um.medalha?.descricao ? ' — ' + um.medalha.descricao : '')">
                 <span *ngIf="!um.medalha?.iconeUrl">🏅</span>
               </div>
 
@@ -873,7 +1026,7 @@
                 <span class="medalha-nome">{{ um.medalha?.nome || 'Medalha' }}</span>
                 <span class="medalha-desc">{{ um.medalha?.descricao }}</span>
                 <span class="medalha-data" style="font-size: 0.75rem; color: #888; margin-top: 4px;">
-                  Conquistada em {{ um.dataConquista | date:'dd/MM/yyyy' }}
+                  Conquistada em {{ um.dataConquista | date:'dd/MM/yyyy, HH:mm':'':'pt-PT' }}
                 </span>
               </div>
 
@@ -886,12 +1039,12 @@
         </div>
 
         <!-- Tab: Todas as Medalhas -->
-        <div *ngIf="conquistasTab === 'todas'">
+        <div *ngIf="isOwnProfile && conquistasTab === 'todas'">
   <div class="medalhas-lista"> 
     <div class="medalha-card-row" *ngFor="let m of todasMedalhas" [class.conquistada]="m.conquistada">
   
-  <div class="medalha-icone-lado">
-    <img [src]="API_URL + m.iconeUrl" [alt]="m.nome">
+  <div class="medalha-icone-lado" [attr.title]="m.nome + (m.descricao ? ' — ' + m.descricao : '')">
+    <img [src]="API_URL + m.iconeUrl" [alt]="m.nome" [attr.title]="m.nome + (m.descricao ? ' — ' + m.descricao : '')">
   </div>
 
   <div class="medalha-info-centro">
@@ -922,6 +1075,77 @@
       </div>
     </ng-container>
 
+    <!-- Géneros -->
+    <ng-container *ngIf="activeSection === 'generos'">
+      <div class="generos-view">
+        <h2>Géneros Favoritos</h2>
+        <p class="generos-desc" *ngIf="isOwnProfile">Seleciona os teus géneros favoritos para personalizar as tuas recomendações.</p>
+        <p class="generos-desc" *ngIf="!isOwnProfile">Géneros que este utilizador indicou como favoritos.</p>
+
+        <div *ngIf="generosError" class="error-message">
+          {{ generosError }}
+        </div>
+
+        <div *ngIf="showGenerosSuccess" class="success-message">
+          Géneros guardados com sucesso!
+        </div>
+
+        <div *ngIf="isLoadingGeneros" style="text-align: center; padding: 40px; color: var(--text-muted);">
+          <p>A carregar géneros...</p>
+        </div>
+
+        <ng-container *ngIf="!isOwnProfile && !isLoadingGeneros">
+          <div class="generos-grid" *ngIf="generosFavoritos.length > 0">
+            <ng-container *ngFor="let genero of generosDisponiveis">
+              <span *ngIf="isGeneroFavorito(genero.id)" class="genero-button selected genero-readonly">{{ genero.nome }}</span>
+            </ng-container>
+          </div>
+          <p *ngIf="generosFavoritos.length === 0" class="chart-empty" style="text-align: center;">Este utilizador ainda não definiu géneros favoritos.</p>
+        </ng-container>
+
+        <div *ngIf="isOwnProfile && !isLoadingGeneros" style="margin-bottom: 20px; text-align: center;">
+          <button
+            type="button"
+            class="btn-select-all"
+            (click)="selecionarTodosGeneros()">
+            {{ todosGenerosSelecionados ? 'Desselecionar Todos' : 'Selecionar Todos' }}
+          </button>
+        </div>
+
+        <div *ngIf="isOwnProfile && !isLoadingGeneros" class="generos-grid">
+          <button
+            *ngFor="let genero of generosDisponiveis"
+            type="button"
+            class="genero-button"
+            [class.selected]="isGeneroFavorito(genero.id)"
+            (click)="toggleGeneroFavorito(genero.id)">
+            {{ genero.nome }}
+          </button>
+        </div>
+
+        <div *ngIf="isOwnProfile && !isLoadingGeneros" class="generos-actions">
+          <p class="generos-count" *ngIf="generosFavoritos.length > 0">
+            {{ generosFavoritos.length }} género(s) selecionado(s)
+          </p>
+          <div class="generos-buttons">
+            <button
+              type="button"
+              class="btn-guardar"
+              (click)="salvarGenerosFavoritos()"
+              [disabled]="isSavingGeneros">
+              {{ isSavingGeneros ? 'A guardar...' : 'Guardar' }}
+            </button>
+            <button
+              type="button"
+              class="btn-cancelar"
+              (click)="showOverview()">
+              Cancelar
+            </button>
+          </div>
+        </div>
+      </div>
+    </ng-container>
+
   </section>
 </div>
 
@@ -934,10 +1158,18 @@
 
     <form (ngSubmit)="saveChanges()">
       <label for="userName">Nome de utilizador</label>
-      <input id="userName" name="userName" type="text" [(ngModel)]="editUserName" required />
+      <input id="userName" name="userName" type="text" [(ngModel)]="editUserName" maxlength="30" required />
+      <div *ngIf="editUserName && editUserName.length >= 30" style="color: #ff6b6b; font-size: 13px; font-weight: 500; margin-top: 4px; margin-bottom: 16px; padding-left: 4px; display: flex; align-items: center; gap: 6px; animation: slideIn 0.3s ease;">
+        <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"></path><path d="M12 9v4"></path><path d="M12 17h.01"></path></svg>
+        <span>Número de caracteres excedido (máximo 30).</span>
+      </div>
 
       <label for="bio">Bio</label>
-      <textarea id="bio" name="bio" rows="4" [(ngModel)]="editBio"></textarea>
+      <textarea id="bio" name="bio" rows="4" [(ngModel)]="editBio" maxlength="150"></textarea>
+      <div *ngIf="editBio && editBio.length >= 150" style="color: #ff6b6b; font-size: 13px; font-weight: 500; margin-top: 4px; margin-bottom: 16px; padding-left: 4px; display: flex; align-items: center; gap: 6px; animation: slideIn 0.3s ease;">
+        <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"></path><path d="M12 9v4"></path><path d="M12 17h.01"></path></svg>
+        <span>Número de caracteres excedido (máximo 150).</span>
+      </div>
 
       <div class="modal-actions">
         <button type="submit" class="save-btn">Guardar</button>
@@ -960,10 +1192,15 @@
         <img *ngIf="editCapaUrl" [src]="editCapaUrl" alt="Pré-visualização da capa" class="image-preview" />
         <input id="capaFile" name="capaFile" type="file" accept="image/*" (change)="onCapaFileSelected($event)" />
       </div>
+      <div class="error-container" *ngIf="capaError" style="display: flex; align-items: center; gap: 8px; margin-top: 8px;">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="#ff4d4d"><path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/></svg>
+        <p class="error-text" style="color: #ff4d4d; margin: 0; font-size: 0.9rem; font-weight: 500;">{{ capaError }}</p>
+      </div>
 
       <div class="modal-actions">
-        <button type="submit" class="save-btn">Guardar</button>
         <button type="button" class="cancel-btn" (click)="closeEditCapa()">Cancelar</button>
+        <button type="button" class="modal-remover-btn" (click)="removeCapa()" *ngIf="editCapaUrl">Remover</button>
+        <button type="submit" class="save-btn">Guardar</button>
       </div>
     </form>
   </div>
@@ -982,10 +1219,15 @@
         <img *ngIf="editFotoPerfilUrl" [src]="editFotoPerfilUrl" alt="Pré-visualização do avatar" class="image-preview avatar-preview" />
         <input id="avatarFile" name="avatarFile" type="file" accept="image/*" (change)="onAvatarFileSelected($event)" />
       </div>
+      <div class="error-container" *ngIf="avatarError" style="display: flex; align-items: center; gap: 8px; margin-top: 8px;">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="#ff4d4d"><path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/></svg>
+        <p class="error-text" style="color: #ff4d4d; margin: 0; font-size: 0.9rem; font-weight: 500;">{{ avatarError }}</p>
+      </div>
 
       <div class="modal-actions">
-        <button type="submit" class="save-btn">Guardar</button>
         <button type="button" class="cancel-btn" (click)="closeEditAvatar()">Cancelar</button>
+        <button type="button" class="modal-remover-btn" (click)="removeAvatar()" *ngIf="editFotoPerfilUrl">Remover</button>
+        <button type="submit" class="save-btn">Guardar</button>
       </div>
     </form>
   </div>
@@ -1003,10 +1245,12 @@
 
     <div class="filter-row" *ngIf="currentListType === 'watchLater'">
       <label for="wlFilter">Filtrar:</label>
-      <select id="wlFilter" [(ngModel)]="watchLaterFilter">
-        <option value="all">Todos (mais recentes primeiro)</option>
-        <option value="newest">Mais recentes primeiro</option>
-        <option value="oldest">Mais antigos primeiro</option>
+      <select id="wlFilter" class="list-filter-select" [(ngModel)]="watchLaterFilter">
+        <option value="all">Todos (data de adição, mais recente)</option>
+        <option value="newest">Adicionado: mais recente primeiro</option>
+        <option value="oldest">Adicionado: mais antigo primeiro</option>
+        <option value="yearNewest">Ano do filme: mais recente primeiro</option>
+        <option value="yearOldest">Ano do filme: mais antigo primeiro</option>
         <option value="7days">Adicionados nos últimos 7 dias</option>
         <option value="30days">Adicionados nos últimos 30 dias</option>
       </select>
@@ -1014,10 +1258,12 @@
 
     <div class="filter-row" *ngIf="currentListType === 'watched'">
       <label for="watFilter">Filtrar:</label>
-      <select id="watFilter" [(ngModel)]="watchedFilter">
-        <option value="all">Todos (mais recentes primeiro)</option>
-        <option value="newest">Mais recentes primeiro</option>
-        <option value="oldest">Mais antigos primeiro</option>
+      <select id="watFilter" class="list-filter-select" [(ngModel)]="watchedFilter">
+        <option value="all">Todos (data de adição, mais recente)</option>
+        <option value="newest">Adicionado: mais recente primeiro</option>
+        <option value="oldest">Adicionado: mais antigo primeiro</option>
+        <option value="yearNewest">Ano do filme: mais recente primeiro</option>
+        <option value="yearOldest">Ano do filme: mais antigo primeiro</option>
         <option value="7days">Adicionados nos últimos 7 dias</option>
         <option value="30days">Adicionados nos últimos 30 dias</option>
       </select>
@@ -1025,19 +1271,39 @@
 
     <div class="expanded-posters-grid" *ngIf="filteredCurrentList.length > 0">
       <div class="expanded-poster-card" *ngFor="let movie of filteredCurrentList">
-        <img [src]="movie.filme?.posterUrl || movie.filme?.PosterUrl || 'https://via.placeholder.com/200x300'"
-             [alt]="movie.filme?.titulo || movie.filme?.Titulo || 'Cartaz do filme'"
-             class="expanded-poster" />
-        <div class="poster-info">
-          <div class="poster-title">{{ movie.filme?.titulo || movie.filme?.Titulo || 'Desconhecido' }}</div>
-          <div class="poster-meta">
-            <span *ngIf="movie.filme?.genero || movie.filme?.Genero">{{ movie.filme?.genero || movie.filme?.Genero }}</span>
-            <span *ngIf="movie.filme?.duracao || movie.filme?.Duracao"> &middot; {{ (movie.filme?.duracao ?? movie.filme?.Duracao) | formatDuration }}</span>
+        <a *ngIf="listEntryFilmeId(movie) as listMid"
+           class="expanded-poster-link"
+           [routerLink]="['/movie-detail', listMid]"
+           (click)="closeListModal()">
+          <img [src]="movie.filme?.posterUrl || movie.filme?.PosterUrl || 'https://via.placeholder.com/200x300'"
+               [alt]="movie.filme?.titulo || movie.filme?.Titulo || 'Cartaz do filme'"
+               class="expanded-poster" />
+          <div class="poster-info">
+            <div class="poster-title">{{ movie.filme?.titulo || movie.filme?.Titulo || 'Desconhecido' }}</div>
+            <div class="poster-meta">
+              <span *ngIf="movie.filme?.genero || movie.filme?.Genero">{{ movie.filme?.genero || movie.filme?.Genero }}</span>
+              <span *ngIf="movie.filme?.duracao || movie.filme?.Duracao"> &middot; {{ (movie.filme?.duracao ?? movie.filme?.Duracao) | formatDuration }}</span>
+            </div>
+            <div class="poster-date" *ngIf="(movie.data || movie.Data)">
+              Adicionado: {{ (movie.data || movie.Data) | date:'dd/MM/yyyy, HH:mm':'':'pt-PT' }}
+            </div>
           </div>
-          <div class="poster-date" *ngIf="(movie.data || movie.Data)">
-            Adicionado: {{ (movie.data || movie.Data) | date:'dd/MM/yyyy, HH:mm':'':'pt-PT' }}
+        </a>
+        <ng-container *ngIf="!listEntryFilmeId(movie)">
+          <img [src]="movie.filme?.posterUrl || movie.filme?.PosterUrl || 'https://via.placeholder.com/200x300'"
+               [alt]="movie.filme?.titulo || movie.filme?.Titulo || 'Cartaz do filme'"
+               class="expanded-poster" />
+          <div class="poster-info">
+            <div class="poster-title">{{ movie.filme?.titulo || movie.filme?.Titulo || 'Desconhecido' }}</div>
+            <div class="poster-meta">
+              <span *ngIf="movie.filme?.genero || movie.filme?.Genero">{{ movie.filme?.genero || movie.filme?.Genero }}</span>
+              <span *ngIf="movie.filme?.duracao || movie.filme?.Duracao"> &middot; {{ (movie.filme?.duracao ?? movie.filme?.Duracao) | formatDuration }}</span>
+            </div>
+            <div class="poster-date" *ngIf="(movie.data || movie.Data)">
+              Adicionado: {{ (movie.data || movie.Data) | date:'dd/MM/yyyy, HH:mm':'':'pt-PT' }}
+            </div>
           </div>
-        </div>
+        </ng-container>
       </div>
     </div>
 
@@ -1078,5 +1344,97 @@
         </button>
       </div>
     </form>
+  </div>
+</div>
+
+<!-- Medal Selector Modal -->
+<div class="modal-overlay" *ngIf="showMedalSelectorModal" (click)="closeMedalSelector()">
+  <div class="modal-box medal-selector-modal" (click)="$event.stopPropagation()">
+    <button class="modal-close" (click)="closeMedalSelector()">&times;</button>
+
+    <h3>Selecionar Medalha</h3>
+    <p class="modal-desc">Escolhe uma medalha para exibir no perfil</p>
+
+    <div class="medals-grid" *ngIf="medalhasConquistadas.length > 0">
+      <div class="medal-option" *ngFor="let medal of medalhasConquistadas" (click)="selectMedalForSlot(medal.medalha || medal)" [class.selected]="isMedalSelectedForSlot(medal)">
+        <img *ngIf="(medal.medalha?.iconeUrl || medal.iconeUrl)" [src]="API_URL + (medal.medalha?.iconeUrl || medal.iconeUrl)" class="medal-option-img">
+        <div *ngIf="!(medal.medalha?.iconeUrl || medal.iconeUrl)" class="medal-option-placeholder">🏅</div>
+        <span class="medal-option-name">{{ medal.medalha?.nome || medal.nome }}</span>
+      </div>
+    </div>
+
+    <div *ngIf="medalhasConquistadas.length === 0" class="no-medals">
+      <p>Ainda não conquistaste nenhuma medalha.</p>
+    </div>
+
+    <div class="modal-actions" *ngIf="selectedSlotIndex !== null && showcasedMedals[selectedSlotIndex]">
+      <button type="button" class="cancel-btn" style="background: #dc3545; color: white; font-weight: 600;" (click)="removeMedalFromSlot(selectedSlotIndex!)">Remover Medalha</button>
+    </div>
+  </div>
+</div>
+
+<!-- Tag Editor Modal -->
+<div class="modal-overlay" *ngIf="showTagModal" (click)="closeTagModal()">
+  <div class="modal-box tag-modal" (click)="$event.stopPropagation()">
+    <button class="modal-close" (click)="closeTagModal()">&times;</button>
+
+    <h3>Editar Tag</h3>
+    <p class="modal-desc">Personaliza a tua tag com cores e escolhe uma medalha</p>
+
+    <div class="tag-form">
+      <!-- Preview -->
+      <div class="tag-form-group" *ngIf="tagModalSelectedTag">
+        <label>Pré-visualização</label>
+        <div class="tag-preview-box" [style.--tag-primary-color]="tagModalPrimaryColor || '#FF4081'" [style.--tag-secondary-color]="tagModalSecondaryColor || '#FFFFFF'">
+          <span class="tag-gradient-text">{{ tagModalSelectedTag }}</span>
+        </div>
+      </div>
+
+      <!-- Tag Selection Dropdown -->
+      <div class="tag-form-group">
+        <label>Tag</label>
+        <div class="tag-selector-wrap">
+          <button type="button" class="tag-selector-btn" (click)="toggleTagMenu()" [class.active]="showTagMenu">
+            {{ tagModalSelectedTag || 'Selecionar tag...' }}
+          </button>
+          <div class="tag-selector-menu" *ngIf="showTagMenu">
+            <button type="button" class="tag-selector-item" (click)="selectTagModal(null)" [class.selected]="tagModalSelectedTag === null">
+              Nenhuma tag
+            </button>
+            <button type="button" class="tag-selector-item" *ngFor="let medal of medalhasConquistadas" (click)="selectTagModal(medal.medalha?.nome || medal.nome)" [class.selected]="tagModalSelectedTag === (medal.medalha?.nome || medal.nome)">
+              {{ medal.medalha?.nome || medal.nome }}
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Primary Color -->
+      <div class="tag-form-group">
+        <label for="primaryColor">Cor Primária</label>
+        <input id="primaryColor" type="color" [(ngModel)]="tagModalPrimaryColor" class="color-picker-full">
+      </div>
+
+      <!-- Secondary Color -->
+      <div class="tag-form-group">
+        <label for="secondaryColor">Cor Secundária</label>
+        <input id="secondaryColor" type="color" [(ngModel)]="tagModalSecondaryColor" class="color-picker-full">
+      </div>
+
+      <!-- Reset Colors Button -->
+      <div class="tag-form-group reset-colors-group">
+        <button type="button" class="reset-colors-btn" (click)="resetTagColorsToDefault()">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 12"/>
+            <path d="M3 3v9h9"/>
+          </svg>
+          Repor cores por defeito
+        </button>
+      </div>
+    </div>
+
+    <div class="modal-actions">
+      <button type="button" class="save-btn" (click)="saveTagModal()">Guardar</button>
+      <button type="button" class="cancel-btn" (click)="closeTagModal()">Cancelar</button>
+    </div>
   </div>
 </div>

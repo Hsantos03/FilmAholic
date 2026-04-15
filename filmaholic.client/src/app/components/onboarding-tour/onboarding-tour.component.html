@@ -1,4 +1,6 @@
 <div class="onboarding-root" *ngIf="active" aria-live="polite" data-component="dicas">
+  <!-- Captura toda a interação até fechares as dicas (a sombra do spotlight não bloqueia cliques). -->
+  <div class="onboarding-backdrop" aria-hidden="true"></div>
   <div
     class="onboarding-spotlight"
     [style.top]="highlightTop"

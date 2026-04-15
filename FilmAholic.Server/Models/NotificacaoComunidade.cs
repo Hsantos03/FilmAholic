@@ -2,6 +2,9 @@ using System;
 
 namespace FilmAholic.Server.Models;
 
+/// <summary>
+/// Representa uma notificação para a comunidade.
+/// </summary>
 public class NotificacaoComunidade
 {
     public int Id { get; set; }
@@ -10,8 +13,8 @@ public class NotificacaoComunidade
     public string UtilizadorId { get; set; } = string.Empty;
     public Utilizador? Utilizador { get; set; }
 
-    /// Community where the new post was created.
-    public int ComunidadeId { get; set; }
+    /// Community where the new post was created. Null apÃ³s a comunidade ser apagada (ex.: notif. <c>comunidade_eliminada</c>).
+    public int? ComunidadeId { get; set; }
     public Comunidade? Comunidade { get; set; }
 
     /// Optional post that triggered the notification.

@@ -3,27 +3,18 @@
 :host {
   display: block;
   min-height: 100vh;
-  background: #0a0a0f;
+  background: #010b15;
   color: #fff;
   font-family: 'DM Sans', sans-serif;
   overflow-x: hidden;
 }
 
-/* ─── TOPBAR ─── */
-.topbar {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  z-index: 100;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 14px 28px;
-  background: rgba(10,10,15,0.85);
-  backdrop-filter: blur(14px);
-  border-bottom: 1px solid rgba(255,255,255,0.05);
+:host.embed-mode {
+  background: transparent;
+  min-height: 0;
 }
+
+/* Topbar: visual global em styles.css; .topbar--leaderboard = flex */
 
 .back-btn {
   display: flex;
@@ -46,29 +37,114 @@
   }
 
 .brand-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
   font-size: 14px;
   font-weight: 700;
+}
+
+.lb-icon {
+  display: block;
+  flex-shrink: 0;
+}
+
+.lb-icon-brand {
+  width: 18px;
+  height: 18px;
+  color: #fbbf24;
+}
+
+.brand-pill-text {
   background: linear-gradient(135deg, #ff2f6d, #fbbf24);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
 }
 
-/* Quando embebido no Higher or Lower: topbar não fixa e menos padding */
-:host.embed-mode .topbar-embed {
-  position: relative;
+/* Embebido: sem segunda “topbar” — só link de voltar dentro do conteúdo */
+:host.embed-mode .lb-page {
+  padding: 12px 0 48px;
+  min-height: 0;
+  overflow: visible;
+}
+
+/* Brilho de fundo (como no HOL, mas em tons amarelos/dourados) */
+:host.embed-mode .bg-orb {
+  display: block;
+  filter: blur(80px);
+  opacity: 0.16;
+  z-index: 0;
+}
+
+:host.embed-mode .orb1 {
+  width: 480px;
+  height: 480px;
+  background: radial-gradient(circle, rgba(251, 191, 36, 0.95), transparent 68%);
+  top: -120px;
+  right: -100px;
+  left: auto;
+}
+
+:host.embed-mode .orb2 {
+  width: 420px;
+  height: 420px;
+  background: radial-gradient(circle, rgba(245, 158, 11, 0.85), transparent 70%);
+  bottom: -60px;
+  left: -100px;
   top: auto;
 }
-:host.embed-mode .lb-page {
-  padding-top: 24px;
-  min-height: auto;
+
+:host.embed-mode .orb3 {
+  width: 320px;
+  height: 320px;
+  background: radial-gradient(circle, rgba(250, 204, 21, 0.55), transparent 72%);
+  top: 45%;
+  left: 55%;
+  transform: translate(-50%, -50%);
+}
+
+.lb-page-embed {
+  min-height: 0 !important;
+}
+
+.lb-embed-bar {
+  width: 100%;
+  max-width: min(1120px, 100%);
+  margin: 0 auto 4px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.lb-embed-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  padding: 8px 16px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(251, 191, 36, 0.22);
+  border-radius: 12px;
+  color: rgba(255, 255, 255, 0.88);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.2s, border-color 0.2s, transform 0.2s, color 0.2s;
+}
+
+.lb-embed-back:hover {
+  color: #fff;
+  background: rgba(251, 191, 36, 0.1);
+  border-color: rgba(251, 191, 36, 0.45);
+  transform: translateX(-2px);
 }
 
 /* ─── PAGE ──── */
 .lb-page {
   position: relative;
   min-height: 100vh;
-  padding: 90px 20px 60px;
+  padding: 28px 22px 60px;
   overflow: hidden;
 }
 
@@ -94,7 +170,7 @@
 .orb2 {
   width: 400px;
   height: 400px;
-  background: radial-gradient(circle, #ff2f6d, transparent 70%);
+  background: radial-gradient(circle, #f59e0b, transparent 70%);
   bottom: 0;
   left: -80px;
   animation: float2 18s ease-in-out infinite;
@@ -103,7 +179,7 @@
 .orb3 {
   width: 300px;
   height: 300px;
-  background: radial-gradient(circle, #6c3fff, transparent 70%);
+  background: radial-gradient(circle, #fcd34d, transparent 70%);
   top: 50%;
   left: 50%;
   transform: translate(-50%,-50%);
@@ -144,12 +220,72 @@
 .lb-container {
   position: relative;
   z-index: 1;
-  max-width: 780px;
+  width: 100%;
+  max-width: min(1120px, 100%);
   margin: 0 auto;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  gap: 28px;
+  align-items: stretch;
+  gap: 24px;
+}
+
+:host.embed-mode .lb-container {
+  max-width: 100%;
+  gap: 20px;
+}
+
+.lb-header {
+  align-self: center;
+  width: 100%;
+  max-width: 720px;
+}
+
+/* Painel: tabs + pódio + lista numa só “cartão” (estrutura visível no vazio) */
+.lb-ranking-panel {
+  position: relative;
+  z-index: 1;
+  align-self: center;
+  width: 100%;
+  max-width: min(1120px, 100%);
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 20px;
+  padding: 22px 24px 26px;
+  border-radius: 24px;
+  background: rgba(8, 14, 24, 0.58);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow:
+    0 2px 0 rgba(251, 191, 36, 0.05),
+    0 28px 80px rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  animation: fadeUp 0.55s 0.08s ease both;
+}
+
+:host.embed-mode .lb-ranking-panel {
+  padding: 20px 18px 24px;
+  border-radius: 22px;
+  max-width: 100%;
+}
+
+.lb-ranking-panel .tab-row {
+  max-width: none;
+  width: 100%;
+}
+
+.lb-ranking-panel .podium {
+  align-self: center;
+  max-width: 640px;
+  width: 100%;
+}
+
+:host.embed-mode .lb-header {
+  max-width: 100%;
+}
+
+:host.embed-mode .lb-ranking-panel .podium {
+  max-width: 100%;
 }
 
 /* ─── HEADER ───── */
@@ -199,8 +335,14 @@
 
 .lb-desc {
   font-size: 15px;
-  color: rgba(255,255,255,0.5);
+  color: rgba(255,255,255,0.55);
   margin: 0;
+  max-width: 400px;
+  line-height: 1.5;
+}
+
+:host.embed-mode .lb-desc {
+  color: rgba(255, 255, 255, 0.68);
 }
 
 .play-btn {
@@ -244,18 +386,41 @@
   display: flex;
   gap: 10px;
   animation: fadeUp 0.5s 0.1s ease both;
+  justify-content: center;
+  flex-wrap: wrap;
 }
 
 .tab-btn {
-  padding: 10px 28px;
-  border-radius: 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 12px 32px;
+  border-radius: 14px;
   background: rgba(255,255,255,0.05);
   border: 1px solid rgba(255,255,255,0.10);
   color: rgba(255,255,255,0.55);
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 700;
   cursor: pointer;
   transition: all 0.2s;
+}
+
+:host.embed-mode .tab-btn {
+  padding: 13px 36px;
+  font-size: 15px;
+  border-radius: 14px;
+}
+
+.lb-icon-tab {
+  width: 20px;
+  height: 20px;
+  opacity: 0.75;
+}
+
+:host.embed-mode .lb-icon-tab {
+  width: 22px;
+  height: 22px;
 }
 
   .tab-btn:hover {
@@ -264,10 +429,28 @@
   }
 
   .tab-btn.tab-active {
-    background: linear-gradient(135deg, rgba(251,191,36,0.2), rgba(255,107,53,0.15));
-    border-color: rgba(251,191,36,0.45);
-    color: #fbbf24;
-    box-shadow: 0 6px 20px rgba(251,191,36,0.15);
+    background: linear-gradient(145deg, rgba(251,191,36,0.28), rgba(245,158,11,0.12));
+    border-width: 2px;
+    border-color: #fbbf24;
+    color: #fde68a;
+    box-shadow:
+      0 0 0 1px rgba(251,191,36,0.15),
+      0 10px 32px rgba(251,191,36,0.22);
+    transform: translateY(-1px);
+  }
+
+  .tab-btn.tab-active .lb-icon-tab {
+    opacity: 1;
+    color: #fcd34d;
+    filter: drop-shadow(0 0 8px rgba(251,191,36,0.4));
+  }
+
+  .tab-btn:active {
+    transform: translateY(0);
+  }
+
+  .tab-btn.tab-active:active {
+    transform: translateY(0);
   }
 
 /* ─── PODIUM ─── */
@@ -289,8 +472,16 @@
 }
 
 .podium-crown {
-  font-size: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   animation: bounce 2s ease-in-out infinite;
+}
+
+.lb-icon-crown {
+  width: 28px;
+  height: 28px;
+  color: #fbbf24;
 }
 
 @keyframes bounce {
@@ -339,6 +530,7 @@
 
 .podium-medal {
   font-size: 22px;
+  line-height: 1;
 }
 
 .podium-name {
@@ -349,6 +541,24 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+a.podium-profile-link {
+  color: inherit;
+  text-decoration: none;
+  cursor: pointer;
+  transition: color 0.2s;
+}
+
+a.podium-profile-link:hover {
+  color: #fde68a;
+  text-decoration: underline;
+}
+
+a.podium-profile-link:focus-visible {
+  outline: 2px solid #fbbf24;
+  outline-offset: 2px;
+  border-radius: 4px;
 }
 
 .podium-score {
@@ -389,6 +599,7 @@
   flex-direction: column;
   gap: 0;
   animation: fadeUp 0.6s 0.2s ease both;
+  min-height: 0;
 }
 
 .lb-loading {
@@ -396,9 +607,10 @@
   flex-direction: column;
   align-items: center;
   gap: 14px;
-  padding: 48px 0;
-  color: rgba(255,255,255,0.4);
-  font-size: 14px;
+  padding: 56px 16px 64px;
+  color: rgba(255,255,255,0.55);
+  font-size: 15px;
+  font-weight: 600;
 }
 
 .spinner {
@@ -418,29 +630,52 @@
 
 .lb-empty {
   text-align: center;
-  padding: 56px 0;
-  color: rgba(255,255,255,0.4);
+  padding: 28px 20px 40px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 8px;
+  gap: 12px;
 }
 
 .empty-icon {
-  font-size: 48px;
-  margin-bottom: 4px;
+  margin-bottom: 2px;
+  line-height: 0;
+  padding: 20px;
+  border-radius: 50%;
+  background: rgba(251, 191, 36, 0.06);
+  border: 1px solid rgba(251, 191, 36, 0.15);
+  box-shadow: 0 0 40px rgba(251, 191, 36, 0.08);
+}
+
+.lb-icon-empty {
+  width: 56px;
+  height: 56px;
+  color: rgba(251, 191, 36, 0.45);
+}
+
+.empty-title {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.88);
+  line-height: 1.35;
+  max-width: 320px;
 }
 
 .empty-sub {
-  font-size: 13px;
-  color: rgba(255,255,255,0.25);
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.5;
+  color: rgba(255, 255, 255, 0.52);
+  max-width: 340px;
+  font-weight: 500;
 }
 
 /* HEADER da tabela */
 .list-header {
   display: grid;
   grid-template-columns: 48px 1fr 110px 72px 72px;
-  padding: 8px 16px;
+  padding: 10px 16px;
   font-size: 11px;
   font-weight: 800;
   letter-spacing: 1.5px;
@@ -448,6 +683,15 @@
   text-transform: uppercase;
   border-bottom: 1px solid rgba(255,255,255,0.06);
   margin-bottom: 4px;
+}
+
+/* Pré-visualização das colunas no ranking vazio */
+.list-header--preview {
+  color: rgba(251, 191, 36, 0.42);
+  border-bottom-color: rgba(251, 191, 36, 0.12);
+  background: rgba(251, 191, 36, 0.04);
+  border-radius: 12px 12px 0 0;
+  margin-bottom: 0;
 }
 
 /* ROWS */
@@ -491,17 +735,40 @@
   border-color: rgba(255,47,109,0.2);
 }
 
+:host.embed-mode .list-row {
+  border-radius: 0;
+  border-left: none;
+  border-right: none;
+  background: transparent;
+  border-color: rgba(255, 255, 255, 0.06);
+  padding-left: 0;
+  padding-right: 0;
+}
+
+:host.embed-mode .list-row:hover {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+:host.embed-mode .list-row.row-me {
+  background: rgba(255, 47, 109, 0.06);
+}
+
+:host.embed-mode .list-header {
+  border-radius: 0;
+  padding-left: 0;
+  padding-right: 0;
+}
+
+:host.embed-mode .list-header--preview {
+  border-radius: 0;
+  background: rgba(251, 191, 36, 0.05);
+}
+
 /* Colunas */
 .col-rank {
   font-family: 'Bebas Neue', sans-serif;
   font-size: 20px;
   color: rgba(255,255,255,0.35);
-}
-
-.rank-num {
-}
-
-.col-player {
 }
 
 .player-info {
@@ -543,6 +810,24 @@
   display: flex;
   align-items: center;
   gap: 6px;
+}
+
+a.player-profile-link {
+  color: inherit;
+  text-decoration: none;
+  cursor: pointer;
+  transition: color 0.2s;
+}
+
+a.player-profile-link:hover {
+  color: #fde68a;
+  text-decoration: underline;
+}
+
+a.player-profile-link:focus-visible {
+  outline: 2px solid #fbbf24;
+  outline-offset: 2px;
+  border-radius: 4px;
 }
 
 .you-tag {
@@ -598,12 +883,235 @@
 
 /* Mensagem se utilizador não está no top */
 .my-position {
-  margin-top: 16px;
+  margin-top: 12px;
   text-align: center;
-  padding: 12px 20px;
-  border-radius: 12px;
-  background: rgba(255,47,109,0.06);
-  border: 1px solid rgba(255,47,109,0.15);
-  font-size: 13px;
-  color: rgba(255,255,255,0.45);
+  padding: 14px 20px;
+  border-radius: 14px;
+  background: rgba(255,47,109,0.08);
+  border: 1px solid rgba(255,47,109,0.2);
+  font-size: 14px;
+  font-weight: 600;
+  color: rgba(255,255,255,0.62);
+  line-height: 1.45;
+}
+
+:host.embed-mode .my-position {
+  border-radius: 0;
+  border: none;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  background: transparent;
+  padding: 16px 0 0;
+  margin-top: 20px;
+}
+
+/* ─── RESPONSIVE STYLES ─── */
+@media (max-width: 768px) {
+  .lb-page {
+    padding: 24px 12px 40px;
+  }
+
+  :host.embed-mode .lb-page {
+    padding: 10px 0 36px;
+  }
+
+  .lb-container {
+    gap: 20px;
+  }
+
+  .lb-title {
+    font-size: clamp(40px, 10vw, 56px);
+  }
+
+  .tab-row {
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 8px;
+  }
+
+  .tab-btn {
+    padding: 8px 20px;
+    font-size: 13px;
+  }
+
+  .podium {
+    gap: 8px;
+  }
+
+  .podium-block {
+    min-width: 90px;
+  }
+
+  .podium-block-1 {
+    height: 70px;
+  }
+
+  .podium-block-2 {
+    height: 52px;
+  }
+
+  .podium-block-3 {
+    height: 40px;
+  }
+
+  .podium-avatar-1st {
+    width: 64px;
+    height: 64px;
+    font-size: 24px;
+  }
+
+  .podium-avatar {
+    width: 52px;
+    height: 52px;
+    font-size: 18px;
+  }
+
+  .podium-name {
+    font-size: 12px;
+    max-width: 70px;
+  }
+
+  .podium-score {
+    font-size: 22px;
+  }
+
+  .list-header:not(.list-header--preview) {
+    display: none;
+  }
+
+  .list-header--preview {
+    display: grid;
+    grid-template-columns: 36px 1fr auto;
+    padding: 10px 12px;
+    font-size: 10px;
+    letter-spacing: 1px;
+  }
+
+  .list-header--preview .col-games,
+  .list-header--preview .col-level {
+    display: none;
+  }
+
+  .list-header--preview .col-score {
+    text-align: right;
+  }
+
+  .list-row {
+    grid-template-columns: 36px 1fr auto;
+    gap: 8px;
+    padding: 12px;
+  }
+
+  .col-games,
+  .col-level {
+    display: none;
+  }
+
+  .col-score {
+    text-align: right;
+  }
+
+  .score-val {
+    font-size: 20px;
+  }
+
+  .player-name {
+    font-size: 13px;
+  }
+
+  .small-avatar {
+    width: 34px;
+    height: 34px;
+    font-size: 13px;
+  }
+}
+
+@media (max-width: 480px) {
+  .lb-page {
+    padding: 20px 10px 30px;
+  }
+
+  :host.embed-mode .lb-page {
+    padding: 8px 0 28px;
+  }
+
+  .lb-title {
+    font-size: 36px;
+  }
+
+  .lb-desc {
+    font-size: 13px;
+  }
+
+  .podium {
+    gap: 6px;
+  }
+
+  .podium-block {
+    min-width: 70px;
+  }
+
+  .podium-block-1 {
+    height: 56px;
+  }
+
+  .podium-block-2 {
+    height: 42px;
+  }
+
+  .podium-block-3 {
+    height: 32px;
+  }
+
+  .podium-avatar-1st {
+    width: 52px;
+    height: 52px;
+    font-size: 20px;
+  }
+
+  .podium-avatar {
+    width: 44px;
+    height: 44px;
+    font-size: 16px;
+  }
+
+  .podium-name {
+    font-size: 11px;
+    max-width: 60px;
+  }
+
+  .podium-score {
+    font-size: 18px;
+  }
+
+  .lb-icon-crown {
+    width: 20px;
+    height: 20px;
+  }
+
+  .list-row {
+    padding: 10px;
+    gap: 6px;
+  }
+
+  .col-rank {
+    font-size: 18px;
+  }
+
+  .score-val {
+    font-size: 18px;
+  }
+
+  .player-name {
+    font-size: 12px;
+  }
+
+  .player-xp {
+    font-size: 10px;
+  }
+
+  .small-avatar {
+    width: 30px;
+    height: 30px;
+    font-size: 12px;
+  }
 }

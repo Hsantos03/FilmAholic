@@ -2,6 +2,9 @@ using System;
 
 namespace FilmAholic.Server.Models
 {
+    /// <summary>
+    /// Representa um relatório de um post em uma comunidade.
+    /// </summary>
     public class ComunidadePostReport
     {
         public int Id { get; set; }

@@ -1,0 +1,7 @@
+<div class="sto-backdrop" *ngIf="motivo" role="alertdialog" aria-modal="true" [attr.aria-labelledby]="'sto-title'">
+  <div class="sto-card">
+    <h2 id="sto-title" class="sto-title">{{ titulo }}</h2>
+    <p class="sto-text">{{ mensagem }}</p>
+    <p class="sto-count">Redirecionamento em <strong>{{ secondsLeft }}</strong> {{ secondsLeft === 1 ? 'segundo' : 'segundos' }}…</p>
+  </div>
+</div>

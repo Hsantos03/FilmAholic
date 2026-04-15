@@ -1,7 +1,9 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-
 import { ForgotPasswordComponent } from './forgot-password.component';
 
+/// <summary>
+/// Representa a página de recuperação de senha da aplicação.
+/// </summary>
 describe('ForgotPasswordComponent', () => {
   let component: ForgotPasswordComponent;
   let fixture: ComponentFixture<ForgotPasswordComponent>;

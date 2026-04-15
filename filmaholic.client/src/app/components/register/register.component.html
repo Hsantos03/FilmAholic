@@ -36,55 +36,79 @@
       <div *ngIf="successMessage" style="background-color:#133b24;border:1px solid #28a745;border-radius:8px;padding:12px 16px;margin-bottom:16px;color:#c9f7d0;font-size:14px;">
         {{ successMessage }}
       </div>
+
+      <p class="auth-required-hint"><span class="auth-required-mark">*</span> Campos obrigatórios.</p>
+
+      <label class="auth-field-label" for="reg-username">Username<span class="auth-required-mark" aria-hidden="true">*</span></label>
       <input
+        id="reg-username"
         type="text"
         name="userName"
         [(ngModel)]="user.userName"
         placeholder="Username"
         required
         pattern="^[a-zA-Z0-9_]{3,}$"
-        title="Mínimo 3 caracteres, apenas letras, números e underscore (_)">
+        title="Mínimo 3 caracteres, apenas letras, números e underscore (_)"
+        aria-required="true">
 
-      <div class="input-row" style="display: flex; gap: 10px;">
-        <input
-          type="text"
-               name="nome"
-               [(ngModel)]="user.nome"
-               placeholder="Nome"
-               required
-          pattern="^[A-Za-zÀ-ÿ\s]+$"
-          title="Só são permitidas letras e espaços (ex: João, Ana Maria)">
-
-        <input
-          type="text"
-               name="sobrenome"
-               [(ngModel)]="user.sobrenome"
-               placeholder="Sobrenome"
-               required
-          pattern="^[A-Za-zÀ-ÿ\s]+$"
-          title="Só são permitidas letras e espaços (ex: Almeida, Dembélé)">
+      <div class="input-row">
+        <div class="auth-field-stack">
+          <label class="auth-field-label" for="reg-nome">Nome<span class="auth-required-mark" aria-hidden="true">*</span></label>
+          <input
+            id="reg-nome"
+            type="text"
+            name="nome"
+            [(ngModel)]="user.nome"
+            placeholder="Nome"
+            required
+            pattern="^[A-Za-zÀ-ÿ\s]+$"
+            title="Só são permitidas letras e espaços (ex: João, Ana Maria)"
+            aria-required="true">
+        </div>
+        <div class="auth-field-stack">
+          <label class="auth-field-label" for="reg-sobrenome">Sobrenome<span class="auth-required-mark" aria-hidden="true">*</span></label>
+          <input
+            id="reg-sobrenome"
+            type="text"
+            name="sobrenome"
+            [(ngModel)]="user.sobrenome"
+            placeholder="Sobrenome"
+            required
+            pattern="^[A-Za-zÀ-ÿ\s]+$"
+            title="Só são permitidas letras e espaços (ex: Almeida, Dembélé)"
+            aria-required="true">
+        </div>
       </div>
 
+      <label class="auth-field-label" for="reg-email">Email<span class="auth-required-mark" aria-hidden="true">*</span></label>
       <input
+        id="reg-email"
         type="email"
         name="email"
         [(ngModel)]="user.email"
         placeholder="Email"
         required
         pattern="^[^\\s@]+@[^\\s@]+\\.com$"
-        title="Introduza um email no formato nome@dominio.com">
+        title="Introduza um email no formato nome@dominio.com"
+        autocomplete="email"
+        aria-required="true">
 
+      <label class="auth-field-label" for="reg-data-nascimento">Data de nascimento<span class="auth-required-mark" aria-hidden="true">*</span></label>
       <input
+        id="reg-data-nascimento"
         type="date"
         name="dataNascimento"
         [(ngModel)]="user.dataNascimento"
         [max]="todayISO"
         required
-        title="A data não pode ser futura">
+        title="A data não pode ser futura"
+        aria-required="true">
 
+      <label class="auth-field-label" for="reg-password">Password<span class="auth-required-mark" aria-hidden="true">*</span></label>
       <div class="password-container">
         <div class="password-input-wrapper">
           <input
+            id="reg-password"
             [type]="showPassword ? 'text' : 'password'"
             name="password"
             [(ngModel)]="user.password"
@@ -92,6 +116,8 @@
             placeholder="Password"
             required
             class="password-input"
+            autocomplete="new-password"
+            aria-required="true"
             [class.password-invalid]="user.password && !isPasswordValid">
           <button type="button" class="password-toggle-btn" (click)="toggleShowPassword()" tabindex="-1">
             <span *ngIf="!showPassword">👁</span>
@@ -134,16 +160,20 @@
         </div>
       </div>
 
+      <label class="auth-field-label" for="reg-confirm-password">Confirmar password<span class="auth-required-mark" aria-hidden="true">*</span></label>
       <div class="password-container">
         <div class="password-input-wrapper">
           <input
+            id="reg-confirm-password"
             [type]="showConfirmPassword ? 'text' : 'password'"
             name="confirmPassword"
             [(ngModel)]="user.confirmPassword"
             (input)="checkPasswordMatch()"
-            placeholder="Confirmar Password"
+            placeholder="Confirmar password"
             required
             class="password-input"
+            autocomplete="new-password"
+            aria-required="true"
             [class.password-invalid]="user.confirmPassword && user.password !== user.confirmPassword">
           <button type="button" class="password-toggle-btn" (click)="toggleShowConfirmPassword()" tabindex="-1">
             <span *ngIf="!showConfirmPassword">👁</span>
@@ -163,39 +193,13 @@
         {{ isLoading ? 'A processar...' : 'Criar Conta' }}
       </button>
 
-      <div style="display: flex; align-items: center; margin: 20px 0;">
-        <div style="flex: 1; height: 1px; background-color: #ddd;"></div>
-        <span style="padding: 0 15px; color: #666; font-size: 14px;">ou</span>
-        <div style="flex: 1; height: 1px; background-color: #ddd;"></div>
-      </div>
-
-      <!-- Botões de registo/login social -->
-      <div style="display: flex; flex-direction: column; gap: 10px;">
-        <button 
-          type="button" 
-          (click)="registarComGoogle()"
-          style="width: 100%; padding: 12px; background-color: #fff; color: #333; border: 1px solid #ddd; border-radius: 10px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px;">
-          <svg width="18" height="18" viewBox="0 0 18 18">
-            <path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.874 2.684-6.615z"/>
-            <path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.184l-2.908-2.258c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332C2.438 15.983 5.482 18 9 18z"/>
-            <path fill="#FBBC05" d="M3.964 10.707c-.18-.54-.282-1.117-.282-1.707s.102-1.167.282-1.707V4.961H.957C.348 6.175 0 7.55 0 9s.348 2.825.957 4.039l3.007-2.332z"/>
-            <path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0 5.482 0 2.438 2.017.957 4.961L3.964 7.293C4.672 5.163 6.656 3.58 9 3.58z"/>
-          </svg>
-          Continuar com Google
-        </button>
-
-        <button 
-          type="button" 
-          (click)="registarComFacebook()"
-          style="width: 100%; padding: 12px; background-color: #1877F2; color: white; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px;">
-          <svg width="18" height="18" viewBox="0 0 18 18" fill="white">
-            <path d="M18 9a9 9 0 1 0-10.406 8.89v-6.288H5.309V9h2.285V7.017c0-2.255 1.343-3.5 3.4-3.5.984 0 2.014.175 2.014.175v2.215h-1.135c-1.118 0-1.467.694-1.467 1.407V9h2.494l-.398 2.602h-2.096v6.288A9.001 9.001 0 0 0 18 9z"/>
-          </svg>
-          Continuar com Facebook
-        </button>
-      </div>
+      <app-social-auth-buttons
+        (googleClick)="registarComGoogle()"
+        (facebookClick)="registarComFacebook()">
+      </app-social-auth-buttons>
 
       <div class="footer-links">
+        <a routerLink="/home">Página inicial</a>
         <a routerLink="/login">Já tenho uma conta</a>
       </div>
     </form>

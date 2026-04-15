@@ -2,6 +2,9 @@
 
 namespace FilmAholic.Server.Models
 {
+    /// <summary>
+    /// Representa um voto em um comentário de um utilizador.
+    /// </summary>
     public class CommentVote
     {
         public int Id { get; set; }

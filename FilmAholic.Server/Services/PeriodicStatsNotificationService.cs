@@ -4,12 +4,18 @@ using Microsoft.Extensions.Options;
 namespace FilmAholic.Server.Services;
 
 /// FR70: agenda geração periódica de resumos de estatísticas.
+/// /// <summary>
+/// Serviço responsável por gerar notificações periódicas de estatísticas.
+/// </summary>
 public sealed class PeriodicStatsNotificationService : BackgroundService
 {
     private readonly IServiceScopeFactory _scopeFactory;
     private readonly ILogger<PeriodicStatsNotificationService> _logger;
     private readonly PeriodicStatsNotificationOptions _options;
 
+    /// <summary>
+    /// Inicializa uma nova instância do serviço de notificações periódicas de estatísticas.
+    /// </summary>
     public PeriodicStatsNotificationService(
         IServiceScopeFactory scopeFactory,
         IOptions<PeriodicStatsNotificationOptions> options,
@@ -20,6 +26,9 @@ public sealed class PeriodicStatsNotificationService : BackgroundService
         _options = options.Value;
     }
 
+    /// <summary>
+    /// Executa o serviço de notificações periódicas de estatísticas.
+    /// </summary>
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         if (!_options.Enabled)
@@ -32,7 +41,7 @@ public sealed class PeriodicStatsNotificationService : BackgroundService
 
         while (!stoppingToken.IsCancellationRequested)
         {
-            var delay = DelayUntilNextRunUtc(_options.HourUtc, _options.MinuteUtc);
+            var delay = BackgroundServiceScheduling.DelayUntilNextRunUtc(_options.HourUtc, _options.MinuteUtc);
             try
             {
                 await Task.Delay(delay, stoppingToken);
@@ -46,6 +55,9 @@ public sealed class PeriodicStatsNotificationService : BackgroundService
         }
     }
 
+    /// <summary>
+    /// Executa um ciclo seguro de geração de notificações periódicas de estatísticas.
+    /// </summary>
     private async Task RunOnceSafe(CancellationToken ct)
     {
         try
@@ -60,6 +72,9 @@ public sealed class PeriodicStatsNotificationService : BackgroundService
         }
     }
 
+    /// <summary>
+    /// Obtém o atraso até a próxima execução do serviço em UTC.
+    /// </summary>
     internal static TimeSpan DelayUntilNextRunUtc(int hourUtc, int minuteUtc)
     {
         var now = DateTime.UtcNow;

@@ -4,6 +4,9 @@ using FilmAholic.Server.Models;
 
 namespace FilmAholic.Server.Data
 {
+    /// <summary>
+    /// Representa a semente de desafios na aplicação.
+    /// </summary>
     public static class DesafioSeed
     {
         private const int RECOMPENSA_XP = 25;

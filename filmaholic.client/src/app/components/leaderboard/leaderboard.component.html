@@ -1,24 +1,23 @@
 <!-- TOPBAR (só quando não está embebido no Higher or Lower) -->
-<header class="topbar" *ngIf="!embedMode">
+<header class="topbar topbar--leaderboard" *ngIf="!embedMode">
   <button class="back-btn" (click)="goBack()">
     <span>←</span> Dashboard
   </button>
-  <span class="brand-pill">🏆 FilmAholic</span>
+  <span class="brand-pill">
+    <svg class="lb-icon lb-icon-brand" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M19 5h-2V3H7v2H5c-1.1 0-2 .9-2 2v1c0 2.55 1.92 4.63 4.39 4.94.63 1.5 1.98 2.63 3.61 2.96V19H7v2h10v-2h-4v-3.1c1.63-.33 2.98-1.46 3.61-2.96C19.08 12.63 21 10.55 21 8V7c0-1.1-.9-2-2-2zM5 8V7h2v3.82C5.84 10.4 5 9.3 5 8zm14 0c0 1.3-.84 2.4-2 2.82V7h2v1z"/></svg>
+    <span class="brand-pill-text">FilmAholic</span>
+  </span>
 </header>
-<!-- Barra mínima quando embebido -->
-<header class="topbar topbar-embed" *ngIf="embedMode">
-  <button type="button" class="back-btn" data-tour="lb-embed-back" (click)="goBack()">
-    <span>←</span> Voltar
-  </button>
-  <span class="brand-pill">🏆 Leaderboard</span>
-</header>
-
-<main class="lb-page">
+<main class="lb-page" [class.lb-page-embed]="embedMode">
   <div class="bg-orb orb1"></div>
   <div class="bg-orb orb2"></div>
   <div class="bg-orb orb3"></div>
 
-  <div class="lb-container">
+  <div class="lb-container" [class.tab-atores]="category === 'actors'">
+
+    <div class="lb-embed-bar" *ngIf="embedMode">
+      <button type="button" class="lb-embed-back" data-tour="lb-embed-back" (click)="goBack()">← Voltar ao jogo</button>
+    </div>
 
     <!-- HEADER -->
     <div class="lb-header">
@@ -30,13 +29,16 @@
       </button>
     </div>
 
+    <div class="lb-ranking-panel">
     <!-- TABS -->
-    <div class="tab-row">
-      <button class="tab-btn" [class.tab-active]="category === 'films'" (click)="category = 'films'">
-        🎬 Filmes
+    <div class="tab-row" data-tour="lb-tabs">
+      <button type="button" class="tab-btn" [class.tab-active]="category === 'films'" (click)="category = 'films'">
+        <svg class="lb-icon lb-icon-tab" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M18 4l2 4h-3l-2-4h-2l2 4h-3l-2-4H8l2 4H7L5 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V4h-4z"/></svg>
+        Filmes
       </button>
-      <button class="tab-btn" [class.tab-active]="category === 'actors'" (click)="category = 'actors'">
-        🎭 Atores
+      <button type="button" class="tab-btn" [class.tab-active]="category === 'actors'" (click)="category = 'actors'">
+        <svg class="lb-icon lb-icon-tab" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>
+        Atores
       </button>
     </div>
 
@@ -51,21 +53,25 @@
           <img *ngIf="activeBoard[1].fotoPerfilUrl" [src]="activeBoard[1].fotoPerfilUrl" [alt]="activeBoard[1].userName" />
           <span *ngIf="!activeBoard[1].fotoPerfilUrl">{{ avatarLetter(activeBoard[1].userName) }}</span>
         </div>
-        <div class="podium-medal">🥈</div>
-        <div class="podium-name">{{ displayName(activeBoard[1].userName) }}</div>
+        <div class="podium-medal">{{ rankIcon(2) }}</div>
+        <a *ngIf="activeBoard[1].utilizadorId" class="podium-name podium-profile-link" [routerLink]="['/profile', activeBoard[1].utilizadorId]">{{ displayName(activeBoard[1].userName) }}</a>
+        <span *ngIf="!activeBoard[1].utilizadorId" class="podium-name">{{ displayName(activeBoard[1].userName) }}</span>
         <div class="podium-score">{{ activeBoard[1].bestScore }}</div>
         <div class="podium-block podium-block-2"></div>
       </div>
 
       <!-- 1º lugar -->
       <div class="podium-slot podium-1st" [class.podium-me]="isCurrentUser(activeBoard[0])">
-        <div class="podium-crown">👑</div>
+        <div class="podium-crown" aria-hidden="true">
+          <svg class="lb-icon lb-icon-crown" viewBox="0 0 24 24" fill="currentColor"><path d="M5 16L3 5l5.5 5L12 4l3.5 6L21 5l-2 11H5z"/></svg>
+        </div>
         <div class="podium-avatar podium-avatar-1st">
           <img *ngIf="activeBoard[0].fotoPerfilUrl" [src]="activeBoard[0].fotoPerfilUrl" [alt]="activeBoard[0].userName" />
           <span *ngIf="!activeBoard[0].fotoPerfilUrl">{{ avatarLetter(activeBoard[0].userName) }}</span>
         </div>
-        <div class="podium-medal">🥇</div>
-        <div class="podium-name">{{ displayName(activeBoard[0].userName) }}</div>
+        <div class="podium-medal">{{ rankIcon(1) }}</div>
+        <a *ngIf="activeBoard[0].utilizadorId" class="podium-name podium-profile-link" [routerLink]="['/profile', activeBoard[0].utilizadorId]">{{ displayName(activeBoard[0].userName) }}</a>
+        <span *ngIf="!activeBoard[0].utilizadorId" class="podium-name">{{ displayName(activeBoard[0].userName) }}</span>
         <div class="podium-score">{{ activeBoard[0].bestScore }}</div>
         <div class="podium-block podium-block-1"></div>
       </div>
@@ -78,8 +84,9 @@
           <img *ngIf="activeBoard[2].fotoPerfilUrl" [src]="activeBoard[2].fotoPerfilUrl" [alt]="activeBoard[2].userName" />
           <span *ngIf="!activeBoard[2].fotoPerfilUrl">{{ avatarLetter(activeBoard[2].userName) }}</span>
         </div>
-        <div class="podium-medal">🥉</div>
-        <div class="podium-name">{{ displayName(activeBoard[2].userName) }}</div>
+        <div class="podium-medal">{{ rankIcon(3) }}</div>
+        <a *ngIf="activeBoard[2].utilizadorId" class="podium-name podium-profile-link" [routerLink]="['/profile', activeBoard[2].utilizadorId]">{{ displayName(activeBoard[2].userName) }}</a>
+        <span *ngIf="!activeBoard[2].utilizadorId" class="podium-name">{{ displayName(activeBoard[2].userName) }}</span>
         <div class="podium-score">{{ activeBoard[2].bestScore }}</div>
         <div class="podium-block podium-block-3"></div>
       </div>
@@ -93,11 +100,22 @@
         <span>A carregar ranking…</span>
       </div>
 
-      <div class="lb-empty" *ngIf="!isLoading && activeBoard.length === 0">
-        <div class="empty-icon">🎮</div>
-        <p>Ainda não há jogadores nesta categoria.</p>
-        <p class="empty-sub">Sê o primeiro a entrar no ranking!</p>
-      </div>
+      <ng-container *ngIf="!isLoading && activeBoard.length === 0">
+        <div class="list-header list-header--preview" aria-hidden="true">
+          <span class="col-rank">Pos.</span>
+          <span class="col-player">Jogador</span>
+          <span class="col-score">Melhor Score</span>
+          <span class="col-games">Jogos</span>
+          <span class="col-level">Nível</span>
+        </div>
+        <div class="lb-empty">
+          <div class="empty-icon" aria-hidden="true">
+            <svg class="lb-icon lb-icon-empty" viewBox="0 0 24 24" fill="currentColor"><path d="M21 6H3c-1.1 0-2 .9-2 2v8c0 1.1.9 2 2 2h18c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm-10 7H8v3H6v-3H3v-2h3V8h2v3h3v2zm4.5 2c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm4-3c-.83 0-1.5-.67-1.5-1.5S18.67 9 19.5 9s1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"/></svg>
+          </div>
+          <p class="empty-title">Ainda não há jogadores nesta categoria</p>
+          <p class="empty-sub">Joga Higher or Lower e sê o primeiro a aparecer aqui.</p>
+        </div>
+      </ng-container>
 
       <div class="list-header" *ngIf="!isLoading && activeBoard.length > 3">
         <span class="col-rank">Pos.</span>
@@ -121,7 +139,11 @@
               <span *ngIf="!entry.fotoPerfilUrl">{{ avatarLetter(entry.userName) }}</span>
             </div>
             <div class="player-details">
-              <span class="player-name">
+              <a *ngIf="entry.utilizadorId" class="player-name player-profile-link" [routerLink]="['/profile', entry.utilizadorId]">
+                {{ displayName(entry.userName) }}
+                <span class="you-tag" *ngIf="isCurrentUser(entry)">Tu</span>
+              </a>
+              <span *ngIf="!entry.utilizadorId" class="player-name">
                 {{ displayName(entry.userName) }}
                 <span class="you-tag" *ngIf="isCurrentUser(entry)">Tu</span>
               </span>
@@ -135,9 +157,10 @@
         </div>
       </div>
 
-      <div class="my-position" *ngIf="!isLoading && currentUserId && !currentUserInBoard">
+      <div class="my-position" *ngIf="!isLoading && currentUserId && !currentUserInBoard && activeBoard.length > 0">
         <span class="my-pos-label">A tua posição ainda não está no top 10 — continua a jogar!</span>
       </div>
+    </div>
     </div>
 
   </div>

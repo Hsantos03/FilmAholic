@@ -11,8 +11,8 @@
   /* Cores SecundÃƒÂ¡rias - Azul */
   --color-secondary: #007bff;
   --color-secondary-hover: #0056b3;
-  /* Cores de Fundo */
-  --bg-dark: #000;
+  /* Cores de Fundo (alinhado com topbar/strips #010B15 — evita faixa mais preta no fundo) */
+  --bg-dark: #010B15;
   --bg-dark-secondary: 5c4f4f5d;
   --bg-card: rgba(5, 10, 15, 0.95);
   --bg-input: #0a1118;
@@ -57,7 +57,7 @@ html, body {
   height: 100%;
   display: block;
   background-color: var(--bg-dark);
-  overflow-x: hidden;
+  
   font-family: 'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif
 }
 
@@ -75,6 +75,25 @@ body {
 app-root {
   display: block;
   min-height: 100vh;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  overflow-x: hidden;
+}
+
+/* Rotas: o host do componente deve esticar à largura do viewport (senão a topbar fica mais estreita e “falta” rosa à direita). */
+app-root > *:not(router-outlet) {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+/* Raiz comum das páginas com topbar */
+.page {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 /* ============================================
@@ -148,8 +167,12 @@ app-root {
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 2000;
+  z-index: 2800;
   animation: fadeIn 0.2s ease-out;
+  padding: max(16px, env(safe-area-inset-top, 0px)) 16px max(16px, env(safe-area-inset-bottom, 0px));
+  box-sizing: border-box;
+  overflow-y: auto;
+  overscroll-behavior: contain;
 }
 
 /* Modal partilhado (perfil edição, etc.) - reutilizar .modal-overlay e .modal-box */
@@ -161,8 +184,12 @@ app-root {
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 2000;
+  z-index: 2800;
   animation: fadeIn 0.2s ease-out;
+  padding: max(16px, env(safe-area-inset-top, 0px)) 16px max(16px, env(safe-area-inset-bottom, 0px));
+  box-sizing: border-box;
+  overflow-y: auto;
+  overscroll-behavior: contain;
 }
 
 .modal-box {
@@ -175,6 +202,12 @@ app-root {
   padding: 40px;
   position: relative;
   animation: slideUp 0.3s ease-out;
+  max-height: calc(100vh - 48px);
+  max-height: min(90vh, calc(100dvh - 48px));
+  overflow-x: hidden;
+  overflow-y: auto;
+  flex-shrink: 0;
+  -webkit-overflow-scrolling: touch;
 }
 
 .modal-box h3 {
@@ -319,6 +352,62 @@ app-root {
   margin: 0 0 8px 0;
 }
 
+.list-modal-box .filter-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 14px;
+  margin: 0 0 20px 0;
+}
+
+.list-modal-box .filter-row label {
+  color: var(--text-secondary);
+  font-size: 15px;
+  font-weight: 600;
+  margin: 0;
+  flex-shrink: 0;
+}
+
+.list-modal-box .list-filter-select {
+  flex: 1 1 260px;
+  min-width: 0;
+  max-width: 100%;
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background-color: var(--bg-input);
+  color: var(--text-primary);
+  border: 1px solid var(--border-dark);
+  border-radius: var(--border-radius-md);
+  padding: 11px 42px 11px 14px;
+  font-size: 15px;
+  font-family: inherit;
+  line-height: 1.35;
+  cursor: pointer;
+  transition: var(--transition-fast);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 24 24' fill='none' stroke='%23e91e63' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  background-size: 18px;
+}
+
+.list-modal-box .list-filter-select:hover {
+  border-color: rgba(233, 30, 99, 0.45);
+  background-color: var(--bg-input-hover);
+}
+
+.list-modal-box .list-filter-select:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(233, 30, 99, 0.22);
+}
+
+.list-modal-box .list-filter-select option {
+  background: #0a1118;
+  color: var(--text-primary);
+  padding: 8px;
+}
+
 /* Input Global */
 .input-global {
   width: 100%;
@@ -452,8 +541,8 @@ app-root {
 }
 
 .icon-btn {
-  height: 40px;
-  width: 40px;
+  height: 44px;
+  width: 44px;
   border: none;
   border-radius: 12px;
   background: rgba(255,255,255,0.08);
@@ -469,15 +558,29 @@ app-root {
   background: rgba(255,255,255,0.12);
 }
 
+.topbar .icon-btn[aria-label="Menu"],
+.cinema-map-topbar .icon-btn[aria-label="Menu"] {
+  background: transparent;
+}
+
+.topbar .icon-btn[aria-label="Menu"] svg,
+.cinema-map-topbar .icon-btn[aria-label="Menu"] svg {
+  width: 32px;
+  height: 32px;
+}
+
 .top-actions {
   display: flex;
   justify-content: flex-end;
   align-items: center;
   gap: 10px;
+  min-width: 0;
+  width: 100%;
+  max-width: 100%;
 }
 
 .brand {
-  font-size: 18px;
+  font-size: 20px;
   font-weight: 700;
   letter-spacing: 0.3px;
   opacity: 0.95;
@@ -637,57 +740,180 @@ app-root {
 }
 
 /* ============================================
+   TOPBAR GLOBAL — dashboard, admin, comunidades, search-results, etc.
+   ============================================ */
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  /* Ancorar o ::after da barra e evitar saltos de layout */
+  isolation: isolate;
+  width: 100%;
+  max-width: 100%;
+  min-height: 76px;
+  height: 76px;
+  box-sizing: border-box;
+  display: grid;
+  /* minmax(0,1fr) evita a grelha a não esticar e deixar faixa vazia à direita */
+  grid-template-columns: 60px 160px minmax(0, 1fr) 120px;
+  align-items: center;
+  gap: 12px;
+  padding: 0 22px;
+  background: linear-gradient(180deg, rgba(26, 32, 48, 0.99) 0%, rgba(16, 22, 34, 0.98) 100%);
+  box-shadow: 0 4px 28px rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  /* visible: overflow:hidden (commit AMonteiro316) recortava o menu do sino (.notifications-menu). */
+  overflow: visible;
+}
+
+.topbar::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 100%;
+  height: 3px;
+  background: linear-gradient(90deg, var(--color-primary), #ff9ad1, var(--color-secondary), #80c0ff, var(--color-primary));
+  background-size: 200% 100%;
+  animation: neonBorderSweep 3s linear infinite;
+  box-shadow: 0 0 12px rgba(233, 30, 99, 0.8), 0 0 20px rgba(0, 123, 255, 0.6);
+  pointer-events: none;
+}
+
+.topbar-simple {
+  grid-template-columns: 60px 160px minmax(0, 1fr);
+}
+
+.topbar-simple .top-actions {
+  justify-self: end;
+}
+
+/* Leaderboard: flex + back + pill (não usa grelha da dashboard) */
+.topbar.topbar--leaderboard {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 76px;
+  min-height: 76px;
+  padding: 14px 28px;
+}
+
+@media (max-width: 860px) {
+  .topbar:not(.topbar--leaderboard) {
+    grid-template-columns: 60px 160px minmax(0, 1fr) 60px;
+    padding: 0 14px;
+  }
+
+  .topbar.topbar-simple:not(.topbar--leaderboard) {
+    grid-template-columns: 60px 160px minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 620px) {
+  .topbar:not(.topbar--leaderboard) {
+    height: auto;
+    min-height: 0;
+    grid-template-columns: minmax(0, 1fr) 60px;
+    grid-template-areas:
+      "brand actions"
+      "search search";
+    padding: 10px 12px;
+    row-gap: 10px;
+  }
+
+  .topbar:not(.topbar--leaderboard) .brand {
+    grid-area: brand;
+  }
+
+  .topbar:not(.topbar--leaderboard) .top-actions {
+    grid-area: actions;
+  }
+
+  .topbar:not(.topbar--leaderboard) .search {
+    grid-area: search;
+  }
+}
+
+/* ============================================
    PAGE TOPBAR (cinema-map, cinema-movies)
    ============================================ */
 
+/* Mesma grelha que .topbar-simple: hamburger (60px) + marca (160px) + ações */
 .cinema-map-topbar {
   position: sticky;
   top: 0;
-  z-index: 200;
-  display: flex;
+  z-index: 1000;
+  display: grid;
+  grid-template-columns: 60px 160px minmax(0, 1fr);
   align-items: center;
   gap: 12px;
-  padding: 14px 0;
+  box-sizing: border-box;
+  min-height: 70px;
+  height: 70px;
+  padding: 0 24px;
   margin: 0 -24px 0 -24px;
-  padding-left: 24px;
-  padding-right: 24px;
-  background: rgba(10,10,15,0.95);
-  backdrop-filter: blur(12px);
-  border-bottom: 1px solid rgba(255,255,255,0.06);
+  background: linear-gradient(180deg, rgba(26, 32, 48, 0.99) 0%, rgba(16, 22, 34, 0.98) 100%);
+  border-bottom: none;
+  box-shadow: 0 4px 28px rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  overflow: visible;
+}
+
+.cinema-map-topbar::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 100%;
+  height: 3px;
+  background: linear-gradient(90deg, var(--color-primary), #ff9ad1, var(--color-secondary), #80c0ff, var(--color-primary));
+  background-size: 200% 100%;
+  animation: neonBorderSweep 3s linear infinite;
+  box-shadow: 0 0 12px rgba(233, 30, 99, 0.8), 0 0 20px rgba(0, 123, 255, 0.6);
+  pointer-events: none;
+}
+
+@keyframes neonBorderSweep {
+  0% {
+    background-position: 0% 50%;
+  }
+  100% {
+    background-position: 200% 50%;
+  }
 }
 
 .cinema-map-topbar .top-actions {
-  margin-left: auto;
+  justify-self: end;
 }
 
-.cinema-map-topbar .brand {
-  font-size: 16px;
-  font-weight: 700;
+/* Marca: igual à dashboard — Arial do body (mapa/cinemas usam DM Sans no :host e herdavam na topbar) */
+.topbar a.brand,
+.topbar a.brand:link,
+.topbar a.brand:visited,
+.cinema-map-topbar a.brand,
+.cinema-map-topbar a.brand:link,
+.cinema-map-topbar a.brand:visited {
+  font-family: Arial, sans-serif;
+  font-size: 18px;
+  font-weight: 800;
+  letter-spacing: 0.3px;
+  opacity: 0.95;
   color: #fff;
   text-decoration: none;
   transition: color 0.2s ease;
 }
 
-.cinema-map-topbar .brand:hover {
+.cinema-map-topbar a.brand:hover,
+.topbar a.brand:hover {
   color: #FF4081;
 }
 
-.cinema-map-topbar .brand.active,
-.topbar .brand.active {
+.cinema-map-topbar a.brand.active,
+.topbar a.brand.active {
   color: #FF4081;
   font-weight: 800;
-}
-
-.topbar .brand {
-  font-size: 16px;
-  font-weight: 700;
-  color: #fff;
-  text-decoration: none;
-  transition: color 0.2s ease;
-}
-
-.topbar .brand:hover {
-  color: #FF4081;
 }
 
 /* ============================================
@@ -695,22 +921,29 @@ app-root {
    ============================================ */
 
 .auth-page-wrapper {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  width: 100vw;
-  height: 100vh;
+  position: relative;
+  width: 100%;
+  min-height: 100vh;
   display: flex;
   justify-content: center;
   align-items: center;
-  padding: 20px;
+  padding: 40px 20px;
   overflow-y: auto;
-  background: linear-gradient(rgba(0,0,0,0.7), rgba(0,0,0,0.7)), url('assets/fundo-cinema.png') no-repeat center center;
-  background-size: cover;
+  -webkit-overflow-scrolling: touch;
+  background: linear-gradient(160deg, #0f0a12 0%, #1a1018 40%, #0a0e16 70%, #120810 100%);
   background-attachment: fixed;
   z-index: 999;
+}
+
+@media (max-width: 600px) {
+  .auth-page-wrapper {
+    align-items: flex-start;
+    padding: 30px 15px 50px;
+  }
+
+  .auth-card {
+    padding: 30px 20px;
+  }
 }
 
 .auth-card {
@@ -764,6 +997,37 @@ app-root {
 
 .auth-card .input-group input {
   margin-bottom: 0;
+}
+
+/* Campos obrigatórios (login, registo, recuperar / redefinir password) */
+.auth-required-hint {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin: 0 0 14px;
+  opacity: 0.9;
+}
+
+.auth-field-label {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-muted);
+  margin-bottom: 6px;
+}
+
+.auth-field-stack {
+  flex: 1;
+  min-width: 0;
+}
+
+.auth-field-stack .auth-field-label {
+  margin-top: 0;
+}
+
+.auth-required-mark {
+  color: var(--color-primary, #e91e63);
+  font-weight: 800;
+  margin-left: 2px;
 }
 
 .auth-card .footer-links a {

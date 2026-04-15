@@ -7,7 +7,4 @@
     <!-- Folder where production build objects will be placed -->
     <BuildOutputFolder>$(MSBuildProjectDirectory)\dist\filmaholic.client\browser\</BuildOutputFolder>
   </PropertyGroup>
-  <ItemGroup>
-    <None Remove="src\assets\logo cinema nos.png" />
-  </ItemGroup>
 </Project>

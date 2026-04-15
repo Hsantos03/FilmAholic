@@ -1,7 +1,10 @@
-﻿using System.Text.Json.Serialization;
+using System.Text.Json.Serialization;
 
 namespace FilmAholic.Server.Models
 {
+    /// <summary>
+    /// Representa a relação entre um utilizador e um filme.
+    /// </summary>
     public class UserMovie
     {
         public int Id { get; set; }
@@ -16,6 +19,6 @@ namespace FilmAholic.Server.Models
 
         public bool JaViu { get; set; } // false = Quero Ver | true = Já Vi
         public bool Favorito { get; set; } // false = Não é favorito | true = É favorito
-        public DateTime Data { get; set; } = DateTime.Now;
+        public DateTime Data { get; set; } = DateTime.UtcNow;
     }
 }

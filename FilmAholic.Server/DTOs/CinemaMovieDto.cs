@@ -1,5 +1,8 @@
 namespace FilmAholic.Server.DTOs;
 
+/// <summary>
+/// Representa um filme em exibição em um cinema, incluindo informações como título, poster, cinema, horários, gênero, duração, classificação, idioma, sala e link.
+/// </summary>
 public class CinemaMovieDto
 {
     public string Id { get; set; } = "";

@@ -3,6 +3,9 @@ import { Router } from '@angular/router';
 import { ProfileService } from '../../services/profile.service';
 import { OnboardingStep } from '../../services/onboarding.service';
 
+/// <summary>
+/// Componente responsável pela seleção de géneros favoritos do utilizador durante o onboarding.
+/// </summary>
 @Component({
   selector: 'app-selecionar-generos',
   templateUrl: './selecionar-generos.component.html',
@@ -16,6 +19,9 @@ export class SelecionarGenerosComponent implements OnInit {
   error = '';
   userId: string = '';
 
+  /// <summary>
+  /// Passos do onboarding para a seleção de géneros favoritos, com seletores, títulos e descrições para guiar o utilizador.
+  /// </summary>
   readonly generosOnboardingSteps: OnboardingStep[] = [
     {
       selector: '[data-tour="generos-intro"]',
@@ -34,11 +40,17 @@ export class SelecionarGenerosComponent implements OnInit {
     }
   ];
 
+  /// <summary>
+  /// Construtor do componente, injetando os serviços necessários para perfil e roteamento.
+  /// </summary>
   constructor(
     private profileService: ProfileService,
     private router: Router
   ) { }
 
+  /// <summary>
+  /// Inicializa o componente, carregando dados iniciais e configurando assinaturas.
+  /// </summary>
   ngOnInit() {
     this.userId = localStorage.getItem('user_id') || '';
     
@@ -50,6 +62,9 @@ export class SelecionarGenerosComponent implements OnInit {
     this.carregarGeneros();
   }
 
+  /// <summary>
+  /// Carrega os géneros disponíveis para seleção.
+  /// </summary>
   carregarGeneros() {
     this.isLoadingGeneros = true;
     this.profileService.obterTodosGeneros().subscribe({
@@ -65,6 +80,9 @@ export class SelecionarGenerosComponent implements OnInit {
     });
   }
 
+  /// <summary>
+  /// Alterna a seleção de um género favorito do utilizador.
+  /// </summary>
   toggleGenero(generoId: number) {
     const index = this.generosSelecionados.indexOf(generoId);
     if (index > -1) {
@@ -74,10 +92,16 @@ export class SelecionarGenerosComponent implements OnInit {
     }
   }
 
+  /// <summary>
+  /// Verifica se um género favorito está selecionado pelo utilizador.
+  /// </summary>
   isGeneroSelecionado(generoId: number): boolean {
     return this.generosSelecionados.includes(generoId);
   }
 
+  /// <summary>
+  /// Salva os géneros favoritos selecionados pelo utilizador.
+  /// </summary>
   salvarGeneros() {
     if (this.generosSelecionados.length === 0) {
       this.error = 'Por favor, selecione pelo menos um género favorito.';
@@ -100,10 +124,16 @@ export class SelecionarGenerosComponent implements OnInit {
     });
   }
 
+  /// <summary>
+  /// Permite ao utilizador saltar a seleção de géneros e ir diretamente para o dashboard.
+  /// </summary>
   saltar() {
     this.router.navigate(['/dashboard']);
   }
 
+  /// <summary>
+  /// Seleciona ou desmarca todos os géneros disponíveis.
+  /// </summary>
   selecionarTodos() {
     if (this.generosSelecionados.length === this.generos.length) {
       this.generosSelecionados = [];
@@ -111,7 +141,10 @@ export class SelecionarGenerosComponent implements OnInit {
       this.generosSelecionados = this.generos.map(g => g.id);
     }
   }
-
+  
+  /// <summary>
+  /// Verifica se todos os géneros estão selecionados.
+  /// </summary>
   get todosSelecionados(): boolean {
     return this.generos.length > 0 && this.generosSelecionados.length === this.generos.length;
   }

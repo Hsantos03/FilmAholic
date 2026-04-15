@@ -8,6 +8,10 @@ using System.Security.Claims;
 
 namespace FilmAholic.Server.Controllers
 {
+    /// <summary>
+    /// Servidor de rastreamento do gamification dos minijogos (High-or-Lower, Quizzes).
+    /// Regista score, calcula distribuições progressivas de XP e atualiza as mecânicas diárias dependentes do streak do user.
+    /// </summary>
     [ApiController]
     [Route("api/game/history")]
     public class GameHistoryController : ControllerBase
@@ -20,6 +24,10 @@ namespace FilmAholic.Server.Controllers
         }
 
         // GET: api/game/history
+        /// <summary>
+        /// Devolve os rastros de 50 pontuações (Histórico de jogos) mais recentes do perfil ativo com metadados do tipo de categoria.
+        /// </summary>
+        /// <returns>Arraio imutável com pontuações.</returns>
         [Authorize]
         [HttpGet]
         public async Task<IActionResult> GetMyHistory()
@@ -37,6 +45,11 @@ namespace FilmAholic.Server.Controllers
         }
 
         // POST: api/game/history
+        /// <summary>
+        /// Cria uma nova entrada no histórico de jogos para o utilizador autenticado.
+        /// </summary>
+        /// <param name="dto">A estrutura de pontuação bruta contendo o rasto em JSON as escolhas nos rounds para replay UI.</param>
+        /// <returns>Estatísticas do jogador atualizadas em runtime e XP remanescente.</returns>
         [Authorize]
         [HttpPost]
         public async Task<IActionResult> saveResult([FromBody] GameHistoryCreateDto dto)
@@ -69,15 +82,13 @@ namespace FilmAholic.Server.Controllers
                     user.UltimoResetDiario = DateTime.UtcNow;
                 }
 
-                const int limiteDiario = 100;
-                const int xpPorAcerto = 10;
+                const int limiteDiario = 1000; // Limite diário para boa progressão
 
                 if (user.XPDiario < limiteDiario)
                 {
-                    int xpBase = dto.Score * xpPorAcerto;
-
-                    double multiplicador = dto.Score >= 10 ? 2.0 : dto.Score >= 5 ? 1.5 : 1.0;
-                    int xpCalculado = (int)(xpBase * multiplicador);
+                    // Sistema de streak: cada resposta consecutiva dá mais XP
+                    // Streak 1 = 5 XP, Streak 2 = 7 XP, Streak 3 = 9 XP
+                    int xpCalculado = CalcularXPComStreak(dto.Score);
 
                     int xpDisponivel = limiteDiario - user.XPDiario;
                     xpGanho = Math.Min(xpCalculado, xpDisponivel);
@@ -101,12 +112,18 @@ namespace FilmAholic.Server.Controllers
                 xpGanho,
                 xpTotal = user?.XP ?? 0,
                 nivel = user?.Nivel ?? 1,
-                xpDiarioRestante = Math.Max(0, 100 - (user?.XPDiario ?? 0))
+                xpDiarioRestante = Math.Max(0, 1000 - (user?.XPDiario ?? 0))
             });
         }
 
 
         // GET: api/game/history/leaderboard?category=films&top=10
+        /// <summary>
+        /// Obtém o ranking dos melhores jogadores em uma categoria específica.
+        /// </summary>
+        /// <param name="category">Categoria do jogo a avaliar peritos ("films", "higherLower").</param>
+        /// <param name="top">Recorte seletivo nativo de pódio ex: 10 ou 100 melhores.</param>
+        /// <returns>Ranking padronizado e ordenado.</returns>
         [HttpGet("leaderboard")]
         public async Task<IActionResult> GetLeaderboard(
             [FromQuery] string category = "films",
@@ -132,18 +149,17 @@ namespace FilmAholic.Server.Controllers
             var userIds = filtered.Select(x => x.UtilizadorId).ToList();
             var users = await _context.Users
                 .Where(u => userIds.Contains(u.Id))
-                .Select(u => new { u.Id, u.Nome, u.Sobrenome, u.FotoPerfilUrl, u.Nivel, u.XP })
+                .Select(u => new { u.Id, u.UserName, u.Nome, u.Sobrenome, u.FotoPerfilUrl, u.Nivel, u.XP })
                 .ToListAsync();
 
             var result = filtered.Select((x, i) =>
             {
                 var user = users.FirstOrDefault(u => u.Id == x.UtilizadorId);
-                var nomeCompleto = ((user?.Nome ?? "") + " " + (user?.Sobrenome ?? "")).Trim();
                 return new
                 {
                     rank = i + 1,
                     utilizadorId = x.UtilizadorId,
-                    userName = string.IsNullOrEmpty(nomeCompleto) ? "Anónimo" : nomeCompleto,
+                    userName = user != null ? (!string.IsNullOrEmpty(user.UserName) && !user.UserName.Contains("@") ? user.UserName : $"{user.Nome} {user.Sobrenome}".Trim()) : "Anónimo",
                     fotoPerfilUrl = user?.FotoPerfilUrl,
                     nivel = user?.Nivel ?? 1,
                     xp = user?.XP ?? 0,
@@ -157,18 +173,55 @@ namespace FilmAholic.Server.Controllers
         }
 
 
+        /// <summary>
+        /// Calcula o nível do utilizador com base no XP total acumulado.
+        /// </summary>
+        /// <param name="xpTotal">Quantitativo absoluto angariado historicamente.</param>
+        /// <returns>Patamar de nível correspondente do sujeito.</returns>
         private static int CalcularNivel(int xpTotal)
         {
             int nivel = 1;
             while (true)
             {
-                int xpParaProximo = 100 * nivel * (nivel + 1) / 2;
+                // Fórmula: XP acumulado para nível N = 50×(2+3+...+(N+1)) = 25×N×(N+3)
+                // Nível 1→2: 100 XP, Nível 2→3: 150 XP adicional, Nível 3→4: 200 XP adicional...
+                int xpParaProximo = 25 * nivel * (nivel + 3);
                 if (xpTotal < xpParaProximo) break;
                 nivel++;
             }
             return nivel;
         }
 
+        /// <summary>
+        /// Calcula o XP total com base na pontuação e streaks.
+        /// </summary>
+        /// <param name="score">O patamar final do quiz atingido.</param>
+        /// <returns>XP bruto extraído dessa run.</returns>
+        private static int CalcularXPComStreak(int score)
+        {
+            if (score <= 0) return 0;
+
+            int xpTotal = 0;
+            for (int i = 1; i <= score; i++)
+            {
+                // XP base: 5 XP
+                // Bónus por streak: +2 XP por cada resposta após a primeira
+                int xpPorResposta = 5 + ((i - 1) * 2);
+                xpTotal += xpPorResposta;
+            }
+
+            // Bónus adicional por streak
+            if (score >= 15) xpTotal += 50; // Streak épico: +50 XP
+            else if (score >= 10) xpTotal += 25; // Streak excelente: +25 XP
+            else if (score >= 5) xpTotal += 10;  // Streak bom: +10 XP
+
+            return xpTotal;
+        }
+
+        /// <summary>
+        /// Obtém as estatísticas do jogador autenticado, incluindo taxa de acerto e máximo global.
+        /// </summary>
+        /// <returns>Estatuto estatístico do Jogador: taxa de acerto e máximo global.</returns>
         [Authorize]
         [HttpGet("stats")]
         public async Task<IActionResult> GetStats()
@@ -204,6 +257,9 @@ namespace FilmAholic.Server.Controllers
         }
     }
 
+    /// <summary>
+    /// Cria uma nova entrada de histórico de jogo para o utilizador autenticado.
+    /// </summary>
     public class GameHistoryCreateDto
     {
         public int Score { get; set; }

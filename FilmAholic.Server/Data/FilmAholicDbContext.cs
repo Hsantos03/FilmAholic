@@ -4,6 +4,9 @@ using Microsoft.EntityFrameworkCore;
 
 namespace FilmAholic.Server.Data;
 
+/// <summary>
+/// Representa o contexto do banco de dados da aplicação.
+/// </summary>
 public class FilmAholicDbContext : IdentityDbContext<Utilizador>
 {
     public DbSet<UserMovie> UserMovies { get; set; }
@@ -37,7 +40,11 @@ public class FilmAholicDbContext : IdentityDbContext<Utilizador>
 
     public DbSet<Medalha> Medalhas => Set<Medalha>();
     public DbSet<UtilizadorMedalha> UtilizadorMedalhas => Set<UtilizadorMedalha>();
+    public DbSet<UtilizadorMedalhaExposicao> UtilizadorMedalhasExposicao => Set<UtilizadorMedalhaExposicao>();
 
+    /// <summary>
+    /// Configura o modelo do banco de dados.
+    /// </summary>
     protected override void OnModelCreating(ModelBuilder builder)
     {
         builder.Entity<UserMovie>()
@@ -50,18 +57,27 @@ public class FilmAholicDbContext : IdentityDbContext<Utilizador>
         builder.Entity<UtilizadorGenero>()
             .HasKey(ug => new { ug.UtilizadorId, ug.GeneroId });
 
+        /// <summary>
+        /// Representa a relação entre um utilizador e um género na aplicação.
+        /// </summary>
         builder.Entity<UtilizadorGenero>()
             .HasOne(ug => ug.Utilizador)
             .WithMany(u => u.GenerosFavoritos)
             .HasForeignKey(ug => ug.UtilizadorId)
             .OnDelete(DeleteBehavior.Cascade);
 
+        /// <summary>
+        /// Representa um género na aplicação.
+        /// </summary>
         builder.Entity<UtilizadorGenero>()
             .HasOne(ug => ug.Genero)
             .WithMany(g => g.Utilizadores)
             .HasForeignKey(ug => ug.GeneroId)
             .OnDelete(DeleteBehavior.Cascade);
 
+        /// <summary>
+        /// Representa uma classificação de filme na aplicação.
+        /// </summary>
         builder.Entity<MovieRating>()
          .HasIndex(r => new { r.FilmeId, r.UserId })
          .IsUnique();
@@ -80,10 +96,16 @@ public class FilmAholicDbContext : IdentityDbContext<Utilizador>
             e.Property(c => c.UserId).IsRequired(false);
         });
 
+        /// <summary>
+        /// Representa um voto em um comentário na aplicação.
+        /// </summary>
         builder.Entity<CommentVote>()
             .HasIndex(v => new { v.CommentId, v.UserId })
             .IsUnique();
 
+        /// <summary>
+        /// Configura a relação entre um voto e um comentário na aplicação.
+        /// </summary>
         builder.Entity<CommentVote>()
             .HasOne(v => v.Comment)
             .WithMany()
@@ -199,6 +221,9 @@ public class FilmAholicDbContext : IdentityDbContext<Utilizador>
             e.ToTable("ComunidadeMembros");
         });
 
+        /// <summary>
+        /// Representa um pedido de entrada em uma comunidade.
+        /// </summary>
         builder.Entity<ComunidadePedidoEntrada>(e =>
         {
             e.HasKey(p => p.Id);
@@ -303,6 +328,9 @@ public class FilmAholicDbContext : IdentityDbContext<Utilizador>
                 .HasFilter("[FilmeId] IS NOT NULL");
         });
 
+        /// <summary>
+        /// Representa as preferências de notificação de um utilizador na aplicação.
+        /// </summary>
         builder.Entity<PreferenciasNotificacao>(e =>
         {
             e.ToTable("PreferenciasNotificacao");
@@ -346,9 +374,12 @@ public class FilmAholicDbContext : IdentityDbContext<Utilizador>
              .HasForeignKey(x => x.UtilizadorId)
              .OnDelete(DeleteBehavior.Cascade);
 
+            // SQL Server: SET NULL aqui cria caminho em cascata duplicado (Comunidade -> Posts -> Notif).
+            // Anular ComunidadeId na app antes de apagar a comunidade.
             e.HasOne(x => x.Comunidade)
              .WithMany()
              .HasForeignKey(x => x.ComunidadeId)
+             .IsRequired(false)
              .OnDelete(DeleteBehavior.NoAction);
 
             e.HasOne(x => x.Post)
@@ -389,6 +420,27 @@ public class FilmAholicDbContext : IdentityDbContext<Utilizador>
              .WithMany(m => m.UtilizadorMedalhas)
              .HasForeignKey(x => x.MedalhaId)
              .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        // Configure UtilizadorMedalhaExposicao entity (showcased medals)
+        builder.Entity<UtilizadorMedalhaExposicao>(e =>
+        {
+            e.ToTable("UtilizadorMedalhasExposicao");
+            e.HasKey(x => new { x.UtilizadorId, x.SlotIndex });
+            e.Property(x => x.SlotIndex).HasMaxLength(3); // 0, 1, 2
+            e.Property(x => x.Tag).HasMaxLength(100);
+            e.Property(x => x.DataAtualizacao).HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+            e.HasOne(x => x.Utilizador)
+             .WithMany()
+             .HasForeignKey(x => x.UtilizadorId)
+             .OnDelete(DeleteBehavior.Cascade);
+
+            e.HasOne(x => x.Medalha)
+             .WithMany()
+             .HasForeignKey(x => x.MedalhaId)
+             .IsRequired(false)
+             .OnDelete(DeleteBehavior.SetNull);
         });
     }
 }

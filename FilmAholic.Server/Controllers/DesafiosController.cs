@@ -1,4 +1,4 @@
-﻿using FilmAholic.Server.Data;
+using FilmAholic.Server.Data;
 using FilmAholic.Server.Models;
 using FilmAholic.Server.DTOs;
 using Microsoft.AspNetCore.Mvc;
@@ -8,6 +8,9 @@ using System.Security.Claims;
 
 namespace FilmAholic.Server.Controllers
 {
+    /// <summary>
+    /// Controlador responsável pela gestão de desafios e progressão de utilizadores.
+    /// </summary>
     [ApiController]
     [Route("api/[controller]")]
     public class DesafiosController : ControllerBase
@@ -19,7 +22,10 @@ namespace FilmAholic.Server.Controllers
             _context = context;
         }
 
-        // GET: api/desafios (lista completa — apenas administradores)
+        /// <summary>
+        /// Obtém todos os desafios disponíveis no sistema, ordenados por data de início.
+        /// </summary>
+        /// <returns>Tabela absoluta de objetos <see cref="Desafio"/> organizados por data.</returns>
         [Authorize(Roles = "Administrador")]
         [HttpGet]
         public async Task<IActionResult> GetAll()
@@ -30,8 +36,10 @@ namespace FilmAholic.Server.Controllers
             return Ok(desafios);
         }
 
-        // GET: api/desafios/user
-        // Returns each desafio plus the current user's progress (progresso)
+        /// <summary>
+        /// Obtém os desafios específicos para o utilizador autenticado, incluindo o progresso individual.
+        /// </summary>
+        /// <returns>Uma visão conjunta que sobrepõe desafios dinâmicos, géneros, e a contagem atingida pelo membro registado.</returns>
         [Authorize]
         [HttpGet("user")]
         public async Task<IActionResult> GetForUser()
@@ -60,8 +68,11 @@ namespace FilmAholic.Server.Controllers
             return Ok(result);
         }
 
-        // GET: api/desafios/publicos
-        // Retorna a lista pública de desafios (para utilizadores não autenticados ou autorizados)
+
+        /// <summary>
+        /// Obtém a lista pública minimalista de desafios ativos (para utilizadores não autenticados ou meros transeuntes).
+        /// </summary>
+        /// <returns>Apenas uma abstração do desafio contendo descritivos, prémios, sem métricas individuais ligadas ao modelo relacional.</returns>
         [HttpGet("publicos")]
         public async Task<IActionResult> GetPublicDesafios()
         {
@@ -73,7 +84,11 @@ namespace FilmAholic.Server.Controllers
             return Ok(desafios);
         }
 
-        // GET: api/desafios/diario
+
+        /// <summary>
+        /// Obtém o desafio diário para o utilizador autenticado, incluindo o progresso individual.
+        /// </summary>
+        /// <returns>JSON contendo as três alíneas de possível escolha (A/B/C), indicador de pré-acerto, e validação se foi cumprido.</returns>
         [Authorize]
         [HttpGet("diario")]
         public async Task<IActionResult> GetDesafioDiario()
@@ -115,7 +130,13 @@ namespace FilmAholic.Server.Controllers
             });
         }
 
-        // POST: api/desafios/5/responder
+        /// <summary>
+        /// Submete a escolha selecionada no Quiz/Trivia diário em concordância com o ID do desafio.
+        /// Audita a integridade, distribui os pontos de XP merecidos em caso de acertar e bloqueia tentativas fraudulentas ou repetidas.
+        /// </summary>
+        /// <param name="id">A matrícula de registo correspondente àquela pergunta elaborada na base de dados.</param>
+        /// <param name="dto">A opção alfanumérica e descritiva selecionada na grelha pelo utilizador.</param>
+        /// <returns>Mensagem definindo ganho experiencial ou rejeição por tentativa sucessiva erradamente duplicada.</returns>
         [Authorize]
         [HttpPost("{id}/responder")]
         public async Task<IActionResult> ResponderDesafio(int id, [FromBody] RespostaDto dto)

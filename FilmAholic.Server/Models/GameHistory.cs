@@ -2,6 +2,9 @@ using System.ComponentModel.DataAnnotations;
 
 namespace FilmAholic.Server.Models
 {
+    /// <summary>
+    /// Representa o histórico de um jogo.
+    /// </summary>
     public class GameHistory
     {
         public int Id { get; set; }

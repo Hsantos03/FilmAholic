@@ -1,14 +1,19 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-
+import { RouterTestingModule } from '@angular/router/testing';
 import { LoginComponent } from './login.component';
+import { SocialAuthButtonsComponent } from '../social-auth-buttons/social-auth-buttons.component';
 
+/// <summary>
+/// Testes unitários para o componente LoginComponent, garantindo que o componente seja criado corretamente e funcione conforme esperado.
+/// </summary>
 describe('LoginComponent', () => {
   let component: LoginComponent;
   let fixture: ComponentFixture<LoginComponent>;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      declarations: [LoginComponent]
+      imports: [RouterTestingModule],
+      declarations: [LoginComponent, SocialAuthButtonsComponent]
     })
     .compileComponents();
 

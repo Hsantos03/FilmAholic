@@ -1,6 +1,9 @@
 namespace FilmAholic.Server.DTOs;
 
 /// FR68 — sugestão social: filme popular entre outros membros da comunidade.
+/// <summary>
+/// Representa uma sugestão de filme baseada na popularidade entre os membros da comunidade.
+/// </summary>
 public class SugestaoFilmeComunidadeDto
 {
     public int FilmeId { get; set; }

@@ -1,8 +1,12 @@
 import { Component, OnInit } from '@angular/core';
 import { AuthService } from '../../services/auth.service';
+import { SessionTerminationService } from '../../services/session-termination.service';
 import { ProfileService } from '../../services/profile.service';
 import { Router, ActivatedRoute } from '@angular/router';
 
+/// <summary>
+/// Representa a página de login da aplicação.
+/// </summary>
 @Component({
   selector: 'app-login',
   templateUrl: './login.component.html',
@@ -21,14 +25,29 @@ export class LoginComponent implements OnInit {
   externalNome = '';
   externalEmail = '';
 
+  /** Rota interna para onde redirecionar após login (ex.: `/profile/{id}`). */
+  private pendingReturnUrl: string | null = null;
+
+  /// <summary>
+  /// Construtor do componente, injetando os serviços necessários para autenticação, perfil, terminação de sessão e roteamento.
+  /// </summary>
   constructor(
     private authService: AuthService,
     private profileService: ProfileService,
+    private sessionTermination: SessionTerminationService,
     private router: Router,
     private route: ActivatedRoute
   ) { }
 
+  /// <summary>
+  /// Inicializa o componente, verificando parâmetros de URL para mensagens de sucesso/erro e redirecionamento após login.
+  /// </summary>
   ngOnInit() {
+    const ruSnap = this.route.snapshot.queryParamMap.get('returnUrl');
+    if (ruSnap && ruSnap.startsWith('/') && !ruSnap.startsWith('//')) {
+      this.pendingReturnUrl = ruSnap;
+    }
+
     // Verificar se veio de login externo bem-sucedido
     this.route.queryParams.subscribe(params => {
       if (params['externalSuccess'] === 'true') {
@@ -77,9 +96,33 @@ export class LoginComponent implements OnInit {
       if (params['error']) {
         this.errorMessage = params['error'];
       }
+
+      if (params['reset'] === 'ok') {
+        this.successMessage = 'Password atualizada com sucesso. Inicia sessão com a nova password.';
+        this.router.navigate([], {
+          relativeTo: this.route,
+          queryParams: { reset: null },
+          queryParamsHandling: 'merge',
+          replaceUrl: true
+        });
+      }
+
+      if (params['recover'] === 'sent') {
+        this.successMessage =
+          'Se este email estiver na FilmAholic, enviámos o link de recuperação. Verifica a caixa de entrada e o spam.';
+        this.router.navigate([], {
+          relativeTo: this.route,
+          queryParams: { recover: null },
+          queryParamsHandling: 'merge',
+          replaceUrl: true
+        });
+      }
     });
   }
 
+  /// <summary>
+  /// Representa a ação de login na aplicação.
+  /// </summary>
   onLogin() {
     this.isLoading = true;
     this.errorMessage = '';
@@ -88,6 +131,7 @@ export class LoginComponent implements OnInit {
     
     this.authService.login(this.loginData).subscribe({
       next: (res) => {
+        this.sessionTermination.reset();
         this.isLoading = false;
         localStorage.removeItem('fotoPerfilUrl');
         localStorage.setItem('user_nome', res.nome);
@@ -96,13 +140,17 @@ export class LoginComponent implements OnInit {
         localStorage.setItem('user_roles', JSON.stringify(res.roles ?? []));
         
         // Verificar se o utilizador já tem géneros favoritos
+        const returnAfter = this.pendingReturnUrl;
         this.profileService.obterGenerosFavoritos(res.id).subscribe({
           next: (generos) => {
             if (generos && generos.length > 0) {
-              // Se já tem géneros, vai para o dashboard
-              this.router.navigate(['/dashboard']);
+              if (returnAfter) {
+                this.pendingReturnUrl = null;
+                this.router.navigateByUrl(returnAfter);
+              } else {
+                this.router.navigate(['/dashboard']);
+              }
             } else {
-              // Se não tem géneros, redireciona para selecionar
               this.router.navigate(['/selecionar-generos']);
             }
           },
@@ -127,6 +175,9 @@ export class LoginComponent implements OnInit {
     });
   }
 
+  /// <summary>
+  /// Reenvia o email de verificação para o utilizador.
+  /// </summary>
   reenviarEmail() {
     if (!this.emailParaVerificar) return;
     
@@ -146,11 +197,16 @@ export class LoginComponent implements OnInit {
     });
   }
 
-  // Métodos para login social
+  /// <summary>
+  /// Inicia o processo de login usando a conta do Google.
+  /// </summary>
   loginWithGoogle() {
     this.authService.googleLogin();
   }
-
+  
+  /// <summary>
+  /// Inicia o processo de login usando a conta do Facebook.
+  /// </summary>
   loginWithFacebook() {
     this.authService.facebookLogin();
   }

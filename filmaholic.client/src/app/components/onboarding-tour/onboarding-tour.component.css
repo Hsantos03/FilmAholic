@@ -6,6 +6,15 @@
   --onboarding-pink: #ff2f6d;
 }
 
+.onboarding-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 2147483000;
+  pointer-events: auto;
+  background: transparent;
+  touch-action: none;
+}
+
 .onboarding-spotlight {
   position: fixed;
   z-index: 2147483001;
@@ -27,6 +36,8 @@
   border: 1px solid rgba(255, 47, 109, 0.35);
   box-shadow: 0 16px 48px rgba(0, 0, 0, 0.55);
   color: #eee;
+  max-height: calc(100vh - 32px);
+  overflow-y: auto;
 }
 
 .onboarding-popover__meta {

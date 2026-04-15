@@ -36,6 +36,12 @@
         <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" /></svg>
         <span>Perfil</span>
       </a>
+      <a *ngIf="isAdmin" class="sidebar-item" routerLink="/admin" routerLinkActive="active" (click)="toggleMenu()">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 10.99h7c-.53 4.12-3.28 7.79-7 8.94V12H5V6.3l7-3.11v8.8z" />
+        </svg>
+        <span>Administração</span>
+      </a>
       <a class="sidebar-item" routerLink="/cinema-movies" routerLinkActive="active" (click)="toggleMenu()">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
           <path d="M18 4l2 4h-3l-2-4h-2l2 4h-3l-2-4H8l2 4H7L5 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V4h-4z" />
@@ -43,7 +49,7 @@
         <span>Filmes em Cartaz</span>
       </a>
       <a class="sidebar-item" routerLink="/higher-or-lower" routerLinkActive="active" (click)="toggleMenu()">
-        <span style="font-size:20px">🎮</span>
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M21 6H3c-1.1 0-2 .9-2 2v8c0 1.1.9 2 2 2h18c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm-10 7H8v3H6v-3H3v-2h3V8h2v3h3v2zm4.5 2c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm4-3c-.83 0-1.5-.67-1.5-1.5S18.67 9 19.5 9s1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"/></svg>
         <span>Higher or Lower</span>
       </a>
 
@@ -51,7 +57,7 @@
         <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
           <path d="M12 2L14.09 8.26L21 9.27L16.5 13.14L17.82 20L12 16.77L6.18 20L7.5 13.14L3 9.27L9.91 8.26L12 2Z" />
         </svg>
-        <span>Desafios Semanais</span>
+        <span>Desafios Diários</span>
       </button>
       <a class="sidebar-item" routerLink="/cinemas-proximos" routerLinkActive="active" (click)="toggleMenu()">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
@@ -134,14 +140,14 @@
                    role="button"
                    tabindex="0"
                    [attr.aria-label]="c.isCurrentUserBanned ? (c.nome + ', comunidade onde foste banido') : c.nome">
-            <div class="card-banner" *ngIf="c.bannerUrl" [style.background-image]="'url(' + c.bannerUrl + ')'"></div>
-            <div class="card-banner card-banner--empty" *ngIf="!c.bannerUrl" aria-hidden="true"></div>
+            <div class="card-banner" *ngIf="capaUrl(c)" [style.background-image]="'url(' + capaUrl(c) + ')'"></div>
+            <div class="card-banner card-banner--empty" *ngIf="!capaUrl(c)" aria-hidden="true"></div>
             <div class="card-badge-wrap">
               <div class="card-badge"
-                   [class.has-photo]="!!c.iconUrl"
-                   [style.background-image]="c.iconUrl ? 'url(' + c.iconUrl + ')' : 'none'"
+                   [class.has-photo]="!!iconeUrl(c)"
+                   [style.background-image]="iconeUrl(c) ? 'url(' + iconeUrl(c) + ')' : 'none'"
                    aria-hidden="true">
-                <span *ngIf="!c.iconUrl">{{ initialLetra(c.nome) }}</span>
+                <span *ngIf="!iconeUrl(c)">{{ initialLetra(c.nome) }}</span>
               </div>
             </div>
             <div class="card-body">
@@ -149,17 +155,24 @@
               <div class="card-desc">{{ c.descricao || 'Sem descrição' }}</div>
             </div>
             <div class="card-meta">
-              <span class="ban-pill" *ngIf="c.isCurrentUserBanned && c.meuBanimentoAteUtc"
-                    [attr.title]="'Banido até ' + (c.meuBanimentoAteUtc | date:'dd/MM/yyyy, HH:mm') + ' (hora local).'">
-                Banido até {{ c.meuBanimentoAteUtc | date:'dd/MM/yyyy, HH:mm' }}
-              </span>
-              <span class="ban-pill" *ngIf="c.isCurrentUserBanned && !c.meuBanimentoAteUtc"
-                    title="Banimento permanente — sem data de fim.">
-                Banimento permanente
-              </span>
-              <span class="visibility-pill" [class.private]="c.isPrivada">{{ c.isPrivada ? 'Privada' : 'Pública' }}</span>
-              <span class="members">{{ c.membrosCount ?? 0 }}<ng-container *ngIf="c.limiteMembros">/{{ c.limiteMembros }}</ng-container> membros</span>
-              <span class="created" *ngIf="c.dataCriacao">Criada: {{ c.dataCriacao | date:'shortDate' }}</span>
+              <div class="card-meta-row" *ngIf="c.isCurrentUserBanned">
+                <span class="ban-pill" *ngIf="c.meuBanimentoAteUtc"
+                      [attr.title]="'Banido até ' + (c.meuBanimentoAteUtc | date:'dd/MM/yyyy, HH:mm') + ' (hora local).'">
+                  Banido até {{ c.meuBanimentoAteUtc | date:'dd/MM/yyyy, HH:mm' }}
+                </span>
+                <span class="ban-pill" *ngIf="!c.meuBanimentoAteUtc"
+                      title="Banimento permanente — sem data de fim.">
+                  Banimento permanente
+                </span>
+              </div>
+              <div class="card-meta-row">
+                <span class="visibility-pill" [class.private]="c.isPrivada">{{ c.isPrivada ? 'Privada' : 'Pública' }}</span>
+                <span class="admin-pill" *ngIf="c.isAdmin">Admin</span>
+              </div>
+              <div class="card-meta-row">
+                <span class="created" *ngIf="c.dataCriacao">Criada: {{ c.dataCriacao | date:'shortDate' }}</span>
+                <span class="members">{{ c.membrosCount ?? 0 }}<ng-container *ngIf="c.limiteMembros">/{{ c.limiteMembros }}</ng-container> membros</span>
+              </div>
             </div>
           </article>
         </div>
@@ -179,14 +192,14 @@
                    role="button"
                    tabindex="0"
                    [attr.aria-label]="c.isCurrentUserBanned ? (c.nome + ', comunidade onde foste banido') : c.nome">
-            <div class="card-banner" *ngIf="c.bannerUrl" [style.background-image]="'url(' + c.bannerUrl + ')'"></div>
-            <div class="card-banner card-banner--empty" *ngIf="!c.bannerUrl" aria-hidden="true"></div>
+            <div class="card-banner" *ngIf="capaUrl(c)" [style.background-image]="'url(' + capaUrl(c) + ')'"></div>
+            <div class="card-banner card-banner--empty" *ngIf="!capaUrl(c)" aria-hidden="true"></div>
             <div class="card-badge-wrap">
               <div class="card-badge"
-                   [class.has-photo]="!!c.iconUrl"
-                   [style.background-image]="c.iconUrl ? 'url(' + c.iconUrl + ')' : 'none'"
+                   [class.has-photo]="!!iconeUrl(c)"
+                   [style.background-image]="iconeUrl(c) ? 'url(' + iconeUrl(c) + ')' : 'none'"
                    aria-hidden="true">
-                <span *ngIf="!c.iconUrl">{{ initialLetra(c.nome) }}</span>
+                <span *ngIf="!iconeUrl(c)">{{ initialLetra(c.nome) }}</span>
               </div>
             </div>
             <div class="card-body">
@@ -194,17 +207,24 @@
               <div class="card-desc">{{ c.descricao || 'Sem descrição' }}</div>
             </div>
             <div class="card-meta">
-              <span class="ban-pill" *ngIf="c.isCurrentUserBanned && c.meuBanimentoAteUtc"
-                    [attr.title]="'Banido até ' + (c.meuBanimentoAteUtc | date:'dd/MM/yyyy, HH:mm') + ' (hora local).'">
-                Banido até {{ c.meuBanimentoAteUtc | date:'dd/MM/yyyy, HH:mm' }}
-              </span>
-              <span class="ban-pill" *ngIf="c.isCurrentUserBanned && !c.meuBanimentoAteUtc"
-                    title="Banimento permanente — sem data de fim.">
-                Banimento permanente
-              </span>
-              <span class="visibility-pill" [class.private]="c.isPrivada">{{ c.isPrivada ? 'Privada' : 'Pública' }}</span>
-              <span class="members">{{ c.membrosCount ?? 0 }}<ng-container *ngIf="c.limiteMembros">/{{ c.limiteMembros }}</ng-container> membros</span>
-              <span class="created" *ngIf="c.dataCriacao">Criada: {{ c.dataCriacao | date:'shortDate' }}</span>
+              <div class="card-meta-row" *ngIf="c.isCurrentUserBanned">
+                <span class="ban-pill" *ngIf="c.meuBanimentoAteUtc"
+                      [attr.title]="'Banido até ' + (c.meuBanimentoAteUtc | date:'dd/MM/yyyy, HH:mm') + ' (hora local).'">
+                  Banido até {{ c.meuBanimentoAteUtc | date:'dd/MM/yyyy, HH:mm' }}
+                </span>
+                <span class="ban-pill" *ngIf="!c.meuBanimentoAteUtc"
+                      title="Banimento permanente — sem data de fim.">
+                  Banimento permanente
+                </span>
+              </div>
+              <div class="card-meta-row">
+                <span class="visibility-pill" [class.private]="c.isPrivada">{{ c.isPrivada ? 'Privada' : 'Pública' }}</span>
+                <span class="admin-pill" *ngIf="c.isAdmin">Admin</span>
+              </div>
+              <div class="card-meta-row">
+                <span class="created" *ngIf="c.dataCriacao">Criada: {{ c.dataCriacao | date:'shortDate' }}</span>
+                <span class="members">{{ c.membrosCount ?? 0 }}<ng-container *ngIf="c.limiteMembros">/{{ c.limiteMembros }}</ng-container> membros</span>
+              </div>
             </div>
           </article>
         </div>
@@ -224,13 +244,29 @@
 
       <form (submit)="createCommunity(); $event.preventDefault();">
         <label for="nome">Nome</label>
-        <input id="nome" name="nome" type="text" [(ngModel)]="newNome" required />
+        <input id="nome" name="nome" type="text" [(ngModel)]="newNome" required maxlength="30" />
+        <div *ngIf="newNome && newNome.length >= 30" class="length-warning">
+          <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"></path><path d="M12 9v4"></path><path d="M12 17h.01"></path></svg>
+          <span>Número de caracteres excedido (máximo 30).</span>
+        </div>
 
         <label for="descricao">Descrição</label>
-        <textarea id="descricao" name="descricao" rows="4" [(ngModel)]="newDescricao"></textarea>
+        <textarea id="descricao" name="descricao" rows="4" [(ngModel)]="newDescricao" maxlength="150"></textarea>
+        <div *ngIf="newDescricao && newDescricao.length >= 150" class="length-warning">
+          <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"></path><path d="M12 9v4"></path><path d="M12 17h.01"></path></svg>
+          <span>Número de caracteres excedido (máximo 150).</span>
+        </div>
 
         <label for="limiteMembros">Limite de membros (opcional)</label>
-        <input id="limiteMembros" name="limiteMembros" type="number" min="1" [(ngModel)]="newLimiteMembros" />
+        <input id="limiteMembros" name="limiteMembros" type="number" min="1" max="500" [(ngModel)]="newLimiteMembros" (keydown)="onlyNumbers($event)" inputmode="numeric" pattern="[0-9]*" />
+        <div *ngIf="newLimiteMembros !== null && newLimiteMembros < 0" class="length-warning">
+          <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"></path><path d="M12 9v4"></path><path d="M12 17h.01"></path></svg>
+          <span>O limite de membros não pode ser um número negativo.</span>
+        </div>
+        <div *ngIf="newLimiteMembros && newLimiteMembros > 500" class="length-warning">
+          <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"></path><path d="M12 9v4"></path><path d="M12 17h.01"></path></svg>
+          <span>O limite de membros não pode exceder 500.</span>
+        </div>
 
         <div class="spoiler-toggle-container visibility-toggle-container">
           <div class="spoiler-toggle-info visibility-toggle-info">
@@ -245,6 +281,10 @@
 
         <label for="banner">Capa / banner (imagem larga no topo da comunidade)</label>
         <input id="banner" name="banner" type="file" accept="image/*" (change)="onBannerSelected($event)" />
+        <div class="error-container" *ngIf="bannerError" style="display: flex; align-items: center; gap: 8px; margin-top: 8px; margin-bottom: 8px;">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="#ff4d4d"><path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/></svg>
+          <div class="form-error" style="margin: 0;">{{ bannerError }}</div>
+        </div>
 
         <div *ngIf="bannerPreview" class="banner-preview">
           <img [src]="bannerPreview" alt="Pré-visualização do banner" />
@@ -252,6 +292,10 @@
 
         <label for="iconCreate">Foto de perfil / ícone (opcional, aparece no círculo)</label>
         <input id="iconCreate" name="icon" type="file" accept="image/*" (change)="onIconSelected($event)" />
+        <div class="error-container" *ngIf="iconError" style="display: flex; align-items: center; gap: 8px; margin-top: 8px; margin-bottom: 8px;">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="#ff4d4d"><path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/></svg>
+          <div class="form-error" style="margin: 0;">{{ iconError }}</div>
+        </div>
 
         <div *ngIf="iconPreview" class="banner-preview banner-preview--icon">
           <img [src]="iconPreview" alt="Pré-visualização do ícone" />
@@ -261,7 +305,7 @@
 
         <div class="modal-actions">
           <button type="button" class="cancel-btn" (click)="closeCreate()" [disabled]="isCreating">Cancelar</button>
-          <button type="button" class="save-btn" (click)="createCommunity()" [disabled]="isCreating">
+          <button type="button" class="save-btn" (click)="createCommunity()" [disabled]="isCreating || (newNome && newNome.length > 30) || (newDescricao && newDescricao.length > 150) || (newLimiteMembros !== null && (newLimiteMembros > 500 || newLimiteMembros < 0))">
             {{ isCreating ? 'A criar…' : 'Criar' }}
           </button>
         </div>
