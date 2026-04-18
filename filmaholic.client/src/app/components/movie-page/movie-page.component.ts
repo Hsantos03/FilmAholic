@@ -1,8 +1,4 @@
-<<<<<<< HEAD
 import { Component, ElementRef, HostListener, OnInit, OnDestroy, ViewChild } from '@angular/core';
-=======
-import { Component, HostListener, OnInit, OnDestroy } from '@angular/core';
->>>>>>> main
 import { Location } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Subject, Subscription, forkJoin, of } from 'rxjs';
@@ -27,16 +23,15 @@ import { environment } from '../../../environments/environment';
   styleUrls: ['./movie-page.component.css']
 })
 export class MoviePageComponent implements OnInit, OnDestroy {
-<<<<<<< HEAD
+
   @ViewChild('searchContainer', { static: false }) searchContainerRef?: ElementRef;
 
   private static readonly posterFallback = 'assets/cinema-clapper.png';
   private readonly searchPosterFallback = 'https://via.placeholder.com/300x450?text=Sem+poster';
   private readonly HISTORY_KEY_PREFIX = 'search_history';
   private readonly MAX_HISTORY_ITEMS = 10;
-=======
-  private static readonly posterFallback = 'assets/cinema-clapper.png';
->>>>>>> main
+
+
 
   /** Quando o URL do poster falha a carregar (rede, 404, CSP), usa fallback local. */
   posterLoadFailed = false;
@@ -583,10 +578,6 @@ export class MoviePageComponent implements OnInit, OnDestroy {
     event.preventDefault();
     this.closeTrailer();
   }
-<<<<<<< HEAD
-
-=======
->>>>>>> main
 
   /// <summary>
   /// Indica se o utilizador pode avaliar o filme.
