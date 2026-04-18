@@ -292,7 +292,7 @@
     <section class="recommendations-section" *ngIf="!isLoadingRecommendations && recommendations.length" data-tour="movie-relacionados">
       <div class="section-head"><h2>Relacionados</h2></div>
       <div class="recommendations-grid">
-        <div class="rec-card" *ngFor="let r of recommendations" (click)="goToRecommendation(r)" style="cursor: pointer;"><img class="rec-poster" [src]="recommendationPoster(r)" [alt]="r.titulo" /></div>
+        <img class="rec-poster" *ngFor="let r of recommendations" (click)="goToRecommendation(r)" style="cursor: pointer;" [src]="recommendationPoster(r)" [alt]="r.titulo" />
       </div>
     </section>
     <div class="state" *ngIf="isLoadingRecommendations">A carregar recomendações...</div>
