@@ -20,7 +20,7 @@ import { environment } from '../../../environments/environment';
 @Component({
   selector: 'app-movie-page',
   templateUrl: './movie-page.component.html',
-  styleUrls: ['./movie-page.component.css']
+  styleUrls: ['./movie-page.component.css', '../dashboard/dashboard.component.css']
 })
 export class MoviePageComponent implements OnInit, OnDestroy {
 
