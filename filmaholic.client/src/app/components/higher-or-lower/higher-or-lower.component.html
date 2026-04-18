@@ -380,7 +380,7 @@
         </div>
         <div class="xp-bar-wrap">
           <div class="xp-bar"
-               [style.width.%]="((endStats?.xpTotal ?? 0) % 100)">
+               [style.width.%]="getXpProgressPercent()">
           </div>
         </div>
         <div class="xp-daily">

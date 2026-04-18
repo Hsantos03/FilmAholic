@@ -12,6 +12,7 @@ import { Subject, forkJoin, of } from 'rxjs';
 import { catchError, debounceTime, distinctUntilChanged, finalize, map, switchMap } from 'rxjs/operators';
 import { AtoresService, ActorSearchResult } from '../../services/atores.service';
 import { NotificacoesService } from '../../services/notificacoes.service';
+import { XpService } from '../../services/xp.service';
 
 type StatsPeriod = 'all' | '7d' | '30d' | '3m' | '12m';
 type GraphTheme = 'default' | 'dark' | 'force';
@@ -255,7 +256,8 @@ export class ProfileComponent implements OnInit {
     private profileService: ProfileService,
     private notificacoesService: NotificacoesService,
     private atoresService: AtoresService,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    private xpService: XpService
   ) { }
 
   /// <summary>
@@ -450,41 +452,28 @@ export class ProfileComponent implements OnInit {
   /// Calcula o nível de um utilizador com base na sua experiência (XP).
   /// </summary>
   private xpParaNivel(n: number): number {
-    if (n <= 1) return 0;
-    return 100 * (n - 1) * n / 2;
+    return this.xpService.getXpParaNivel(n);
   }
   
   /// <summary>
   /// Calcula a experiência necessária para o próximo nível.
   /// </summary>
   xpParaProximoNivel(): number {
-    const xpProximo = this.xpParaNivel(this.level + 1);
-    return Math.max(0, xpProximo - this.xp);
+    return this.xpService.getXpParaProximoNivel(this.xp, this.level);
   }
   
   /// <summary>
   /// Calcula a percentagem de progresso para o próximo nível.
   /// </summary>
   xpProgressPercent(): number {
-    const xpAtual = this.xpParaNivel(this.level);
-    const xpProximo = this.xpParaNivel(this.level + 1);
-    const intervalo = xpProximo - xpAtual;
-    if (intervalo <= 0) return 100;
-    const progresso = this.xp - xpAtual;
-    return Math.min(100, Math.max(0, (progresso / intervalo) * 100));
+    return this.xpService.getXpProgressPercent(this.xp, this.level);
   }
   
   /// <summary>
   /// Calcula o nível de um utilizador com base na sua experiência (XP) localmente.
   /// </summary>
   private calcularNivelLocal(xpTotal: number): number {
-    let nivel = 1;
-    while (true) {
-      const xpNecessario = 100 * nivel * (nivel + 1) / 2;
-      if (xpTotal < xpNecessario) break;
-      nivel++;
-    }
-    return nivel;
+    return this.xpService.calcularNivel(xpTotal);
   }
   
   /// <summary>

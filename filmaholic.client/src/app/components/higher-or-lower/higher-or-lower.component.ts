@@ -9,6 +9,7 @@ import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../environments/environment';
 import { OnboardingStep } from '../../services/onboarding.service';
 import { NotificacoesService } from '../../services/notificacoes.service';
+import { XpService } from '../../services/xp.service';
 import { finalize } from 'rxjs/operators';
 
 export type GameDifficulty = 'easy' | 'medium' | 'hard';
@@ -147,7 +148,8 @@ export class HigherOrLowerComponent implements OnInit {
     public menuService: MenuService,
     private http: HttpClient,
     private notificacoesService: NotificacoesService,
-    private authService: AuthService
+    private authService: AuthService,
+    public xpService: XpService
   ) { }
 
   /// <summary>
@@ -274,6 +276,14 @@ export class HigherOrLowerComponent implements OnInit {
       return { ...rules, minVoteCount: 0 };
     }
     return { minRatingGap: 0.01, maxRatingGap: null, minVoteCount: 0 };
+  }
+
+  /// <summary>
+  /// Calcula a percentagem de progresso do XP para a barra de resultados.
+  /// </summary>
+  getXpProgressPercent(): number {
+    if (!this.endStats) return 0;
+    return this.xpService.getXpProgressPercent(this.endStats.xpTotal ?? 0, this.endStats.nivel);
   }
 
   /// <summary>
